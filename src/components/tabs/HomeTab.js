@@ -1,3 +1,4 @@
+/* eslint-disable react-native/no-inline-styles */
 import {
   View,
   Text,
@@ -32,7 +33,7 @@ const HomeTab = () => {
           }}
         />
       </View>
-      <View style={{margin: 10}}>
+      <View style={{marginHorizontal: 10}}>
         <ScrollView>
           <Text style={styles.textHome}>
             What is Lorem Ipsum? Lorem Ipsum is simply dummy text of the

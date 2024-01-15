@@ -8,11 +8,10 @@ const Splash = () => {
   const authData = useSelector(state => state.auth);
   useEffect(() => {
     setTimeout(() => {
-      console.log(authData.data);
       if (authData.data == null) {
         navigation.navigate('Login');
       } else {
-        navigation.replace('Home', {user: authData.data});
+        navigation.replace('Main', {user: authData.data});
       }
     }, 3000);
     return;

@@ -15,9 +15,11 @@ import {THEME_COLOR, THEME_COLOR_2} from '../utils/Colors';
 import {useSelector} from 'react-redux';
 import HomeTab from '../components/tabs/HomeTab';
 import FeatureTab from '../components/tabs/FeatureTab';
+import {useNavigation} from '@react-navigation/native';
 const Main = () => {
   const isDarkMode = useColorScheme() === 'dark';
   const authData = useSelector(state => state.auth);
+  const navigation = useNavigation();
   const [selectedTab, setSelectedTab] = useState(0);
   return (
     <SafeAreaView style={styles.container}>
@@ -36,7 +38,10 @@ const Main = () => {
             ]}
           />
         </TouchableOpacity>
-        <TouchableOpacity>
+        <TouchableOpacity
+          onPress={() => {
+            navigation.navigate('Checkin');
+          }}>
           <View style={styles.checkInIcon}>
             <Image
               source={require('../images/checkin_icon.png')}
