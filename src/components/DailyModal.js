@@ -9,7 +9,7 @@ import {
   ScrollView,
 } from 'react-native';
 import React from 'react';
-import {BG, BG_COLOR, THEME_COLOR} from '../utils/Colors';
+import {BG, BG_COLOR, TEXT_COLOR, THEME_COLOR} from '../utils/Colors';
 
 const DailyModal = ({visible, onClose, products, onProductSelected}) => {
   const handleProductClick = product => {
@@ -45,7 +45,7 @@ const styles = StyleSheet.create({
   mainModalChoiceProduct: {
     width: 300,
     height: 300,
-    backgroundColor: BG_COLOR,
+    backgroundColor: THEME_COLOR,
     position: 'absolute',
     right: 30,
     ...Platform.select({
@@ -63,5 +63,6 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     marginTop: 10,
     textDecorationLine: 'underline',
+    color: TEXT_COLOR,
   },
 });

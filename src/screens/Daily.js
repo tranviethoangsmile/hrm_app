@@ -210,7 +210,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderWidth: 1,
   },
-  textInput: {width: '50%', fontSize: 20, fontWeight: 'bold', padding: 5},
+  textInput: {
+    width: '50%',
+    fontSize: 20,
+    fontWeight: 'bold',
+    padding: 5,
+    color: TEXT_COLOR,
+  },
   resulView: {
     width: '100%',
     height: 50,

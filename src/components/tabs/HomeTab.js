@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable react-native/no-inline-styles */
 import {
   View,
@@ -7,12 +8,15 @@ import {
   ScrollView,
   TouchableOpacity,
 } from 'react-native';
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
+import {useSelector} from 'react-redux';
 import {TEXT_COLOR, THEME_COLOR, THEME_COLOR_2} from '../../utils/Colors';
 import Control from '../Control';
+import socket from '../../socket.io/socket.io';
 
 const HomeTab = () => {
   const [visible, setVisible] = useState(false);
+  const AUTH = useSelector(state => state.auth);
   const handleControl = () => {
     setVisible(!visible);
   };
