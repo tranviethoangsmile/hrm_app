@@ -6,6 +6,7 @@ import Login from '../screens/Login';
 import Checkin from '../screens/Checkin';
 import Main from '../screens/Main';
 import Daily from '../screens/Daily';
+import Order from '../screens/Order';
 const Stack = createStackNavigator();
 const MainNavigator = () => {
   return (
@@ -29,6 +30,11 @@ const MainNavigator = () => {
         <Stack.Screen
           name="Checkin"
           component={Checkin}
+          options={{headerShown: true}}
+        />
+        <Stack.Screen
+          name="Order"
+          component={Order}
           options={{headerShown: true}}
         />
         <Stack.Screen

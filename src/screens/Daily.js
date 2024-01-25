@@ -25,6 +25,7 @@ const Daily = () => {
     {label: '14k FR', value: '0.8'},
     {label: '67E', value: '0.80'},
     {label: '84N', value: '1.13'},
+    {label: '61PAO', value: '0.9'},
   ];
   const [isModalProductChoiceVisible, setIsModalProductChoiceVisible] =
     useState(false);

@@ -1,3 +1,4 @@
+/* eslint-disable no-undef */
 /* eslint-disable no-lone-blocks */
 /* eslint-disable no-alert */
 /* eslint-disable no-unused-vars */
@@ -10,10 +11,8 @@ import {
   Image,
   Dimensions,
   TouchableOpacity,
-  Button,
-  TextInput,
 } from 'react-native';
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import LinearGradient from 'react-native-linear-gradient';
 import axios from 'axios';
 import {useNavigation} from '@react-navigation/native';
@@ -28,6 +27,8 @@ import {
 import CustomTextInput from '../components/CustomTextInput';
 import Loader from '../components/Loader';
 import {setAuthData} from '../redux/AuthSlice';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
 const Login = () => {
   const navigation = useNavigation();
   const disPatch = useDispatch();
@@ -37,6 +38,23 @@ const Login = () => {
   const [badPassword, setBadPassword] = useState('');
   const [secury, setSecury] = useState(true);
   const [visible, setVisible] = useState(false);
+  const [savePass, setSavePass] = useState(false);
+  const getUserIF = async () => {
+    const userIF = await AsyncStorage.getItem('USERINFO');
+    return JSON.parse(userIF);
+  };
+  useEffect(() => {
+    const fetchData = async () => {
+      const userIF = await getUserIF();
+      if (userIF != null) {
+        setUserName(userIF.username);
+        setPassword(userIF.password);
+        setSavePass(true);
+      }
+    };
+
+    fetchData();
+  }, []);
   const validate = () => {
     let isValid = false;
     if (userName === '') {
@@ -90,6 +108,18 @@ const Login = () => {
       console.log(error);
     }
   };
+  const handleSaveLoginInfo = async () => {
+    setSavePass(true);
+    try {
+      const userIF = {
+        username: userName,
+        password: password,
+      };
+      await AsyncStorage.setItem('USERINFO', JSON.stringify(userIF));
+    } catch (error) {
+      alert('Error while saving the data');
+    }
+  };
   return (
     <View style={styles.container}>
       <Image
@@ -126,6 +156,14 @@ const Login = () => {
         }}>
         Show password
       </Text>
+      <View style={styles.saveContainer}>
+        <TouchableOpacity onPress={handleSaveLoginInfo}>
+          <View style={styles.saveLoginOutter}>
+            {savePass && <View style={styles.saveLoginInner} />}
+          </View>
+        </TouchableOpacity>
+        <Text style={styles.saveText}>Save</Text>
+      </View>
 
       <LinearGradient colors={[THEME_COLOR, THEME_COLOR_2]} style={styles.btn}>
         <TouchableOpacity
@@ -152,6 +190,31 @@ const Login = () => {
 export default Login;
 
 const styles = StyleSheet.create({
+  saveLoginOutter: {
+    width: 15,
+    height: 15,
+    borderWidth: 1,
+    marginLeft: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  saveText: {
+    fontSize: 15,
+    fontWeight: 'bold',
+    marginLeft: 5,
+    color: TEXT_COLOR,
+  },
+  saveContainer: {
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
+    alignItems: 'center',
+  },
+  saveLoginInner: {
+    width: 10,
+    height: 10,
+    borderWidth: 1,
+    backgroundColor: 'blue',
+  },
   container: {
     flex: 1,
     backgroundColor: BG_COLOR,

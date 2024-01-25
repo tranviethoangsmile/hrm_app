@@ -1,6 +1,7 @@
 /* eslint-disable no-unused-vars */
 import {View, Text, StyleSheet, ScrollView, Platform} from 'react-native';
-import React from 'react';
+import React, {useEffect, useState} from 'react';
+import moment from 'moment';
 import {TEXT_COLOR, THEME_COLOR_2} from '../../utils/Colors';
 import {useNavigation} from '@react-navigation/native';
 const FeatureTab = () => {
@@ -15,7 +16,13 @@ const FeatureTab = () => {
               <Text style={styles.featureBtn}>Report</Text>
             </View>
             <View style={styles.featureBnt}>
-              <Text style={styles.featureBtn}>Order</Text>
+              <Text
+                style={styles.featureBtn}
+                onPress={() => {
+                  navigation.navigate('Order');
+                }}>
+                Order
+              </Text>
             </View>
           </View>
           <View style={styles.feature}>
