@@ -28,13 +28,13 @@ const MainNavigator = () => {
           options={{headerShown: true}}
         />
         <Stack.Screen
-          name="Checkin"
-          component={Checkin}
+          name="Order"
+          component={Order}
           options={{headerShown: true}}
         />
         <Stack.Screen
-          name="Order"
-          component={Order}
+          name="Checkin"
+          component={Checkin}
           options={{headerShown: true}}
         />
         <Stack.Screen

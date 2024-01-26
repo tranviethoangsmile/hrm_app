@@ -1,4 +1,5 @@
 /* eslint-disable no-alert */
+import React, {useState} from 'react';
 import {
   View,
   Text,
@@ -6,11 +7,9 @@ import {
   Image,
   TouchableOpacity,
   TextInput,
-  Button,
 } from 'react-native';
-import React, {useState} from 'react';
 import DailyModal from '../components/DailyModal';
-import {BG, BG_COLOR, TEXT_COLOR, THEME_COLOR} from '../utils/Colors';
+import {TEXT_COLOR, THEME_COLOR, BG_COLOR} from '../utils/Colors';
 import {useNavigation} from '@react-navigation/native';
 
 const Daily = () => {
@@ -46,6 +45,7 @@ const Daily = () => {
     setProductName(product.label);
     setProductValue(product.value);
   };
+
   const handleCal = () => {
     if (productValue === '') {
       alert('Please select a product');
@@ -63,14 +63,15 @@ const Daily = () => {
       setTempPercent(tempPer.toFixed(1));
     }
   };
+
   const handleCancel = () => {
     navigation.goBack();
   };
+
   return (
     <View style={styles.container}>
       <View style={styles.productChoice}>
-        <Text style={styles.text}>Product: </Text>
-        <Text style={styles.text}>{productName}</Text>
+        <Text style={styles.text}>Product: {productName}</Text>
         <TouchableOpacity
           onPress={() => {
             setIsModalProductChoiceVisible(!isModalProductChoiceVisible);
@@ -89,8 +90,9 @@ const Daily = () => {
           onProductSelected={handleClickChoiceProduct}
         />
       </View>
+
       <View style={styles.quatityProduct}>
-        <Text style={styles.text}>Quatity:</Text>
+        <Text style={styles.text}>Quantity:</Text>
         <TextInput
           style={styles.textInput}
           keyboardType="number-pad"
@@ -99,8 +101,9 @@ const Daily = () => {
           }}
         />
       </View>
+
       <View style={styles.quatityProduct}>
-        <Text style={styles.text}>Fisrt Product:</Text>
+        <Text style={styles.text}>First Product:</Text>
         <TextInput
           style={styles.textInput}
           keyboardType="number-pad"
@@ -109,6 +112,7 @@ const Daily = () => {
           }}
         />
       </View>
+
       <View style={styles.quatityProduct}>
         <Text style={styles.text}>Temperature:</Text>
         <TextInput
@@ -119,6 +123,7 @@ const Daily = () => {
           }}
         />
       </View>
+
       <View style={styles.quatityProduct}>
         <Text style={styles.text}>Errors:</Text>
         <TextInput
@@ -129,8 +134,9 @@ const Daily = () => {
           }}
         />
       </View>
+
       <View style={styles.quatityProduct}>
-        <Text style={styles.text}>Time stop:</Text>
+        <Text style={styles.text}>Time Stop:</Text>
         <TextInput
           style={styles.textInput}
           keyboardType="number-pad"
@@ -139,8 +145,9 @@ const Daily = () => {
           }}
         />
       </View>
+
       <View style={styles.quatityProduct}>
-        <Text style={styles.text}>Time work:</Text>
+        <Text style={styles.text}>Time Work:</Text>
         <TextInput
           style={styles.textInput}
           keyboardType="number-pad"
@@ -149,97 +156,101 @@ const Daily = () => {
           }}
         />
       </View>
+
       <View style={styles.resulView}>
-        <Text style={[styles.text, {color: '#FFF', fontSize: 15}]}>
-          PERCENT: {percent}
+        <Text style={[styles.text, styles.resultText]}>Percent: {percent}</Text>
+        <Text style={[styles.text, styles.resultText]}>
+          First: {fisrtPercent}
         </Text>
-        <Text style={[styles.text, {color: '#FFF', fontSize: 15}]}>
-          FISRT: {fisrtPercent}
+        <Text style={[styles.text, styles.resultText]}>
+          Temperature: {tempPercent}
         </Text>
-        <Text style={[styles.text, {color: '#FFF', fontSize: 15}]}>
-          TEMP: {tempPercent}
-        </Text>
-        <Text style={[styles.text, {color: '#FFF', fontSize: 15}]}>
-          ERROR: {errPercemt}
+        <Text style={[styles.text, styles.resultText]}>
+          Errors: {errPercemt}
         </Text>
       </View>
+
       <View style={styles.handleBtn}>
-        <View style={styles.btnCal}>
-          <Text style={styles.btnText} onPress={handleCal}>
-            Cal
-          </Text>
-        </View>
-        <View style={styles.btnCancel}>
-          <Text onPress={handleCancel} style={styles.btnText}>
-            Cancel
-          </Text>
-        </View>
+        <TouchableOpacity onPress={handleCal} style={styles.btnCal}>
+          <Text style={styles.btnText}>Calculate</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity onPress={handleCancel} style={styles.btnCancel}>
+          <Text style={styles.btnText}>Cancel</Text>
+        </TouchableOpacity>
       </View>
     </View>
   );
 };
 
 export default Daily;
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    width: '100%',
-    height: '100%',
+    padding: 20,
+    backgroundColor: BG_COLOR,
   },
   productChoice: {
-    width: '100%',
     height: 40,
-    justifyContent: 'space-between',
     flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
     borderWidth: 1,
+    borderColor: THEME_COLOR,
+    borderRadius: 5,
+    paddingHorizontal: 10,
+    marginBottom: 10,
   },
   arrowChoiceProduct: {
-    width: 40,
-    height: 40,
+    width: 30,
+    height: 30,
   },
   text: {
     color: TEXT_COLOR,
-    fontSize: 20,
+    fontSize: 16,
     fontWeight: 'bold',
   },
   quatityProduct: {
-    width: '100%',
     height: 40,
-    justifyContent: 'space-between',
     flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
     borderWidth: 1,
+    borderColor: THEME_COLOR,
+    borderRadius: 5,
+    paddingHorizontal: 10,
+    marginBottom: 10,
   },
   textInput: {
     width: '50%',
-    fontSize: 20,
+    fontSize: 16,
     fontWeight: 'bold',
     padding: 5,
     color: TEXT_COLOR,
   },
   resulView: {
-    width: '100%',
     height: 50,
-    marginTop: 10,
     flexDirection: 'row',
     justifyContent: 'space-evenly',
     alignItems: 'center',
-    backgroundColor: BG,
+    backgroundColor: THEME_COLOR,
+    borderRadius: 5,
+  },
+  resultText: {
+    fontSize: 14,
+    fontWeight: 'bold',
   },
   handleBtn: {
-    justifyContent: 'space-evenly',
     flexDirection: 'row',
-    marginTop: 30,
-    width: '100%',
-    alignItems: 'center',
+    justifyContent: 'space-evenly',
+    marginTop: 20,
   },
   btnCal: {
     backgroundColor: THEME_COLOR,
     borderWidth: 1,
     height: 40,
-    borderRadius: 25,
-    margin: 10,
+    borderRadius: 5,
     width: '40%',
     justifyContent: 'center',
     alignItems: 'center',
@@ -248,15 +259,14 @@ const styles = StyleSheet.create({
     backgroundColor: 'red',
     borderWidth: 1,
     height: 40,
+    borderRadius: 5,
     width: '40%',
-    borderRadius: 25,
     justifyContent: 'center',
     alignItems: 'center',
   },
   btnText: {
-    alignSelf: 'center',
     color: '#fff',
-    fontSize: 20,
+    fontSize: 16,
     fontWeight: 'bold',
   },
 });

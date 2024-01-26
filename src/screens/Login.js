@@ -4,6 +4,7 @@
 /* eslint-disable no-unused-vars */
 /* eslint-disable react-native/no-inline-styles */
 
+import React, {useEffect, useState} from 'react';
 import {
   View,
   Text,
@@ -12,12 +13,12 @@ import {
   Dimensions,
   TouchableOpacity,
 } from 'react-native';
-import React, {useEffect, useState} from 'react';
 import LinearGradient from 'react-native-linear-gradient';
 import axios from 'axios';
 import {useNavigation} from '@react-navigation/native';
 import {useDispatch} from 'react-redux';
-import {BASE_URL, LOGIN_URL, PORT} from '../utils/Strings';
+import {setAuthData} from '../redux/AuthSlice';
+import {API, BASE_URL, LOGIN_URL, PORT, V1, VERSION} from '../utils/Strings';
 import {
   BG_COLOR,
   TEXT_COLOR,
@@ -26,12 +27,11 @@ import {
 } from '../utils/Colors';
 import CustomTextInput from '../components/CustomTextInput';
 import Loader from '../components/Loader';
-import {setAuthData} from '../redux/AuthSlice';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const Login = () => {
   const navigation = useNavigation();
-  const disPatch = useDispatch();
+  const dispatch = useDispatch(); // Đã sửa thành "dispatch" thay vì "disPatch"
   const [userName, setUserName] = useState('');
   const [password, setPassword] = useState('');
   const [badUserName, setBadUserName] = useState('');
@@ -39,10 +39,12 @@ const Login = () => {
   const [secury, setSecury] = useState(true);
   const [visible, setVisible] = useState(false);
   const [savePass, setSavePass] = useState(false);
+
   const getUserIF = async () => {
     const userIF = await AsyncStorage.getItem('USERINFO');
     return JSON.parse(userIF);
   };
+
   useEffect(() => {
     const fetchData = async () => {
       const userIF = await getUserIF();
@@ -55,71 +57,82 @@ const Login = () => {
 
     fetchData();
   }, []);
+
   const validate = () => {
-    let isValid = false;
+    let isValid = true;
+
     if (userName === '') {
-      setBadUserName('Please input password');
+      setBadUserName('Please input username');
       isValid = false;
-    } else if (userName !== '' && userName.length < 5) {
-      setBadUserName('please enter user name > 5 characters');
+    } else if (userName.length < 5) {
+      setBadUserName('Please enter a username with at least 5 characters');
       isValid = false;
     } else {
-      isValid = true;
       setBadUserName('');
     }
+
     if (password === '') {
       setBadPassword('Please input password');
       isValid = false;
-    } else if (password !== '' && password.length < 6) {
-      setBadPassword('please enter password > 5 characters');
+    } else if (password.length < 6) {
+      setBadPassword('Please enter a password with at least 6 characters');
       isValid = false;
     } else {
-      isValid = true;
       setBadPassword('');
     }
+
     return isValid;
   };
+
   const handleLogin = async () => {
     if (validate()) {
       setVisible(true);
-    }
-    try {
-      let user = {
-        user_name: userName,
-        password: password,
-      };
-      const login = await axios.post(BASE_URL + PORT + LOGIN_URL, user);
-      if (!login?.data?.success) {
-        if (login?.data?.message == 'Password wrong...!!!') {
-          setBadPassword(login?.data?.message);
-          setVisible(false);
+      try {
+        let user = {
+          user_name: userName,
+          password: password,
+        };
+
+        const login = await axios.post(
+          `${BASE_URL}${PORT}${API}${VERSION}${V1}${LOGIN_URL}`,
+          user,
+        );
+
+        if (!login?.data?.success) {
+          if (login?.data?.message === 'Password wrong...!!!') {
+            setBadPassword(login?.data?.message);
+          } else {
+            setBadUserName(login?.data?.message);
+          }
         } else {
-          setBadUserName(login?.data?.message);
-          setVisible(false);
+          dispatch(setAuthData(login?.data)); // Đã sửa thành "dispatch" thay vì "disPatch"
+          setUserName('');
+          setPassword('');
+          navigation.navigate('Main');
         }
-      } else {
-        disPatch(setAuthData(login?.data));
-        setVisible(false);
-        setUserName('');
-        setPassword('');
-        navigation.navigate('Main');
+      } catch (error) {
+        console.error('Error during login:', error);
       }
-    } catch (error) {
-      console.log(error);
+      setVisible(false);
     }
   };
+
   const handleSaveLoginInfo = async () => {
     setSavePass(true);
+
     try {
       const userIF = {
         username: userName,
         password: password,
       };
+
       await AsyncStorage.setItem('USERINFO', JSON.stringify(userIF));
     } catch (error) {
-      alert('Error while saving the data');
+      console.error('Error while saving login info:', error);
+      alert('Error while saving login info');
     }
   };
+
   return (
     <View style={styles.container}>
       <Image
@@ -127,12 +140,13 @@ const Login = () => {
         style={styles.logo}
       />
       <Text style={styles.welcomeText}>Login with your account</Text>
+
       <CustomTextInput
         Icon={require('../images/user_name.png')}
         placeholder={'User Name'}
         value={userName}
         onChangeText={text => setUserName(text)}
-        isValid={badUserName === '' ? true : false}
+        isValid={badUserName === ''}
       />
       {badUserName !== '' && (
         <Text style={styles.errorText}>{badUserName}</Text>
@@ -143,12 +157,13 @@ const Login = () => {
         placeholder={'Password..'}
         value={password}
         onChangeText={text => setPassword(text)}
-        isValid={badPassword === '' ? true : false}
+        isValid={badPassword === ''}
         secureTextEntry={secury}
       />
       {badPassword !== '' && (
         <Text style={styles.errorText}>{badPassword}</Text>
       )}
+
       <Text
         style={styles.checkBox}
         onPress={() => {
@@ -156,6 +171,7 @@ const Login = () => {
         }}>
         Show password
       </Text>
+
       <View style={styles.saveContainer}>
         <TouchableOpacity onPress={handleSaveLoginInfo}>
           <View style={styles.saveLoginOutter}>
@@ -166,15 +182,11 @@ const Login = () => {
       </View>
 
       <LinearGradient colors={[THEME_COLOR, THEME_COLOR_2]} style={styles.btn}>
-        <TouchableOpacity
-          onPress={handleLogin}
-          style={[
-            styles.btn,
-            {justifyContent: 'center', alignItems: 'center', marginTop: 0},
-          ]}>
+        <TouchableOpacity onPress={handleLogin} style={styles.btn}>
           <Text style={styles.btnText}>LOGIN</Text>
         </TouchableOpacity>
       </LinearGradient>
+
       <Text
         style={styles.forgetText}
         onPress={() => {
@@ -182,6 +194,7 @@ const Login = () => {
         }}>
         Forget password?
       </Text>
+
       <Loader visible={visible} />
     </View>
   );
@@ -190,35 +203,11 @@ const Login = () => {
 export default Login;
 
 const styles = StyleSheet.create({
-  saveLoginOutter: {
-    width: 15,
-    height: 15,
-    borderWidth: 1,
-    marginLeft: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  saveText: {
-    fontSize: 15,
-    fontWeight: 'bold',
-    marginLeft: 5,
-    color: TEXT_COLOR,
-  },
-  saveContainer: {
-    flexDirection: 'row',
-    justifyContent: 'flex-start',
-    alignItems: 'center',
-  },
-  saveLoginInner: {
-    width: 10,
-    height: 10,
-    borderWidth: 1,
-    backgroundColor: 'blue',
-  },
   container: {
     flex: 1,
     backgroundColor: BG_COLOR,
     color: TEXT_COLOR,
+    paddingHorizontal: 20,
   },
   logo: {
     width: 150,
@@ -231,13 +220,13 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     fontSize: 20,
     fontWeight: '500',
+    marginVertical: 20,
   },
   btn: {
-    width: '90%',
     height: 50,
-    marginTop: 40,
-    alignSelf: 'center',
     borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   btnText: {
     textAlign: 'center',
@@ -247,19 +236,41 @@ const styles = StyleSheet.create({
   },
   errorText: {
     color: 'red',
-    marginLeft: 20,
     marginTop: 5,
   },
   forgetText: {
     color: TEXT_COLOR,
     fontSize: 15,
-    marginLeft: 20,
     marginTop: 20,
     fontWeight: '500',
   },
   checkBox: {
-    marginLeft: 20,
+    color: TEXT_COLOR,
     marginTop: 5,
+  },
+  saveContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  saveLoginOutter: {
+    width: 15,
+    height: 15,
+    borderWidth: 1,
+    marginLeft: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  saveLoginInner: {
+    width: 10,
+    height: 10,
+    borderWidth: 1,
+    backgroundColor: 'blue',
+  },
+  saveText: {
+    fontSize: 15,
+    fontWeight: 'bold',
+    marginLeft: 5,
     color: TEXT_COLOR,
   },
 });

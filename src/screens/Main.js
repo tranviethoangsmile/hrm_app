@@ -1,5 +1,6 @@
 /* eslint-disable eqeqeq */
 /* eslint-disable react-native/no-inline-styles */
+import React, {useState} from 'react';
 import {
   View,
   Text,
@@ -10,21 +11,22 @@ import {
   TouchableOpacity,
   Image,
 } from 'react-native';
-import React, {useState} from 'react';
 import {THEME_COLOR, THEME_COLOR_2} from '../utils/Colors';
 import {useSelector} from 'react-redux';
 import HomeTab from '../components/tabs/HomeTab';
 import FeatureTab from '../components/tabs/FeatureTab';
 import {useNavigation} from '@react-navigation/native';
+
 const Main = () => {
   const isDarkMode = useColorScheme() === 'dark';
   const authData = useSelector(state => state.auth);
   const navigation = useNavigation();
   const [selectedTab, setSelectedTab] = useState(0);
+
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
-      {selectedTab == 0 ? <HomeTab /> : <FeatureTab />}
+      {selectedTab === 0 ? <HomeTab /> : <FeatureTab />}
       <View style={styles.bottomNav}>
         <TouchableOpacity
           onPress={() => {
@@ -34,7 +36,7 @@ const Main = () => {
             source={require('../images/home_icon.png')}
             style={[
               styles.btnIcon,
-              {tintColor: selectedTab === 0 ? '#BB2525' : '#000'},
+              {tintColor: selectedTab === 0 ? THEME_COLOR_2 : '#000'},
             ]}
           />
         </TouchableOpacity>
@@ -66,7 +68,6 @@ const Main = () => {
   );
 };
 
-export default Main;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -102,3 +103,5 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
 });
+
+export default Main;
