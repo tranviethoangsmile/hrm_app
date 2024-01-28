@@ -4,8 +4,10 @@ import {
   Text,
   FlatList,
   TextInput,
-  Button,
+  TouchableOpacity,
   StyleSheet,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import socket from '../socket.io/socket.io';
 
@@ -48,15 +50,12 @@ const Ai = () => {
 
     // Clear the input field
     setNewMessage('');
-
-    // Scroll to the end of the FlatList when a new message is sent
-    if (flatListRef.current) {
-      flatListRef.current.scrollToEnd({animated: true});
-    }
   };
 
   return (
-    <View style={styles.container}>
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
       <FlatList
         ref={flatListRef}
         data={messages}
@@ -65,11 +64,20 @@ const Ai = () => {
           <View
             style={[
               styles.messageContainer,
-              {alignSelf: item.sent ? 'flex-end' : 'flex-start'},
+              {
+                alignSelf: item.sent ? 'flex-end' : 'flex-start',
+                backgroundColor: item.sent ? '#F4C2C2' : '#F0F4F7',
+              },
             ]}>
             <Text style={styles.messageText}>{item.text}</Text>
           </View>
         )}
+        contentContainerStyle={styles.messagesContainer}
+        onContentSizeChange={() => {
+          if (flatListRef.current) {
+            flatListRef.current.scrollToEnd({animated: true});
+          }
+        }}
       />
 
       <View style={styles.inputContainer}>
@@ -79,9 +87,11 @@ const Ai = () => {
           value={newMessage}
           onChangeText={text => setNewMessage(text)}
         />
-        <Button title="Send" onPress={sendMessage} />
+        <TouchableOpacity style={styles.sendButton} onPress={sendMessage}>
+          <Text style={styles.sendButtonText}>Send</Text>
+        </TouchableOpacity>
       </View>
-    </View>
+    </KeyboardAvoidingView>
   );
 };
 
@@ -90,34 +100,49 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 10,
     justifyContent: 'space-between',
+    backgroundColor: '#EAEFF2',
+  },
+  messagesContainer: {
+    paddingVertical: 10,
   },
   messageContainer: {
-    backgroundColor: '#eee',
-    maxWidth: '80%',
     flexDirection: 'row',
-    marginBottom: 5,
-    padding: 10,
-    borderRadius: 8,
+    marginBottom: 10,
+    padding: 15,
+    borderRadius: 12,
+    maxWidth: '80%',
   },
   messageText: {
     fontSize: 16,
     marginHorizontal: 5,
-    color: 'red',
+    color: '#2E3A59',
   },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     borderTopWidth: 1,
-    borderTopColor: '#ccc',
+    borderTopColor: '#BDC6D8',
     paddingVertical: 10,
   },
   input: {
     flex: 1,
-    padding: 8,
+    padding: 12,
     borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 5,
+    borderColor: '#BDC6D8',
+    borderRadius: 15,
     marginRight: 10,
+    backgroundColor: 'white',
+  },
+  sendButton: {
+    backgroundColor: '#3F65F7',
+    padding: 12,
+    borderRadius: 15,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  sendButtonText: {
+    color: 'white',
+    fontWeight: 'bold',
   },
 });
 
