@@ -7,6 +7,7 @@ import Checkin from '../screens/Checkin';
 import Main from '../screens/Main';
 import Daily from '../screens/Daily';
 import Order from '../screens/Order';
+import Ai from '../screens/Ai';
 const Stack = createStackNavigator();
 const MainNavigator = () => {
   return (
@@ -42,6 +43,7 @@ const MainNavigator = () => {
           component={Main}
           options={{headerShown: false}}
         />
+        <Stack.Screen name="Ai" component={Ai} options={{headerShown: true}} />
       </Stack.Navigator>
     </NavigationContainer>
   );

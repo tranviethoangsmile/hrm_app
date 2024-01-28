@@ -12,13 +12,26 @@ import {
   Image,
   Dimensions,
   TouchableOpacity,
+  Platform,
+  Alert,
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import axios from 'axios';
 import {useNavigation} from '@react-navigation/native';
 import {useDispatch} from 'react-redux';
 import {setAuthData} from '../redux/AuthSlice';
-import {API, BASE_URL, LOGIN_URL, PORT, V1, VERSION} from '../utils/Strings';
+import {
+  API,
+  BASE_URL,
+  BASE_URL_DEV,
+  BASE_URL_IOS,
+  LOGIN_URL,
+  PORT,
+  PORT_DEV,
+  PORT_IOS,
+  V1,
+  VERSION,
+} from '../utils/Strings';
 import {
   BG_COLOR,
   TEXT_COLOR,
@@ -92,12 +105,30 @@ const Login = () => {
           user_name: userName,
           password: password,
         };
-
-        const login = await axios.post(
-          `${BASE_URL}${PORT}${API}${VERSION}${V1}${LOGIN_URL}`,
-          user,
-        );
-
+        const IosLogin = async () => {
+          try {
+            return await axios.post(
+              `${BASE_URL_DEV}${PORT_DEV}${API}${VERSION}${V1}${LOGIN_URL}`,
+              user,
+            );
+          } catch (error) {
+            Alert.alert('Error during iOS login:', error);
+          }
+        };
+        const AndroidLogin = async () => {
+          try {
+            return await axios.post(
+              `${BASE_URL_DEV}${PORT_DEV}${API}${VERSION}${V1}${LOGIN_URL}`,
+              user,
+            );
+          } catch (error) {
+            Alert.alert('Error during Android login:', error);
+          }
+        };
+        const login = await Platform.select({
+          ios: IosLogin,
+          android: AndroidLogin,
+        })();
         if (!login?.data?.success) {
           if (login?.data?.message === 'Password wrong...!!!') {
             setBadPassword(login?.data?.message);

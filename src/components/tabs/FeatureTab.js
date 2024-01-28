@@ -34,7 +34,13 @@ const FeatureTab = () => {
 
         <View style={styles.featureRow}>
           <View style={styles.featureBtn}>
-            <Text style={styles.featureText}>AI</Text>
+            <Text
+              style={styles.featureText}
+              onPress={() => {
+                navigation.navigate('Ai');
+              }}>
+              AI
+            </Text>
           </View>
           <View style={styles.featureBtn}>
             <Text style={styles.featureText}>Market</Text>
