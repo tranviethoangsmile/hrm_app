@@ -6,15 +6,16 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  KeyboardAvoidingView,
-  Platform,
+  ScrollView,
+  Keyboard,
+  Alert,
 } from 'react-native';
 import socket from '../socket.io/socket.io';
 
 const Ai = () => {
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
-  const flatListRef = useRef(null);
+  const scrollViewRef = useRef(null);
 
   useEffect(() => {
     const handleMessage = receivedMessage => {
@@ -35,7 +36,7 @@ const Ai = () => {
 
   const sendMessage = () => {
     if (newMessage.trim() === '') {
-      console.log('Enter your text');
+      Alert.alert('Enter your text');
       return;
     }
 
@@ -50,40 +51,44 @@ const Ai = () => {
 
     // Clear the input field
     setNewMessage('');
+
+    // Scroll to the end of the ScrollView when a new message is sent
+    if (scrollViewRef.current) {
+      scrollViewRef.current.scrollToEnd({animated: true});
+    }
   };
 
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-      <FlatList
-        ref={flatListRef}
-        data={messages}
-        keyExtractor={(item, index) => index.toString()}
-        renderItem={({item}) => (
+    <View style={styles.container}>
+      <ScrollView
+        ref={scrollViewRef}
+        contentContainerStyle={styles.messagesContainer}
+        keyboardShouldPersistTaps="handled"
+        onContentSizeChange={() => {
+          if (scrollViewRef.current) {
+            scrollViewRef.current.scrollToEnd({animated: true});
+          }
+        }}>
+        {messages.map((item, index) => (
           <View
+            key={index}
             style={[
               styles.messageContainer,
               {
                 alignSelf: item.sent ? 'flex-end' : 'flex-start',
-                backgroundColor: item.sent ? '#F4C2C2' : '#F0F4F7',
+                backgroundColor: item.sent ? '#4CAF50' : '#2196F3',
               },
             ]}>
             <Text style={styles.messageText}>{item.text}</Text>
           </View>
-        )}
-        contentContainerStyle={styles.messagesContainer}
-        onContentSizeChange={() => {
-          if (flatListRef.current) {
-            flatListRef.current.scrollToEnd({animated: true});
-          }
-        }}
-      />
+        ))}
+      </ScrollView>
 
       <View style={styles.inputContainer}>
         <TextInput
           style={styles.input}
           placeholder="Type your message..."
+          placeholderTextColor="#757575"
           value={newMessage}
           onChangeText={text => setNewMessage(text)}
         />
@@ -91,54 +96,53 @@ const Ai = () => {
           <Text style={styles.sendButtonText}>Send</Text>
         </TouchableOpacity>
       </View>
-    </KeyboardAvoidingView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 10,
-    justifyContent: 'space-between',
-    backgroundColor: '#EAEFF2',
+    backgroundColor: '#F5F5F5',
   },
   messagesContainer: {
-    paddingVertical: 10,
+    flexGrow: 1,
+    padding: 10,
   },
   messageContainer: {
-    flexDirection: 'row',
-    marginBottom: 10,
-    padding: 15,
-    borderRadius: 12,
     maxWidth: '80%',
+    flexDirection: 'row',
+    marginBottom: 5,
+    padding: 10,
+    borderRadius: 8,
   },
   messageText: {
     fontSize: 16,
     marginHorizontal: 5,
-    color: '#2E3A59',
+    color: 'white',
   },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     borderTopWidth: 1,
-    borderTopColor: '#BDC6D8',
+    borderTopColor: '#ccc',
     paddingVertical: 10,
+    paddingHorizontal: 5,
+    backgroundColor: 'white',
   },
   input: {
     flex: 1,
-    padding: 12,
+    padding: 8,
     borderWidth: 1,
-    borderColor: '#BDC6D8',
-    borderRadius: 15,
+    borderColor: '#ccc',
+    borderRadius: 5,
     marginRight: 10,
-    backgroundColor: 'white',
+    color: 'black', // Text color
   },
   sendButton: {
-    backgroundColor: '#3F65F7',
-    padding: 12,
-    borderRadius: 15,
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: '#2196F3',
+    padding: 10,
+    borderRadius: 5,
   },
   sendButtonText: {
     color: 'white',

@@ -1,7 +1,7 @@
 import io from 'socket.io-client';
-import {BASE_URL, BASE_URL_DEV, PORT_DEV} from '../utils/Strings';
+import {BASE_URL, PORT} from '../utils/Strings';
 
-const socket = io(BASE_URL_DEV + PORT_DEV);
+const socket = io(BASE_URL + PORT);
 socket.on('connect', () => {
   console.log('Connected to server');
   // Gửi và nhận các thông điệp từ máy chủ

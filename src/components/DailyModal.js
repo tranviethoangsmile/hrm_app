@@ -9,7 +9,7 @@ import {
   ScrollView,
 } from 'react-native';
 import React from 'react';
-import {BG, BG_COLOR, TEXT_COLOR, THEME_COLOR} from '../utils/Colors';
+import {TEXT_COLOR, THEME_COLOR} from '../utils/Colors';
 
 const DailyModal = ({visible, onClose, products, onProductSelected}) => {
   const handleProductClick = product => {

@@ -15,26 +15,36 @@ import {useNavigation} from '@react-navigation/native';
 const Daily = () => {
   const navigation = useNavigation();
   const listProduct = [
-    {label: '66 OIL', value: '1.08'},
-    {label: '05k RR', value: '0.81'},
-    {label: '05k FR', value: '0.85'},
-    {label: '042 OIL', value: '1.09'},
-    {label: 'D93F', value: '0.82'},
-    {label: '14k RR', value: '1'},
-    {label: '14k FR', value: '0.8'},
-    {label: '67E', value: '0.80'},
-    {label: '84N', value: '1.13'},
-    {label: '61PAO', value: '0.9'},
+    {label: 'D66_5', value: '1.08'},
+    {label: 'D66_6', value: '1.08'},
+    {label: 'DK05RR_1', value: '0.81'},
+    {label: 'DK05RR_2', value: '0.81'},
+    {label: 'DK05FR_1', value: '0.85'},
+    {label: 'DK05FR_2', value: '0.85'},
+    {label: 'D042', value: '1.09'},
+    {label: 'DF93_4', value: '0.82'},
+    {label: 'DF93_3', value: '0.82'},
+    {label: 'D14KRR', value: '1'},
+    {label: 'D14KFR', value: '0.8'},
+    {label: 'D67CTC', value: '0.80'},
+    {label: 'C84N', value: '1.13'},
+    {label: 'D61F', value: '0.9'},
+  ];
+  const work_shift = [
+    {label: 'A', value: 'A'},
+    {label: 'B', value: 'A'},
   ];
   const [isModalProductChoiceVisible, setIsModalProductChoiceVisible] =
     useState(false);
+  const [shift, setShift] = useState('');
+  const [operatorHistory, setOperatiorHistory] = useState('');
   const [productName, setProductName] = useState('');
   const [productValue, setProductValue] = useState('');
   const [quatity, setQuatity] = useState(0);
   const [fisrtProduct, setFisrtProduct] = useState(0);
   const [temperature, setTemperature] = useState(0);
   const [error, setError] = useState(0);
-  const [timeStop, setTimeStop] = useState(0);
+  const [shutdown, setShutdown] = useState(0);
   const [timeWork, setTimeWork] = useState(0);
   const [percent, setPercent] = useState(0);
   const [errPercemt, setErrPercent] = useState(0);
@@ -52,7 +62,7 @@ const Daily = () => {
     } else {
       let per =
         ((parseFloat(quatity) * parseFloat(productValue)) /
-          (parseFloat(timeWork) - parseFloat(timeStop))) *
+          (parseFloat(timeWork) - parseFloat(shutdown))) *
         100;
       let errPer = (parseFloat(error) / parseFloat(quatity)) * 100;
       let firstPer = (parseFloat(fisrtProduct) / parseFloat(quatity)) * 100;
@@ -136,12 +146,12 @@ const Daily = () => {
       </View>
 
       <View style={styles.quatityProduct}>
-        <Text style={styles.text}>Time Stop:</Text>
+        <Text style={styles.text}>Shutdown:</Text>
         <TextInput
           style={styles.textInput}
           keyboardType="number-pad"
           onChangeText={txt => {
-            setTimeStop(txt);
+            setShutdown(txt);
           }}
         />
       </View>

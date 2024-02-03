@@ -13,8 +13,14 @@ import {
 import {useSelector} from 'react-redux';
 import axios from 'axios';
 import moment from 'moment';
-import {API, BASE_URL, ORDER_URL, PORT, V1, VERSION} from '../utils/Strings';
-import {BG, TEXT_COLOR, THEME_COLOR_2} from '../utils/Colors';
+import {
+  API,
+  BASE_URL_DEV,
+  ORDER_URL,
+  PORT_DEV,
+  V1,
+  VERSION,
+} from '../utils/Strings';
 
 const Order = () => {
   const authData = useSelector(state => state.auth);
@@ -38,19 +44,19 @@ const Order = () => {
   const handleCheckBoxPress = async (date, check) => {
     setSelectedMap(prevSelectedMap => ({
       ...prevSelectedMap,
-      [date.format('YYYY / M / D')]: check,
+      [date.format('YYYY/MM/DD')]: check,
     }));
 
     const order = {
       user_id: authData.data.data.id,
-      date: date.format('YYYY/MM/DD'),
+      date: date.format('YYYY-MM-DD'),
       dayOrNight: check,
       position: '',
     };
 
     try {
       const orderSuccess = await axios.post(
-        `${BASE_URL}${PORT}${API}${VERSION}${V1}${ORDER_URL}`,
+        `${BASE_URL_DEV}${PORT_DEV}${API}${VERSION}${V1}${ORDER_URL}`,
         order,
         config,
       );
@@ -67,60 +73,83 @@ const Order = () => {
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      {yearlyDates.map((date, index) => (
-        <View key={index} style={styles.dayContainer}>
-          <View
-            style={[
-              styles.dayHeader,
-              {
-                backgroundColor:
-                  date.format('dddd') === 'Sunday' ||
-                  date.format('dddd') === 'Saturday'
-                    ? THEME_COLOR_2
-                    : BG.WHITE,
-              },
-            ]}>
-            <Text
+    <View style={styles.container}>
+      <ScrollView contentContainerStyle={styles.scrollViewContent}>
+        {yearlyDates.map((date, index) => (
+          <View key={index} style={styles.dayContainer}>
+            <View
               style={[
-                styles.dayHeaderText,
+                styles.dayHeader,
                 {
-                  color:
+                  backgroundColor:
                     date.format('dddd') === 'Sunday' ||
                     date.format('dddd') === 'Saturday'
-                      ? TEXT_COLOR
-                      : 'black',
+                      ? '#3b5998'
+                      : '#f5f5f5',
                 },
               ]}>
-              {date.format('dddd')} {date.format('YYYY/MM/DD')}
-            </Text>
+              <Text
+                style={[
+                  styles.dayHeaderText,
+                  {
+                    color:
+                      date.format('dddd') === 'Sunday' ||
+                      date.format('dddd') === 'Saturday'
+                        ? 'white'
+                        : 'black',
+                  },
+                ]}>
+                {date.format('dddd')} {date.format('YYYY/MM/DD')}
+              </Text>
+            </View>
+            <View style={styles.checkBoxContainer}>
+              {['DAY', 'NIGHT'].map(check =>
+                date.format('dddd') === 'Sunday' ||
+                date.format('dddd') === 'Saturday' ? (
+                  <View key={check} style={styles.emptyCheckBox}></View>
+                ) : (
+                  <TouchableOpacity
+                    key={check}
+                    style={[
+                      styles.checkBox,
+                      {
+                        backgroundColor:
+                          selectedMap[date.format('YYYY/MM/DD')] === check
+                            ? '#3b5998'
+                            : 'transparent',
+                        borderWidth:
+                          selectedMap[date.format('YYYY/MM/DD')] === check
+                            ? 0
+                            : 1,
+                      },
+                    ]}
+                    onPress={() => {
+                      handleCheckBoxPress(date, check);
+                    }}>
+                    <Text style={styles.checkBoxText}>{check}</Text>
+                  </TouchableOpacity>
+                ),
+              )}
+            </View>
           </View>
-          <View style={styles.checkBoxContainer}>
-            {['DAY', 'NIGHT'].map(check => (
-              <View key={check} style={styles.checkBox}>
-                <Text style={styles.checkBoxText}>{check}</Text>
-                <TouchableOpacity
-                  style={styles.outer}
-                  onPress={() => {
-                    handleCheckBoxPress(date, check);
-                  }}>
-                  {selectedMap[date.format('YYYY / M / D')] === check && (
-                    <View style={styles.inner} />
-                  )}
-                </TouchableOpacity>
-              </View>
-            ))}
-          </View>
-        </View>
-      ))}
-    </ScrollView>
+        ))}
+      </ScrollView>
+      <View style={styles.orderDetailForUser}>
+        <Text style={styles.orderDetailText}>2024/02</Text>
+        <Text style={styles.orderDetailText}>Ordered: 15</Text>
+        <Text style={styles.orderDetailText}>Taken: 10</Text>
+      </View>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    justifyContent: 'center',
+    flex: 1,
     flexDirection: 'column',
+  },
+  scrollViewContent: {
+    flexGrow: 1,
   },
   dayContainer: {
     flexDirection: 'row',
@@ -139,6 +168,7 @@ const styles = StyleSheet.create({
   dayHeaderText: {
     fontSize: 14,
     fontWeight: 'bold',
+    color: 'white',
   },
   checkBoxContainer: {
     flex: 3,
@@ -149,27 +179,26 @@ const styles = StyleSheet.create({
   },
   checkBox: {
     alignItems: 'center',
+    padding: 10,
+    borderRadius: 5,
+  },
+  emptyCheckBox: {
+    flex: 1,
   },
   checkBoxText: {
-    color: 'red',
+    color: 'black',
     textTransform: 'capitalize',
   },
-  outer: {
-    flex: 1,
-    width: 20,
-    height: 20,
-    borderWidth: 1,
-    borderRadius: 10,
-    margin: 7,
+  orderDetailForUser: {
+    height: 70,
+    backgroundColor: '#3b5998',
+    justifyContent: 'space-around',
     alignItems: 'center',
-    justifyContent: 'center',
+    flexDirection: 'row',
+    paddingHorizontal: 10,
   },
-  inner: {
-    width: 15,
-    height: 15,
-    borderWidth: 1,
-    borderRadius: 10,
-    backgroundColor: 'blue',
+  orderDetailText: {
+    color: 'white',
   },
 });
 

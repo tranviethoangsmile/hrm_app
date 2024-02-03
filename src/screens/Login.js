@@ -24,11 +24,9 @@ import {
   API,
   BASE_URL,
   BASE_URL_DEV,
-  BASE_URL_IOS,
   LOGIN_URL,
   PORT,
   PORT_DEV,
-  PORT_IOS,
   V1,
   VERSION,
 } from '../utils/Strings';
@@ -108,7 +106,7 @@ const Login = () => {
         const IosLogin = async () => {
           try {
             return await axios.post(
-              `${BASE_URL_DEV}${PORT_DEV}${API}${VERSION}${V1}${LOGIN_URL}`,
+              `${BASE_URL}${PORT}${API}${VERSION}${V1}${LOGIN_URL}`,
               user,
             );
           } catch (error) {
