@@ -106,7 +106,7 @@ const Login = () => {
         const IosLogin = async () => {
           try {
             return await axios.post(
-              `${BASE_URL}${PORT}${API}${VERSION}${V1}${LOGIN_URL}`,
+              `${BASE_URL_DEV}${PORT_DEV}${API}${VERSION}${V1}${LOGIN_URL}`,
               user,
             );
           } catch (error) {

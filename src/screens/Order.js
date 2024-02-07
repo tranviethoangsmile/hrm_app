@@ -1,3 +1,5 @@
+/* eslint-disable react-hooks/exhaustive-deps */
+/* eslint-disable react/self-closing-comp */
 /* eslint-disable no-shadow */
 /* eslint-disable prettier/prettier */
 /* eslint-disable react-native/no-inline-styles */
@@ -21,25 +23,58 @@ import {
   V1,
   VERSION,
 } from '../utils/Strings';
+import OrderModal from '../components/OrderModal';
 
 const Order = () => {
   const authData = useSelector(state => state.auth);
   const [yearlyDates, setYearlyDates] = useState([]);
+  const [month, setMonth] = useState('');
   const [selectedMap, setSelectedMap] = useState({});
+  const [ordered, setOrdered] = useState([]);
+  const [picked, setPicked] = useState(0);
+  const [isVisible, setIsVisible] = useState(false);
   const config = {
     headers: {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${authData.data.token}`,
     },
   };
-
+  const showAlert = message => {
+    Alert.alert('Notification: ', message);
+  };
+  const getUserOrders = async () => {
+    try {
+      const res = await axios.post(
+        `${BASE_URL_DEV}${PORT_DEV}${API}${VERSION}${V1}${ORDER_URL}/user/`,
+        {
+          user_id: authData.data.data.id,
+        },
+      );
+      if (res?.data?.success) {
+        setOrdered(res?.data?.data);
+        let pick = 0;
+        for (let i = 0; i < res?.data?.data.length; i++) {
+          if (res?.data?.data[i].isPicked === true) {
+            pick++;
+          }
+          setPicked(pick);
+        }
+      } else {
+        showAlert('please back to home page and login again!');
+      }
+    } catch (error) {
+      showAlert(error.message);
+    }
+  };
   useEffect(() => {
     const today = moment();
+    setMonth(today.format('YYYY/MM'));
     const yearDays = Array.from({length: 366}, (_, index) =>
       today.clone().add(index, 'days'),
     );
     setYearlyDates(yearDays);
-  }, []);
+    getUserOrders();
+  }, [isVisible]);
 
   const handleCheckBoxPress = async (date, check) => {
     setSelectedMap(prevSelectedMap => ({
@@ -62,14 +97,18 @@ const Order = () => {
       );
 
       if (orderSuccess?.data?.success) {
-        Alert.alert('Success');
+        showAlert('success');
       } else {
-        Alert.alert('Not Success');
+        showAlert(orderSuccess?.data?.message);
       }
     } catch (error) {
       console.error('Error during order:', error);
-      Alert.alert('An error occurred during the order process.');
+      showAlert(error.message);
     }
+  };
+
+  const handleOrderShow = () => {
+    setIsVisible(true);
   };
 
   return (
@@ -134,11 +173,22 @@ const Order = () => {
           </View>
         ))}
       </ScrollView>
-      <View style={styles.orderDetailForUser}>
-        <Text style={styles.orderDetailText}>2024/02</Text>
-        <Text style={styles.orderDetailText}>Ordered: 15</Text>
-        <Text style={styles.orderDetailText}>Taken: 10</Text>
-      </View>
+      <TouchableOpacity onPress={handleOrderShow}>
+        <View style={styles.orderDetailForUser}>
+          <Text style={styles.orderDetailText}>{month}</Text>
+          <Text style={styles.orderDetailText}>Ordered: {ordered.length}</Text>
+          <Text style={styles.orderDetailText}>Picked: {picked}</Text>
+        </View>
+      </TouchableOpacity>
+      <OrderModal
+        visible={isVisible}
+        orders={ordered}
+        onClose={() => {
+          setIsVisible(!isVisible);
+        }}
+        showAlert={showAlert}
+        getUserOrders={getUserOrders}
+      />
     </View>
   );
 };
@@ -199,6 +249,8 @@ const styles = StyleSheet.create({
   },
   orderDetailText: {
     color: 'white',
+    fontSize: 15,
+    fontWeight: 'bold',
   },
 });
 
