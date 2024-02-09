@@ -44,7 +44,7 @@ const Checkin = () => {
   return (
     <View style={{flex: 1, backgroundColor: 'black'}}>
       <CameraScreen
-        style={{flex: 1}}
+        style={{flex: 1, height: SCREEN_HEIGHT}}
         scanBarcode={true}
         onReadCode={handleQRCodeScanner}
         showFrame={true}
