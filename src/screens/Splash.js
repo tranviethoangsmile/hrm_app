@@ -1,9 +1,8 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import {View, Text, StyleSheet, Image} from 'react-native';
+import {View, StyleSheet, Image} from 'react-native';
 import React, {useEffect} from 'react';
 import {useNavigation} from '@react-navigation/native';
 import {useSelector} from 'react-redux';
-import socket from '../socket.io/socket.io';
 const Splash = () => {
   const navigation = useNavigation();
   const authData = useSelector(state => state.auth);

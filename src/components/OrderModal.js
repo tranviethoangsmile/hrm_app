@@ -10,18 +10,11 @@ import {
   TouchableOpacity,
   Button,
 } from 'react-native';
-import {
-  API,
-  BASE_URL_DEV,
-  ORDER_URL,
-  PORT_DEV,
-  V1,
-  VERSION,
-} from '../utils/Strings';
+import {API, BASE_URL, ORDER_URL, PORT, V1, VERSION} from '../utils/Strings';
 import axios from 'axios';
 import moment from 'moment';
 
-const OrderModal = ({visible, onClose, orders, showAlert}) => {
+const OrderModal = ({visible, onClose, orders, showAlert, getUserOrders}) => {
   const today = moment();
   const closeModal = () => {
     onClose();
@@ -30,11 +23,13 @@ const OrderModal = ({visible, onClose, orders, showAlert}) => {
   const handleCancelOrder = async id => {
     try {
       const deleteOrder = await axios.delete(
-        `${BASE_URL_DEV}${PORT_DEV}${API}${VERSION}${V1}${ORDER_URL}/${id}`,
+        `${BASE_URL}${PORT}${API}${VERSION}${V1}${ORDER_URL}/${id}`,
       );
       if (deleteOrder?.data?.success) {
+        getUserOrders();
         showAlert('Order deleted successfully');
       } else {
+        getUserOrders();
         showAlert(deleteOrder?.data?.message);
       }
     } catch (error) {

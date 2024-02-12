@@ -15,14 +15,7 @@ import {
 import {useSelector} from 'react-redux';
 import axios from 'axios';
 import moment from 'moment';
-import {
-  API,
-  BASE_URL_DEV,
-  ORDER_URL,
-  PORT_DEV,
-  V1,
-  VERSION,
-} from '../utils/Strings';
+import {API, BASE_URL, ORDER_URL, PORT, V1, VERSION} from '../utils/Strings';
 import OrderModal from '../components/OrderModal';
 
 const Order = () => {
@@ -45,7 +38,7 @@ const Order = () => {
   const getUserOrders = async () => {
     try {
       const res = await axios.post(
-        `${BASE_URL_DEV}${PORT_DEV}${API}${VERSION}${V1}${ORDER_URL}/user/`,
+        `${BASE_URL}${PORT}${API}${VERSION}${V1}${ORDER_URL}/user/`,
         {
           user_id: authData.data.data.id,
         },
@@ -91,14 +84,16 @@ const Order = () => {
 
     try {
       const orderSuccess = await axios.post(
-        `${BASE_URL_DEV}${PORT_DEV}${API}${VERSION}${V1}${ORDER_URL}`,
+        `${BASE_URL}${PORT}${API}${VERSION}${V1}${ORDER_URL}`,
         order,
         config,
       );
 
       if (orderSuccess?.data?.success) {
+        getUserOrders();
         showAlert('success');
       } else {
+        getUserOrders();
         showAlert(orderSuccess?.data?.message);
       }
     } catch (error) {
