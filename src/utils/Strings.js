@@ -1,4 +1,4 @@
-export const BASE_URL = 'http://126.31.242.212';
+export const BASE_URL = 'http://60.75.209.140';
 export const BASE_URL_DEV = 'http://192.168.0.108';
 export const PORT = ':8000';
 export const PORT_DEV = ':4000';
