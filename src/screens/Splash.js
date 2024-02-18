@@ -19,7 +19,7 @@ const Splash = () => {
   return (
     <View style={styles.container}>
       <Image
-        source={require('../images/daihatsu_logo.jpg')}
+        source={require('../images/logo_shiga_daihatsu.jpg')}
         style={styles.logo}
       />
     </View>
@@ -35,8 +35,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   logo: {
-    width: '50%',
-    height: '40%',
+    width: '80%',
+    height: '60%',
     resizeMode: 'contain',
   },
 });
