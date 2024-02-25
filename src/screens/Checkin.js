@@ -6,10 +6,16 @@ import moment from 'moment';
 import {useSelector} from 'react-redux';
 import axios from 'axios';
 import {API, BASE_URL, ORDER_URL, PORT, V1, VERSION} from '../utils/Strings';
+import ConfirmDayOrNight from '../components/ComfirmDayOrNight';
 const Checkin = () => {
   const today = moment();
   const authData = useSelector(state => state.auth);
   const [isScanned, setScanned] = useState(false);
+  const [isVisible, setVisible] = useState(false);
+  const [timeCheckin, setTimeCheckin] = useState('');
+  const closeModal = () => {
+    setVisible(!isVisible);
+  };
   const checkin = {
     user_id: authData.data.data.id,
     date: today.format('YYYY-MM-DD'),
@@ -24,7 +30,7 @@ const Checkin = () => {
       }, 10000);
     }
   };
-  const handleScannerQRCode = async () => {
+  const handleScannerQRCodePicked = async () => {
     const checked = await axios.put(
       `${BASE_URL}${PORT}${API}${VERSION}${V1}${ORDER_URL}/user/`,
       {
@@ -38,18 +44,32 @@ const Checkin = () => {
     }
   };
 
-  const handleCheckin = qrValue => {
-    switch (qrValue) {
-      case 'eiuakpougg':
-        showAlert('You have checked in!');
-        break;
-      case 'http://en.m.wikipedia.org':
-        handleScannerQRCode();
-        break;
-      default:
-        showAlert('Failed');
-        break;
+  const isValidQRCode = qrValue => {
+    if (qrValue.startsWith('http://')) {
+      return false;
+    } else if (qrValue.length > 10) {
+      return false;
+    } else {
+      return true;
     }
+  };
+
+  const handleCheckin = qrValue => {
+    if (isValidQRCode(qrValue)) {
+      if (qrValue === 'picked') {
+        handleScannerQRCodePicked();
+      } else {
+        setVisible(true);
+        handleCheckinWithQr(qrValue);
+      }
+    } else {
+      console.log(qrValue);
+      showAlert('QR not avaiable');
+    }
+  };
+
+  const handleCheckinWithQr = qrValue => {
+    setTimeCheckin(qrValue);
   };
 
   const showAlert = message => {
@@ -88,6 +108,15 @@ const Checkin = () => {
           <Text style={{color: 'white', fontSize: 18}}>Retry Scan</Text>
         </TouchableOpacity>
       )}
+      <ConfirmDayOrNight
+        visible={isVisible}
+        onClose={() => {
+          setVisible(!isVisible);
+        }}
+        closeModal={closeModal}
+        checkin={checkin}
+        time={timeCheckin}
+      />
     </View>
   );
 };

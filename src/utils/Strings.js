@@ -1,7 +1,5 @@
 export const BASE_URL = 'http://60.75.209.140';
-export const BASE_URL_DEV = 'http://192.168.0.108';
 export const PORT = ':8000';
-export const PORT_DEV = ':4000';
 export const USER_URL = '/users';
 export const DEPARTMENT = '/departments';
 export const LOGIN_URL = '/login';
@@ -10,4 +8,5 @@ export const VERSION = '/version';
 export const V1 = '/v1';
 export const API = '/api';
 export const CHAT = '/chat';
-export const LOGO_DHT = 'daihatsu_logo.jpg';
+export const CHECKIN = '/checkin';
+export const CREATE = '/create';
