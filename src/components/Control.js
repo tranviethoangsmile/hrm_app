@@ -28,7 +28,7 @@ const Control = ({visible, onClose}) => {
             <Text
               style={styles.textControl}
               onPress={() => {
-                alert('OK Pressed');
+                navigation.navigate('Profile');
               }}>
               Profile
             </Text>
