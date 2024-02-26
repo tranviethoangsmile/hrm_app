@@ -8,6 +8,7 @@ import Main from '../screens/Main';
 import Daily from '../screens/Daily';
 import Order from '../screens/Order';
 import Ai from '../screens/Ai';
+import Profile from '../screens/Profile';
 const Stack = createStackNavigator();
 const MainNavigator = () => {
   return (
@@ -17,6 +18,11 @@ const MainNavigator = () => {
           name="Splash"
           component={Splash}
           options={{headerShown: false}}
+        />
+        <Stack.Screen
+          name="Profile"
+          component={Profile}
+          options={{headerShown: true}}
         />
         <Stack.Screen
           name="Login"
