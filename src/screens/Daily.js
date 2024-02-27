@@ -29,6 +29,7 @@ const Daily = () => {
     {label: 'D67CTC', value: '0.80'},
     {label: 'C84N', value: '1.13'},
     {label: 'D61F', value: '0.9'},
+    {label: 'C089', value: '1.13'},
   ];
   const work_shift = [
     {label: 'A', value: 'A'},

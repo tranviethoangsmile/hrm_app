@@ -73,65 +73,67 @@ const Profile = () => {
   }, []);
 
   return (
-    <ScrollView style={styles.container}>
-      <Card containerStyle={styles.card}>
-        <Text style={styles.label}>Name:</Text>
-        <Text style={styles.info}>{userInfo.name}</Text>
-        <Divider style={styles.divider} />
-        <Text style={styles.label}>Email:</Text>
-        <Text style={styles.info}>{userInfo.email}</Text>
-        <Divider style={styles.divider} />
-        <Text style={styles.label}>Staff Code:</Text>
-        <Text style={styles.info}>{userInfo.employee_id}</Text>
-      </Card>
-      <Card containerStyle={styles.card}>
+    <View style={styles.container}>
+      <ScrollView style={styles.container}>
+        <Card containerStyle={styles.card}>
+          <Text style={styles.label}>Name:</Text>
+          <Text style={styles.info}>{userInfo.name}</Text>
+          <Divider style={styles.divider} />
+          <Text style={styles.label}>Email:</Text>
+          <Text style={styles.info}>{userInfo.email}</Text>
+          <Divider style={styles.divider} />
+          <Text style={styles.label}>Staff Code:</Text>
+          <Text style={styles.info}>{userInfo.employee_id}</Text>
+        </Card>
+        <Card containerStyle={styles.card}>
+          <View style={styles.tableHeader}>
+            <Text style={styles.headerText}>Month</Text>
+            <Text style={styles.headerText}>Work Time</Text>
+            <Text style={styles.headerText}>Over Time</Text>
+          </View>
+          <View style={styles.tableRow}>
+            <Text
+              onPress={() => {
+                setIsModalVisible(!isModalVisible);
+              }}
+              style={styles.cellText}>
+              {year}/{month}
+            </Text>
+            <Text style={styles.cellText}>{totalWorkTime}</Text>
+            <Text style={styles.cellText}>{totalOverTime}</Text>
+          </View>
+        </Card>
+        <Text style={styles.subtitle}>Check-in History</Text>
         <View style={styles.tableHeader}>
-          <Text style={styles.headerText}>Month</Text>
+          <Text style={styles.headerText}>Date</Text>
+          <Text style={styles.headerText}>In</Text>
+          <Text style={styles.headerText}>Out</Text>
           <Text style={styles.headerText}>Work Time</Text>
+          <Text style={styles.headerText}>Shift</Text>
           <Text style={styles.headerText}>Over Time</Text>
         </View>
-        <View style={styles.tableRow}>
-          <Text
-            onPress={() => {
-              setIsModalVisible(!isModalVisible);
-            }}
-            style={styles.cellText}>
-            {year}/{month}
-          </Text>
-          <Text style={styles.cellText}>{totalWorkTime}</Text>
-          <Text style={styles.cellText}>{totalOverTime}</Text>
-        </View>
-      </Card>
-      <Text style={styles.subtitle}>Check-in History</Text>
-      <View style={styles.tableHeader}>
-        <Text style={styles.headerText}>Date</Text>
-        <Text style={styles.headerText}>In</Text>
-        <Text style={styles.headerText}>Out</Text>
-        <Text style={styles.headerText}>Work Time</Text>
-        <Text style={styles.headerText}>Shift</Text>
-        <Text style={styles.headerText}>Over Time</Text>
-      </View>
-      <FlatList
-        data={userCheckin}
-        keyExtractor={(item, index) => index.toString()}
-        renderItem={({item}) => (
-          <View style={styles.tableRow}>
-            <Text style={styles.cellText}>{item.date}</Text>
-            <Text style={styles.cellText}>{item.time_in}</Text>
-            <Text style={styles.cellText}>{item.time_out}</Text>
-            <Text style={styles.cellText}>{item.work_time}</Text>
-            <Text style={styles.cellText}>{item.work_shift}</Text>
-            <Text style={styles.cellText}>{item.over_time}</Text>
-          </View>
-        )}
-      />
-      <SelectDate
-        visible={isModalVisible}
-        onClose={() => setIsModalVisible(!isModalVisible)}
-        setSelectedDate={setToday}
-        getCheckin={get_checkin_of_user}
-      />
-    </ScrollView>
+        <FlatList
+          data={userCheckin}
+          keyExtractor={(item, index) => index.toString()}
+          renderItem={({item}) => (
+            <View style={styles.tableRow}>
+              <Text style={styles.cellText}>{item.date}</Text>
+              <Text style={styles.cellText}>{item.time_in}</Text>
+              <Text style={styles.cellText}>{item.time_out}</Text>
+              <Text style={styles.cellText}>{item.work_time}</Text>
+              <Text style={styles.cellText}>{item.work_shift}</Text>
+              <Text style={styles.cellText}>{item.over_time}</Text>
+            </View>
+          )}
+        />
+        <SelectDate
+          visible={isModalVisible}
+          onClose={() => setIsModalVisible(!isModalVisible)}
+          setSelectedDate={setToday}
+          getCheckin={get_checkin_of_user}
+        />
+      </ScrollView>
+    </View>
   );
 };
 
