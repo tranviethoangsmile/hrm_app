@@ -14,7 +14,14 @@ import {API, BASE_URL, ORDER_URL, PORT, V1, VERSION} from '../utils/Strings';
 import axios from 'axios';
 import moment from 'moment';
 
-const OrderModal = ({visible, onClose, orders, showAlert, getUserOrders}) => {
+const OrderModal = ({
+  visible,
+  onClose,
+  orders,
+  showAlert,
+  getUserOrders,
+  t,
+}) => {
   const today = moment();
   const closeModal = () => {
     onClose();
@@ -48,7 +55,7 @@ const OrderModal = ({visible, onClose, orders, showAlert, getUserOrders}) => {
           {/* Header của Modal */}
           <View style={styles.header}>
             <View style={styles.titleContainer}>
-              <Text style={styles.modalTitle}>ORDER LIST</Text>
+              <Text style={styles.modalTitle}>{t('orLi')}</Text>
             </View>
             <TouchableOpacity onPress={closeModal}>
               <Text style={styles.closeButton}>✕</Text>
@@ -56,17 +63,17 @@ const OrderModal = ({visible, onClose, orders, showAlert, getUserOrders}) => {
           </View>
           <View style={styles.separator}></View>
           <View style={styles.orderRow}>
-            <Text style={styles.headerText}>DATE</Text>
-            <Text style={styles.headerText}>Work Period:</Text>
+            <Text style={styles.headerText}>{t('D')}</Text>
+            <Text style={styles.headerText}>{t('ws')}</Text>
             <Text style={styles.headerText}></Text>
           </View>
           <ScrollView style={styles.body}>
             {orders.map((order, index) => (
               <View key={index} style={styles.orderRow}>
                 <Text style={styles.orderInfoText}>{order.date}</Text>
-                <Text style={styles.orderInfoText}>{order.dayOrNight}</Text>
+                <Text style={styles.orderInfoText}>{t(order.dayOrNight)}</Text>
                 <Button
-                  title="Cancel"
+                  title={t('c')}
                   onPress={() => handleCancelOrder(order.id)}
                   disabled={moment(order.date, 'YYYY/MM/DD').isBefore(today)}
                   color={

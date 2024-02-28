@@ -1,5 +1,5 @@
 /* eslint-disable react-native/no-inline-styles */
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {View, Text, Dimensions, Alert, TouchableOpacity} from 'react-native';
 import {CameraScreen} from 'react-native-camera-kit';
 import moment from 'moment';
@@ -7,7 +7,23 @@ import {useSelector} from 'react-redux';
 import axios from 'axios';
 import {API, BASE_URL, ORDER_URL, PORT, V1, VERSION} from '../utils/Strings';
 import ConfirmDayOrNight from '../components/ComfirmDayOrNight';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import {useTranslation} from 'react-i18next';
+import i18next from '../../services/i18next';
 const Checkin = () => {
+  const {t} = useTranslation();
+  const getLanguage = async () => {
+    return await AsyncStorage.getItem('Language');
+  };
+  useEffect(() => {
+    const checkLanguage = async () => {
+      const lang = await getLanguage();
+      if (lang != null) {
+        i18next.changeLanguage(lang);
+      }
+    };
+    checkLanguage();
+  });
   const today = moment();
   const authData = useSelector(state => state.auth);
   const [isScanned, setScanned] = useState(false);
@@ -38,7 +54,7 @@ const Checkin = () => {
       },
     );
     if (checked?.success) {
-      showAlert(checked?.data?.message);
+      showAlert(t(checked?.data?.message));
     } else {
       showAlert(checked?.data?.message);
     }
@@ -105,7 +121,7 @@ const Checkin = () => {
             borderRadius: 8,
           }}
           onPress={handleRetryScan}>
-          <Text style={{color: 'white', fontSize: 18}}>Retry Scan</Text>
+          <Text style={{color: 'white', fontSize: 18}}>{t('reS')}</Text>
         </TouchableOpacity>
       )}
       <ConfirmDayOrNight
@@ -116,6 +132,7 @@ const Checkin = () => {
         closeModal={closeModal}
         checkin={checkin}
         time={timeCheckin}
+        t={t}
       />
     </View>
   );

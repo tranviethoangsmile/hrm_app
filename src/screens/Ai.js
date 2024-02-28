@@ -1,3 +1,5 @@
+/* eslint-disable react-native/no-inline-styles */
+/* eslint-disable no-unreachable */
 import React, {useEffect, useState, useRef} from 'react';
 import {
   View,
@@ -11,13 +13,26 @@ import {
   Alert,
 } from 'react-native';
 import socket from '../socket.io/socket.io';
+import i18next from '../../services/i18next';
+import {useTranslation} from 'react-i18next';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const Ai = () => {
+  const {t} = useTranslation();
+  const getLanguage = async () => {
+    return await AsyncStorage.getItem('Language');
+  };
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
   const scrollViewRef = useRef(null);
 
   useEffect(() => {
+    const checkLanguage = async () => {
+      const lang = await getLanguage();
+      if (lang != null) {
+        i18next.changeLanguage(lang);
+      }
+    };
     const handleMessage = receivedMessage => {
       setMessages(prevMessages => [
         ...prevMessages,
@@ -32,6 +47,7 @@ const Ai = () => {
     return () => {
       socket.off('messgpt', handleMessage);
     };
+    checkLanguage();
   }, [messages]);
 
   const sendMessage = () => {
@@ -87,13 +103,13 @@ const Ai = () => {
       <View style={styles.inputContainer}>
         <TextInput
           style={styles.input}
-          placeholder="Type your message..."
+          placeholder={t('tymess')}
           placeholderTextColor="#757575"
           value={newMessage}
           onChangeText={text => setNewMessage(text)}
         />
         <TouchableOpacity style={styles.sendButton} onPress={sendMessage}>
-          <Text style={styles.sendButtonText}>Send</Text>
+          <Text style={styles.sendButtonText}>{t('Send')}</Text>
         </TouchableOpacity>
       </View>
     </View>

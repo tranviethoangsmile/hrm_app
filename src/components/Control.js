@@ -7,12 +7,13 @@ import {
   TouchableWithoutFeedback,
   Platform,
 } from 'react-native';
-import React from 'react';
+import React, {useEffect} from 'react';
 import {useNavigation} from '@react-navigation/native';
 import {TEXT_COLOR, THEME_COLOR, THEME_COLOR_2} from '../utils/Colors';
 import {useDispatch} from 'react-redux';
 import {setAuthData} from '../redux/AuthSlice';
-const Control = ({visible, onClose}) => {
+
+const Control = ({visible, onClose, t}) => {
   const navigation = useNavigation();
   const disPatch = useDispatch();
   const handleLogout = () => {
@@ -30,17 +31,17 @@ const Control = ({visible, onClose}) => {
               onPress={() => {
                 navigation.navigate('Profile');
               }}>
-              Profile
+              {t('Pro')}
             </Text>
             <Text
               style={styles.textControl}
               onPress={() => {
-                alert('OK Pressed');
+                navigation.navigate('Setting');
               }}>
-              Setting
+              {t('Set')}
             </Text>
             <Text style={styles.textControl} onPress={handleLogout}>
-              Logout
+              {t('Lout')}
             </Text>
           </View>
         </View>

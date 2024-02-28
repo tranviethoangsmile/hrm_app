@@ -9,6 +9,8 @@ import Daily from '../screens/Daily';
 import Order from '../screens/Order';
 import Ai from '../screens/Ai';
 import Profile from '../screens/Profile';
+import LanguageSelectionScreen from '../screens/LanguageSelectionScreen';
+import Setting from '../screens/Setting';
 const Stack = createStackNavigator();
 const MainNavigator = () => {
   return (
@@ -23,6 +25,11 @@ const MainNavigator = () => {
           name="Profile"
           component={Profile}
           options={{headerShown: true}}
+        />
+        <Stack.Screen
+          name="Language"
+          component={LanguageSelectionScreen}
+          options={{headerShown: false}}
         />
         <Stack.Screen
           name="Login"
@@ -48,6 +55,11 @@ const MainNavigator = () => {
           name="Main"
           component={Main}
           options={{headerShown: false}}
+        />
+        <Stack.Screen
+          name="Setting"
+          component={Setting}
+          options={{headerShown: true}}
         />
         <Stack.Screen name="Ai" component={Ai} options={{headerShown: true}} />
       </Stack.Navigator>

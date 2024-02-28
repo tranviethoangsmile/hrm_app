@@ -18,6 +18,9 @@ import {
 import LinearGradient from 'react-native-linear-gradient';
 import axios from 'axios';
 import {useNavigation} from '@react-navigation/native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import {useTranslation} from 'react-i18next';
+import i18next from '../../services/i18next';
 import {useDispatch} from 'react-redux';
 import {setAuthData} from '../redux/AuthSlice';
 import {API, BASE_URL, LOGIN_URL, PORT, V1, VERSION} from '../utils/Strings';
@@ -29,11 +32,14 @@ import {
 } from '../utils/Colors';
 import CustomTextInput from '../components/CustomTextInput';
 import Loader from '../components/Loader';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const Login = () => {
+  const getLanguage = async () => {
+    return await AsyncStorage.getItem('Language');
+  };
+  const {t} = useTranslation();
   const navigation = useNavigation();
-  const dispatch = useDispatch(); // Đã sửa thành "dispatch" thay vì "disPatch"
+  const dispatch = useDispatch();
   const [userName, setUserName] = useState('');
   const [password, setPassword] = useState('');
   const [badUserName, setBadUserName] = useState('');
@@ -48,6 +54,12 @@ const Login = () => {
   };
 
   useEffect(() => {
+    const checkLanguage = async () => {
+      const lang = await getLanguage();
+      if (lang != null) {
+        i18next.changeLanguage(lang);
+      }
+    };
     const fetchData = async () => {
       const userIF = await getUserIF();
       if (userIF != null) {
@@ -56,7 +68,7 @@ const Login = () => {
         setSavePass(true);
       }
     };
-
+    checkLanguage();
     fetchData();
   }, []);
 
@@ -159,11 +171,11 @@ const Login = () => {
         source={require('../images/daihatsu_logo.jpg')}
         style={styles.logo}
       />
-      <Text style={styles.welcomeText}>Login with your account</Text>
+      <Text style={styles.welcomeText}>{t('Login w')}</Text>
 
       <CustomTextInput
         Icon={require('../images/user_name.png')}
-        placeholder={'User Name'}
+        placeholder={t('User Name')}
         value={userName}
         onChangeText={text => setUserName(text)}
         isValid={badUserName === ''}
@@ -174,7 +186,7 @@ const Login = () => {
 
       <CustomTextInput
         Icon={require('../images/password_icon.png')}
-        placeholder={'Password..'}
+        placeholder={t('Password') + '..'}
         value={password}
         onChangeText={text => setPassword(text)}
         isValid={badPassword === ''}
@@ -189,7 +201,7 @@ const Login = () => {
         onPress={() => {
           setSecury(!secury);
         }}>
-        Show password
+        {t('Spw')}
       </Text>
 
       <View style={styles.saveContainer}>
@@ -198,12 +210,12 @@ const Login = () => {
             {savePass && <View style={styles.saveLoginInner} />}
           </View>
         </TouchableOpacity>
-        <Text style={styles.saveText}>Save</Text>
+        <Text style={styles.saveText}>{t('Save')}</Text>
       </View>
 
       <LinearGradient colors={[THEME_COLOR, THEME_COLOR_2]} style={styles.btn}>
         <TouchableOpacity onPress={handleLogin} style={styles.btn}>
-          <Text style={styles.btnText}>LOGIN</Text>
+          <Text style={styles.btnText}>{t('Login')}</Text>
         </TouchableOpacity>
       </LinearGradient>
 
@@ -212,7 +224,7 @@ const Login = () => {
         onPress={() => {
           navigation.navigate('Forget');
         }}>
-        Forget password?
+        {t('Fgp')}
       </Text>
 
       <Loader visible={visible} />
