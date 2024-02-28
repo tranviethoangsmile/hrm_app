@@ -19,10 +19,10 @@ import {
   CREATE,
 } from '../utils/Strings';
 import {useNavigation} from '@react-navigation/native';
-const ConfirmDayOrNight = ({visible, closeModal, checkin, time}) => {
+const ConfirmDayOrNight = ({visible, closeModal, checkin, time, t}) => {
   const navigate = useNavigation();
   const showAlert = message => {
-    Alert.alert('Checkin Status: ', message);
+    Alert.alert('Checkin Status: ', t(message));
   };
 
   const handleCheckinWithQrCode = async (shift, action) => {
@@ -51,12 +51,12 @@ const ConfirmDayOrNight = ({visible, closeModal, checkin, time}) => {
       },
     );
     if (result?.data?.success) {
-      showAlert('CHECKIN SUCCESS');
+      showAlert('cSuc');
       navigate.goBack();
       closeModal();
     } else {
       closeModal();
-      showAlert('PLEASE TRY AGAIN');
+      showAlert('pta');
     }
   };
 
@@ -68,14 +68,14 @@ const ConfirmDayOrNight = ({visible, closeModal, checkin, time}) => {
       onRequestClose={closeModal}>
       <View style={styles.container}>
         <View style={styles.modalView}>
-          <Text style={styles.modalText}>Select Shift</Text>
+          <Text style={styles.modalText}>{t('selS')}</Text>
           <View style={styles.btnContainer}>
             <TouchableOpacity
               style={styles.dayButton}
               onPress={() => {
                 handleCheckinWithQrCode('DAY');
               }}>
-              <Text style={styles.buttonText}>DAY SHIFT</Text>
+              <Text style={styles.buttonText}>{t('dS')}</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.nightButton}
@@ -100,7 +100,7 @@ const ConfirmDayOrNight = ({visible, closeModal, checkin, time}) => {
                   {cancelable: true},
                 );
               }}>
-              <Text style={styles.buttonText}>NIGHT SHIFT</Text>
+              <Text style={styles.buttonText}>{t('nS')}</Text>
             </TouchableOpacity>
           </View>
         </View>

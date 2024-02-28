@@ -13,19 +13,34 @@ import {useSelector} from 'react-redux';
 import {TEXT_COLOR, THEME_COLOR, THEME_COLOR_2} from '../../utils/Colors';
 import Control from '../Control';
 import socket from '../../socket.io/socket.io';
+import i18next from '../../../services/i18next';
+import {useTranslation} from 'react-i18next';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const HomeTab = () => {
+  const getLanguage = async () => {
+    return await AsyncStorage.getItem('Language');
+  };
+  const {t} = useTranslation();
   const [visible, setVisible] = useState(false);
   const AUTH = useSelector(state => state.auth);
 
   const handleControl = () => {
     setVisible(!visible);
   };
-
+  useEffect(() => {
+    const checkLanguage = async () => {
+      const lang = await getLanguage();
+      if (lang != null) {
+        i18next.changeLanguage(lang);
+      }
+    };
+    checkLanguage();
+  }, []);
   return (
     <ScrollView style={styles.container}>
       <View style={styles.titleView}>
-        <Text style={styles.title}>Information</Text>
+        <Text style={styles.title}>{t('info')}</Text>
         <TouchableOpacity onPress={handleControl}>
           <Image
             source={require('../../images/avatar.jpg')}
@@ -37,6 +52,7 @@ const HomeTab = () => {
           onClose={() => {
             setVisible(!visible);
           }}
+          t={t}
         />
       </View>
       <View style={styles.postContainer}>

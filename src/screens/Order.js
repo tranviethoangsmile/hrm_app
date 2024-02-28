@@ -17,8 +17,14 @@ import axios from 'axios';
 import moment from 'moment';
 import {API, BASE_URL, ORDER_URL, PORT, V1, VERSION} from '../utils/Strings';
 import OrderModal from '../components/OrderModal';
-
+import i18next from '../../services/i18next';
+import {useTranslation} from 'react-i18next';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 const Order = () => {
+  const {t} = useTranslation();
+  const getLanguage = async () => {
+    return await AsyncStorage.getItem('Language');
+  };
   const authData = useSelector(state => state.auth);
   const [yearlyDates, setYearlyDates] = useState([]);
   const [month, setMonth] = useState('');
@@ -60,13 +66,20 @@ const Order = () => {
     }
   };
   useEffect(() => {
+    const checkLanguage = async () => {
+      const lang = await getLanguage();
+      if (lang != null) {
+        i18next.changeLanguage(lang);
+      }
+    };
     const today = moment();
     setMonth(today.format('YYYY/MM'));
-    const yearDays = Array.from({length: 366}, (_, index) =>
+    const yearDays = Array.from({length: 30}, (_, index) =>
       today.clone().add(index, 'days'),
     );
     setYearlyDates(yearDays);
     getUserOrders();
+    checkLanguage();
   }, [isVisible]);
 
   const handleCheckBoxPress = async (date, check) => {
@@ -133,11 +146,11 @@ const Order = () => {
                         : 'black',
                   },
                 ]}>
-                {date.format('dddd')} {date.format('YYYY/MM/DD')}
+                {t(date.format('dddd'))} {date.format('YYYY/MM/DD')}
               </Text>
             </View>
             <View style={styles.checkBoxContainer}>
-              {['DAY', 'NIGHT'].map(check =>
+              {[t('dd'), t('nn')].map(check =>
                 date.format('dddd') === 'Sunday' ||
                 date.format('dddd') === 'Saturday' ? (
                   <View key={check} style={styles.emptyCheckBox}></View>
@@ -171,8 +184,12 @@ const Order = () => {
       <TouchableOpacity onPress={handleOrderShow}>
         <View style={styles.orderDetailForUser}>
           <Text style={styles.orderDetailText}>{month}</Text>
-          <Text style={styles.orderDetailText}>Ordered: {ordered.length}</Text>
-          <Text style={styles.orderDetailText}>Picked: {picked}</Text>
+          <Text style={styles.orderDetailText}>
+            {t('ord')}: {ordered.length}
+          </Text>
+          <Text style={styles.orderDetailText}>
+            {t('pid')}: {picked}
+          </Text>
         </View>
       </TouchableOpacity>
       <OrderModal
@@ -183,6 +200,7 @@ const Order = () => {
         }}
         showAlert={showAlert}
         getUserOrders={getUserOrders}
+        t={t}
       />
     </View>
   );

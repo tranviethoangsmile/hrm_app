@@ -3,18 +3,30 @@ import {View, StyleSheet, Image} from 'react-native';
 import React, {useEffect} from 'react';
 import {useNavigation} from '@react-navigation/native';
 import {useSelector} from 'react-redux';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
 const Splash = () => {
+  const getLanguage = async () => {
+    return await AsyncStorage.getItem('Language');
+  };
   const navigation = useNavigation();
   const authData = useSelector(state => state.auth);
   useEffect(() => {
-    setTimeout(() => {
-      if (authData.data == null) {
-        navigation.navigate('Login');
+    const checkLanguage = async () => {
+      const lang = await getLanguage();
+      if (lang != null) {
+        setTimeout(() => {
+          if (authData.data != null) {
+            navigation.navigate('Main');
+          } else {
+            navigation.replace('Login');
+          }
+        }, 3000);
       } else {
-        navigation.replace('Main', {user: authData.data});
+        navigation.navigate('Language');
       }
-    }, 3000);
-    return;
+    };
+    checkLanguage();
   }, []);
   return (
     <View style={styles.container}>
@@ -27,6 +39,7 @@ const Splash = () => {
 };
 
 export default Splash;
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,

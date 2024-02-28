@@ -1,15 +1,30 @@
 /* eslint-disable no-unused-vars */
-import React from 'react';
+import React, {useEffect} from 'react';
 import {View, Text, StyleSheet, ScrollView, Platform} from 'react-native';
 import {TEXT_COLOR, THEME_COLOR_2, BG_COLOR} from '../../utils/Colors';
 import {useNavigation} from '@react-navigation/native';
+import i18next from '../../../services/i18next';
+import {useTranslation} from 'react-i18next';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const FeatureTab = () => {
+  const getLanguage = async () => {
+    return await AsyncStorage.getItem('Language');
+  };
+  const {t} = useTranslation();
   const navigation = useNavigation();
-
+  useEffect(() => {
+    const checkLanguage = async () => {
+      const lang = await getLanguage();
+      if (lang != null) {
+        i18next.changeLanguage(lang);
+      }
+    };
+    checkLanguage();
+  }, []);
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>FEATURES</Text>
+      <Text style={styles.title}>{t('Fea')}</Text>
       <ScrollView style={styles.scrollView}>
         <View style={styles.featureRow}>
           <View style={styles.featureBtn}>
@@ -18,7 +33,7 @@ const FeatureTab = () => {
               onPress={() => {
                 /* Handle 'Report' button press */
               }}>
-              Report
+              {t('rp')}
             </Text>
           </View>
           <View style={styles.featureBtn}>
@@ -27,7 +42,7 @@ const FeatureTab = () => {
               onPress={() => {
                 navigation.navigate('Order');
               }}>
-              Order
+              {t('or')}
             </Text>
           </View>
         </View>
@@ -39,35 +54,35 @@ const FeatureTab = () => {
               onPress={() => {
                 navigation.navigate('Ai');
               }}>
-              AI
+              {t('Ai')}
             </Text>
           </View>
           <View style={styles.featureBtn}>
-            <Text style={styles.featureText}>Market</Text>
+            <Text style={styles.featureText}>{t('Mk')}</Text>
           </View>
         </View>
 
         <View style={styles.featureRow}>
           <View style={styles.featureBtn}>
-            <Text style={styles.featureText}>Leave</Text>
+            <Text style={styles.featureText}>{t('Lea')}</Text>
           </View>
           <View style={styles.featureBtn}>
-            <Text style={styles.featureText}>Message</Text>
-          </View>
-        </View>
-
-        <View style={styles.featureRow}>
-          <View style={styles.featureBtn}>
-            <Text style={styles.featureText}>Upload</Text>
-          </View>
-          <View style={styles.featureBtn}>
-            <Text style={styles.featureText}>Learning</Text>
+            <Text style={styles.featureText}>{t('Mess')}</Text>
           </View>
         </View>
 
         <View style={styles.featureRow}>
           <View style={styles.featureBtn}>
-            <Text style={styles.featureText}>Report View</Text>
+            <Text style={styles.featureText}>{t('Up')}</Text>
+          </View>
+          <View style={styles.featureBtn}>
+            <Text style={styles.featureText}>{t('Learn')}</Text>
+          </View>
+        </View>
+
+        <View style={styles.featureRow}>
+          <View style={styles.featureBtn}>
+            <Text style={styles.featureText}>{t('RpV')}</Text>
           </View>
           <View style={styles.featureBtn}>
             <Text
@@ -75,7 +90,7 @@ const FeatureTab = () => {
               onPress={() => {
                 navigation.navigate('Daily');
               }}>
-              Daily
+              {t('Dai')}
             </Text>
           </View>
         </View>
