@@ -91,7 +91,7 @@ const Order = () => {
     const order = {
       user_id: authData.data.data.id,
       date: date.format('YYYY-MM-DD'),
-      dayOrNight: check,
+      dayOrNight: check === t('dd') ? 'DAY' : 'NIGHT',
       position: '',
     };
 

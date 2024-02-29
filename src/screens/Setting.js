@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useState, useEffect} from 'react';
 import {
   View,
   Text,
@@ -6,15 +6,19 @@ import {
   StyleSheet,
   FlatList,
   Button,
-  AppState,
 } from 'react-native';
-import {useNavigation} from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import {useNavigation} from '@react-navigation/native';
 import {useTranslation} from 'react-i18next';
 import i18next from '../../services/i18next';
+import {
+  BG_COLOR,
+  TEXT_COLOR,
+  THEME_COLOR,
+  THEME_COLOR_2,
+} from '../utils/Colors';
 
 const Setting = () => {
-  const navigation = useNavigation();
   const {t} = useTranslation();
   const getLanguage = async () => {
     return await AsyncStorage.getItem('Language');
@@ -27,7 +31,8 @@ const Setting = () => {
       }
     };
     checkLanguage();
-  }, []);
+  });
+  const navigation = useNavigation();
   const [selectedLocale, setSelectedLocale] = useState('');
 
   const supportedLocales = [
@@ -60,7 +65,7 @@ const Setting = () => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>{t('cyl')}</Text>
+      <Text style={styles.title}>Choose Your Language</Text>
       <FlatList
         contentContainerStyle={styles.listContainer}
         data={supportedLocales}
@@ -88,14 +93,15 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#f5f5f5',
+    backgroundColor: BG_COLOR,
     paddingHorizontal: 20,
   },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
     marginBottom: 20,
-    marginTop: 100, // Đặt marginTop để title không nằm quá cao
+    marginTop: 100,
+    color: TEXT_COLOR,
   },
   listContainer: {
     flexGrow: 1,
@@ -112,9 +118,12 @@ const styles = StyleSheet.create({
   },
   languageText: {
     fontSize: 18,
+    color: TEXT_COLOR,
   },
   selectedLanguage: {
-    backgroundColor: 'blue',
+    backgroundColor: THEME_COLOR,
+  },
+  selectedLanguageText: {
     color: 'white',
   },
   buttonContainer: {
@@ -125,15 +134,15 @@ const styles = StyleSheet.create({
     bottom: 0,
   },
   nextButton: {
-    marginTop: 10, // Đổi giá trị margin để làm cho nút Next gần hơn với title
+    marginTop: 10,
     paddingVertical: 10,
     paddingHorizontal: 30,
-    backgroundColor: '#007bff',
+    backgroundColor: THEME_COLOR_2,
     borderRadius: 5,
     alignSelf: 'center',
   },
   nextButtonText: {
-    color: '#fff',
+    color: 'white',
     fontSize: 18,
     fontWeight: 'bold',
   },
