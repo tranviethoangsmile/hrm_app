@@ -1,7 +1,7 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 // Profile.js
 import React, {useEffect, useState} from 'react';
-import {View, Text, StyleSheet, ScrollView, FlatList} from 'react-native';
+import {View, Text, StyleSheet, ScrollView} from 'react-native';
 import {useSelector} from 'react-redux';
 import axios from 'axios';
 import SelectDate from '../components/SelectDate';
@@ -9,6 +9,7 @@ import {Card, Divider} from 'react-native-elements';
 import moment from 'moment';
 import i18next from '../../services/i18next';
 import {useTranslation} from 'react-i18next';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   BASE_URL,
   PORT,
@@ -26,6 +27,9 @@ import {
   THEME_COLOR_2,
 } from '../utils/Colors';
 const Profile = () => {
+  const getLanguage = async () => {
+    return await AsyncStorage.getItem('Language');
+  };
   const {t} = useTranslation();
   const authData = useSelector(state => state.auth);
   const user_id = authData?.data?.data?.id;
@@ -43,6 +47,12 @@ const Profile = () => {
     (total, checkin) => total + checkin.over_time,
     0,
   );
+  const totalWorkTimeWeekend = userCheckin.reduce((total, checkin) => {
+    if (checkin.is_weekend) {
+      return total + checkin.work_time;
+    }
+    return total;
+  }, 0);
 
   const get_checkin_of_user = async () => {
     const res = await axios.post(
@@ -69,12 +79,16 @@ const Profile = () => {
       console.log(res?.data?.message);
     }
   };
-
-  const Lng = 'jp';
   useEffect(() => {
-    i18next.changeLanguage(Lng);
+    const checkLanguage = async () => {
+      const lang = await getLanguage();
+      if (lang != null) {
+        i18next.changeLanguage(lang);
+      }
+    };
     get_user_info();
     get_checkin_of_user();
+    checkLanguage();
   }, []);
 
   return (
@@ -94,6 +108,7 @@ const Profile = () => {
           <Text style={styles.headerText}>{t('m')}</Text>
           <Text style={styles.headerText}>{t('wt')}</Text>
           <Text style={styles.headerText}>{t('ot')}</Text>
+          <Text style={styles.headerText}>{t('wend')}</Text>
         </View>
         <View style={styles.tableRow}>
           <Text
@@ -105,6 +120,7 @@ const Profile = () => {
           </Text>
           <Text style={styles.cellText}>{totalWorkTime}</Text>
           <Text style={styles.cellText}>{totalOverTime}</Text>
+          <Text style={styles.cellText}>{totalWorkTimeWeekend}</Text>
         </View>
       </Card>
       <Text style={styles.subtitle}>{t('c-i-h')}</Text>
