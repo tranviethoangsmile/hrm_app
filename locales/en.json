@@ -61,5 +61,6 @@
   "cSuc": "CHECKIN SUCCESS",
   "pta": "PLEASE TRY AGAIN",
   "picked success": "Picked Success",
-  "conf": "Do you want to check in or check out?"
+  "conf": "Do you want to check in or check out?",
+  "wend": "Weekend"
 }

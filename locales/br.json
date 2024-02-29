@@ -61,5 +61,6 @@
   "cSuc": "CHECKIN REALIZADO COM SUCESSO",
   "pta": "POR FAVOR, TENTE NOVAMENTE",
   "picked success": "Seleção bem-sucedida",
-  "conf": "Você quer fazer check-in ou check-out?"
+  "conf": "Você quer fazer check-in ou check-out?",
+  "wend": "Fim de semana"
 }
