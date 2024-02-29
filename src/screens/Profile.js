@@ -39,10 +39,12 @@ const Profile = () => {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const year = moment(today).format('YYYY');
   const month = moment(today).format('MM');
-  const totalWorkTime = userCheckin.reduce(
-    (total, checkin) => total + checkin.work_time,
-    0,
-  );
+  const totalWorkTime = userCheckin.reduce((total, checkin) => {
+    if (!checkin.is_weekend) {
+      return total + checkin.work_time;
+    }
+    return total;
+  }, 0);
   const totalOverTime = userCheckin.reduce(
     (total, checkin) => total + checkin.over_time,
     0,
