@@ -64,6 +64,8 @@ const Profile = () => {
         date: today,
       },
     );
+    console.log(res.data);
+
     if (res?.data?.success) {
       setUserCheckin(res?.data?.data);
     } else {

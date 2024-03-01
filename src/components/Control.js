@@ -7,16 +7,18 @@ import {
   TouchableWithoutFeedback,
   Platform,
 } from 'react-native';
-import React, {useEffect} from 'react';
+import React, {useState} from 'react';
 import {useNavigation} from '@react-navigation/native';
-import {TEXT_COLOR, THEME_COLOR, THEME_COLOR_2} from '../utils/Colors';
+import {TEXT_COLOR, THEME_COLOR_2} from '../utils/Colors';
 import {useDispatch} from 'react-redux';
 import {setAuthData} from '../redux/AuthSlice';
 
 const Control = ({visible, onClose, t}) => {
+  const [isVisible, setIsvisible] = useState(visible);
   const navigation = useNavigation();
   const disPatch = useDispatch();
   const handleLogout = () => {
+    setIsvisible(!isVisible);
     disPatch(setAuthData(null));
     onClose();
     navigation.navigate('Login');
@@ -29,6 +31,7 @@ const Control = ({visible, onClose, t}) => {
             <Text
               style={styles.textControl}
               onPress={() => {
+                setIsvisible(!isVisible);
                 navigation.navigate('Profile');
               }}>
               {t('Pro')}
@@ -36,6 +39,7 @@ const Control = ({visible, onClose, t}) => {
             <Text
               style={styles.textControl}
               onPress={() => {
+                setIsvisible(!isVisible);
                 navigation.navigate('Setting');
               }}>
               {t('Set')}
