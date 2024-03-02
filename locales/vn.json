@@ -62,5 +62,6 @@
   "pta": "VUI LÒNG THỬ LẠI",
   "picked success": "Thành công",
   "conf": "Bạn muốn check in hay check out?",
-  "wend": "Ngày nghỉ"
+  "wend": "Ngày nghỉ",
+  "user_no_check_ins": "Người dùng này không có bất kỳ check-in nào trong tháng này"
 }

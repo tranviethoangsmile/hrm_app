@@ -62,5 +62,6 @@
   "pta": "PLEASE TRY AGAIN",
   "picked success": "Picked Success",
   "conf": "Do you want to check in or check out?",
-  "wend": "Weekend"
+  "wend": "Weekend",
+  "user_no_check_ins": "This user does not have any check-ins in this month"
 }

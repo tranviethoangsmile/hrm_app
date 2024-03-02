@@ -1,7 +1,7 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 // Profile.js
 import React, {useEffect, useState} from 'react';
-import {View, Text, StyleSheet, ScrollView} from 'react-native';
+import {View, Text, StyleSheet, ScrollView, Alert} from 'react-native';
 import {useSelector} from 'react-redux';
 import axios from 'axios';
 import SelectDate from '../components/SelectDate';
@@ -64,12 +64,11 @@ const Profile = () => {
         date: today,
       },
     );
-    console.log(res.data);
 
     if (res?.data?.success) {
       setUserCheckin(res?.data?.data);
     } else {
-      console.log(res?.data?.message);
+      Alert.alert(t('user_no_check_ins'));
     }
   };
 
@@ -143,7 +142,7 @@ const Profile = () => {
             <Text style={styles.cellText}>{item.time_in}</Text>
             <Text style={styles.cellText}>{item.time_out}</Text>
             <Text style={styles.cellText}>{item.work_time}</Text>
-            <Text style={styles.cellText}>{item.work_shift}</Text>
+            <Text style={styles.cellText}>{t(item.work_shift)}</Text>
             <Text style={styles.cellText}>{item.over_time}</Text>
           </View>
         ))}
