@@ -1,4 +1,5 @@
 # Resolve react_native_pods.rb with node to allow for hoisting
+$FirebaseSDKVersion = '10.21.0'
 require Pod::Executable.execute_command('node', ['-p',
   'require.resolve(
     "react-native/scripts/react_native_pods.rb",
@@ -27,7 +28,10 @@ end
 
 target 'hrm_manager' do
   config = use_native_modules!
-
+  pod 'Firebase', :modular_headers => true
+  pod 'FirebaseCoreInternal', :modular_headers => true
+  pod 'GoogleUtilities', :modular_headers => true
+  pod 'FirebaseCore', :modular_headers => true
   use_react_native!(
     :path => config[:reactNativePath],
     # Enables Flipper.

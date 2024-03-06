@@ -114,7 +114,7 @@ const Daily = () => {
       </View>
 
       <View style={styles.quatityProduct}>
-        <Text style={styles.text}>First Product:</Text>
+        <Text style={styles.text}>Low Temp:</Text>
         <TextInput
           style={styles.textInput}
           keyboardType="number-pad"
@@ -125,7 +125,7 @@ const Daily = () => {
       </View>
 
       <View style={styles.quatityProduct}>
-        <Text style={styles.text}>Temperature:</Text>
+        <Text style={styles.text}>Hight Temp:</Text>
         <TextInput
           style={styles.textInput}
           keyboardType="number-pad"
