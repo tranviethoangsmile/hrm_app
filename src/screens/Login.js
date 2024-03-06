@@ -140,7 +140,7 @@ const Login = () => {
           dispatch(setAuthData(login?.data)); // Đã sửa thành "dispatch" thay vì "disPatch"
           setUserName('');
           setPassword('');
-          navigation.navigate('Main');
+          navigation.replace('Main');
         }
       } catch (error) {
         console.error('Error during login:', error);

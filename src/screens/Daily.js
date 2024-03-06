@@ -171,10 +171,10 @@ const Daily = () => {
       <View style={styles.resulView}>
         <Text style={[styles.text, styles.resultText]}>Percent: {percent}</Text>
         <Text style={[styles.text, styles.resultText]}>
-          First: {fisrtPercent}
+          Low Temp: {fisrtPercent}
         </Text>
         <Text style={[styles.text, styles.resultText]}>
-          Temperature: {tempPercent}
+          Hight Temp: {tempPercent}
         </Text>
         <Text style={[styles.text, styles.resultText]}>
           Errors: {errPercemt}

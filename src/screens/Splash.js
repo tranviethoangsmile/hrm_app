@@ -17,7 +17,7 @@ const Splash = () => {
       if (lang != null) {
         setTimeout(() => {
           if (authData.data != null) {
-            navigation.navigate('Main');
+            navigation.replace('Main');
           } else {
             navigation.replace('Login');
           }
