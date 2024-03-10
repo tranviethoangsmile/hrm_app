@@ -44,7 +44,14 @@ const HomeTab = () => {
       <View style={styles.titleView}>
         <Text style={styles.title}>{t('info')}</Text>
         <TouchableOpacity onPress={handleControl}>
-          <Image source={{uri: userInfo.avatar}} style={styles.avatar} />
+          <Image
+            source={
+              userInfo.avatar
+                ? {uri: userInfo.avatar}
+                : require('../../images/avatar.jpg')
+            }
+            style={styles.avatar}
+          />
         </TouchableOpacity>
         <Control
           visible={visible}
