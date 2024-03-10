@@ -1,11 +1,19 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 // Profile.js
 import React, {useEffect, useState} from 'react';
-import {View, Text, StyleSheet, ScrollView, Alert} from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  Alert,
+  Image,
+  TouchableOpacity,
+} from 'react-native';
 import {useSelector} from 'react-redux';
 import axios from 'axios';
 import SelectDate from '../components/SelectDate';
-import {Card, Divider} from 'react-native-elements';
+import {Card} from 'react-native-elements';
 import moment from 'moment';
 import i18next from '../../services/i18next';
 import {useTranslation} from 'react-i18next';
@@ -26,6 +34,7 @@ import {
   THEME_COLOR,
   THEME_COLOR_2,
 } from '../utils/Colors';
+import UploadAvatar from '../components/UploadAvatar';
 const Profile = () => {
   const getLanguage = async () => {
     return await AsyncStorage.getItem('Language');
@@ -37,6 +46,8 @@ const Profile = () => {
   const [userCheckin, setUserCheckin] = useState([]);
   const [today, setToday] = useState(moment().format('YYYY-MM-DD'));
   const [isModalVisible, setIsModalVisible] = useState(false);
+  const [isModalUpAvataVisible, setIsModalUpAvataVisible] = useState(false);
+
   const year = moment(today).format('YYYY');
   const month = moment(today).format('MM');
   const totalWorkTime = userCheckin.reduce((total, checkin) => {
@@ -55,7 +66,9 @@ const Profile = () => {
     }
     return total;
   }, 0);
-
+  const handleUploadAvatar = () => {
+    setIsModalUpAvataVisible(!isModalUpAvataVisible);
+  };
   const get_checkin_of_user = async () => {
     const res = await axios.post(
       `${BASE_URL}${PORT}${API}${VERSION}${V1}${CHECKIN}${SEARCH}`,
@@ -97,14 +110,29 @@ const Profile = () => {
   return (
     <View style={styles.container}>
       <Card containerStyle={styles.card}>
-        <Text style={styles.label}>{t('N')}</Text>
-        <Text style={styles.info}>{userInfo.name}</Text>
-        <Divider style={styles.divider} />
-        <Text style={styles.label}>{t('Em')}</Text>
-        <Text style={styles.info}>{userInfo.email}</Text>
-        <Divider style={styles.divider} />
-        <Text style={styles.label}>{t('St-c')}</Text>
-        <Text style={styles.info}>{userInfo.employee_id}</Text>
+        <View style={styles.infoViewContainer}>
+          <View style={styles.avatarContainer}>
+            <TouchableOpacity onPress={handleUploadAvatar}>
+              <Image
+                source={
+                  userInfo.avatar
+                    ? {uri: userInfo.avatar}
+                    : require('../images/avatar.jpg')
+                }
+                style={styles.avatar}
+              />
+            </TouchableOpacity>
+          </View>
+          <View style={styles.infoContainer}>
+            <Text style={[styles.label, {fontSize: 20, fontWeight: '500'}]}>
+              {userInfo.name}
+            </Text>
+            <Text style={styles.label}>{userInfo.email}</Text>
+            <Text style={styles.label}>
+              {userInfo.employee_id} - {userInfo.role} - {userInfo.position}
+            </Text>
+          </View>
+        </View>
       </Card>
       <Card containerStyle={styles.card}>
         <View style={styles.tableHeader}>
@@ -153,17 +181,59 @@ const Profile = () => {
         setSelectedDate={setToday}
         getCheckin={get_checkin_of_user}
       />
+      <UploadAvatar
+        visible={isModalUpAvataVisible}
+        closeModal={() => {
+          setIsModalUpAvataVisible(!isModalUpAvataVisible);
+        }}
+        t={t}
+        user_id={user_id}
+        avatar_url={userInfo.avatar}
+      />
     </View>
   );
 };
 
 const styles = StyleSheet.create({
+  card: {
+    marginVertical: 5,
+    padding: 10,
+  },
+  infoViewContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  avatarContainer: {
+    marginRight: 10,
+  },
+  avatar: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+  },
+  infoContainer: {
+    flex: 1,
+  },
+  label: {
+    fontSize: 16,
+    color: '#333',
+  },
+  info: {
+    marginBottom: 5,
+    fontSize: 16,
+    color: '#555',
+  },
+  divider: {
+    marginVertical: 5,
+  },
+
   container: {
     flex: 1,
     backgroundColor: '#f0f0f0',
-    paddingVertical: 20,
-    paddingHorizontal: 10,
+    paddingVertical: 5,
+    paddingHorizontal: 5,
   },
+
   title: {
     fontSize: 24,
     fontWeight: 'bold',
@@ -176,23 +246,7 @@ const styles = StyleSheet.create({
     marginVertical: 20,
     color: THEME_COLOR,
   },
-  card: {
-    marginVertical: 5,
-    padding: 10,
-  },
-  label: {
-    fontWeight: 'bold',
-    fontSize: 16,
-    color: '#333',
-  },
-  info: {
-    marginBottom: 5,
-    fontSize: 16,
-    color: '#555',
-  },
-  divider: {
-    marginVertical: 5,
-  },
+
   tableHeader: {
     flexDirection: 'row',
     backgroundColor: '#eee',

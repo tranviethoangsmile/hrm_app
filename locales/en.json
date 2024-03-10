@@ -63,5 +63,12 @@
   "picked success": "Picked Success",
   "conf": "Do you want to check in or check out?",
   "wend": "Weekend",
-  "user_no_check_ins": "This user does not have any check-ins in this month"
+  "user_no_check_ins": "This user does not have any check-ins in this month",
+  "dltSuc": "Order deleted successfully",
+  "ordered": "You have already placed an order today!",
+  "ordSuc": "Order successfully",
+  "noti": "Notification!!  ",
+  "size": "File size exceeds the limit",
+  "success": "successfully",
+  "unSuccess": "Failed ..."
 }

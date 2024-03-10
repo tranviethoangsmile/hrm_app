@@ -63,5 +63,12 @@
   "picked success": "Thành công",
   "conf": "Bạn muốn check in hay check out?",
   "wend": "Ngày nghỉ",
-  "user_no_check_ins": "Người dùng này không có bất kỳ check-in nào trong tháng này"
+  "user_no_check_ins": "Người dùng này không có bất kỳ check-in nào trong tháng này",
+  "dltSuc": "Đã xóa đơn hàng thành công",
+  "ordered": "Hôm nay bạn đã có đặt hàng rồi!",
+  "ordSuc": "Đặt hàng thành công!",
+  "noti": "Thông báo!!  ",
+  "size": "Kích thước tệp vượt quá giới hạn",
+  "success": "Cập nhật thành công!!!",
+  "unSuccess": "Cập nhật thất bại ..."
 }

@@ -37,10 +37,14 @@ const ConfirmDayOrNight = ({visible, closeModal, checkin, time, t}) => {
         .subtract(1, 'days')
         .format('YYYY-MM-DD'); // Nếu là ca đêm và ra ca đêm, sử dụng ngày hôm trước
     }
+
+    // Dev Try Only
+    const time_check = moment(new Date()).format('HH:mm');
+    // end dev
     const field = {
       user_id: checkin.user_id,
       date: date_check,
-      check_time: time,
+      check_time: time_check,
       work_shift: shift,
     };
 

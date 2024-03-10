@@ -161,7 +161,6 @@ const Login = () => {
       await AsyncStorage.setItem('USERINFO', JSON.stringify(userIF));
     } catch (error) {
       console.error('Error while saving login info:', error);
-      alert('Error while saving login info');
     }
   };
 

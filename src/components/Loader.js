@@ -8,7 +8,7 @@ const Loader = ({visible}) => {
     <Modal transparent visible={visible}>
       <View style={styles.mainView}>
         <View style={styles.loaderView}>
-          <ActivityIndicator />
+          <ActivityIndicator size="large" color="red" />
         </View>
       </View>
     </Modal>

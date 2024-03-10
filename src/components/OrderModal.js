@@ -34,7 +34,7 @@ const OrderModal = ({
       );
       if (deleteOrder?.data?.success) {
         getUserOrders();
-        showAlert('Order deleted successfully');
+        showAlert(t('dltSuc'));
       } else {
         getUserOrders();
         showAlert(deleteOrder?.data?.message);

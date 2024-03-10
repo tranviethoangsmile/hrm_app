@@ -32,6 +32,8 @@ target 'hrm_manager' do
   pod 'FirebaseCoreInternal', :modular_headers => true
   pod 'GoogleUtilities', :modular_headers => true
   pod 'FirebaseCore', :modular_headers => true
+  pod 'Firebase/Messaging'
+
   use_react_native!(
     :path => config[:reactNativePath],
     # Enables Flipper.

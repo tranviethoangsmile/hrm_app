@@ -32,6 +32,8 @@ const Order = () => {
   const [ordered, setOrdered] = useState([]);
   const [picked, setPicked] = useState(0);
   const [isVisible, setIsVisible] = useState(false);
+  const [orderedDates, setOrderedDates] = useState([]);
+
   const config = {
     headers: {
       'Content-Type': 'application/json',
@@ -39,7 +41,7 @@ const Order = () => {
     },
   };
   const showAlert = message => {
-    Alert.alert('Notification: ', message);
+    Alert.alert(t('noti'), message);
   };
   const getUserOrders = async () => {
     try {
@@ -51,6 +53,12 @@ const Order = () => {
       );
       if (res?.data?.success) {
         setOrdered(res?.data?.data);
+        setOrderedDates(
+          res.data.data.map(item => ({
+            date: item.date,
+            shift: item.dayOrNight,
+          })),
+        );
         let pick = 0;
         for (let i = 0; i < res?.data?.data.length; i++) {
           if (res?.data?.data[i].isPicked === true) {
@@ -65,6 +73,21 @@ const Order = () => {
       showAlert(error.message);
     }
   };
+  const check_ordered = (date, check) => {
+    const isOrdered = orderedDates.some(
+      order =>
+        order.date === date.format('YYYY-MM-DD') && order.shift === check,
+    );
+    return isOrdered;
+  };
+
+  const disable_ordered_btn = date => {
+    const is_disable = orderedDates.some(
+      order => order.date === date.format('YYYY-MM-DD'),
+    );
+    return is_disable;
+  };
+
   useEffect(() => {
     const checkLanguage = async () => {
       const lang = await getLanguage();
@@ -73,7 +96,7 @@ const Order = () => {
       }
     };
     const today = moment();
-    setMonth(today.format('YYYY/MM'));
+    setMonth(today.format('YYYY-MM'));
     const yearDays = Array.from({length: 30}, (_, index) =>
       today.clone().add(index, 'days'),
     );
@@ -85,13 +108,12 @@ const Order = () => {
   const handleCheckBoxPress = async (date, check) => {
     setSelectedMap(prevSelectedMap => ({
       ...prevSelectedMap,
-      [date.format('YYYY/MM/DD')]: check,
+      [date.format('YYYY-MM-DD')]: check,
     }));
-
     const order = {
       user_id: authData.data.data.id,
       date: date.format('YYYY-MM-DD'),
-      dayOrNight: check === t('dd') ? 'DAY' : 'NIGHT',
+      dayOrNight: check,
       position: '',
     };
 
@@ -104,10 +126,10 @@ const Order = () => {
 
       if (orderSuccess?.data?.success) {
         getUserOrders();
-        showAlert('success');
+        showAlert(t('ordSuc'));
       } else {
         getUserOrders();
-        showAlert(orderSuccess?.data?.message);
+        showAlert(t('ordered'));
       }
     } catch (error) {
       console.error('Error during order:', error);
@@ -123,7 +145,7 @@ const Order = () => {
     <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollViewContent}>
         {yearlyDates.map((date, index) => (
-          <View key={index} style={styles.dayContainer}>
+          <View key={index} style={[styles.dayContainer]}>
             <View
               style={[
                 styles.dayHeader,
@@ -146,26 +168,28 @@ const Order = () => {
                         : 'black',
                   },
                 ]}>
-                {t(date.format('dddd'))} {date.format('YYYY/MM/DD')}
+                {t(date.format('dddd'))} {date.format('YYYY-MM-DD')}
               </Text>
             </View>
             <View style={styles.checkBoxContainer}>
-              {[t('dd'), t('nn')].map(check =>
+              {['DAY', 'NIGHT'].map(check =>
                 date.format('dddd') === 'Sunday' ||
                 date.format('dddd') === 'Saturday' ? (
                   <View key={check} style={styles.emptyCheckBox}></View>
                 ) : (
                   <TouchableOpacity
+                    disabled={disable_ordered_btn(date)}
                     key={check}
                     style={[
                       styles.checkBox,
                       {
                         backgroundColor:
-                          selectedMap[date.format('YYYY/MM/DD')] === check
+                          selectedMap[date.format('YYYY-MM-DD')] === check ||
+                          check_ordered(date, check)
                             ? '#3b5998'
                             : 'transparent',
                         borderWidth:
-                          selectedMap[date.format('YYYY/MM/DD')] === check
+                          selectedMap[date.format('YYYY-MM-DD')] === check
                             ? 0
                             : 1,
                       },
@@ -173,7 +197,9 @@ const Order = () => {
                     onPress={() => {
                       handleCheckBoxPress(date, check);
                     }}>
-                    <Text style={styles.checkBoxText}>{check}</Text>
+                    <Text style={styles.checkBoxText}>
+                      {check === 'DAY' ? t('dd') : t('nn')}
+                    </Text>
                   </TouchableOpacity>
                 ),
               )}

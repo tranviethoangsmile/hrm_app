@@ -70,26 +70,41 @@ const Checkin = () => {
     }
   };
 
+  // dev only use
   const handleCheckin = qrValue => {
     if (isValidQRCode(qrValue)) {
       if (qrValue === 'picked') {
         handleScannerQRCodePicked();
-      } else {
+      } else if (qrValue === 'checkin') {
         setVisible(true);
-        handleCheckinWithQr(qrValue);
+        // handleCheckinWithQr();
       }
     } else {
       console.log(qrValue);
       showAlert('QR not avaiable');
     }
   };
+  // end dev
 
-  const handleCheckinWithQr = qrValue => {
-    setTimeCheckin(qrValue);
-  };
+  // product
+  // const handleCheckin = qrValue => {
+  //   if (isValidQRCode(qrValue)) {
+  //     if (qrValue === 'picked') {
+  //       handleScannerQRCodePicked();
+  //     } else {
+  //       setVisible(true);
+  //       handleCheckinWithQr(qrValue);
+  //     }
+  //   } else {
+  //     showAlert('QR not avaiable');
+  //   }
+  // };
+  // const handleCheckinWithQr = qrValue => {
+  //   setTimeCheckin(qrValue);
+  // };
 
   const showAlert = message => {
-    Alert.alert('Checkin Status: ', message);
+    Alert.alert(t('noti'), message);
   };
 
   const handleRetryScan = () => {

@@ -23,12 +23,14 @@ const HomeTab = () => {
   };
   const {t} = useTranslation();
   const [visible, setVisible] = useState(false);
-  const AUTH = useSelector(state => state.auth);
+  const authData = useSelector(state => state.auth);
+  const [userInfo, setUserInfo] = useState({});
 
   const handleControl = () => {
     setVisible(!visible);
   };
   useEffect(() => {
+    setUserInfo(authData?.data.data);
     const checkLanguage = async () => {
       const lang = await getLanguage();
       if (lang != null) {
@@ -42,10 +44,7 @@ const HomeTab = () => {
       <View style={styles.titleView}>
         <Text style={styles.title}>{t('info')}</Text>
         <TouchableOpacity onPress={handleControl}>
-          <Image
-            source={require('../../images/avatar.jpg')}
-            style={styles.avatar}
-          />
+          <Image source={{uri: userInfo.avatar}} style={styles.avatar} />
         </TouchableOpacity>
         <Control
           visible={visible}
