@@ -65,9 +65,14 @@ const UploadAvatar = ({visible, closeModal, t, user_id, avatar_url}) => {
           },
         },
       );
-      setIsloading(false);
-      showAlert(t('success'));
-      closeModal();
+      if (response?.success) {
+        setIsloading(false);
+        showAlert(t('success'));
+        closeModal();
+      } else {
+        setIsloading(false);
+        showAlert(t('unSuccess'));
+      }
     } catch (error) {
       console.log(error);
       showAlert(t('unSuccess'));
@@ -94,9 +99,7 @@ const UploadAvatar = ({visible, closeModal, t, user_id, avatar_url}) => {
             <TouchableOpacity onPress={handleChoiceImage}>
               <Image
                 source={
-                  avatar_url
-                    ? {uri: avatar_url}
-                    : require('../images/avatar.jpg')
+                  imageUri ? {uri: imageUri} : require('../images/avatar.jpg')
                 }
                 style={styles.avatar}
               />

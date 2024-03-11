@@ -164,16 +164,19 @@ const Profile = () => {
         <Text style={styles.headerText}>{t('ot')}</Text>
       </View>
       <ScrollView>
-        {userCheckin.map((item, index) => (
-          <View key={index} style={styles.tableRow}>
-            <Text style={styles.cellText}>{item.date}</Text>
-            <Text style={styles.cellText}>{item.time_in}</Text>
-            <Text style={styles.cellText}>{item.time_out}</Text>
-            <Text style={styles.cellText}>{item.work_time}</Text>
-            <Text style={styles.cellText}>{t(item.work_shift)}</Text>
-            <Text style={styles.cellText}>{item.over_time}</Text>
-          </View>
-        ))}
+        {
+          (userCheckin.sort((a, b) => new Date(b.date) - new Date(a.date)),
+          userCheckin.map((item, index) => (
+            <View key={item.id} style={styles.tableRow}>
+              <Text style={styles.cellText}>{item.date}</Text>
+              <Text style={styles.cellText}>{item.time_in}</Text>
+              <Text style={styles.cellText}>{item.time_out}</Text>
+              <Text style={styles.cellText}>{item.work_time}</Text>
+              <Text style={styles.cellText}>{t(item.work_shift)}</Text>
+              <Text style={styles.cellText}>{item.over_time}</Text>
+            </View>
+          )))
+        }
       </ScrollView>
       <SelectDate
         visible={isModalVisible}

@@ -68,22 +68,27 @@ const OrderModal = ({
             <Text style={styles.headerText}></Text>
           </View>
           <ScrollView style={styles.body}>
-            {orders.map((order, index) => (
-              <View key={index} style={styles.orderRow}>
-                <Text style={styles.orderInfoText}>{order.date}</Text>
-                <Text style={styles.orderInfoText}>{t(order.dayOrNight)}</Text>
-                <Button
-                  title={t('c')}
-                  onPress={() => handleCancelOrder(order.id)}
-                  disabled={moment(order.date, 'YYYY/MM/DD').isBefore(today)}
-                  color={
-                    moment(order.date, 'YYYY/MM/DD').isBefore(today)
-                      ? '#95a5a6'
-                      : '#e74c3c'
-                  }
-                />
-              </View>
-            ))}
+            {
+              (orders.sort((a, b) => new Date(a.date) - new Date(b.date)),
+              orders.map((order, index) => (
+                <View key={index} style={styles.orderRow}>
+                  <Text style={styles.orderInfoText}>{order.date}</Text>
+                  <Text style={styles.orderInfoText}>
+                    {t(order.dayOrNight)}
+                  </Text>
+                  <Button
+                    title={t('c')}
+                    onPress={() => handleCancelOrder(order.id)}
+                    disabled={moment(order.date, 'YYYY/MM/DD').isBefore(today)}
+                    color={
+                      moment(order.date, 'YYYY/MM/DD').isBefore(today)
+                        ? '#95a5a6'
+                        : '#e74c3c'
+                    }
+                  />
+                </View>
+              )))
+            }
           </ScrollView>
         </View>
       </View>
