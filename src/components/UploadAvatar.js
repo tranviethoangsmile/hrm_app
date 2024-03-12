@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useState, useEffect} from 'react';
 import {
   View,
   Text,
@@ -25,6 +25,11 @@ const UploadAvatar = ({visible, closeModal, t, user_id, avatar_url}) => {
   const [imageUri, setImageUri] = useState(null);
   const [imageName, setImageName] = useState('');
   const [isloading, setIsloading] = useState(false);
+  const [updateDisabled, setUpdateDisabled] = useState(true);
+  useEffect(() => {
+    setUpdateDisabled(!imageUri);
+  }, [imageUri]);
+
   const showAlert = mess => {
     Alert.alert('Notification!! ', mess);
   };
@@ -106,7 +111,10 @@ const UploadAvatar = ({visible, closeModal, t, user_id, avatar_url}) => {
             </TouchableOpacity>
             <TouchableOpacity
               onPress={handleUploadImage}
-              style={styles.updateButton}>
+              style={[
+                styles.updateButton,
+                updateDisabled && styles.disabledButton,
+              ]}>
               <Text style={styles.updateButtonText}>Update</Text>
             </TouchableOpacity>
           </View>
@@ -160,6 +168,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 10,
     borderRadius: 5,
+  },
+  disabledButton: {
+    backgroundColor: 'gray',
   },
   updateButtonText: {
     fontSize: 16,
