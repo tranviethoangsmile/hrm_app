@@ -73,7 +73,13 @@ const FeatureTab = () => {
 
         <View style={styles.featureRow}>
           <View style={styles.featureBtn}>
-            <Text style={styles.featureText}>{t('Up')}</Text>
+            <Text
+              onPress={() => {
+                navigation.navigate('Upload');
+              }}
+              style={styles.featureText}>
+              {t('Up')}
+            </Text>
           </View>
           <View style={styles.featureBtn}>
             <Text style={styles.featureText}>{t('Learn')}</Text>

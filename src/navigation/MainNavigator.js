@@ -11,6 +11,7 @@ import Ai from '../screens/Ai';
 import Profile from '../screens/Profile';
 import LanguageSelectionScreen from '../screens/LanguageSelectionScreen';
 import Setting from '../screens/Setting';
+import Upload from '../screens/Upload';
 const Stack = createStackNavigator();
 const MainNavigator = () => {
   return (
@@ -24,6 +25,11 @@ const MainNavigator = () => {
         <Stack.Screen
           name="Profile"
           component={Profile}
+          options={{headerShown: true}}
+        />
+        <Stack.Screen
+          name="Upload"
+          component={Upload}
           options={{headerShown: true}}
         />
         <Stack.Screen
