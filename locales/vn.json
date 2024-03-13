@@ -70,5 +70,10 @@
   "noti": "Thông báo!!  ",
   "size": "Kích thước tệp vượt quá giới hạn",
   "success": "Cập nhật thành công!!!",
-  "unSuccess": "Cập nhật thất bại ..."
+  "unSuccess": "Cập nhật thất bại ...",
+  "post": "Bạn đang nghĩ gì?",
+  "P": "Đăng",
+  "pub": "Công khai",
+  "choo": "Chọn tệp",
+  "til": "Tiêu đề"
 }

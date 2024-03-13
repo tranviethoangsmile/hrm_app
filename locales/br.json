@@ -70,5 +70,10 @@
   "noti": "Notificação!! ",
   "size": "O tamanho do arquivo excede o limite",
   "success": "Com sucesso!!!",
-  "unSuccess": "Falhou ..."
+  "unSuccess": "Falhou ...",
+  "post": "O que está pensando?",
+  "P": "Publicar",
+  "pub": "Público",
+  "choo": "Escolher Mídia",
+  "til": "Título"
 }
