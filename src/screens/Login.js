@@ -137,6 +137,11 @@ const Login = () => {
             setBadUserName(login?.data?.message);
           }
         } else {
+          await AsyncStorage.setItem(
+            'userInfor',
+            JSON.stringify(login.data.data),
+          );
+
           dispatch(setAuthData(login?.data)); // Đã sửa thành "dispatch" thay vì "disPatch"
           setUserName('');
           setPassword('');

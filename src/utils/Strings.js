@@ -15,3 +15,4 @@ export const UPLOAD_AVATAR = '/upload-avatar';
 export const INFORMATION = '/information';
 export const GET_INFOR_OF_USER = '/getinforofuser';
 export const GET_INFOR_BY_ID = '/getinforbyid';
+export const GET_ALL_BY_FIELD = '/getallinforbyfield';
