@@ -75,5 +75,11 @@
   "P": "Đăng",
   "pub": "Công khai",
   "choo": "Chọn tệp",
-  "til": "Tiêu đề"
+  "til": "Tiêu đề",
+  "more": "xem thêm",
+  "infoDetail": "xem chi tiết",
+  "plzcof": "Vui lòng xác nhận...",
+  "wantDelete": "Bạn có thực sự muốn xóa không??",
+  "dl": "Xóa",
+  "inorout": "Bạn vui lòng xác nhận Vào hoặc Ra"
 }

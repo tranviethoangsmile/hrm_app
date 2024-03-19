@@ -75,5 +75,11 @@
   "P": "Publicar",
   "pub": "Público",
   "choo": "Escolher Mídia",
-  "til": "Título"
+  "til": "Título",
+  "more": "mais",
+  "infoDetail": "detalhes da informação",
+  "plzcof": "Por favor, confirme..",
+  "wantDelete": "Você deseja excluir esta informação?",
+  "dl": "Excluir",
+  "inorout": "Você quer fazer check-in ou check-out?"
 }

@@ -17,7 +17,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import i18next from '../../../services/i18next';
 import VideoPlayer from 'react-native-video-player';
-
+import ImageViewer from 'react-native-image-zoom-viewer'; // Import ImageViewer
 import {
   BASE_URL,
   PORT,
@@ -40,7 +40,8 @@ const HomeTab = () => {
   const [err, setError] = useState('');
   const [posts, setPosts] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
-
+  const [imageZoomVisible, setImageZoomVisible] = useState(false);
+  const [zoomImageIndex, setZoomImageIndex] = useState(0);
   const get_all_information = async () => {
     try {
       const userInforString = await AsyncStorage.getItem('userInfor');
@@ -58,7 +59,6 @@ const HomeTab = () => {
         const sortedPosts = informations.data.data.sort(
           (a, b) => new Date(b.date) - new Date(a.date),
         );
-        console.log(sortedPosts);
         setPosts(sortedPosts);
       } else {
         setError('Not have information here');
@@ -82,12 +82,12 @@ const HomeTab = () => {
         </View>
         <View style={styles.separator}></View>
         <Text style={styles.titleText}>{item.title}</Text>
-        <Text numberOfLines={3} ellipsizeMode="tail">
+        <Text style={styles.content} numberOfLines={3} ellipsizeMode="tail">
           {item.content}
         </Text>
         {item.content.length > 100 && (
           <TouchableOpacity onPress={() => alert(item.content)}>
-            <Text style={{color: 'blue', marginTop: 5}}>Xem thêm</Text>
+            <Text style={{color: 'blue', marginTop: 5}}>{t('more')}</Text>
           </TouchableOpacity>
         )}
         {item.is_video ? (
@@ -100,7 +100,13 @@ const HomeTab = () => {
             thumbnail={require('../../images/thumbnail.jpg')}
           />
         ) : (
-          <Image source={{uri: item.media}} style={styles.media} />
+          <TouchableOpacity
+            onPress={() => {
+              setZoomImageIndex(0); // Set the index of the image to be zoomed to 0
+              setImageZoomVisible(true); // Show the image zoom viewer
+            }}>
+            <Image source={{uri: item.media}} style={styles.media} />
+          </TouchableOpacity>
         )}
       </View>
     );
@@ -167,11 +173,21 @@ const HomeTab = () => {
           }
         />
       </View>
+      {/* Image zoom viewer */}
+      <ImageViewer
+        imageUrls={[{url: posts[zoomImageIndex]?.media}]}
+        enableSwipeDown={true}
+        onSwipeDown={() => setImageZoomVisible(false)}
+        onCancel={() => setImageZoomVisible(false)}
+        index={0}
+        visible={imageZoomVisible}
+      />
     </View>
   );
 };
 
 const styles = StyleSheet.create({
+  content: {color: TEXT_COLOR},
   avatarContainer: {
     marginRight: 5,
   },
@@ -187,13 +203,16 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     fontSize: 20,
     fontWeight: '600',
+    color: TEXT_COLOR,
   },
   dateText: {
     fontSize: 10,
+    color: TEXT_COLOR,
   },
   nameText: {
     fontSize: 18,
     fontWeight: '600',
+    color: TEXT_COLOR,
   },
   container: {
     flex: 1,

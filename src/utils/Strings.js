@@ -1,5 +1,8 @@
-export const BASE_URL = 'http://192.168.0.108';
-export const PORT = ':4000';
+// export const BASE_URL = 'http://192.168.0.108';
+// export const PORT = ':4000';
+
+export const BASE_URL = 'http://60.75.209.140';
+export const PORT = ':8000';
 export const USER_URL = '/users';
 export const DEPARTMENT = '/departments';
 export const LOGIN_URL = '/login';
@@ -16,3 +19,4 @@ export const INFORMATION = '/information';
 export const GET_INFOR_OF_USER = '/getinforofuser';
 export const GET_INFOR_BY_ID = '/getinforbyid';
 export const GET_ALL_BY_FIELD = '/getallinforbyfield';
+export const DELETE_INFORMATION_BY_ID = '/deleteinformationbyid';

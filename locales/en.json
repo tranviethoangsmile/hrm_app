@@ -75,5 +75,11 @@
   "P": "Post",
   "pub": "Public",
   "choo": "Choose Media",
-  "til": "Title"
+  "til": "Title",
+  "more": "more",
+  "infoDetail": "information detail",
+  "plzcof": "Please confirm..",
+  "wantDelete": "Do you want to Delete this is Information??",
+  "dl": "Delete",
+  "inorout": "Do you want to check in or check out?"
 }

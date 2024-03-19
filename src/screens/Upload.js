@@ -26,8 +26,10 @@ import {
   INFORMATION,
   GET_INFOR_OF_USER,
   GET_INFOR_BY_ID,
+  DELETE_INFORMATION_BY_ID,
 } from '../utils/Strings';
 import InformationDetail from '../components/InformationDetail';
+import {TEXT_COLOR} from '../utils/Colors';
 
 const Upload = () => {
   const {t} = useTranslation();
@@ -40,7 +42,7 @@ const Upload = () => {
   const [post, setPost] = useState({});
   const [err, setError] = useState('');
   const showAlert = message => {
-    Alert.alert(t('noti', message));
+    Alert.alert(t('noti'), t(message));
   };
   const handleGetValueOfInformation = async id => {
     try {
@@ -65,7 +67,10 @@ const Upload = () => {
         {user_id: USER_IF.id},
       );
       if (informationPosted?.data?.success) {
-        setPosts(informationPosted?.data?.data);
+        const sortedPosts = informationPosted.data.data.sort(
+          (a, b) => new Date(b.date) - new Date(a.date),
+        );
+        setPosts(sortedPosts);
         setError('');
       }
     } catch (error) {
@@ -92,13 +97,46 @@ const Upload = () => {
     getInformationPostedOfUser();
     setRefreshing(false);
   };
+  const handleDeleteInformation = async id => {
+    try {
+      const result = await axios.post(
+        `${BASE_URL}${PORT}${API}${VERSION}${V1}${INFORMATION}${DELETE_INFORMATION_BY_ID}`,
+        {
+          id: id,
+        },
+      );
+      if (result.data.success) {
+        onRefresh();
+        setError('');
+        showAlert('success');
+      }
+    } catch (error) {
+      setError(error.message);
+    }
+  };
 
-  const renderHiddenItem = () => (
+  const renderHiddenItem = ({item}) => (
     <View style={styles.rowBack}>
       <TouchableOpacity style={styles.editBtn}>
         <Text style={styles.btnTitle}>EDIT</Text>
       </TouchableOpacity>
-      <TouchableOpacity style={styles.deleteBtn}>
+      <TouchableOpacity
+        onPress={() => {
+          Alert.alert(
+            t('plzcof'),
+            t('wantDelete'),
+            [
+              {
+                text: t('dl'),
+                onPress: () => {
+                  handleDeleteInformation(item.id);
+                },
+              },
+            ],
+            {cancelable: true},
+          );
+        }}
+        style={styles.deleteBtn}>
         <Text style={styles.btnTitle}>DELETE</Text>
       </TouchableOpacity>
     </View>
@@ -126,8 +164,8 @@ const Upload = () => {
       <TouchableOpacity onPress={() => handleGetValueOfInformation(item.id)}>
         <View style={styles.textContainer}>
           <Text style={styles.title}>{item.title}</Text>
-          <Text>{item.date}</Text>
-          <Text>
+          <Text style={styles.date}>{item.date}</Text>
+          <Text styles={styles.content}>
             {item.content.length > 100
               ? `${item.content.substring(0, 100)}...`
               : item.content}
@@ -139,7 +177,7 @@ const Upload = () => {
 
   return (
     <View style={styles.container}>
-      {err ? <Text>{err}</Text> : ''}
+      {err ? <Text style={styles.title}>{err}</Text> : ''}
       <SwipeListView
         data={posts}
         renderItem={renderItem}
@@ -164,6 +202,7 @@ const Upload = () => {
         }}
         t={t}
         USER_IF={USER_IF}
+        refresh={onRefresh}
       />
       <InformationDetail
         visible={modalDetailVisible}
@@ -179,6 +218,7 @@ const Upload = () => {
 };
 
 const styles = StyleSheet.create({
+  content: {color: TEXT_COLOR},
   postIcon: {
     width: 50,
     height: 50,
@@ -250,6 +290,10 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     marginBottom: 5,
+    color: TEXT_COLOR,
+  },
+  date: {
+    color: TEXT_COLOR,
   },
   rowBack: {
     flex: 1,

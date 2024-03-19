@@ -43,9 +43,9 @@ const InformationDetail = ({visible, onClose, t, post}) => {
           </View>
           <View style={styles.textContainer}>
             <Text style={styles.title}>{post.title}</Text>
-            <Text>{post.date}</Text>
+            <Text style={styles.date}>{post.date}</Text>
             <ScrollView style={styles.contentContainer}>
-              <Text>{post.content}</Text>
+              <Text style={styles.content}>{post.content}</Text>
             </ScrollView>
           </View>
         </View>
@@ -55,6 +55,10 @@ const InformationDetail = ({visible, onClose, t, post}) => {
 };
 
 const styles = StyleSheet.create({
+  content: {color: TEXT_COLOR},
+  date: {
+    color: TEXT_COLOR,
+  },
   modalContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -77,9 +81,11 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 20,
     fontWeight: 'bold',
+    color: TEXT_COLOR,
   },
   closeButton: {
     fontSize: 20,
+    color: TEXT_COLOR,
   },
   mediaContainer: {
     alignItems: 'center',
@@ -98,6 +104,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     marginBottom: 5,
+    color: TEXT_COLOR,
   },
   contentContainer: {
     maxHeight: 200, // Limit the maximum height of the content

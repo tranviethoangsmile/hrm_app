@@ -22,7 +22,7 @@ import {useNavigation} from '@react-navigation/native';
 const ConfirmDayOrNight = ({visible, closeModal, checkin, time, t}) => {
   const navigate = useNavigation();
   const showAlert = message => {
-    Alert.alert('Checkin Status: ', t(message));
+    Alert.alert(t('noti'), t(message));
   };
 
   const handleCheckinWithQrCode = async (shift, action) => {
@@ -44,7 +44,7 @@ const ConfirmDayOrNight = ({visible, closeModal, checkin, time, t}) => {
     const field = {
       user_id: checkin.user_id,
       date: date_check,
-      check_time: time_check,
+      check_time: time_check, //product (time)
       work_shift: shift,
     };
 
@@ -85,17 +85,17 @@ const ConfirmDayOrNight = ({visible, closeModal, checkin, time, t}) => {
               style={styles.nightButton}
               onPress={() => {
                 Alert.alert(
-                  'Please confirm..',
-                  'Do you want to check in or check out?',
+                  t('plzcof'),
+                  t('inorout'),
                   [
                     {
-                      text: 'Check In',
+                      text: t('I'),
                       onPress: () => {
                         handleCheckinWithQrCode('NIGHT', 'IN'); // Xác nhận vào ca đêm
                       },
                     },
                     {
-                      text: 'Check Out',
+                      text: t('O'),
                       onPress: () => {
                         handleCheckinWithQrCode('NIGHT', 'OUT'); // Xác nhận ra ca đêm
                       },

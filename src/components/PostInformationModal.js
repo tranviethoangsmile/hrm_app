@@ -27,7 +27,7 @@ import {
 } from '../utils/Strings';
 import axios from 'axios';
 import {TEXT_COLOR, THEME_COLOR, THEME_COLOR_2} from '../utils/Colors';
-const PostInformationModal = ({visible, onClose, t, USER_IF}) => {
+const PostInformationModal = ({visible, onClose, t, USER_IF, refresh}) => {
   const date = moment().format('YYYY-MM-DD');
   const [content, setContent] = useState('');
   const [mediaUri, setMediaUri] = useState(null);
@@ -79,6 +79,7 @@ const PostInformationModal = ({visible, onClose, t, USER_IF}) => {
         setFileSelected(false); // Reset file selection state
         onClose(); // Close the modal
         setError(null);
+        refresh();
       } else {
         setIsloading(false);
         showAlert(t('unSuccess'));
@@ -254,6 +255,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     padding: 20,
     width: '90%',
+    color: TEXT_COLOR,
   },
   header: {
     flexDirection: 'row',
@@ -264,9 +266,11 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 20,
     fontWeight: 'bold',
+    color: TEXT_COLOR,
   },
   closeButton: {
     fontSize: 20,
+    color: TEXT_COLOR,
   },
   errorText: {
     color: 'red',
