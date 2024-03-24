@@ -105,12 +105,18 @@ const Upload = () => {
           id: id,
         },
       );
+      console.log(result?.data);
       if (result.data.success) {
         onRefresh();
         setError('');
         showAlert('success');
+      } else {
+        onRefresh();
+        setError('');
+        showAlert('unSuccess');
       }
     } catch (error) {
+      onRefresh();
       setError(error.message);
     }
   };
