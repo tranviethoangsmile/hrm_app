@@ -30,7 +30,7 @@ import {
 } from '../utils/Strings';
 import InformationDetail from '../components/InformationDetail';
 import {TEXT_COLOR} from '../utils/Colors';
-
+import Loader from '../components/Loader';
 const Upload = () => {
   const {t} = useTranslation();
   const authData = useSelector(state => state.auth);
@@ -41,6 +41,7 @@ const Upload = () => {
   const [modalDetailVisible, setModalDetailVisible] = useState(false);
   const [post, setPost] = useState({});
   const [err, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const showAlert = message => {
     Alert.alert(t('noti'), t(message));
   };
@@ -98,6 +99,7 @@ const Upload = () => {
     setRefreshing(false);
   };
   const handleDeleteInformation = async id => {
+    setIsLoading(true);
     try {
       const result = await axios.post(
         `${BASE_URL}${PORT}${API}${VERSION}${V1}${INFORMATION}${DELETE_INFORMATION_BY_ID}`,
@@ -105,17 +107,19 @@ const Upload = () => {
           id: id,
         },
       );
-      console.log(result?.data);
       if (result.data.success) {
+        setIsLoading(false);
         onRefresh();
         setError('');
         showAlert('success');
       } else {
+        setIsLoading(false);
         onRefresh();
         setError('');
         showAlert('unSuccess');
       }
     } catch (error) {
+      setIsLoading(false);
       onRefresh();
       setError(error.message);
     }
@@ -219,6 +223,7 @@ const Upload = () => {
         USER_IF={USER_IF}
         post={post}
       />
+      <Loader visible={isLoading} />
     </View>
   );
 };
