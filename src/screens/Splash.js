@@ -30,10 +30,7 @@ const Splash = () => {
   }, []);
   return (
     <View style={styles.container}>
-      <Image
-        source={require('../images/logo_shiga_daihatsu.jpg')}
-        style={styles.logo}
-      />
+      <Image source={require('../images/logo_metal.png')} style={styles.logo} />
     </View>
   );
 };
@@ -43,7 +40,7 @@ export default Splash;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: 'white',
+    backgroundColor: 'black',
     justifyContent: 'center',
     alignItems: 'center',
   },

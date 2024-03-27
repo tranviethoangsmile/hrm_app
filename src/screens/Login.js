@@ -24,6 +24,8 @@ import i18next from '../../services/i18next';
 import {useDispatch} from 'react-redux';
 import {setAuthData} from '../redux/AuthSlice';
 import {API, BASE_URL, LOGIN_URL, PORT, V1, VERSION} from '../utils/Strings';
+import CheckBox from '@react-native-community/checkbox';
+
 import {
   BG_COLOR,
   TEXT_COLOR,
@@ -46,8 +48,7 @@ const Login = () => {
   const [badPassword, setBadPassword] = useState('');
   const [secury, setSecury] = useState(true);
   const [visible, setVisible] = useState(false);
-  const [savePass, setSavePass] = useState(false);
-
+  const [savePass, setSavePass] = useState(true);
   const getUserIF = async () => {
     const userIF = await AsyncStorage.getItem('USERINFO');
     return JSON.parse(userIF);
@@ -99,6 +100,11 @@ const Login = () => {
   };
 
   const handleLogin = async () => {
+    if (savePass) {
+      handleSaveLoginInfo();
+    } else {
+      await AsyncStorage.removeItem('USERINFO');
+    }
     if (validate()) {
       setVisible(true);
       try {
@@ -155,8 +161,6 @@ const Login = () => {
   };
 
   const handleSaveLoginInfo = async () => {
-    setSavePass(true);
-
     try {
       const userIF = {
         username: userName,
@@ -172,7 +176,7 @@ const Login = () => {
   return (
     <View style={styles.container}>
       <Image
-        source={require('../images/daihatsu_logo.jpg')}
+        source={require('../images/daihatsu-metal-logo.jpg')}
         style={styles.logo}
       />
       <Text style={styles.welcomeText}>{t('Login w')}</Text>
@@ -209,11 +213,11 @@ const Login = () => {
       </Text>
 
       <View style={styles.saveContainer}>
-        <TouchableOpacity onPress={handleSaveLoginInfo}>
-          <View style={styles.saveLoginOutter}>
-            {savePass && <View style={styles.saveLoginInner} />}
-          </View>
-        </TouchableOpacity>
+        <CheckBox
+          value={savePass}
+          style={styles.checkBox}
+          onChange={() => setSavePass(!savePass)}
+        />
         <Text style={styles.saveText}>{t('Save')}</Text>
       </View>
 
@@ -241,13 +245,13 @@ export default Login;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: BG_COLOR,
+    backgroundColor: 'white',
     color: TEXT_COLOR,
     paddingHorizontal: 20,
   },
   logo: {
-    width: 150,
-    height: 150,
+    width: 170,
+    height: 160,
     alignSelf: 'center',
     marginTop: Dimensions.get('window').height / 8,
   },
@@ -273,6 +277,9 @@ const styles = StyleSheet.create({
   errorText: {
     color: 'red',
     marginTop: 5,
+  },
+  checkbox: {
+    margin: 10,
   },
   forgetText: {
     color: TEXT_COLOR,
