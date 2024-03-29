@@ -46,7 +46,7 @@ const Login = () => {
   const [password, setPassword] = useState('');
   const [badUserName, setBadUserName] = useState('');
   const [badPassword, setBadPassword] = useState('');
-  const [secury, setSecury] = useState(true);
+  const [secury, setSecury] = useState(false);
   const [visible, setVisible] = useState(false);
   const [savePass, setSavePass] = useState(true);
   const getUserIF = async () => {
@@ -148,7 +148,7 @@ const Login = () => {
             JSON.stringify(login.data.data),
           );
 
-          dispatch(setAuthData(login?.data)); // Đã sửa thành "dispatch" thay vì "disPatch"
+          dispatch(setAuthData(login?.data));
           setUserName('');
           setPassword('');
           navigation.replace('Main');
@@ -203,20 +203,25 @@ const Login = () => {
       {badPassword !== '' && (
         <Text style={styles.errorText}>{badPassword}</Text>
       )}
-
-      <Text
-        style={styles.checkBox}
-        onPress={() => {
-          setSecury(!secury);
-        }}>
-        {t('Spw')}
-      </Text>
+      <View style={styles.saveContainer}>
+        <View style={styles.checkBoxType}>
+          <CheckBox
+            tintColors={{true: 'red', false: 'black'}}
+            value={secury}
+            style={styles.checkBox}
+            onChange={() => setSecury(!secury)}
+          />
+        </View>
+        <Text style={styles.saveText}>{t('Spw')}</Text>
+      </View>
 
       <View style={styles.saveContainer}>
         <CheckBox
+          tintColors={{true: 'red', false: 'black'}}
           value={savePass}
           style={styles.checkBox}
           onChange={() => setSavePass(!savePass)}
+          tintColor={{true: 'GREEN', false: 'BLACK'}}
         />
         <Text style={styles.saveText}>{t('Save')}</Text>
       </View>
@@ -288,6 +293,8 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   checkBox: {
+    borderWidth: 1,
+    borderColor: 'black',
     color: TEXT_COLOR,
     marginTop: 5,
   },

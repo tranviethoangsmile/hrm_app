@@ -47,7 +47,7 @@ const UploadAvatar = ({visible, closeModal, t, user_id, avatar_url}) => {
         setImageName(image.name);
       }
     } catch (error) {
-      console.log(error);
+      showAlert(error);
     }
   };
 
@@ -70,7 +70,8 @@ const UploadAvatar = ({visible, closeModal, t, user_id, avatar_url}) => {
           },
         },
       );
-      if (response?.success) {
+      console.log(response?.data);
+      if (response?.data?.success) {
         setIsloading(false);
         showAlert(t('success'));
         closeModal();

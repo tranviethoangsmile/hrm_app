@@ -5,12 +5,25 @@ import {CameraScreen} from 'react-native-camera-kit';
 import moment from 'moment';
 import {useSelector} from 'react-redux';
 import axios from 'axios';
-import {API, BASE_URL, ORDER_URL, PORT, V1, VERSION} from '../utils/Strings';
+import {
+  API,
+  BASE_URL,
+  ORDER_URL,
+  PORT,
+  V1,
+  VERSION,
+  CHECKIN,
+  CREATE,
+} from '../utils/Strings';
+import {useNavigation} from '@react-navigation/native';
+
 import ConfirmDayOrNight from '../components/ComfirmDayOrNight';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {useTranslation} from 'react-i18next';
 import i18next from '../../services/i18next';
 const Checkin = () => {
+  const navigate = useNavigation();
+
   const {t} = useTranslation();
   const getLanguage = async () => {
     return await AsyncStorage.getItem('Language');
@@ -70,13 +83,43 @@ const Checkin = () => {
     }
   };
 
+  const handleCheckinForOfficer = async () => {
+    try {
+      const field = {
+        user_id: checkin.user_id,
+        date: today.format('YYYY-MM-DD'),
+        check_time: moment(new Date()).format('HH:mm'), //product (USE qrVlaue)
+        work_shift: 'DAY',
+      };
+
+      const result = await axios.post(
+        `${BASE_URL}${PORT}${API}${VERSION}${V1}${CHECKIN}${CREATE}`,
+        {
+          ...field,
+        },
+      );
+      if (result?.data?.success) {
+        showAlert('cSuc');
+        navigate.goBack();
+      } else {
+        showAlert('pta');
+      }
+    } catch (error) {
+      showAlert(t('unSuccess'));
+    }
+  };
+
   // dev only use
   const handleCheckin = qrValue => {
     if (isValidQRCode(qrValue)) {
       if (qrValue === 'picked') {
         handleScannerQRCodePicked();
       } else if (qrValue === 'checkin') {
-        setVisible(true);
+        if (authData.data.data.is_officer) {
+          handleCheckinForOfficer();
+        } else {
+          setVisible(true);
+        }
         // handleCheckinWithQr();
       }
     } else {
@@ -104,7 +147,7 @@ const Checkin = () => {
   // };
 
   const showAlert = message => {
-    Alert.alert(t('noti'), message);
+    Alert.alert(t('noti'), t(message));
   };
 
   const handleRetryScan = () => {
@@ -140,6 +183,7 @@ const Checkin = () => {
         </TouchableOpacity>
       )}
       <ConfirmDayOrNight
+        auth={authData}
         visible={isVisible}
         onClose={() => {
           setVisible(!isVisible);

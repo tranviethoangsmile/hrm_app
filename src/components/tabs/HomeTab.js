@@ -34,7 +34,7 @@ const HomeTab = () => {
   };
 
   const {t} = useTranslation();
-  const [visible, setVisible] = useState(false);
+  const [visibleControl, setVisibleControl] = useState(false);
   const authData = useSelector(state => state.auth);
   const [userInfo, setUserInfo] = useState({});
   const [err, setError] = useState('');
@@ -113,7 +113,7 @@ const HomeTab = () => {
   };
 
   const handleControl = () => {
-    setVisible(!visible);
+    setVisibleControl(!visibleControl);
   };
 
   const onRefresh = React.useCallback(() => {
@@ -155,9 +155,9 @@ const HomeTab = () => {
           />
         </TouchableOpacity>
         <Control
-          visible={visible}
+          visible={visibleControl}
           onClose={() => {
-            setVisible(!visible);
+            setVisibleControl(!visibleControl);
           }}
           t={t}
         />

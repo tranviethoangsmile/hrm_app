@@ -179,6 +179,7 @@ const PostInformationModal = ({visible, onClose, t, USER_IF, refresh}) => {
           )}
           <View style={styles.postOptions}>
             <CheckBox
+              tintColors={{true: 'red', false: 'black'}}
               value={isPublic}
               onValueChange={() => setIsPublic(!isPublic)}
               style={styles.checkbox}
