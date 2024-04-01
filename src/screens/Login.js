@@ -198,7 +198,7 @@ const Login = () => {
         value={password}
         onChangeText={text => setPassword(text)}
         isValid={badPassword === ''}
-        secureTextEntry={secury}
+        secureTextEntry={!secury}
       />
       {badPassword !== '' && (
         <Text style={styles.errorText}>{badPassword}</Text>
