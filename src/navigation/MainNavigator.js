@@ -1,17 +1,19 @@
 import React from 'react';
 import {createStackNavigator} from '@react-navigation/stack';
 import {NavigationContainer} from '@react-navigation/native';
-import Splash from '../screens/Splash';
-import Login from '../screens/Login';
-import Checkin from '../screens/Checkin';
-import Main from '../screens/Main';
-import Daily from '../screens/Daily';
-import Order from '../screens/Order';
-import Ai from '../screens/Ai';
-import Profile from '../screens/Profile';
-import LanguageSelectionScreen from '../screens/LanguageSelectionScreen';
-import Setting from '../screens/Setting';
-import Upload from '../screens/Upload';
+import {
+  Ai,
+  Setting,
+  Splash,
+  Order,
+  LanguageSelectionScreen,
+  Profile,
+  Upload,
+  Login,
+  Daily,
+  Main,
+  Checkin,
+} from '../screens';
 const Stack = createStackNavigator();
 const MainNavigator = () => {
   return (

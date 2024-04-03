@@ -60,16 +60,38 @@ const Checkin = () => {
     }
   };
   const handleScannerQRCodePicked = async () => {
-    const checked = await axios.put(
-      `${BASE_URL}${PORT}${API}${VERSION}${V1}${ORDER_URL}/user/`,
-      {
-        ...checkin,
-      },
-    );
-    if (checked?.success) {
-      showAlert(t(checked?.data?.message));
-    } else {
-      showAlert(checked?.data?.message);
+    try {
+      const time = moment().format('HH:mm:ss A');
+      if (
+        moment(time, 'HH:mm:ss A').isBefore(moment('12:00:00 PM', 'HH:mm:ss A'))
+      ) {
+        checkin.date = moment(today).subtract(1, 'day');
+        const checked = await axios.put(
+          `${BASE_URL}${PORT}${API}${VERSION}${V1}${ORDER_URL}/user/`,
+          {
+            ...checkin,
+          },
+        );
+        if (checked?.success) {
+          showAlert(t(checked?.data?.message));
+        } else {
+          showAlert(checked?.data?.message);
+        }
+      } else {
+        const checked = await axios.put(
+          `${BASE_URL}${PORT}${API}${VERSION}${V1}${ORDER_URL}/user/`,
+          {
+            ...checkin,
+          },
+        );
+        if (checked?.success) {
+          showAlert(t(checked?.data?.message));
+        } else {
+          showAlert(checked?.data?.message);
+        }
+      }
+    } catch (error) {
+      console.log(error);
     }
   };
 

@@ -221,7 +221,6 @@ const Login = () => {
           value={savePass}
           style={styles.checkBox}
           onChange={() => setSavePass(!savePass)}
-          tintColor={{true: 'GREEN', false: 'BLACK'}}
         />
         <Text style={styles.saveText}>{t('Save')}</Text>
       </View>
@@ -293,7 +292,6 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   checkBox: {
-    borderWidth: 1,
     borderColor: 'black',
     color: TEXT_COLOR,
     marginTop: 5,

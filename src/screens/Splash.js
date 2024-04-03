@@ -1,5 +1,5 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import {View, StyleSheet, Image} from 'react-native';
+import {View, StyleSheet, Image, ActivityIndicator} from 'react-native';
 import React, {useEffect} from 'react';
 import {useNavigation} from '@react-navigation/native';
 import {useSelector} from 'react-redux';
@@ -12,10 +12,11 @@ const Splash = () => {
   const navigation = useNavigation();
   const authData = useSelector(state => state.auth);
   useEffect(() => {
+    let timeout;
     const checkLanguage = async () => {
       const lang = await getLanguage();
       if (lang != null) {
-        setTimeout(() => {
+        timeout = setTimeout(() => {
           if (authData.data != null) {
             navigation.replace('Main');
           } else {
@@ -27,10 +28,13 @@ const Splash = () => {
       }
     };
     checkLanguage();
+    return () => clearTimeout(timeout);
   }, []);
   return (
     <View style={styles.container}>
       <Image source={require('../images/logo_metal.png')} style={styles.logo} />
+      <View style={{height: 5}} />
+      <ActivityIndicator size="large" color="#fff" />
     </View>
   );
 };
