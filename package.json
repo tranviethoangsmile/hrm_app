@@ -26,6 +26,7 @@
     "react-native-camera-kit": "^13.0.0",
     "react-native-date-picker": "^4.3.6",
     "react-native-document-picker": "^9.1.1",
+    "react-native-dropdown-picker": "^5.4.6",
     "react-native-elements": "^3.4.3",
     "react-native-gesture-handler": "^2.14.0",
     "react-native-image-zoom-viewer": "^3.0.1",

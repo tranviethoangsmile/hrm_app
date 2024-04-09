@@ -13,6 +13,7 @@ import {
   Daily,
   Main,
   Checkin,
+  Leave,
 } from '../screens';
 const Stack = createStackNavigator();
 const MainNavigator = () => {
@@ -29,6 +30,7 @@ const MainNavigator = () => {
           component={Profile}
           options={{headerShown: true}}
         />
+        <Stack.Screen name="Leave" component={Leave} />
         <Stack.Screen
           name="Upload"
           component={Upload}

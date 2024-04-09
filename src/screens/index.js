@@ -9,6 +9,7 @@ import Order from './Order';
 import Setting from './Setting';
 import Profile from './Profile';
 import Login from './Login';
+import Leave from './Leave';
 
 export {
   Checkin,
@@ -22,4 +23,5 @@ export {
   Order,
   Profile,
   Login,
+  Leave,
 };

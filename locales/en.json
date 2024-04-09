@@ -81,5 +81,11 @@
   "plzcof": "Please confirm..",
   "wantDelete": "Do you want to Delete this is Information??",
   "dl": "Delete",
-  "inorout": "Do you want to check in or check out?"
+  "inorout": "Do you want to check in or check out?",
+  "networkError": "network Error",
+  "contactAdmin": "Please contact the administrator.",
+  "sTo": "Receiver",
+  "selectName": "Select a leader",
+  "enterR": "Enter Reason",
+  "reason": "Reason"
 }

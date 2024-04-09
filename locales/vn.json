@@ -81,5 +81,11 @@
   "plzcof": "Vui lòng xác nhận...",
   "wantDelete": "Bạn có thực sự muốn xóa không??",
   "dl": "Xóa",
-  "inorout": "Bạn vui lòng xác nhận Vào hoặc Ra"
+  "inorout": "Bạn vui lòng xác nhận Vào hoặc Ra",
+  "networkError": "Kiểm tra internet",
+  "contactAdmin": "hãy liên lạc với quản trị viên.",
+  "sTo": "Gửi đến: ",
+  "selectName": "Chọn cấp trên",
+  "enterR": "Nhập lý do",
+  "reason": "Lý do"
 }

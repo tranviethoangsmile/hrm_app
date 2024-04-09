@@ -81,5 +81,11 @@
   "plzcof": "Por favor, confirme..",
   "wantDelete": "Você deseja excluir esta informação?",
   "dl": "Excluir",
-  "inorout": "Você quer fazer check-in ou check-out?"
+  "inorout": "Você quer fazer check-in ou check-out?",
+  "networkError": "network Error",
+  "contactAdmin": "Please contact the administrator.",
+  "sTo": "Receptor",
+  "selectName": "Selecione um líder",
+  "enterR": "insira o motivo",
+  "reason": "razão"
 }

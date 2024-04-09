@@ -21,7 +21,7 @@ const Daily = () => {
     {label: 'DK05RR_2', value: '0.81'},
     {label: 'DK05FR_1', value: '0.85'},
     {label: 'DK05FR_2', value: '0.85'},
-    {label: 'D042', value: '1.09'},
+    {label: 'D042', value: '0.95'},
     {label: 'DF93_4', value: '0.82'},
     {label: 'DF93_3', value: '0.82'},
     {label: 'D14KRR', value: '1'},
