@@ -87,5 +87,7 @@
   "sTo": "Receiver",
   "selectName": "Select a leader",
   "enterR": "Enter Reason",
-  "reason": "Reason"
+  "reason": "Reason",
+  "d.off": "Off day",
+  "off.p": "Paid"
 }

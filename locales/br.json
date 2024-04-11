@@ -87,5 +87,7 @@
   "sTo": "Receptor",
   "selectName": "Selecione um líder",
   "enterR": "insira o motivo",
-  "reason": "razão"
+  "reason": "razão",
+  "d.off": "folga",
+  "off.p": "pago"
 }

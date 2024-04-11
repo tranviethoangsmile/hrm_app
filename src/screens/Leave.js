@@ -1,4 +1,5 @@
 /* eslint-disable react-hooks/exhaustive-deps */
+import React, {useEffect, useState} from 'react';
 import {
   View,
   Text,
@@ -10,7 +11,6 @@ import {
   Dimensions,
   TouchableOpacity,
 } from 'react-native';
-import React, {useEffect, useState} from 'react';
 import DropDownPicker from 'react-native-dropdown-picker';
 import i18next from '../../services/i18next';
 import {useTranslation} from 'react-i18next';
@@ -19,7 +19,7 @@ import {useSelector} from 'react-redux';
 import DatePicker from 'react-native-date-picker';
 import moment from 'moment';
 import LinearGradient from 'react-native-linear-gradient';
-
+import Icon from 'react-native-vector-icons/FontAwesome';
 import {
   API,
   BASE_URL,
@@ -28,10 +28,13 @@ import {
   VERSION,
   USER_URL,
   GET_USER_WITH_DEPARTMENT_ID,
+  PAID_LEAVE,
+  CREATE,
 } from '../utils/Strings';
 import axios from 'axios';
 import {TEXT_COLOR, THEME_COLOR, THEME_COLOR_2} from '../utils/Colors';
-import {color} from 'react-native-elements/dist/helpers';
+import CheckBox from '@react-native-community/checkbox';
+import Loader from '../components/Loader';
 
 const Leave = () => {
   const {t} = useTranslation();
@@ -43,16 +46,18 @@ const Leave = () => {
   const showAlert = message => {
     Alert.alert(t('noti'), t(message));
   };
-  const [fromDate, setFromDate] = useState(moment().toDate());
-  const [toDate, setToDate] = useState(moment().add(1, 'day').toDate());
+  const today = moment().toDate();
+  const [dayOff, setDayOff] = useState(moment().add(1, 'day').toDate());
 
   const [leaderList, setLeaderList] = useState([]);
   const [leaderValue, setLeaderValue] = useState(''); // Might be useful later
   const [open, setOpen] = useState(false);
   const [value, setValue] = useState(null);
   const [reason, setReason] = useState('');
-  const [isSelectFromModal, setIsSelectFromModal] = useState(false);
   const [isSelectToModal, setIsSelectToModal] = useState(false);
+  const [is_paid, setIs_paid] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
+  const [modal, setModal] = useState(false);
 
   const getLeaderList = async () => {
     try {
@@ -70,7 +75,6 @@ const Leave = () => {
           label: leader.name, // Assuming leader data has a name property
           value: leader.id, // Assuming leader data has an id property
         }));
-        console.log(formattedList);
         setLeaderList(formattedList);
       } else {
         showAlert('contactAdmin');
@@ -79,14 +83,40 @@ const Leave = () => {
       showAlert('networkError');
     }
   };
-  const handleSelectFromDate = date => {
-    setFromDate(date);
-    setIsSelectFromModal(false);
-  };
 
   const handleSelectToDate = date => {
-    setToDate(date);
+    setDayOff(date);
     setIsSelectToModal(false);
+  };
+  const handleRequestDayOffPaid = async () => {
+    setIsLoading(!isLoading);
+    try {
+      const field = {
+        user_id: authData?.data?.data.id,
+        reason: reason,
+        leader_id: leaderValue,
+        date_request: moment(today).format('YYYY-MM-DD'),
+        is_paid: is_paid,
+        date_leave: moment(dayOff).format('YYYY-MM-DD'),
+        position: authData?.data?.data.position,
+      };
+      const paidleave = await axios.post(
+        `${BASE_URL}${PORT}${API}${VERSION}${V1}${PAID_LEAVE}${CREATE}`,
+        {
+          ...field,
+        },
+      );
+      if (paidleave?.data?.success) {
+        setIsLoading(false);
+        showAlert('success');
+      } else {
+        setIsLoading(false);
+        showAlert('unSuccess');
+      }
+    } catch (error) {
+      console.log(error);
+      showAlert('networkError');
+    }
   };
 
   useEffect(() => {
@@ -100,148 +130,140 @@ const Leave = () => {
     getLeaderList();
   }, []); // Add empty dependency array to avoid warning
   const handleSelectLeader = value => {
-    console.log(value);
     setLeaderValue(value);
+  };
+  const showHandleButtonModal = () => {
+    setModal(true);
   };
   return (
     <View style={styles.container}>
-      <View style={styles.viewDateContainer}>
-        <View style={styles.dateFromContainer}>
-          <Text>From:</Text>
-          <Button
-            title={moment(fromDate).format('YYYY-MM-DD')}
-            onPress={() => setIsSelectFromModal(true)}
-          />
-          <Modal
-            visible={isSelectFromModal}
-            transparent={true}
-            animationType="slide">
-            <View style={styles.modalContainer}>
-              <View style={styles.modalContent}>
-                <DatePicker
-                  date={fromDate}
-                  mode="date"
-                  onDateChange={handleSelectFromDate}
-                />
+      <Modal visible={modal}>
+        <View style={styles.modalContainer}>
+          <View style={styles.modalheader}>
+            <TouchableOpacity onPress={() => setModal(!modal)}>
+              <Icon name="times" color={THEME_COLOR} size={30} />
+            </TouchableOpacity>
+          </View>
+          <View style={styles.modalContent}>
+            <View style={styles.dayOffViewContainer}>
+              <View style={styles.dayOffTextView}>
+                <Text style={styles.text}>{t('d.off')}</Text>
+              </View>
+              <View style={styles.dayOffSelectView}>
                 <Button
-                  title="Close"
-                  onPress={() => setIsSelectFromModal(false)}
+                  title={moment(dayOff).format('YYYY-MM-DD')}
+                  onPress={() => setIsSelectToModal(true)}
+                />
+              </View>
+              <Modal
+                visible={isSelectToModal}
+                transparent={true}
+                animationType="slide"
+                onRequestClose={() => setIsSelectToModal(false)}>
+                <View style={styles.modalContainer}>
+                  <View style={styles.modalContent}>
+                    <DatePicker
+                      date={dayOff}
+                      mode="date"
+                      onDateChange={handleSelectToDate}
+                      textColor={TEXT_COLOR} // Color of the selected date
+                      dayTextColor="#333" // Color of the day text
+                      monthTextColor="#333" // Color of the month text
+                      yearTextColor="#333" // Color of the year text
+                    />
+                    <Button
+                      title="Close"
+                      onPress={() => setIsSelectToModal(false)}
+                    />
+                  </View>
+                </View>
+              </Modal>
+            </View>
+            <View style={styles.reasonViewContainer}>
+              <View style={styles.reasonTextView}>
+                <Text style={styles.text}>{t('reason')}</Text>
+              </View>
+              <View style={styles.reasonInputView}>
+                <TextInput
+                  placeholder={t('enterR')}
+                  multiline={true}
+                  onChangeText={text => setReason(text)}
+                  placeholderTextColor={TEXT_COLOR}
+                  style={{color: TEXT_COLOR}}
                 />
               </View>
             </View>
-          </Modal>
-        </View>
-        <View style={styles.dateToContainer}>
-          <Text>To:</Text>
-          <Button
-            title={moment(toDate).format('YYYY-MM-DD')}
-            onPress={() => setIsSelectToModal(true)}
-          />
-          <Modal
-            visible={isSelectToModal}
-            transparent={true}
-            animationType="slide">
-            <View style={styles.modalContainer}>
-              <View style={styles.modalContent}>
-                <DatePicker
-                  date={toDate}
-                  mode="date"
-                  onDateChange={handleSelectToDate}
-                />
-                <Button
-                  title="Close"
-                  onPress={() => setIsSelectToModal(false)}
+            <View style={styles.checkBoxViewContainer}>
+              <CheckBox
+                tintColors={{true: 'red', false: 'black'}}
+                value={is_paid}
+                style={[styles.checkBox]}
+                onChange={() => setIs_paid(!is_paid)}
+              />
+              <Text style={[styles.text, , {marginLeft: 20}]}>
+                {t('off.p')}
+              </Text>
+            </View>
+            <View style={styles.receiverViewContainer}>
+              <View style={styles.receiverTextView}>
+                <Text style={[styles.text]}>{t('sTo')}</Text>
+              </View>
+              <View style={styles.receiverSelectView}>
+                <DropDownPicker
+                  open={open}
+                  value={value}
+                  setValue={val => setValue(val)}
+                  setOpen={() => setOpen(!open)}
+                  items={leaderList}
+                  maxHeight={300}
+                  autoScroll
+                  onChangeValue={item => handleSelectLeader(item)}
+                  placeholder={t('selectName')}
+                  placeholderStyle={{color: TEXT_COLOR}}
+                  zIndexInverse={1000}
+                  dropDownContainerStyle={{
+                    backgroundColor: '#dfdfdf',
+                  }}
                 />
               </View>
             </View>
-          </Modal>
+            <LinearGradient
+              style={styles.btnSendRequest}
+              colors={[THEME_COLOR, THEME_COLOR_2]}>
+              <TouchableOpacity onPress={handleRequestDayOffPaid}>
+                <Text style={[styles.text, {color: 'white'}]}>{t('Send')}</Text>
+              </TouchableOpacity>
+            </LinearGradient>
+          </View>
         </View>
-      </View>
-
-      <View style={styles.ViewReason}>
-        <View style={styles.reasonText}>
-          <Text>{t('reason')}</Text>
-        </View>
-        <View style={styles.reationInput}>
-          <TextInput
-            placeholder={t('enterR')}
-            multiline={true}
-            onChangeText={text => setReason(text)}
-            placeholderTextColor={TEXT_COLOR}
-            style={{padding: 10}}
-          />
-        </View>
-      </View>
-      <View style={styles.viewSelectLeader}>
-        <View style={styles.selectText}>
-          <Text>{t('sTo')}</Text>
-        </View>
-        <View style={styles.selectBox}>
-          <DropDownPicker
-            open={open}
-            value={value}
-            setValue={val => setValue(val)}
-            setOpen={() => setOpen(!open)}
-            items={leaderList}
-            maxHeight={300}
-            autoScroll
-            onChangeValue={item => handleSelectLeader(item)}
-            placeholder={t('selectName')}
-            placeholderStyle={{color: TEXT_COLOR}}
-            zIndexInverse={1000}
-            dropDownContainerStyle={{
-              backgroundColor: '#dfdfdf',
-            }}
-          />
-        </View>
-      </View>
-      <LinearGradient colors={[THEME_COLOR, THEME_COLOR_2]} style={styles.btn}>
-        <TouchableOpacity>
-          <Text style={styles.btnText}>{t('Send')}</Text>
+      </Modal>
+      <View style={styles.handleButtonShowModal}>
+        <TouchableOpacity onPress={showHandleButtonModal}>
+          <Icon name="send" size={40} color="#fff" />
         </TouchableOpacity>
-      </LinearGradient>
+      </View>
+      <Loader visible={isLoading} />
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  btnText: {
-    textAlign: 'center',
-    color: '#FFFFFF',
-    fontSize: 20,
-    fontWeight: '600',
+  modalheader: {
+    position: 'absolute',
+    right: 40,
+    top: 100,
   },
-  btn: {
-    height: 50,
-    borderRadius: 10,
+  handleButtonShowModal: {
+    position: 'absolute',
+    backgroundColor: '#5e81ac',
+    width: Dimensions.get('screen').width * 0.5,
+    height: Dimensions.get('screen').height * 0.1,
+    borderWidth: 0.2,
+    borderRadius: 50,
+    bottom: 10,
+    right: 15,
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 100,
-    color: '#fff',
-  },
-  viewDateContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: 10,
-  },
-  dateToContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 20,
-    width: Dimensions.get('window').width / 2,
-    justifyContent: 'space-between',
-    paddingHorizontal: 10,
-    borderWidth: 0.5,
-  },
-  dateFromContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 20,
-    width: Dimensions.get('window').width / 2,
-    justifyContent: 'space-between',
-    paddingHorizontal: 10,
-    borderWidth: 0.5,
   },
   modalContainer: {
     flex: 1,
@@ -255,42 +277,85 @@ const styles = StyleSheet.create({
     padding: 20,
     width: '80%',
   },
-
-  dateSelectView: {
-    flexDirection: 'row',
+  btnSendRequest: {
+    width: Dimensions.get('screen').width * 0.5,
+    height: Dimensions.get('screen').height * 0.1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: Dimensions.get('screen').height * 0.15,
+    borderWidth: 0.1,
+    borderRadius: 8,
+    alignContent: 'center',
+    marginHorizontal: Dimensions.get('screen').width * 0.1,
   },
-
+  checkBoxViewContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderBottomWidth: 0.5,
+    borderRadius: 8,
+    marginTop: 15,
+  },
+  checkBox: {
+    marginLeft: 20,
+  },
+  receiverSelectView: {
+    flex: 1,
+  },
+  receiverTextView: {
+    width: '20%',
+    marginLeft: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  receiverViewContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderBottomWidth: 0.5,
+    borderRadius: 8,
+    marginTop: 15,
+    maxHeight: 300,
+  },
+  reasonInputView: {flex: 1},
   container: {
     flex: 1,
+    padding: 10,
+    backgroundColor: '#fff',
   },
-  reationInput: {
-    flex: 1,
-    borderWidth: 0.5,
-    borderRadius: 7,
-    marginRight: 10,
-  },
-  ViewReason: {
-    flexDirection: 'row',
-    marginTop: 10,
-    justifyContent: 'center',
-    height: 45,
-  },
-  reasonText: {width: '20%', justifyContent: 'center', marginLeft: 10},
-  viewSelectLeader: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    marginTop: 5,
-  },
-  selectText: {
+  reasonTextView: {
     width: '20%',
-    justifyContent: 'center',
     marginLeft: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  selectBox: {
+  text: {
+    fontSize: 20,
+    color: TEXT_COLOR,
+    fontWeight: '500',
+  },
+  dayOffViewContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderBottomWidth: 0.5,
+    borderRadius: 8,
+  },
+  reasonViewContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderBottomWidth: 0.5,
+    borderRadius: 8,
+    marginTop: 15,
+  },
+  dayOffTextView: {
+    width: '20%',
+    marginLeft: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  dayOffSelectView: {
     flex: 1,
-    width: '60%',
-    maxHeight: 300,
-    marginRight: 10,
   },
 });
 

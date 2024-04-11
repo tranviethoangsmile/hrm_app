@@ -21,3 +21,4 @@ export const GET_INFOR_BY_ID = '/getinforbyid';
 export const GET_ALL_BY_FIELD = '/getallinforbyfield';
 export const DELETE_INFORMATION_BY_ID = '/deleteinformationbyid';
 export const GET_USER_WITH_DEPARTMENT_ID = '/getuserwithdepartmentid';
+export const PAID_LEAVE = '/paidleave';
