@@ -14,6 +14,7 @@ import {
   Main,
   Checkin,
   Leave,
+  ReportView,
 } from '../screens';
 const Stack = createStackNavigator();
 const MainNavigator = () => {
@@ -28,6 +29,11 @@ const MainNavigator = () => {
         <Stack.Screen
           name="Profile"
           component={Profile}
+          options={{headerShown: true}}
+        />
+        <Stack.Screen
+          name="ReportView"
+          component={ReportView}
           options={{headerShown: true}}
         />
         <Stack.Screen name="Leave" component={Leave} />

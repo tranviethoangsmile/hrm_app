@@ -83,11 +83,21 @@
   "dl": "Excluir",
   "inorout": "Você quer fazer check-in ou check-out?",
   "networkError": "network Error",
-  "contactAdmin": "Please contact the administrator.",
+  "contactAdmin": "Houve um erro inesperado. Por favor, entre em contato com o administrador para resolvê-lo.",
   "sTo": "Receptor",
   "selectName": "Selecione um líder",
   "enterR": "insira o motivo",
   "reason": "razão",
   "d.off": "folga",
-  "off.p": "pago"
+  "off.p": "pago",
+  "d.request": "Demandar Dia",
+  "awaiting": "Awaiting approval",
+  "leader": "Líder",
+  "unPaid": "Licença não remunerada",
+  "approved": "Aprovado",
+  "EDIT": "Editar",
+  "DELETE": "Excluir",
+  "auth": "Você não está autorizado a usar esta função. Por favor, entre em contato com o administrador para obter ajuda.",
+  "confirm_approve": "Você está confirmando a aprovação desta solicitação.",
+  "feedback": "Feedback"
 }

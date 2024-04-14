@@ -14,6 +14,7 @@ export const CHAT = '/chat';
 export const CHECKIN = '/checkin';
 export const CREATE = '/create';
 export const SEARCH = '/search';
+export const UPDATE = '/update';
 export const UPLOAD_AVATAR = '/upload-avatar';
 export const INFORMATION = '/information';
 export const GET_INFOR_OF_USER = '/getinforofuser';

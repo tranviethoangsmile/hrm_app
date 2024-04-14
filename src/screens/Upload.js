@@ -128,7 +128,7 @@ const Upload = () => {
   const renderHiddenItem = ({item}) => (
     <View style={styles.rowBack}>
       <TouchableOpacity style={styles.editBtn}>
-        <Text style={styles.btnTitle}>EDIT</Text>
+        <Text style={styles.btnTitle}>{t('EDIT')}</Text>
       </TouchableOpacity>
       <TouchableOpacity
         onPress={() => {
@@ -147,7 +147,7 @@ const Upload = () => {
           );
         }}
         style={styles.deleteBtn}>
-        <Text style={styles.btnTitle}>DELETE</Text>
+        <Text style={styles.btnTitle}>{t('DELETE')}</Text>
       </TouchableOpacity>
     </View>
   );

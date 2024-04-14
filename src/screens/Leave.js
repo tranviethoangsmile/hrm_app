@@ -1,3 +1,4 @@
+/* eslint-disable react-native/no-inline-styles */
 /* eslint-disable react-hooks/exhaustive-deps */
 import React, {useEffect, useState} from 'react';
 import {
@@ -10,6 +11,8 @@ import {
   Button,
   Dimensions,
   TouchableOpacity,
+  RefreshControl,
+  FlatList,
 } from 'react-native';
 import DropDownPicker from 'react-native-dropdown-picker';
 import i18next from '../../services/i18next';
@@ -30,11 +33,13 @@ import {
   GET_USER_WITH_DEPARTMENT_ID,
   PAID_LEAVE,
   CREATE,
+  SEARCH,
 } from '../utils/Strings';
 import axios from 'axios';
 import {TEXT_COLOR, THEME_COLOR, THEME_COLOR_2} from '../utils/Colors';
 import CheckBox from '@react-native-community/checkbox';
 import Loader from '../components/Loader';
+import {SwipeListView} from 'react-native-swipe-list-view';
 
 const Leave = () => {
   const {t} = useTranslation();
@@ -58,9 +63,38 @@ const Leave = () => {
   const [is_paid, setIs_paid] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [modal, setModal] = useState(false);
+  const [leaveRequested, setLeaveRequested] = useState([]);
+  const [refreshing, setRefreshing] = useState(false);
+  const [err, setError] = useState('');
+
+  const getValueRequestLeave = async () => {
+    try {
+      const field = {
+        user_id: authData?.data?.data?.id,
+      };
+      const leaves = await axios.post(
+        `${BASE_URL}${PORT}${API}${VERSION}${V1}${PAID_LEAVE}${SEARCH}`,
+        {
+          ...field,
+        },
+      );
+      if (leaves?.data.success) {
+        setError('');
+        setIsLoading(false);
+        const sortedPosts = leaves.data.data.sort(
+          (a, b) => new Date(b.date_leave) - new Date(a.date_leave),
+        );
+        setLeaveRequested(sortedPosts);
+      }
+    } catch (error) {
+      setIsLoading(false);
+      setError(t('contactAdmin'));
+    }
+  };
 
   const getLeaderList = async () => {
     try {
+      setIsLoading(true);
       const field = {
         department_id: authData?.data?.data.department_id,
       };
@@ -107,6 +141,7 @@ const Leave = () => {
         },
       );
       if (paidleave?.data?.success) {
+        onRefresh();
         setIsLoading(false);
         showAlert('success');
       } else {
@@ -114,7 +149,6 @@ const Leave = () => {
         showAlert('unSuccess');
       }
     } catch (error) {
-      console.log(error);
       showAlert('networkError');
     }
   };
@@ -128,6 +162,7 @@ const Leave = () => {
     };
     checkLanguage();
     getLeaderList();
+    getValueRequestLeave();
   }, []); // Add empty dependency array to avoid warning
   const handleSelectLeader = value => {
     setLeaderValue(value);
@@ -135,8 +170,85 @@ const Leave = () => {
   const showHandleButtonModal = () => {
     setModal(true);
   };
+
+  const renderHiddenItem = ({item}) => (
+    <View style={styles.rowBack}>
+      <TouchableOpacity style={styles.editBtn}>
+        <Text style={styles.btnTitle}>{t('EDIT')}</Text>
+      </TouchableOpacity>
+      <TouchableOpacity
+        onPress={() => {
+          Alert.alert(
+            t('plzcof'),
+            t('wantDelete'),
+            [
+              {
+                text: t('dl'),
+                onPress: () => {
+                  handleDeleteLeaveRequest(item.id);
+                },
+              },
+            ],
+            {cancelable: true},
+          );
+        }}
+        style={styles.deleteBtn}>
+        <Text style={styles.btnTitle}>{t('DELETE')}</Text>
+      </TouchableOpacity>
+    </View>
+  );
+  const handleDeleteLeaveRequest = id => {
+    try {
+      console.log(`deleting leave request ${id}`);
+    } catch (error) {
+      showAlert('networkError');
+    }
+  };
+  const renderItem = ({item, index}) => (
+    <View
+      key={index}
+      style={[
+        styles.rowFront,
+        {
+          backgroundColor: item.feedback
+            ? '#D1BB9E'
+            : item.is_confirm
+            ? 'green'
+            : 'white',
+        },
+      ]}>
+      <Text style={[styles.text]}>{item.date_leave}</Text>
+      <Text style={[styles.text]}>
+        {item.is_paid ? t('off.p') : t('unPaid')}
+      </Text>
+      <Text style={[styles.text, {color: item.is_approve ? 'green' : 'red'}]}>
+        {item.is_approve ? t('approved') : t('awaiting')}
+      </Text>
+
+      {item.feedback ? <Text style={[styles.text]}>{item.feedback}</Text> : ''}
+    </View>
+  );
+
+  const onRefresh = () => {
+    setRefreshing(true);
+    getValueRequestLeave();
+    setRefreshing(false);
+  };
   return (
     <View style={styles.container}>
+      <Loader visible={isLoading} />
+      {err ? <Text style={styles.title}>{err}</Text> : ''}
+
+      <SwipeListView
+        data={leaveRequested}
+        renderItem={renderItem}
+        renderHiddenItem={renderHiddenItem}
+        leftOpenValue={75}
+        rightOpenValue={-75}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
+      />
       <Modal visible={modal}>
         <View style={styles.modalContainer}>
           <View style={styles.modalheader}>
@@ -187,9 +299,9 @@ const Leave = () => {
                 <TextInput
                   placeholder={t('enterR')}
                   multiline={true}
+                  style={{color: TEXT_COLOR}}
                   onChangeText={text => setReason(text)}
                   placeholderTextColor={TEXT_COLOR}
-                  style={{color: TEXT_COLOR}}
                 />
               </View>
             </View>
@@ -248,6 +360,55 @@ const Leave = () => {
 };
 
 const styles = StyleSheet.create({
+  rowFront: {
+    flex: 1,
+    flexDirection: 'row',
+    backgroundColor: '#FFF',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    borderBottomWidth: 1,
+    borderBottomColor: '#ccc',
+    width: Dimensions.get('screen').width * 0.95,
+    height: Dimensions.get('screen').height * 0.05,
+  },
+  btnTitle: {
+    fontSize: 17,
+    color: 'white',
+    fontWeight: '600',
+  },
+  deleteBtn: {
+    width: '20%',
+    backgroundColor: 'red',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  editBtn: {
+    width: '20%',
+    backgroundColor: 'blue',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  rowBack: {
+    flex: 1,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+
+  title: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 5,
+    color: TEXT_COLOR,
+  },
+  titleListLeaveRequest: {
+    flex: 1,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    maxHeight: Dimensions.get('screen').height * 0.05,
+    width: Dimensions.get('screen').width * 0.95,
+    backgroundColor: '#fff',
+  },
   modalheader: {
     position: 'absolute',
     right: 40,
@@ -256,7 +417,7 @@ const styles = StyleSheet.create({
   handleButtonShowModal: {
     position: 'absolute',
     backgroundColor: '#5e81ac',
-    width: Dimensions.get('screen').width * 0.5,
+    width: Dimensions.get('screen').width * 0.3,
     height: Dimensions.get('screen').height * 0.1,
     borderWidth: 0.2,
     borderRadius: 50,

@@ -10,6 +10,7 @@ import Setting from './Setting';
 import Profile from './Profile';
 import Login from './Login';
 import Leave from './Leave';
+import ReportView from './ReportView';
 
 export {
   Checkin,
@@ -24,4 +25,5 @@ export {
   Profile,
   Login,
   Leave,
+  ReportView,
 };

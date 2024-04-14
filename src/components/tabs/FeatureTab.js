@@ -94,7 +94,13 @@ const FeatureTab = () => {
 
         <View style={styles.featureRow}>
           <View style={styles.featureBtn}>
-            <Text style={styles.featureText}>{t('RpV')}</Text>
+            <Text
+              style={styles.featureText}
+              onPress={() => {
+                navigation.navigate('ReportView');
+              }}>
+              {t('RpV')}
+            </Text>
           </View>
           <View style={styles.featureBtn}>
             <Text
