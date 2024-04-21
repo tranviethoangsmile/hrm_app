@@ -65,7 +65,7 @@
   "wend": "Fim de semana",
   "user_no_check_ins": "Este usuário não possui nenhum check-in neste mês",
   "dltSuc": "Pedido excluído com sucesso",
-  "ordered": "Você já fez um pedido hoje!",
+  "ordered": "O tempo de pedido acabou ou você já pediu hoje!",
   "ordSuc": "Pedido realizado com sucesso!!",
   "noti": "Notificação!! ",
   "size": "O tamanho do arquivo excede o limite",
@@ -99,5 +99,6 @@
   "DELETE": "Excluir",
   "auth": "Você não está autorizado a usar esta função. Por favor, entre em contato com o administrador para obter ajuda.",
   "confirm_approve": "Você está confirmando a aprovação desta solicitação.",
-  "feedback": "Feedback"
+  "feedback": "Feedback",
+  "half.d": "Meio período"
 }

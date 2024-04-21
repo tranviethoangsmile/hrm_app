@@ -65,7 +65,7 @@
   "wend": "Weekend",
   "user_no_check_ins": "This user does not have any check-ins in this month",
   "dltSuc": "Order deleted successfully",
-  "ordered": "You have already placed an order today!",
+  "ordered": "YOrdering time has ended or you have already ordered today!",
   "ordSuc": "Order successfully",
   "noti": "Notification!!  ",
   "size": "File size exceeds the limit",
@@ -101,5 +101,6 @@
   "is_approve": "Approved",
   "un_approve": "Rejected",
   "confirm_approve": "You are confirming approval of this request.",
-  "feedback": "feedback"
+  "feedback": "feedback",
+  "half.d": "half day"
 }

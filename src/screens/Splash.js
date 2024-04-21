@@ -1,5 +1,5 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import {View, StyleSheet, Image, ActivityIndicator} from 'react-native';
+import {View, StyleSheet, Image, ActivityIndicator, Text} from 'react-native';
 import React, {useEffect} from 'react';
 import {useNavigation} from '@react-navigation/native';
 import {useSelector} from 'react-redux';
@@ -35,6 +35,9 @@ const Splash = () => {
       <Image source={require('../images/logo_metal.png')} style={styles.logo} />
       <View style={{height: 5}} />
       <ActivityIndicator size="large" color="#fff" />
+      <View style={styles.versionTextView}>
+        <Text style={styles.text}>version 1.0.6</Text>
+      </View>
     </View>
   );
 };
@@ -42,6 +45,13 @@ const Splash = () => {
 export default Splash;
 
 const styles = StyleSheet.create({
+  versionTextView: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 100,
+  },
+
   container: {
     flex: 1,
     backgroundColor: 'black',
@@ -52,5 +62,8 @@ const styles = StyleSheet.create({
     width: '80%',
     height: '60%',
     resizeMode: 'contain',
+  },
+  text: {
+    color: '#fff',
   },
 });

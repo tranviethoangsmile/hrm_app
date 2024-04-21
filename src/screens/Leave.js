@@ -61,6 +61,7 @@ const Leave = () => {
   const [reason, setReason] = useState('');
   const [isSelectToModal, setIsSelectToModal] = useState(false);
   const [is_paid, setIs_paid] = useState(true);
+  const [is_half, setIs_half] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [modal, setModal] = useState(false);
   const [leaveRequested, setLeaveRequested] = useState([]);
@@ -133,6 +134,7 @@ const Leave = () => {
         is_paid: is_paid,
         date_leave: moment(dayOff).format('YYYY-MM-DD'),
         position: authData?.data?.data.position,
+        is_half: is_half,
       };
       const paidleave = await axios.post(
         `${BASE_URL}${PORT}${API}${VERSION}${V1}${PAID_LEAVE}${CREATE}`,
@@ -306,15 +308,28 @@ const Leave = () => {
               </View>
             </View>
             <View style={styles.checkBoxViewContainer}>
-              <CheckBox
-                tintColors={{true: 'red', false: 'black'}}
-                value={is_paid}
-                style={[styles.checkBox]}
-                onChange={() => setIs_paid(!is_paid)}
-              />
-              <Text style={[styles.text, , {marginLeft: 20}]}>
-                {t('off.p')}
-              </Text>
+              <View>
+                <CheckBox
+                  tintColors={{true: 'red', false: 'black'}}
+                  value={is_paid}
+                  style={[styles.checkBox]}
+                  onChange={() => setIs_paid(!is_paid)}
+                />
+                <Text style={[styles.text, , {marginLeft: 20}]}>
+                  {t('off.p')}
+                </Text>
+              </View>
+              <View>
+                <CheckBox
+                  tintColors={{true: 'red', false: 'black'}}
+                  value={is_half}
+                  style={[styles.checkBox]}
+                  onChange={() => setIs_half(!is_half)}
+                />
+                <Text style={[styles.text, , {marginLeft: 20}]}>
+                  {t('half.d')}
+                </Text>
+              </View>
             </View>
             <View style={styles.receiverViewContainer}>
               <View style={styles.receiverTextView}>
@@ -412,7 +427,7 @@ const styles = StyleSheet.create({
   modalheader: {
     position: 'absolute',
     right: 40,
-    top: 100,
+    top: 90,
   },
   handleButtonShowModal: {
     position: 'absolute',
@@ -452,6 +467,7 @@ const styles = StyleSheet.create({
   checkBoxViewContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-around',
     borderBottomWidth: 0.5,
     borderRadius: 8,
     marginTop: 15,

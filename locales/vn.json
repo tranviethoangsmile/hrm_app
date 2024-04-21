@@ -65,7 +65,7 @@
   "wend": "Ngày nghỉ",
   "user_no_check_ins": "Người dùng này không có bất kỳ check-in nào trong tháng này",
   "dltSuc": "Đã xóa đơn hàng thành công",
-  "ordered": "Hôm nay bạn đã có đặt hàng rồi!",
+  "ordered": "Thời gian đặt hàng đã kết thúc hoặc Hôm nay bạn đã đặt hàng rồi!",
   "ordSuc": "Đặt hàng thành công!",
   "noti": "Thông báo!!  ",
   "size": "Kích thước tệp vượt quá giới hạn",
@@ -101,5 +101,6 @@
   "is_approve": "Đồng Ý",
   "un_approve": "Từ Chối",
   "confirm_approve": "Bạn đang xác nhận đồng ý với yêu cầu này.",
-  "feedback": "Phản hồi"
+  "feedback": "Phản hồi",
+  "half.d": "1/2 ngày"
 }
