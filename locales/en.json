@@ -102,5 +102,7 @@
   "un_approve": "Rejected",
   "confirm_approve": "You are confirming approval of this request.",
   "feedback": "feedback",
-  "half.d": "half day"
+  "half.d": "half day",
+  "inventory": "inventory",
+  "dailyRP": "Daily Report"
 }

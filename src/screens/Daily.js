@@ -1,5 +1,5 @@
 /* eslint-disable no-alert */
-import React, {useState} from 'react';
+import React, {useState, useEffect} from 'react';
 import {
   View,
   Text,
@@ -7,13 +7,32 @@ import {
   Image,
   TouchableOpacity,
   TextInput,
+  Alert,
+  Modal,
+  Dimensions,
 } from 'react-native';
+import {useSelector} from 'react-redux';
 import DailyModal from '../components/DailyModal';
 import {TEXT_COLOR, THEME_COLOR, BG_COLOR} from '../utils/Colors';
 import {useNavigation} from '@react-navigation/native';
+import CheckBox from '@react-native-community/checkbox';
+import moment from 'moment';
+import {useTranslation} from 'react-i18next';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import i18next from '../../services/i18next';
+import Icon from 'react-native-vector-icons/FontAwesome';
 
 const Daily = () => {
+  const {t} = useTranslation();
+  const authData = useSelector(state => state.auth);
+  const today = moment().toDate();
   const navigation = useNavigation();
+  const getLanguage = async () => {
+    return await AsyncStorage.getItem('Language');
+  };
+  const showAlert = message => {
+    Alert.alert(t('noti'), t(message));
+  };
   const listProduct = [
     {label: 'D66_5', value: '1.08'},
     {label: 'D66_6', value: '1.08'},
@@ -35,23 +54,43 @@ const Daily = () => {
     {label: 'A', value: 'A'},
     {label: 'B', value: 'A'},
   ];
+  const [isShowModalSendReport, setShowModalSendReport] = useState(false);
   const [isModalProductChoiceVisible, setIsModalProductChoiceVisible] =
     useState(false);
   const [shift, setShift] = useState('');
-  const [operatorHistory, setOperatiorHistory] = useState('');
   const [productName, setProductName] = useState('');
   const [productValue, setProductValue] = useState('');
+  const [operator_history, setOperator_history] = useState('');
+  const [quantity, setQuantity] = useState(0);
+
   const [quatity, setQuatity] = useState(0);
   const [fisrtProduct, setFisrtProduct] = useState(0);
   const [temperature, setTemperature] = useState(0);
   const [error, setError] = useState(0);
-  const [shutdown, setShutdown] = useState(0);
+  const [shutdown_time, setShutdown_time] = useState(0);
   const [timeWork, setTimeWork] = useState(0);
   const [percent, setPercent] = useState(0);
   const [errPercemt, setErrPercent] = useState(0);
   const [fisrtPercent, setFisrtPercent] = useState(0);
   const [tempPercent, setTempPercent] = useState(0);
 
+  const handleSendDailyReport = async () => {
+    try {
+      const field = {
+        product: productName,
+        user_id: authData?.data?.data?.id,
+        department_id: authData?.data?.data?.department_id,
+        date: moment(today).format('YYYY-MM-DD'),
+        shift: shift,
+        quantity: quantity,
+        operated_time: timeWork,
+        shutdown_time: shutdown_time,
+        operator_history: operator_history,
+      };
+    } catch (error) {
+      showAlert('contactAdmin');
+    }
+  };
   const handleClickChoiceProduct = product => {
     setProductName(product.label);
     setProductValue(product.value);
@@ -63,7 +102,7 @@ const Daily = () => {
     } else {
       let per =
         ((parseFloat(quatity) * parseFloat(productValue)) /
-          (parseFloat(timeWork) - parseFloat(shutdown))) *
+          (parseFloat(timeWork) - parseFloat(shutdown_time))) *
         100;
       let errPer = (parseFloat(error) / parseFloat(quatity)) * 100;
       let firstPer = (parseFloat(fisrtProduct) / parseFloat(quatity)) * 100;
@@ -76,8 +115,18 @@ const Daily = () => {
   };
 
   const handleCancel = () => {
-    navigation.goBack();
+    setShowModalSendReport(!isShowModalSendReport);
+    // navigation.goBack();
   };
+  useEffect(() => {
+    const checkLanguage = async () => {
+      const lang = await getLanguage();
+      if (lang != null) {
+        i18next.changeLanguage(lang);
+      }
+    };
+    checkLanguage();
+  }, []);
 
   return (
     <View style={styles.container}>
@@ -101,7 +150,6 @@ const Daily = () => {
           onProductSelected={handleClickChoiceProduct}
         />
       </View>
-
       <View style={styles.quatityProduct}>
         <Text style={styles.text}>Quantity:</Text>
         <TextInput
@@ -112,7 +160,6 @@ const Daily = () => {
           }}
         />
       </View>
-
       <View style={styles.quatityProduct}>
         <Text style={styles.text}>Low Temp:</Text>
         <TextInput
@@ -123,7 +170,6 @@ const Daily = () => {
           }}
         />
       </View>
-
       <View style={styles.quatityProduct}>
         <Text style={styles.text}>Hight Temp:</Text>
         <TextInput
@@ -134,7 +180,6 @@ const Daily = () => {
           }}
         />
       </View>
-
       <View style={styles.quatityProduct}>
         <Text style={styles.text}>Errors:</Text>
         <TextInput
@@ -145,18 +190,16 @@ const Daily = () => {
           }}
         />
       </View>
-
       <View style={styles.quatityProduct}>
-        <Text style={styles.text}>Shutdown:</Text>
+        <Text style={styles.text}>shutdown_time:</Text>
         <TextInput
           style={styles.textInput}
           keyboardType="number-pad"
           onChangeText={txt => {
-            setShutdown(txt);
+            setShutdown_time(txt);
           }}
         />
       </View>
-
       <View style={styles.quatityProduct}>
         <Text style={styles.text}>Time Work:</Text>
         <TextInput
@@ -167,7 +210,6 @@ const Daily = () => {
           }}
         />
       </View>
-
       <View style={styles.resulView}>
         <Text style={[styles.text, styles.resultText]}>Percent: {percent}</Text>
         <Text style={[styles.text, styles.resultText]}>
@@ -180,7 +222,6 @@ const Daily = () => {
           Errors: {errPercemt}
         </Text>
       </View>
-
       <View style={styles.handleBtn}>
         <TouchableOpacity onPress={handleCal} style={styles.btnCal}>
           <Text style={styles.btnText}>Calculate</Text>
@@ -190,6 +231,23 @@ const Daily = () => {
           <Text style={styles.btnText}>Cancel</Text>
         </TouchableOpacity>
       </View>
+      <Modal animationType="none" transparent visible={isShowModalSendReport}>
+        <View style={styles.modalSenReportContainer}>
+          <View style={styles.cancelModal}>
+            <TouchableOpacity
+              onPress={() => {
+                setShowModalSendReport(!isShowModalSendReport);
+              }}>
+              <Icon name="times" color={THEME_COLOR} size={30} />
+            </TouchableOpacity>
+          </View>
+          <View style={styles.modalContent}>
+            <View style={styles.modalTile}>
+              <Text style={styles.text}>{t('dailyRP')}</Text>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -197,6 +255,29 @@ const Daily = () => {
 export default Daily;
 
 const styles = StyleSheet.create({
+  modalTile: {
+    borderBottomWidth: 1,
+    borderBottomColor: 'gray',
+    padding: 5,
+  },
+  cancelModal: {
+    position: 'absolute',
+    top: 100,
+    right: 30,
+  },
+  modalContent: {
+    width: Dimensions.get('screen').width * 0.9,
+    height: Dimensions.get('screen').height * 0.6,
+    backgroundColor: BG_COLOR,
+    borderRadius: 10,
+    padding: 10,
+  },
+  modalSenReportContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.8)',
+  },
   container: {
     flex: 1,
     padding: 20,

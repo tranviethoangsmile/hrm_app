@@ -11,6 +11,7 @@ import Profile from './Profile';
 import Login from './Login';
 import Leave from './Leave';
 import ReportView from './ReportView';
+import Report from './Report';
 
 export {
   Checkin,
@@ -26,4 +27,5 @@ export {
   Login,
   Leave,
   ReportView,
+  Report,
 };

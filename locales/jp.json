@@ -102,5 +102,7 @@
   "un_approve": "却下",
   "confirm_approve": "このリクエストの承認を確認しています。",
   "feedback": "フィードバック",
-  "half.d": "半日"
+  "half.d": "半日",
+  "inventory": "在庫",
+  "dailyRP": "日報"
 }
