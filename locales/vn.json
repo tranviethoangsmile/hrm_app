@@ -18,7 +18,7 @@
   "Up": "Đăng bài",
   "Learn": "Góc học tập",
   "RpV": "Xem báo cáo",
-  "Dai": "Hàng ngày",
+  "Dai": "Báo Cáo ngày",
   "N": "Tên",
   "Em": "Email",
   "St-c": "Mã nhân viên",
@@ -104,5 +104,14 @@
   "feedback": "Phản hồi",
   "half.d": "1/2 ngày",
   "inventory": "Hàng tồn kho",
-  "dailyRP": "Báo cáo hằng ngày"
+  "dailyRP": "Báo cáo hằng ngày",
+  "product": "Tên sản phẩm: ",
+  "A.s": "Ca A",
+  "B.s": "Ca B",
+  "quantity": "Số lương: ",
+  "operated_time": "Thời gian vận hành: ",
+  "shutdown_time": "Thời gian dừng máy: ",
+  "operator_history": "Lịch sử vận hành: ",
+  "his.operation": "Hãy ghi lại lịch sử vận hành ngày hôm nay..",
+  "not.empty": "Vui lòng không để trống.."
 }

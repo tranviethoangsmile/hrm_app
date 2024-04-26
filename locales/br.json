@@ -102,5 +102,14 @@
   "feedback": "Feedback",
   "half.d": "Meio período",
   "inventory": "Inventário",
-  "dailyRP": "Relatório diário"
+  "dailyRP": "Relatório diário",
+  "product": "Nome do produto: ",
+  "A.s": "Turno A",
+  "B.s": "Turno B",
+  "quantity": "Quantidade: ",
+  "operated_time": "Tempo de operação: ",
+  "shutdown_time": "Tempo de desligamento: ",
+  "operator_history": "Histórico do operador: ",
+  "his.operation": "Por favor, registre o histórico de operação de hoje.",
+  "not.empty": "Por favor, não deixe em branco."
 }

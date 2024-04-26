@@ -104,5 +104,14 @@
   "feedback": "feedback",
   "half.d": "half day",
   "inventory": "inventory",
-  "dailyRP": "Daily Report"
+  "dailyRP": "Daily Report",
+  "product": "Product's name: ",
+  "A.s": "Shift A",
+  "B.s": "Shift B",
+  "quantity": "Quantity: ",
+  "operated_time": "Operating time: ",
+  "shutdown_time": "Shutdown time: ",
+  "operator_history": "Operator history: ",
+  "his.operation": "Please record today's operating history.",
+  "not.empty": "Please do not leave it blank."
 }

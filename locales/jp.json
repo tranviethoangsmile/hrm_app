@@ -18,7 +18,7 @@
   "Up": "アップロード",
   "Learn": "学習",
   "RpV": "レポート表示",
-  "Dai": "日々",
+  "Dai": "日報",
   "N": "名前",
   "Em": "Eメール",
   "St-c": "スタッフコード",
@@ -104,5 +104,14 @@
   "feedback": "フィードバック",
   "half.d": "半日",
   "inventory": "在庫",
-  "dailyRP": "日報"
+  "dailyRP": "日報",
+  "product": "製品名: ",
+  "A.s": "Aシフト",
+  "B.s": "Bシフト",
+  "quantity": "数量: ",
+  "operated_time": "稼働時間: ",
+  "shutdown_time": "シャットダウン時間: ",
+  "operator_history": "オペレーター履歴: ",
+  "his.operation": "今日の運転履歴を記録してください。",
+  "not.empty": "空白にしないでください。"
 }
