@@ -23,3 +23,6 @@ export const GET_ALL_BY_FIELD = '/getallinforbyfield';
 export const DELETE_INFORMATION_BY_ID = '/deleteinformationbyid';
 export const GET_USER_WITH_DEPARTMENT_ID = '/getuserwithdepartmentid';
 export const PAID_LEAVE = '/paidleave';
+export const INVENTORY = '/inventory';
+export const GET_ALL_INVENTORTY = '/getall';
+export const DAILY_REPORT = '/dailyreport';

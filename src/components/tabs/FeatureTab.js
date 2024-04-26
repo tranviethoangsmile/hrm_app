@@ -31,7 +31,7 @@ const FeatureTab = () => {
             <Text
               style={styles.featureText}
               onPress={() => {
-                /* Handle 'Report' button press */
+                navigation.navigate('Report');
               }}>
               {t('rp')}
             </Text>
