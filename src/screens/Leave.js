@@ -86,10 +86,12 @@ const Leave = () => {
           (a, b) => new Date(b.date_leave) - new Date(a.date_leave),
         );
         setLeaveRequested(sortedPosts);
+      } else {
+        throw new Error('not.data');
       }
     } catch (error) {
       setIsLoading(false);
-      setError(t('contactAdmin'));
+      setError(t(error.message));
     }
   };
 
@@ -107,15 +109,15 @@ const Leave = () => {
       );
       if (listUser?.data?.success) {
         const formattedList = listUser?.data?.data.map(leader => ({
-          label: leader.name, // Assuming leader data has a name property
-          value: leader.id, // Assuming leader data has an id property
+          label: leader.name,
+          value: leader.id,
         }));
         setLeaderList(formattedList);
       } else {
-        showAlert('contactAdmin');
+        throw new Error('contactAdmin');
       }
     } catch (error) {
-      showAlert('networkError');
+      showAlert(error.message);
     }
   };
 
@@ -145,13 +147,16 @@ const Leave = () => {
       if (paidleave?.data?.success) {
         onRefresh();
         setIsLoading(false);
+        setModal(false);
         showAlert('success');
       } else {
         setIsLoading(false);
-        showAlert('unSuccess');
+        setModal(false);
+        throw new Error('unSuccess');
       }
     } catch (error) {
-      showAlert('networkError');
+      setModal(false);
+      showAlert(error.message);
     }
   };
 

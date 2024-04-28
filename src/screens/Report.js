@@ -2,6 +2,7 @@
 import {View, Text, Dimensions, Alert, StyleSheet} from 'react-native';
 import React, {useEffect, useState} from 'react';
 import axios from 'axios';
+import {useNavigation} from '@react-navigation/native';
 import {TEXT_COLOR, THEME_COLOR, THEME_COLOR_2} from '../utils/Colors';
 import Loader from '../components/Loader';
 import moment from 'moment';
@@ -33,6 +34,7 @@ import {
 const Report = () => {
   const {t} = useTranslation();
   const authData = useSelector(state => state.auth);
+  const navigation = useNavigation();
   const [dataInventory, setDataInventory] = useState([]);
   const getLanguage = async () => {
     return await AsyncStorage.getItem('Language');
@@ -59,7 +61,6 @@ const Report = () => {
           ...field,
         },
       );
-      console.log(inventorys?.data);
       if (inventorys?.data?.success) {
         const newData = inventorys?.data?.data.map(item => ({
           name: item.product,
@@ -70,10 +71,13 @@ const Report = () => {
         }));
         setDataInventory(newData);
       } else {
-        throw new Error(inventorys?.data?.message);
+        throw new Error('not.data');
       }
     } catch (error) {
-      showAlert('contactAdmin');
+      showAlert(error.message);
+      setTimeout(() => {
+        navigation.goBack();
+      }, 2000);
     }
   };
   useEffect(() => {
@@ -100,24 +104,55 @@ const Report = () => {
     useShadowColorFromDataset: false, // optional
   };
   return (
-    <View style={{flex: 1, marginHorizontal: 5}}>
-      <Text style={styles.text}>{t('inventory')}</Text>
-      <PieChart
-        data={dataInventory}
-        width={width}
-        height={height}
-        chartConfig={chartConfig}
-        accessor={'population'}
-        backgroundColor={'transparent'}
-        paddingLeft={'15'}
-        center={[10, 20]}
-        absolute
-      />
+    <View style={[styles.container]}>
+      <View style={[styles.inventoryView]}>
+        <Text style={styles.text}>{t('inventory')}</Text>
+        <PieChart
+          data={dataInventory}
+          width={width}
+          height={height}
+          chartConfig={chartConfig}
+          accessor={'population'}
+          backgroundColor={'transparent'}
+          paddingLeft={'15'}
+          center={[10, -25]}
+          absolute
+        />
+      </View>
+      <View style={[styles.DailyReportView]}>
+        <Text style={styles.text}>{t('Dai')}</Text>
+        <PieChart
+          data={dataInventory}
+          width={width}
+          height={height}
+          chartConfig={chartConfig}
+          accessor={'population'}
+          backgroundColor={'transparent'}
+          paddingLeft={'15'}
+          center={[10, -25]}
+          absolute
+        />
+      </View>
     </View>
   );
 };
-
+const width = Dimensions.get('screen').width;
+const height = Dimensions.get('screen').height;
 const styles = StyleSheet.create({
+  DailyReportView: {
+    width: width * 0.9,
+    maxHeight: height * 0.5,
+    alignSelf: 'center',
+  },
+  inventoryView: {
+    width: width * 0.9,
+    maxHeight: height * 0.5,
+    alignSelf: 'center',
+  },
+  container: {
+    flex: 1,
+    marginHorizontal: 5,
+  },
   text: {
     color: TEXT_COLOR,
     fontSize: 18,

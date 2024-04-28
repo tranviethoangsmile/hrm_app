@@ -63,7 +63,7 @@
   "picked success": "Thành công",
   "conf": "Bạn muốn check in hay check out?",
   "wend": "Ngày nghỉ",
-  "user_no_check_ins": "Người dùng này không có bất kỳ check-in nào trong tháng này",
+  "user_no_check_ins": "Người dùng này không có dữ liệu.",
   "dltSuc": "Đã xóa đơn hàng thành công",
   "ordered": "Thời gian đặt hàng đã kết thúc hoặc Hôm nay bạn đã đặt hàng rồi!",
   "ordSuc": "Đặt hàng thành công!",
@@ -113,5 +113,6 @@
   "shutdown_time": "Thời gian dừng máy: ",
   "operator_history": "Lịch sử vận hành: ",
   "his.operation": "Hãy ghi lại lịch sử vận hành ngày hôm nay..",
-  "not.empty": "Vui lòng không để trống.."
+  "not.empty": "Vui lòng không để trống..",
+  "not.data": "Dữ liệu trống..."
 }

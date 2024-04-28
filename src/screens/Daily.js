@@ -88,6 +88,7 @@ const Daily = () => {
     try {
       setLoader(true);
       if (operator_history === '' || shift === '') {
+        setLoader(false);
         throw new Error('not.empty');
       }
       const field = {
@@ -107,7 +108,6 @@ const Daily = () => {
           ...field,
         },
       );
-      console.log(dailyReport?.data);
       if (!dailyReport?.data?.success) {
         setLoader(false);
         throw new Error('unSuccess');

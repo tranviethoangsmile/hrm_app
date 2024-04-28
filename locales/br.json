@@ -111,5 +111,6 @@
   "shutdown_time": "Tempo de desligamento: ",
   "operator_history": "Histórico do operador: ",
   "his.operation": "Por favor, registre o histórico de operação de hoje.",
-  "not.empty": "Por favor, não deixe em branco."
+  "not.empty": "Por favor, não deixe em branco.",
+  "not.data": "Nenhum dado disponível..."
 }

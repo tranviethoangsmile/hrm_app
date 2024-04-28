@@ -113,5 +113,6 @@
   "shutdown_time": "Shutdown time: ",
   "operator_history": "Operator history: ",
   "his.operation": "Please record today's operating history.",
-  "not.empty": "Please do not leave it blank."
+  "not.empty": "Please do not leave it blank.",
+  "not.data": "No data available..."
 }

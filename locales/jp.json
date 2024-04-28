@@ -113,5 +113,6 @@
   "shutdown_time": "シャットダウン時間: ",
   "operator_history": "オペレーター履歴: ",
   "his.operation": "今日の運転履歴を記録してください。",
-  "not.empty": "空白にしないでください。"
+  "not.empty": "空白にしないでください。",
+  "not.data": "データがありません..."
 }
