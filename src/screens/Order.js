@@ -151,8 +151,7 @@ const Order = () => {
                 styles.dayHeader,
                 {
                   backgroundColor:
-                    date.format('dddd') === 'Sunday' ||
-                    date.format('dddd') === 'Saturday'
+                    date.format('dd') === 'Su' || date.format('dd') === 'Sa'
                       ? '#3b5998'
                       : '#f5f5f5',
                 },
@@ -162,19 +161,17 @@ const Order = () => {
                   styles.dayHeaderText,
                   {
                     color:
-                      date.format('dddd') === 'Sunday' ||
-                      date.format('dddd') === 'Saturday'
+                      date.format('dd') === 'Su' || date.format('dd') === 'Sa'
                         ? 'white'
                         : 'black',
                   },
                 ]}>
-                {t(date.format('dddd'))} {date.format('YYYY-MM-DD')}
+                {t(date.format('dd'))} {date.format('YYYY-MM-DD')}
               </Text>
             </View>
             <View style={styles.checkBoxContainer}>
               {['DAY', 'NIGHT'].map(check =>
-                date.format('dddd') === 'Sunday' ||
-                date.format('dddd') === 'Saturday' ? (
+                date.format('dd') === 'Su' || date.format('dd') === 'Sa' ? (
                   <View key={check} style={styles.emptyCheckBox}></View>
                 ) : (
                   <TouchableOpacity

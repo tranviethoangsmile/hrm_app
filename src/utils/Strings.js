@@ -1,8 +1,8 @@
-export const BASE_URL = 'http://192.168.0.107';
-export const PORT = ':4000';
+// export const BASE_URL = 'http://192.168.0.107';
+// export const PORT = ':4000';
 
-// export const BASE_URL = 'http://60.75.220.110';
-// export const PORT = ':8000';
+export const BASE_URL = 'http://60.75.220.110';
+export const PORT = ':8000';
 export const USER_URL = '/users';
 export const DEPARTMENT = '/departments';
 export const LOGIN_URL = '/login';
@@ -24,5 +24,5 @@ export const DELETE_INFORMATION_BY_ID = '/deleteinformationbyid';
 export const GET_USER_WITH_DEPARTMENT_ID = '/getuserwithdepartmentid';
 export const PAID_LEAVE = '/paidleave';
 export const INVENTORY = '/inventory';
-export const GET_ALL_INVENTORTY = '/getall';
+export const GET_ALL = '/getall';
 export const DAILY_REPORT = '/dailyreport';
