@@ -12,7 +12,11 @@ import {
   Dimensions,
   TouchableOpacity,
   RefreshControl,
-  FlatList,
+  KeyboardAvoidingView,
+  Platform,
+  TouchableWithoutFeedback,
+  Keyboard,
+  StatusBar,
 } from 'react-native';
 import DropDownPicker from 'react-native-dropdown-picker';
 import i18next from '../../services/i18next';
@@ -242,7 +246,11 @@ const Leave = () => {
     setRefreshing(false);
   };
   return (
-    <View style={styles.container}>
+    <KeyboardAvoidingView
+      keyboardVerticalOffset={100}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      style={styles.container}>
+      <StatusBar barStyle="dark-content" backgroundColor="#fff" />
       <Loader visible={isLoading} />
       {err ? <Text style={styles.title}>{err}</Text> : ''}
 
@@ -257,117 +265,123 @@ const Leave = () => {
         }
       />
       <Modal visible={modal}>
-        <View style={styles.modalContainer}>
-          <View style={styles.modalheader}>
-            <TouchableOpacity onPress={() => setModal(!modal)}>
-              <Icon name="times" color={THEME_COLOR} size={30} />
-            </TouchableOpacity>
-          </View>
-          <View style={styles.modalContent}>
-            <View style={styles.dayOffViewContainer}>
-              <View style={styles.dayOffTextView}>
-                <Text style={styles.text}>{t('d.off')}</Text>
-              </View>
-              <View style={styles.dayOffSelectView}>
-                <Button
-                  title={moment(dayOff).format('YYYY-MM-DD')}
-                  onPress={() => setIsSelectToModal(true)}
-                />
-              </View>
-              <Modal
-                visible={isSelectToModal}
-                transparent={true}
-                animationType="slide"
-                onRequestClose={() => setIsSelectToModal(false)}>
-                <View style={styles.modalContainer}>
-                  <View style={styles.modalContent}>
-                    <DatePicker
-                      date={dayOff}
-                      mode="date"
-                      onDateChange={handleSelectToDate}
-                      textColor={TEXT_COLOR} // Color of the selected date
-                      dayTextColor="#333" // Color of the day text
-                      monthTextColor="#333" // Color of the month text
-                      yearTextColor="#333" // Color of the year text
-                    />
-                    <Button
-                      title="Close"
-                      onPress={() => setIsSelectToModal(false)}
-                    />
-                  </View>
-                </View>
-              </Modal>
-            </View>
-            <View style={styles.reasonViewContainer}>
-              <View style={styles.reasonTextView}>
-                <Text style={styles.text}>{t('reason')}</Text>
-              </View>
-              <View style={styles.reasonInputView}>
-                <TextInput
-                  placeholder={t('enterR')}
-                  multiline={true}
-                  style={{color: TEXT_COLOR}}
-                  onChangeText={text => setReason(text)}
-                  placeholderTextColor={TEXT_COLOR}
-                />
-              </View>
-            </View>
-            <View style={styles.checkBoxViewContainer}>
-              <View>
-                <CheckBox
-                  tintColors={{true: 'red', false: 'black'}}
-                  value={is_paid}
-                  style={[styles.checkBox]}
-                  onChange={() => setIs_paid(!is_paid)}
-                />
-                <Text style={[styles.text, , {marginLeft: 20}]}>
-                  {t('off.p')}
-                </Text>
-              </View>
-              <View>
-                <CheckBox
-                  tintColors={{true: 'red', false: 'black'}}
-                  value={is_half}
-                  style={[styles.checkBox]}
-                  onChange={() => setIs_half(!is_half)}
-                />
-                <Text style={[styles.text, , {marginLeft: 20}]}>
-                  {t('half.d')}
-                </Text>
-              </View>
-            </View>
-            <View style={styles.receiverViewContainer}>
-              <View style={styles.receiverTextView}>
-                <Text style={[styles.text]}>{t('sTo')}</Text>
-              </View>
-              <View style={styles.receiverSelectView}>
-                <DropDownPicker
-                  open={open}
-                  value={value}
-                  setValue={val => setValue(val)}
-                  setOpen={() => setOpen(!open)}
-                  items={leaderList}
-                  maxHeight={300}
-                  autoScroll
-                  onChangeValue={item => handleSelectLeader(item)}
-                  placeholder={t('selectName')}
-                  placeholderStyle={{color: TEXT_COLOR}}
-                  zIndexInverse={1000}
-                  dropDownContainerStyle={{
-                    backgroundColor: '#dfdfdf',
-                  }}
-                />
-              </View>
-            </View>
-            <LinearGradient
-              style={styles.btnSendRequest}
-              colors={[THEME_COLOR, THEME_COLOR_2]}>
-              <TouchableOpacity onPress={handleRequestDayOffPaid}>
-                <Text style={[styles.text, {color: 'white'}]}>{t('Send')}</Text>
+        <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
+          <View style={styles.modalContainer}>
+            <View style={styles.modalheader}>
+              <TouchableOpacity onPress={() => setModal(!modal)}>
+                <Icon name="times" color={THEME_COLOR} size={30} />
               </TouchableOpacity>
-            </LinearGradient>
+            </View>
+            <KeyboardAvoidingView
+              keyboardVerticalOffset={100}
+              style={styles.modalContent}>
+              <View style={styles.dayOffViewContainer}>
+                <View style={styles.dayOffTextView}>
+                  <Text style={styles.text}>{t('d.off')}</Text>
+                </View>
+                <View style={styles.dayOffSelectView}>
+                  <Button
+                    title={moment(dayOff).format('YYYY-MM-DD')}
+                    onPress={() => setIsSelectToModal(true)}
+                  />
+                </View>
+                <Modal
+                  visible={isSelectToModal}
+                  transparent={true}
+                  animationType="slide"
+                  onRequestClose={() => setIsSelectToModal(false)}>
+                  <View style={styles.modalContainer}>
+                    <View style={styles.modalContent}>
+                      <DatePicker
+                        date={dayOff}
+                        mode="date"
+                        onDateChange={handleSelectToDate}
+                        textColor={TEXT_COLOR} // Color of the selected date
+                        dayTextColor="#333" // Color of the day text
+                        monthTextColor="#333" // Color of the month text
+                        yearTextColor="#333" // Color of the year text
+                      />
+                      <Button
+                        title="Close"
+                        onPress={() => setIsSelectToModal(false)}
+                      />
+                    </View>
+                  </View>
+                </Modal>
+              </View>
+              <View style={styles.reasonViewContainer}>
+                <View style={styles.reasonTextView}>
+                  <Text style={styles.text}>{t('reason')}</Text>
+                </View>
+                <View style={styles.reasonInputView}>
+                  <TextInput
+                    placeholder={t('enterR')}
+                    multiline={true}
+                    style={{color: TEXT_COLOR}}
+                    onChangeText={text => setReason(text)}
+                    placeholderTextColor={TEXT_COLOR}
+                  />
+                </View>
+              </View>
+              <View style={styles.checkBoxViewContainer}>
+                <View>
+                  <CheckBox
+                    tintColors={{true: 'red', false: 'black'}}
+                    value={is_paid}
+                    style={[styles.checkBox]}
+                    onChange={() => setIs_paid(!is_paid)}
+                  />
+                  <Text style={[styles.text, , {marginLeft: 20}]}>
+                    {t('off.p')}
+                  </Text>
+                </View>
+                <View>
+                  <CheckBox
+                    tintColors={{true: 'red', false: 'black'}}
+                    value={is_half}
+                    style={[styles.checkBox]}
+                    onChange={() => setIs_half(!is_half)}
+                  />
+                  <Text style={[styles.text, , {marginLeft: 20}]}>
+                    {t('half.d')}
+                  </Text>
+                </View>
+              </View>
+              <View style={styles.receiverViewContainer}>
+                <View style={styles.receiverTextView}>
+                  <Text style={[styles.text]}>{t('sTo')}</Text>
+                </View>
+                <View style={styles.receiverSelectView}>
+                  <DropDownPicker
+                    open={open}
+                    value={value}
+                    setValue={val => setValue(val)}
+                    setOpen={() => setOpen(!open)}
+                    items={leaderList}
+                    maxHeight={300}
+                    autoScroll
+                    onChangeValue={item => handleSelectLeader(item)}
+                    placeholder={t('selectName')}
+                    placeholderStyle={{color: TEXT_COLOR}}
+                    zIndexInverse={1000}
+                    dropDownContainerStyle={{
+                      backgroundColor: '#dfdfdf',
+                    }}
+                  />
+                </View>
+              </View>
+              <LinearGradient
+                style={styles.btnSendRequest}
+                colors={[THEME_COLOR, THEME_COLOR_2]}>
+                <TouchableOpacity onPress={handleRequestDayOffPaid}>
+                  <Text style={[styles.text, {color: 'white'}]}>
+                    {t('Send')}
+                  </Text>
+                </TouchableOpacity>
+              </LinearGradient>
+            </KeyboardAvoidingView>
           </View>
-        </View>
+        </TouchableWithoutFeedback>
       </Modal>
       <View style={styles.handleButtonShowModal}>
         <TouchableOpacity onPress={showHandleButtonModal}>
@@ -375,7 +389,7 @@ const Leave = () => {
         </TouchableOpacity>
       </View>
       <Loader visible={isLoading} />
-    </View>
+    </KeyboardAvoidingView>
   );
 };
 
@@ -463,11 +477,12 @@ const styles = StyleSheet.create({
     height: Dimensions.get('screen').height * 0.1,
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: Dimensions.get('screen').height * 0.15,
+    marginTop: Dimensions.get('screen').height * 0.01,
     borderWidth: 0.1,
     borderRadius: 8,
     alignContent: 'center',
     marginHorizontal: Dimensions.get('screen').width * 0.1,
+    zIndex: -1,
   },
   checkBoxViewContainer: {
     flexDirection: 'row',
@@ -503,6 +518,7 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 10,
     backgroundColor: '#fff',
+    justifyContent: 'center',
   },
   reasonTextView: {
     width: '20%',

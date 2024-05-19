@@ -8,6 +8,9 @@ import {
   TouchableOpacity,
   RefreshControl,
   Alert,
+  KeyboardAvoidingView,
+  Platform,
+  StatusBar,
 } from 'react-native';
 import {useSelector} from 'react-redux';
 import {SwipeListView} from 'react-native-swipe-list-view';
@@ -162,7 +165,7 @@ const Upload = () => {
             defaultMuted={true}
             videoWidth={300}
             videoHeight={200}
-            thumbnail={require('../images/thumbnail.jpg')}
+            thumbnail={require('../assets/images/thumbnail.jpg')}
           />
         ) : (
           <Image
@@ -186,7 +189,11 @@ const Upload = () => {
   );
 
   return (
-    <View style={styles.container}>
+    <KeyboardAvoidingView
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0}
+      style={styles.container}>
+      <StatusBar barStyle="dark-content" backgroundColor="#fff" />
       {err ? <Text style={styles.title}>{err}</Text> : ''}
       <SwipeListView
         data={posts}
@@ -203,7 +210,10 @@ const Upload = () => {
           setModalPostVisible(!modalPostVisible);
         }}
         style={styles.fab}>
-        <Image style={styles.postIcon} source={require('../images/post.png')} />
+        <Image
+          style={styles.postIcon}
+          source={require('../assets/images/post.png')}
+        />
       </TouchableOpacity>
       <PostInformationModal
         visible={modalPostVisible}
@@ -224,7 +234,7 @@ const Upload = () => {
         post={post}
       />
       <Loader visible={isLoading} />
-    </View>
+    </KeyboardAvoidingView>
   );
 };
 

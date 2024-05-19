@@ -1,9 +1,3 @@
-/* eslint-disable no-undef */
-/* eslint-disable no-lone-blocks */
-/* eslint-disable no-alert */
-/* eslint-disable no-unused-vars */
-/* eslint-disable react-native/no-inline-styles */
-
 import React, {useEffect, useState} from 'react';
 import {
   View,
@@ -14,6 +8,10 @@ import {
   TouchableOpacity,
   Platform,
   Alert,
+  KeyboardAvoidingView,
+  ScrollView,
+  StatusBar,
+  Keyboard,
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import axios from 'axios';
@@ -34,6 +32,7 @@ import {
 } from '../utils/Colors';
 import CustomTextInput from '../components/CustomTextInput';
 import Loader from '../components/Loader';
+import {TouchableWithoutFeedback} from 'react-native-gesture-handler';
 
 const Login = () => {
   const getLanguage = async () => {
@@ -172,59 +171,64 @@ const Login = () => {
       console.error('Error while saving login info:', error);
     }
   };
-
+  const handlePressOutsideTextInput = () => {
+    Keyboard.dismiss();
+  };
   return (
-    <View style={styles.container}>
-      <Image
-        source={require('../images/daihatsu-metal-logo.jpg')}
-        style={styles.logo}
-      />
-      <Text style={styles.welcomeText}>{t('Login w')}</Text>
+    <KeyboardAvoidingView
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      style={styles.container}>
+      <StatusBar barStyle="dark-content" backgroundColor="#fff" />
+      <TouchableWithoutFeedback onPress={handlePressOutsideTextInput}>
+        <Image
+          source={require('../assets/images/daihatsu-metal-logo.jpg')}
+          style={styles.logo}
+        />
+        <Text style={styles.welcomeText}>{t('Login w')}</Text>
 
-      <CustomTextInput
-        Icon={require('../images/user_name.png')}
-        placeholder={t('User Name')}
-        value={userName}
-        onChangeText={text => setUserName(text)}
-        isValid={badUserName === ''}
-      />
-      {badUserName !== '' && (
-        <Text style={styles.errorText}>{badUserName}</Text>
-      )}
-
-      <CustomTextInput
-        Icon={require('../images/password_icon.png')}
-        placeholder={t('Password') + '..'}
-        value={password}
-        onChangeText={text => setPassword(text)}
-        isValid={badPassword === ''}
-        secureTextEntry={!secury}
-      />
-      {badPassword !== '' && (
-        <Text style={styles.errorText}>{badPassword}</Text>
-      )}
-      <View style={styles.saveContainer}>
-        <View style={styles.checkBoxType}>
+        <CustomTextInput
+          Icon={require('../assets/images/user_name.png')}
+          placeholder={t('User Name')}
+          value={userName}
+          onChangeText={text => setUserName(text)}
+          isValid={badUserName === ''}
+        />
+        {badUserName !== '' && (
+          <Text style={styles.errorText}>{badUserName}</Text>
+        )}
+        <CustomTextInput
+          Icon={require('../assets/images/password_icon.png')}
+          placeholder={t('Password') + '..'}
+          value={password}
+          onChangeText={text => setPassword(text)}
+          isValid={badPassword === ''}
+          secureTextEntry={!secury}
+        />
+        {badPassword !== '' && (
+          <Text style={styles.errorText}>{badPassword}</Text>
+        )}
+        <View style={styles.saveContainer}>
+          <View style={styles.checkBoxType}>
+            <CheckBox
+              tintColors={{true: 'red', false: 'black'}}
+              value={secury}
+              style={styles.checkBox}
+              onChange={() => setSecury(!secury)}
+            />
+          </View>
+          <Text style={styles.saveText}>{t('Spw')}</Text>
+        </View>
+        <View style={styles.saveContainer}>
           <CheckBox
             tintColors={{true: 'red', false: 'black'}}
-            value={secury}
+            value={savePass}
             style={styles.checkBox}
-            onChange={() => setSecury(!secury)}
+            onChange={() => setSavePass(!savePass)}
           />
+          <Text style={styles.saveText}>{t('Save')}</Text>
         </View>
-        <Text style={styles.saveText}>{t('Spw')}</Text>
-      </View>
-
-      <View style={styles.saveContainer}>
-        <CheckBox
-          tintColors={{true: 'red', false: 'black'}}
-          value={savePass}
-          style={styles.checkBox}
-          onChange={() => setSavePass(!savePass)}
-        />
-        <Text style={styles.saveText}>{t('Save')}</Text>
-      </View>
-
+      </TouchableWithoutFeedback>
       <LinearGradient colors={[THEME_COLOR, THEME_COLOR_2]} style={styles.btn}>
         <TouchableOpacity onPress={handleLogin} style={styles.btn}>
           <Text style={styles.btnText}>{t('Login')}</Text>
@@ -238,20 +242,23 @@ const Login = () => {
         }}>
         {t('Fgp')}
       </Text>
-
       <Loader visible={visible} />
-    </View>
+    </KeyboardAvoidingView>
   );
 };
 
 export default Login;
 
 const styles = StyleSheet.create({
+  scrollView: {
+    flexGrow: 1,
+  },
   container: {
     flex: 1,
     backgroundColor: 'white',
     color: TEXT_COLOR,
     paddingHorizontal: 20,
+    justifyContent: 'center',
   },
   logo: {
     width: 170,
@@ -299,7 +306,7 @@ const styles = StyleSheet.create({
   saveContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 10,
+    marginVertical: 10,
   },
   saveLoginOutter: {
     width: 15,

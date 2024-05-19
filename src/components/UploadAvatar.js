@@ -105,7 +105,9 @@ const UploadAvatar = ({visible, closeModal, t, user_id, avatar_url}) => {
             <TouchableOpacity onPress={handleChoiceImage}>
               <Image
                 source={
-                  imageUri ? {uri: imageUri} : require('../images/avatar.jpg')
+                  imageUri
+                    ? {uri: imageUri}
+                    : require('../assets/images/avatar.jpg')
                 }
                 style={styles.avatar}
               />

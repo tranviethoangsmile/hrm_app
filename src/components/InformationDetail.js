@@ -35,7 +35,7 @@ const InformationDetail = ({visible, onClose, t, post}) => {
                 defaultMuted={true}
                 videoWidth={300}
                 videoHeight={200}
-                thumbnail={require('../images/thumbnail.jpg')}
+                thumbnail={require('../assets/images/thumbnail.jpg')}
               />
             ) : (
               <Image source={{uri: post.media}} style={styles.media} />

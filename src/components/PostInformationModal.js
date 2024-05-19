@@ -170,7 +170,7 @@ const PostInformationModal = ({visible, onClose, t, USER_IF, refresh}) => {
                   defaultMuted={true}
                   videoWidth={300}
                   videoHeight={200}
-                  thumbnail={require('../images/thumbnail.jpg')}
+                  thumbnail={require('../assets/images/thumbnail.jpg')}
                 />
               ) : (
                 <Image source={{uri: mediaUri}} style={styles.selectedImage} />

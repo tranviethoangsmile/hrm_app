@@ -5,7 +5,7 @@ import {
   TouchableOpacity,
   StyleSheet,
   FlatList,
-  Button,
+  StatusBar,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {useNavigation} from '@react-navigation/native';
@@ -19,6 +19,8 @@ import {
 } from '../utils/Colors';
 
 const Setting = () => {
+  const [selectedLocale, setSelectedLocale] = useState('');
+
   const {t} = useTranslation();
   const getLanguage = async () => {
     return await AsyncStorage.getItem('Language');
@@ -31,9 +33,9 @@ const Setting = () => {
       }
     };
     checkLanguage();
-  });
+  }, [selectedLocale]);
+
   const navigation = useNavigation();
-  const [selectedLocale, setSelectedLocale] = useState('');
 
   const supportedLocales = [
     {id: 'en', label: 'English'},
@@ -48,7 +50,7 @@ const Setting = () => {
       setSelectedLocale(locale);
     } catch (error) {
       console.error('Error saving language:', error);
-      // Hiển thị thông báo lỗi cho người dùng
+      // Display error message to the user
     }
   };
 
@@ -65,14 +67,19 @@ const Setting = () => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Choose Your Language</Text>
-      <FlatList
-        contentContainerStyle={styles.listContainer}
-        data={supportedLocales}
-        renderItem={renderItem}
-        keyExtractor={item => item.id}
-        extraData={selectedLocale}
-      />
+      <StatusBar barStyle="dark-content" backgroundColor="#fff" />
+      <View style={styles.tileView}>
+        <Text style={styles.title}>{t('lng')}</Text>
+      </View>
+      <View style={styles.listView}>
+        <FlatList
+          contentContainerStyle={styles.listContainer}
+          data={supportedLocales}
+          renderItem={renderItem}
+          keyExtractor={item => item.id}
+          extraData={selectedLocale}
+        />
+      </View>
       <View style={styles.buttonContainer}>
         <TouchableOpacity
           style={styles.nextButton}
@@ -86,21 +93,27 @@ const Setting = () => {
   );
 };
 
-// LanguageSelectionScreen.js
-
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
+  listView: {
+    flex: 0.4,
+    width: '100%',
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  tileView: {
+    flex: 0.1,
+    width: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  container: {
+    flex: 1,
     backgroundColor: BG_COLOR,
-    paddingHorizontal: 20,
+    flexDirection: 'column',
   },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
-    marginBottom: 20,
-    marginTop: 100,
     color: TEXT_COLOR,
   },
   listContainer: {
@@ -123,15 +136,9 @@ const styles = StyleSheet.create({
   selectedLanguage: {
     backgroundColor: THEME_COLOR,
   },
-  selectedLanguageText: {
-    color: 'white',
-  },
   buttonContainer: {
+    flex: 0.2,
     width: '100%',
-    paddingHorizontal: 20,
-    paddingBottom: 20,
-    position: 'absolute',
-    bottom: 0,
   },
   nextButton: {
     marginTop: 10,

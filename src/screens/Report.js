@@ -6,6 +6,7 @@ import {
   Alert,
   StyleSheet,
   ScrollView,
+  StatusBar,
 } from 'react-native';
 import React, {useEffect, useState} from 'react';
 import axios from 'axios';
@@ -110,8 +111,6 @@ const Report = () => {
         `${BASE_URL}${PORT}${API}${VERSION}${V1}${DAILY_REPORT}${GET_ALL}`,
         search_value,
       );
-
-      console.log(dailyReports?.data);
       if (dailyReports?.data?.success) {
         const dailyData = {};
         const newLabels = [];
@@ -150,7 +149,6 @@ const Report = () => {
         throw new Error(dailyReports?.data?.message);
       }
     } catch (error) {
-      console.log(error.message);
       showAlert(error.message);
     }
   };
@@ -208,6 +206,7 @@ const Report = () => {
   };
   return (
     <View style={[styles.container]}>
+      <StatusBar barStyle="dark-content" backgroundColor="#fff" />
       <View style={[styles.inventoryView]}>
         <Text style={styles.text}>{t('inventory')}</Text>
         <PieChart

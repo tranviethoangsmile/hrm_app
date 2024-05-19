@@ -110,9 +110,16 @@
   "B.s": "Bシフト",
   "quantity": "数量: ",
   "operated_time": "稼働時間: ",
-  "shutdown_time": "シャットダウン時間: ",
+  "shutdown_time": "区分時間: ",
   "operator_history": "オペレーター履歴: ",
   "his.operation": "今日の運転履歴を記録してください。",
   "not.empty": "空白にしないでください。",
-  "not.data": "データがありません..."
+  "not.data": "データがありません...",
+  "l.speed": "低速",
+  "h.speed": "高速",
+  "per": "パーセント",
+  "err": "エラー",
+  "cycle": "サイクル",
+  "acc": "会計",
+  "lng": "言語を選択"
 }

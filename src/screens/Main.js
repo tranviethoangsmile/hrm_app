@@ -33,7 +33,7 @@ const Main = () => {
             setSelectedTab(0);
           }}>
           <Image
-            source={require('../images/home_icon.png')}
+            source={require('../assets/images/home_icon.png')}
             style={[
               styles.btnIcon,
               {tintColor: selectedTab === 0 ? THEME_COLOR_2 : '#000'},
@@ -46,7 +46,7 @@ const Main = () => {
           }}>
           <View style={styles.checkInIcon}>
             <Image
-              source={require('../images/checkin_icon.png')}
+              source={require('../assets/images/checkin_icon.png')}
               style={[styles.btnIcon, {tintColor: '#fff'}]}
             />
           </View>
@@ -56,7 +56,7 @@ const Main = () => {
             setSelectedTab(1);
           }}>
           <Image
-            source={require('../images/features_icon.png')}
+            source={require('../assets/images/features_icon.png')}
             style={[
               styles.btnIcon,
               {tintColor: selectedTab === 1 ? THEME_COLOR_2 : '#000'},

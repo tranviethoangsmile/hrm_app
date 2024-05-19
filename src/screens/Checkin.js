@@ -1,6 +1,13 @@
 /* eslint-disable react-native/no-inline-styles */
 import React, {useEffect, useState} from 'react';
-import {View, Text, Dimensions, Alert, TouchableOpacity} from 'react-native';
+import {
+  View,
+  Text,
+  Dimensions,
+  Alert,
+  TouchableOpacity,
+  StatusBar,
+} from 'react-native';
 import {CameraScreen} from 'react-native-camera-kit';
 import moment from 'moment';
 import {useSelector} from 'react-redux';
@@ -180,6 +187,7 @@ const Checkin = () => {
 
   return (
     <View style={{flex: 1, backgroundColor: 'black'}}>
+      <StatusBar barStyle="dark-content" backgroundColor="#fff" />
       <CameraScreen
         style={{flex: 1, height: SCREEN_HEIGHT}}
         scanBarcode={true}

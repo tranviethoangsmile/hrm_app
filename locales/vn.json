@@ -114,5 +114,12 @@
   "operator_history": "Lịch sử vận hành: ",
   "his.operation": "Hãy ghi lại lịch sử vận hành ngày hôm nay..",
   "not.empty": "Vui lòng không để trống..",
-  "not.data": "Dữ liệu trống..."
+  "not.data": "Dữ liệu trống...",
+  "l.speed": "Chậm",
+  "h.speed": "Nhanh",
+  "per": "Phần trăm",
+  "err": "Lỗi",
+  "cycle": "Chu kì",
+  "acc": "Tính",
+  "lng": "Chọn ngôn ngữ"
 }

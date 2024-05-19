@@ -10,6 +10,11 @@ import {
   Alert,
   Modal,
   Dimensions,
+  Platform,
+  Keyboard,
+  KeyboardAvoidingView,
+  ScrollView,
+  StatusBar,
 } from 'react-native';
 import {
   API,
@@ -45,21 +50,31 @@ const Daily = () => {
     Alert.alert(t('noti'), t(message));
   };
   const listProduct = [
-    {label: 'D66_5', value: '1.08'},
-    {label: 'D66_6', value: '1.08'},
-    {label: 'DK05RR_1', value: '0.81'},
-    {label: 'DK05RR_2', value: '0.81'},
-    {label: 'DK05FR_1', value: '0.85'},
-    {label: 'DK05FR_2', value: '0.85'},
-    {label: 'D042', value: '0.95'},
-    {label: 'DF93_4', value: '0.82'},
-    {label: 'DF93_3', value: '0.82'},
-    {label: 'D14KRR', value: '1'},
-    {label: 'D14KFR', value: '0.8'},
-    {label: 'D67CTC', value: '0.80'},
+    {label: 'C84_BUV', value: '0.55'},
+    {label: 'D16E_COP', value: '0.42'},
+    {label: 'D637F', value: '1'},
+    {label: 'D93F_PAO_DC2', value: '0.97'},
+    {label: 'D67E_PAO', value: '0.86'},
+    {label: 'D61F_PAO_DC2', value: '0.81'},
+    {label: 'D66_DC3', value: '1.26'},
+    {label: 'DF93_4', value: '0.93'},
+    {label: 'DF93_3', value: '0.93'},
+    {label: 'D042F_PAO_DC3', value: '1.08'},
+    {label: 'D14KFR', value: '0.91'},
+    {label: 'DK05FR_1', value: '0.91'},
+    {label: 'DK05FR_2', value: '0.91'},
     {label: 'C84N', value: '1.13'},
-    {label: 'D61F', value: '0.9'},
     {label: 'C089', value: '1.13'},
+    {label: 'D860F_PAO_DC3', value: '1.26'},
+    {label: 'D67E_CTC', value: '0.80'},
+    {label: 'D66_5', value: '0.85'},
+    {label: 'D66_6', value: '0.85'},
+    {label: 'D93F_PAO_DC4', value: '1.08'},
+    {label: 'D042F_PAO_DC4', value: '0.97'},
+    {label: 'D14KRR', value: '1'},
+    {label: 'DK05RR_1', value: '0.89'},
+    {label: 'DK05RR_2', value: '0.89'},
+    {label: 'D61F_PAO_DC4', value: '0.8'},
   ];
   const [isShowModalSendReport, setShowModalSendReport] = useState(false);
   const [isModalProductChoiceVisible, setIsModalProductChoiceVisible] =
@@ -167,229 +182,263 @@ const Daily = () => {
   }, []);
 
   return (
-    <View style={styles.container}>
-      <Loader visible={loader} />
-      <View style={styles.productChoice}>
-        <Text style={styles.text}>
-          {t('product')} {productName}
-        </Text>
-        <TouchableOpacity
-          onPress={() => {
-            setIsModalProductChoiceVisible(!isModalProductChoiceVisible);
-          }}>
-          <Image
-            style={styles.arrowChoiceProduct}
-            source={require('../images/arrow_icon.png')}
-          />
-        </TouchableOpacity>
-        <DailyModal
-          products={listProduct}
-          visible={isModalProductChoiceVisible}
-          onClose={() => {
-            setIsModalProductChoiceVisible(!isModalProductChoiceVisible);
-          }}
-          onProductSelected={handleClickChoiceProduct}
-        />
-      </View>
-      <View style={styles.quatityProduct}>
-        <Text style={styles.text}>{t('quantity')}</Text>
-        <TextInput
-          style={styles.textInput}
-          keyboardType="number-pad"
-          onChangeText={txt => {
-            setQuatity(txt);
-          }}
-        />
-      </View>
-      <View style={styles.quatityProduct}>
-        <Text style={styles.text}>Low Temp:</Text>
-        <TextInput
-          style={styles.textInput}
-          keyboardType="number-pad"
-          onChangeText={txt => {
-            setFisrtProduct(txt);
-          }}
-        />
-      </View>
-      <View style={styles.quatityProduct}>
-        <Text style={styles.text}>Hight Temp:</Text>
-        <TextInput
-          style={styles.textInput}
-          keyboardType="number-pad"
-          onChangeText={txt => {
-            setTemperature(txt);
-          }}
-        />
-      </View>
-      <View style={styles.quatityProduct}>
-        <Text style={styles.text}>Errors:</Text>
-        <TextInput
-          style={styles.textInput}
-          keyboardType="number-pad"
-          onChangeText={txt => {
-            setError(txt);
-          }}
-        />
-      </View>
-      <View style={styles.quatityProduct}>
-        <Text style={styles.text}>{t('shutdown_time')}:</Text>
-        <TextInput
-          style={styles.textInput}
-          keyboardType="number-pad"
-          onChangeText={txt => {
-            setShutdown_time(txt);
-          }}
-        />
-      </View>
-      <View style={styles.quatityProduct}>
-        <Text style={styles.text}>{t('operated_time')}</Text>
-        <TextInput
-          style={styles.textInput}
-          keyboardType="number-pad"
-          onChangeText={txt => {
-            setTimeWork(txt);
-          }}
-        />
-      </View>
-      <View style={styles.resulView}>
-        <Text style={[styles.text, styles.resultText]}>Percent: {percent}</Text>
-        <Text style={[styles.text, styles.resultText]}>
-          Low Temp: {fisrtPercent}
-        </Text>
-        <Text style={[styles.text, styles.resultText]}>
-          Hight Temp: {tempPercent}
-        </Text>
-        <Text style={[styles.text, styles.resultText]}>
-          Errors: {errPercemt}
-        </Text>
-      </View>
-      <View style={styles.handleBtn}>
-        <TouchableOpacity onPress={handleCal} style={styles.btnCal}>
-          <Text style={styles.btnText}>Cal</Text>
-        </TouchableOpacity>
-        {isShowSendBtn && (
-          <TouchableOpacity
-            onPress={() => {
-              setShowModalSendReport(true);
-            }}
-            style={styles.btnCal}>
-            <Text style={styles.btnText}>{t('Send')}</Text>
-          </TouchableOpacity>
-        )}
-        <TouchableOpacity onPress={handleCancel} style={styles.btnCancel}>
-          <Text style={styles.btnText}>{t('c')}</Text>
-        </TouchableOpacity>
-      </View>
-      <Modal animationType="none" transparent visible={isShowModalSendReport}>
-        <View style={styles.modalSenReportContainer}>
-          <View style={styles.cancelModal}>
+    <KeyboardAvoidingView
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      style={styles.container}>
+      <StatusBar barStyle="dark-content" backgroundColor="#fff" />
+      <ScrollView
+        contentContainerStyle={styles.scrollView}
+        keyboardShouldPersistTaps="handled">
+        <View style={styles.container}>
+          <Loader visible={loader} />
+          <View style={styles.productChoice}>
+            <Text style={styles.text}>
+              {t('product')} {productName}
+            </Text>
             <TouchableOpacity
               onPress={() => {
-                setShowModalSendReport(!isShowModalSendReport);
+                setIsModalProductChoiceVisible(!isModalProductChoiceVisible);
               }}>
-              <Icon name="times" color={THEME_COLOR} size={30} />
+              <Image
+                style={styles.arrowChoiceProduct}
+                source={require('../assets/images/arrow_icon.png')}
+              />
+            </TouchableOpacity>
+            <DailyModal
+              products={listProduct}
+              visible={isModalProductChoiceVisible}
+              onClose={() => {
+                setIsModalProductChoiceVisible(!isModalProductChoiceVisible);
+              }}
+              onProductSelected={handleClickChoiceProduct}
+            />
+          </View>
+          <View style={styles.quatityProduct}>
+            <Text style={styles.text}>{t('quantity')}</Text>
+            <TextInput
+              style={styles.textInput}
+              keyboardType="number-pad"
+              onChangeText={txt => {
+                setQuatity(txt);
+              }}
+            />
+          </View>
+          <View style={styles.quatityProduct}>
+            <Text style={styles.text}>{t('l.speed')}:</Text>
+            <TextInput
+              style={styles.textInput}
+              keyboardType="number-pad"
+              onChangeText={txt => {
+                setFisrtProduct(txt);
+                Keyboard.dismiss();
+              }}
+            />
+          </View>
+          <View style={styles.quatityProduct}>
+            <Text style={styles.text}>{t('h.speed')}:</Text>
+            <TextInput
+              style={styles.textInput}
+              keyboardType="number-pad"
+              onChangeText={txt => {
+                setTemperature(txt);
+              }}
+            />
+          </View>
+          <View style={styles.quatityProduct}>
+            <Text style={styles.text}>{t('err')}:</Text>
+            <TextInput
+              style={styles.textInput}
+              keyboardType="number-pad"
+              onChangeText={txt => {
+                setError(txt);
+              }}
+            />
+          </View>
+          <View style={styles.quatityProduct}>
+            <Text style={styles.text}>{t('shutdown_time')}</Text>
+            <TextInput
+              style={styles.textInput}
+              keyboardType="number-pad"
+              onChangeText={txt => {
+                setShutdown_time(txt);
+              }}
+            />
+          </View>
+          <View style={styles.quatityProduct}>
+            <Text style={styles.text}>{t('operated_time')}</Text>
+            <TextInput
+              style={styles.textInput}
+              keyboardType="number-pad"
+              onChangeText={txt => {
+                setTimeWork(txt);
+              }}
+            />
+          </View>
+          <View style={styles.resulView}>
+            <View style={styles.resultViewElement}>
+              <Text style={[styles.text, styles.resultText]}>
+                {t('per')}: {percent}
+              </Text>
+            </View>
+            <View style={styles.resultViewElement}>
+              <Text style={[styles.text, styles.resultText]}>
+                {t('l.speed')}: {fisrtPercent}
+              </Text>
+            </View>
+            <View style={styles.resultViewElement}>
+              <Text style={[styles.text, styles.resultText]}>
+                {t('h.speed')}: {tempPercent}
+              </Text>
+            </View>
+            <View style={styles.resultViewElement}>
+              <Text style={[styles.text, styles.resultText]}>
+                {t('err')}: {errPercemt}
+              </Text>
+            </View>
+          </View>
+          <View style={styles.handleBtn}>
+            <TouchableOpacity onPress={handleCal} style={styles.btnCal}>
+              <Text style={styles.btnText}>{t('acc')}</Text>
+            </TouchableOpacity>
+            {isShowSendBtn && (
+              <TouchableOpacity
+                onPress={() => {
+                  setShowModalSendReport(true);
+                }}
+                style={styles.btnCal}>
+                <Text style={styles.btnText}>{t('Send')}</Text>
+              </TouchableOpacity>
+            )}
+            <TouchableOpacity onPress={handleCancel} style={styles.btnCancel}>
+              <Text style={styles.btnText}>{t('c')}</Text>
             </TouchableOpacity>
           </View>
-          <View style={styles.modalContent}>
-            <View style={styles.modalTile}>
-              <View>
-                <Text style={styles.textTitle}>{t('dailyRP')}</Text>
+          <Modal
+            animationType="none"
+            transparent
+            visible={isShowModalSendReport}>
+            <View style={styles.modalSenReportContainer}>
+              <View style={styles.cancelModal}>
+                <TouchableOpacity
+                  onPress={() => {
+                    setShowModalSendReport(!isShowModalSendReport);
+                  }}>
+                  <Icon name="times" color={THEME_COLOR} size={30} />
+                </TouchableOpacity>
               </View>
-              <View>
-                <Text style={styles.textTitle}>
-                  {moment(today).format('YYYY-MM-DD')}
-                </Text>
+              <View style={styles.modalContent}>
+                <View style={styles.modalTile}>
+                  <View>
+                    <Text style={styles.textTitle}>{t('dailyRP')}</Text>
+                  </View>
+                  <View>
+                    <Text style={styles.textTitle}>
+                      {moment(today).format('YYYY-MM-DD')}
+                    </Text>
+                  </View>
+                </View>
+                <View style={styles.modalBody}>
+                  <View style={styles.modalBodyElement}>
+                    <Text style={styles.text}>{t('product')}</Text>
+                    <Text style={styles.text}>{productName}</Text>
+                  </View>
+                  <View style={styles.modalBodyElement}>
+                    <Text style={styles.text}>{t('quantity')}</Text>
+                    <Text style={styles.text}>{quantity}</Text>
+                  </View>
+                  <View style={styles.modalBodyElement}>
+                    <CheckBox
+                      tintColors={{true: 'red', false: 'black'}}
+                      value={Acheck}
+                      style={styles.checkBox}
+                      onChange={() => {
+                        setShift('A');
+                        setAcheck(true);
+                        setBcheck(false);
+                      }}
+                    />
+                    <Text style={[styles.text, {padding: 10}]}>{t('A.s')}</Text>
+                    <CheckBox
+                      tintColors={{true: 'red', false: 'black'}}
+                      value={Bcheck}
+                      style={styles.checkBox}
+                      onChange={() => {
+                        setShift('B');
+                        setAcheck(false);
+                        setBcheck(true);
+                      }}
+                    />
+                    <Text style={[styles.text, {padding: 10}]}>{t('B.s')}</Text>
+                  </View>
+                  <View style={styles.modalBodyElement}>
+                    <Text style={styles.text}>{t('operated_time')}</Text>
+                    <Text style={styles.text}>{timeWork}</Text>
+                  </View>
+                  <View style={styles.modalBodyElement}>
+                    <Text style={styles.text}>{t('cycle')}: </Text>
+                    <Text style={styles.text}>{productValue}</Text>
+                  </View>
+                  <View style={styles.modalBodyElement}>
+                    <Text style={styles.text}>{t('shutdown_time')}</Text>
+                    <Text style={styles.text}>{shutdown_time}</Text>
+                  </View>
+                  <View
+                    style={[
+                      styles.modalBodyElement,
+                      {flexDirection: 'column'},
+                    ]}>
+                    <Text style={styles.text}>{t('operator_history')}</Text>
+                    <TextInput
+                      placeholder={t('his.operation')}
+                      placeholderTextColor={TEXT_COLOR}
+                      style={{
+                        borderWidth: 1,
+                        marginTop: 10,
+                        borderRadius: 20,
+                        padding: 5,
+                        height: 90,
+                        width: '100%',
+                        borderColor: 'black',
+                        color: TEXT_COLOR,
+                      }}
+                      multiline={true}
+                      onChangeText={text => {
+                        setOperator_history(text);
+                      }}
+                    />
+                  </View>
+                  <View style={styles.modalFooter}>
+                    <View style={[styles.btnCal, {borderRadius: 20}]}>
+                      <TouchableOpacity onPress={handleSendDailyReport}>
+                        <Icon name="send" size={30} color={BG_COLOR} />
+                      </TouchableOpacity>
+                    </View>
+                    <View style={[styles.btnCal, {borderRadius: 20}]}>
+                      <TouchableOpacity
+                        onPress={() => {
+                          setShowModalSendReport(!isShowModalSendReport);
+                        }}>
+                        <Icon name="remove" size={30} />
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                </View>
               </View>
             </View>
-            <View style={styles.modalBody}>
-              <View style={styles.modalBodyElement}>
-                <Text style={styles.text}>{t('product')}</Text>
-                <Text style={styles.text}>{productName}</Text>
-              </View>
-              <View style={styles.modalBodyElement}>
-                <Text style={styles.text}>{t('quantity')}</Text>
-                <Text style={styles.text}>{quantity}</Text>
-              </View>
-              <View style={styles.modalBodyElement}>
-                <CheckBox
-                  tintColors={{true: 'red', false: 'black'}}
-                  value={Acheck}
-                  style={styles.checkBox}
-                  onChange={() => {
-                    setShift('A');
-                    setAcheck(true);
-                    setBcheck(false);
-                  }}
-                />
-                <Text style={[styles.text, {padding: 10}]}>{t('A.s')}</Text>
-                <CheckBox
-                  tintColors={{true: 'red', false: 'black'}}
-                  value={Bcheck}
-                  style={styles.checkBox}
-                  onChange={() => {
-                    setShift('B');
-                    setAcheck(false);
-                    setBcheck(true);
-                  }}
-                />
-                <Text style={[styles.text, {padding: 10}]}>{t('B.s')}</Text>
-              </View>
-              <View style={styles.modalBodyElement}>
-                <Text style={styles.text}>{t('operated_time')}</Text>
-                <Text style={styles.text}>{timeWork}</Text>
-              </View>
-              <View style={styles.modalBodyElement}>
-                <Text style={styles.text}>{t('shutdown_time')}</Text>
-                <Text style={styles.text}>{shutdown_time}</Text>
-              </View>
-              <View
-                style={[styles.modalBodyElement, {flexDirection: 'column'}]}>
-                <Text style={styles.text}>{t('operator_history')}</Text>
-                <TextInput
-                  placeholder={t('his.operation')}
-                  placeholderTextColor={TEXT_COLOR}
-                  style={{
-                    borderWidth: 1,
-                    marginTop: 10,
-                    borderRadius: 20,
-                    padding: 5,
-                    height: 90,
-                    width: '100%',
-                    borderColor: 'black',
-                    color: TEXT_COLOR,
-                  }}
-                  multiline={true}
-                  onChangeText={text => {
-                    setOperator_history(text);
-                  }}
-                />
-              </View>
-              <View style={styles.modalFooter}>
-                <View style={[styles.btnCal, {borderRadius: 20}]}>
-                  <TouchableOpacity onPress={handleSendDailyReport}>
-                    <Icon name="send" size={30} color={BG_COLOR} />
-                  </TouchableOpacity>
-                </View>
-                <View style={[styles.btnCal, {borderRadius: 20}]}>
-                  <TouchableOpacity
-                    onPress={() => {
-                      setShowModalSendReport(!isShowModalSendReport);
-                    }}>
-                    <Icon name="remove" size={30} />
-                  </TouchableOpacity>
-                </View>
-              </View>
-            </View>
-          </View>
+          </Modal>
         </View>
-      </Modal>
-    </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 };
 
 export default Daily;
 
 const styles = StyleSheet.create({
+  resultViewElement: {
+    width: '25%',
+    padding: 10,
+  },
   modalFooter: {
     marginTop: 10,
     flexDirection: 'row',
@@ -483,15 +532,14 @@ const styles = StyleSheet.create({
     color: TEXT_COLOR,
   },
   resulView: {
-    height: 50,
+    flex: 1,
     flexDirection: 'row',
-    justifyContent: 'space-evenly',
     alignItems: 'center',
     backgroundColor: THEME_COLOR,
     borderRadius: 5,
   },
   resultText: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: 'bold',
   },
   handleBtn: {

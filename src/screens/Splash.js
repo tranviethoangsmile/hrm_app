@@ -32,7 +32,10 @@ const Splash = () => {
   }, []);
   return (
     <View style={styles.container}>
-      <Image source={require('../images/logo_metal.png')} style={styles.logo} />
+      <Image
+        source={require('../assets/images/logo_metal.png')}
+        style={styles.logo}
+      />
       <View style={{height: 5}} />
       <ActivityIndicator size="large" color="#fff" />
       <View style={styles.versionTextView}>

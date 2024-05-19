@@ -6,6 +6,7 @@ import {
   StyleSheet,
   FlatList,
   Button,
+  StatusBar,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {useNavigation} from '@react-navigation/native';
@@ -50,6 +51,7 @@ const LanguageSelectionScreen = () => {
 
   return (
     <View style={styles.container}>
+      <StatusBar barStyle="dark-content" backgroundColor="#fff" />
       <Text style={styles.title}>Choose Your Language</Text>
       <FlatList
         contentContainerStyle={styles.listContainer}

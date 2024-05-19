@@ -112,5 +112,12 @@
   "operator_history": "Histórico do operador: ",
   "his.operation": "Por favor, registre o histórico de operação de hoje.",
   "not.empty": "Por favor, não deixe em branco.",
-  "not.data": "Nenhum dado disponível..."
+  "not.data": "Nenhum dado disponível...",
+  "l.speed": "baixa velocidade",
+  "h.speed": "alta velocidade",
+  "per": "porcentagem",
+  "err": "Erros",
+  "cycle": "Ciclo",
+  "acc": "CONT",
+  "lng": "Selecionar idioma"
 }

@@ -13,6 +13,7 @@ import {
   TouchableOpacity,
   RefreshControl,
   FlatList,
+  StatusBar,
 } from 'react-native';
 import DropDownPicker from 'react-native-dropdown-picker';
 import i18next from '../../services/i18next';
@@ -230,6 +231,7 @@ const ReportView = () => {
 
   return (
     <View style={styles.container}>
+      <StatusBar barStyle="dark-content" backgroundColor="#fff" />
       <Loader visible={isLoading} />
       {err ? <Text style={styles.title}>{err}</Text> : ''}
       <SwipeListView

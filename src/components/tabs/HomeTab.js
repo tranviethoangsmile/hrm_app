@@ -1,5 +1,4 @@
-/* eslint-disable react-hooks/exhaustive-deps */
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useState, useCallback} from 'react';
 import {
   View,
   Text,
@@ -8,16 +7,20 @@ import {
   FlatList,
   RefreshControl,
   TouchableOpacity,
+  StatusBar,
 } from 'react-native';
+import {useNavigation} from '@react-navigation/native';
 import {useSelector} from 'react-redux';
-import {TEXT_COLOR, THEME_COLOR_2} from '../../utils/Colors';
+import {TEXT_COLOR, THEME_COLOR_2, THEME_COLOR} from '../../utils/Colors';
 import Control from '../Control';
+import Notifications from '../Notifications';
 import {useTranslation} from 'react-i18next';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import i18next from '../../../services/i18next';
 import VideoPlayer from 'react-native-video-player';
 import ImageViewer from 'react-native-image-zoom-viewer'; // Import ImageViewer
+import Icon from 'react-native-vector-icons/FontAwesome';
 import {
   BASE_URL,
   PORT,
@@ -29,10 +32,7 @@ import {
 } from '../../utils/Strings';
 
 const HomeTab = () => {
-  const getLanguage = async () => {
-    return await AsyncStorage.getItem('Language');
-  };
-
+  const navigation = useNavigation();
   const {t} = useTranslation();
   const [visibleControl, setVisibleControl] = useState(false);
   const authData = useSelector(state => state.auth);
@@ -40,8 +40,16 @@ const HomeTab = () => {
   const [err, setError] = useState('');
   const [posts, setPosts] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
-  const [imageZoomVisible, setImageZoomVisible] = useState(false);
-  const [zoomImageIndex, setZoomImageIndex] = useState(0);
+  const [notificationCount, setNotificationCount] = useState(5);
+  const [is_notification, setIsNotification] = useState(false);
+  const onClose = () => {
+    setVisibleControl(false);
+    setIsNotification(false);
+  };
+  const getLanguage = async () => {
+    return await AsyncStorage.getItem('Language');
+  };
+
   const get_all_information = async () => {
     try {
       const userInforString = await AsyncStorage.getItem('userInfor');
@@ -68,58 +76,51 @@ const HomeTab = () => {
     }
   };
 
-  const renderPost = ({item}) => {
-    return (
-      <View style={styles.card}>
-        <View style={styles.headerPost}>
-          <View style={styles.avatarContainer}>
-            <Image style={styles.avatar} source={{uri: item.user.avatar}} />
-          </View>
-          <View style={styles.NameAndDayContainer}>
-            <Text style={styles.nameText}>{item.user.name}</Text>
-            <Text style={styles.dateText}>{item.date}</Text>
-          </View>
+  const renderPost = ({item}) => (
+    <View style={styles.card}>
+      <StatusBar barStyle="dark-content" backgroundColor="#fff" />
+      <View style={styles.headerPost}>
+        <Image style={styles.avatar} source={{uri: item.user.avatar}} />
+        <View style={styles.nameAndDayContainer}>
+          <Text style={styles.nameText}>{item.user.name}</Text>
+          <Text style={styles.dateText}>{item.date}</Text>
         </View>
-        <View style={styles.separator}></View>
-        <Text style={styles.titleText}>{item.title}</Text>
-        <Text style={styles.content} numberOfLines={3} ellipsizeMode="tail">
-          {item.content}
-        </Text>
-        {item.content.length > 100 && (
-          <TouchableOpacity onPress={() => alert(item.content)}>
-            <Text style={{color: 'blue', marginTop: 5}}>{t('more')}</Text>
-          </TouchableOpacity>
-        )}
-        {item.is_video ? (
-          <VideoPlayer
-            autoplay={false}
-            video={{uri: item.media}}
-            defaultMuted={true}
-            videoWidth={300}
-            videoHeight={200}
-            thumbnail={require('../../images/thumbnail.jpg')}
-          />
-        ) : (
-          <TouchableOpacity
-            onPress={() => {
-              setZoomImageIndex(0); // Set the index of the image to be zoomed to 0
-              setImageZoomVisible(true); // Show the image zoom viewer
-            }}>
-            <Image source={{uri: item.media}} style={styles.media} />
-          </TouchableOpacity>
-        )}
       </View>
-    );
-  };
+      <View style={styles.separator}></View>
+      <Text style={styles.titleText}>{item.title}</Text>
+      <Text style={styles.content} numberOfLines={3} ellipsizeMode="tail">
+        {item.content}
+      </Text>
+      {item.content.length > 100 && (
+        <TouchableOpacity onPress={() => alert(item.content)}>
+          <Text style={styles.moreText}>{t('more')}</Text>
+        </TouchableOpacity>
+      )}
+      {item.is_video ? (
+        <VideoPlayer
+          autoplay={false}
+          video={{uri: item.media}}
+          defaultMuted={true}
+          videoWidth={300}
+          videoHeight={200}
+          thumbnail={require('../../assets/images/thumbnail.jpg')}
+        />
+      ) : (
+        <TouchableOpacity>
+          <Image source={{uri: item.media}} style={styles.media} />
+        </TouchableOpacity>
+      )}
+    </View>
+  );
 
   const handleControl = () => {
     setVisibleControl(!visibleControl);
   };
 
-  const onRefresh = React.useCallback(() => {
+  const onRefresh = useCallback(() => {
     setRefreshing(true);
     get_all_information().then(() => setRefreshing(false));
-  }, [userInfo]); // Update data when userInfo changes
+  }, []); // Update data when userInfo changes
 
   useEffect(() => {
     const fetchData = async () => {
@@ -143,27 +144,47 @@ const HomeTab = () => {
   return (
     <View style={styles.container}>
       <View style={styles.titleView}>
-        <Text style={styles.title}>{t('info')}</Text>
-        <TouchableOpacity onPress={handleControl}>
-          <Image
-            source={
-              userInfo.avatar
-                ? {uri: userInfo.avatar}
-                : require('../../images/avatar.jpg')
-            }
-            style={styles.avatar}
-          />
-        </TouchableOpacity>
-        <Control
-          visible={visibleControl}
-          onClose={() => {
-            setVisibleControl(!visibleControl);
-          }}
-          t={t}
-        />
+        <View style={styles.titleTextView}>
+          <Text style={styles.title}>{t('info')}</Text>
+        </View>
+        <View style={styles.notificationBellContainer}>
+          <TouchableOpacity
+            onPress={() => {
+              navigation.navigate('Notifications');
+            }}>
+            <Icon name="bell" size={25} color="white" />
+            {notificationCount > 0 && (
+              <View style={styles.notificationBadge}>
+                <Text style={styles.notificationText}>{notificationCount}</Text>
+              </View>
+            )}
+          </TouchableOpacity>
+        </View>
+        <View style={styles.titleAvatarView}>
+          <TouchableOpacity
+            onPress={() => {
+              navigation.navigate('Profile');
+            }}>
+            <Image
+              source={
+                userInfo.avatar
+                  ? {uri: userInfo.avatar}
+                  : require('../../assets/images/avatar.jpg')
+              }
+              style={[styles.avatar, {marginRight: 0}]}
+            />
+          </TouchableOpacity>
+        </View>
+        <View style={styles.titleBarsView}>
+          <TouchableOpacity onPress={handleControl}>
+            <Icon name="bars" size={40} color="white" />
+          </TouchableOpacity>
+        </View>
       </View>
+      <Control visible={visibleControl} t={t} onClose={onClose} />
+      <Notifications visible={is_notification} t={t} onClose={onClose} />
       <View style={styles.postContainer}>
-        {err ? <Text>{err}</Text> : ''}
+        {err ? <Text style={styles.errorText}>{err}</Text> : null}
         <FlatList
           data={posts}
           renderItem={renderPost}
@@ -173,26 +194,83 @@ const HomeTab = () => {
           }
         />
       </View>
-      {/* Image zoom viewer */}
-      <ImageViewer
-        imageUrls={[{url: posts[zoomImageIndex]?.media}]}
-        enableSwipeDown={true}
-        onSwipeDown={() => setImageZoomVisible(false)}
-        onCancel={() => setImageZoomVisible(false)}
-        index={0}
-        visible={imageZoomVisible}
-      />
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  content: {color: TEXT_COLOR},
-  avatarContainer: {
-    marginRight: 5,
+  container: {
+    flex: 1,
+    backgroundColor: '#f5f5f5',
+  },
+  titleBarsView: {
+    flex: 0.1,
+    marginLeft: 10,
+  },
+  titleView: {
+    width: '100%',
+    backgroundColor: THEME_COLOR_2,
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  titleTextView: {
+    flex: 1,
+  },
+  titleAvatarView: {
+    flex: 0.2,
+    alignItems: 'flex-end',
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: 'white',
+  },
+  postContainer: {
+    flex: 1,
+    paddingHorizontal: 10,
+    paddingTop: 10,
+  },
+  errorText: {
+    color: 'red',
+    textAlign: 'center',
+    marginBottom: 10,
+  },
+  card: {
+    marginVertical: 4,
+    padding: 5,
+    backgroundColor: 'white',
+    borderRadius: 8,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 4},
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
   },
   headerPost: {
     flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  avatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    marginRight: 10,
+  },
+  nameAndDayContainer: {
+    flex: 1,
+  },
+  nameText: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#333',
+  },
+  dateText: {
+    fontSize: 12,
+    color: '#999',
   },
   separator: {
     height: 1,
@@ -200,62 +278,45 @@ const styles = StyleSheet.create({
     marginVertical: 10,
   },
   titleText: {
-    alignSelf: 'center',
-    fontSize: 20,
-    fontWeight: '600',
-    color: TEXT_COLOR,
-  },
-  dateText: {
-    fontSize: 10,
-    color: TEXT_COLOR,
-  },
-  nameText: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: TEXT_COLOR,
-  },
-  container: {
-    flex: 1,
-  },
-  titleView: {
-    width: '100%',
-    height: 50,
-    backgroundColor: THEME_COLOR_2,
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    flexDirection: 'row',
-  },
-  title: {
-    fontSize: 20,
-    color: TEXT_COLOR,
+    fontSize: 16,
     fontWeight: '700',
-    marginLeft: 10,
+    color: '#333',
+    marginBottom: 5,
   },
-  avatar: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+  content: {
+    color: '#333',
+    marginBottom: 10,
   },
-  postContainer: {
-    marginHorizontal: 10,
-    marginTop: 10,
-  },
-  card: {
-    marginVertical: 10,
-    padding: 10,
-    backgroundColor: '#fff',
-    borderRadius: 8,
-    shadowColor: '#000',
-    shadowOffset: {width: 0, height: 2},
-    shadowOpacity: 0.2,
-    shadowRadius: 2,
-    elevation: 2,
+  moreText: {
+    color: 'blue',
+    marginTop: 5,
   },
   media: {
     width: '100%',
     height: 200,
     borderRadius: 8,
     marginTop: 10,
+  },
+  notificationBellContainer: {
+    flex: 0.2,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  notificationBadge: {
+    position: 'absolute',
+    right: -6,
+    top: -6,
+    backgroundColor: 'red',
+    borderRadius: 10,
+    width: 20,
+    height: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  notificationText: {
+    color: 'white',
+    fontSize: 12,
+    fontWeight: 'bold',
   },
 });
 

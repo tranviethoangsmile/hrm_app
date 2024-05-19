@@ -9,6 +9,7 @@ import {
   Alert,
   Image,
   TouchableOpacity,
+  StatusBar,
 } from 'react-native';
 import {useSelector} from 'react-redux';
 import axios from 'axios';
@@ -109,6 +110,7 @@ const Profile = () => {
 
   return (
     <View style={styles.container}>
+      <StatusBar barStyle="dark-content" backgroundColor="#fff" />
       <Card containerStyle={styles.card}>
         <View style={styles.infoViewContainer}>
           <View style={styles.avatarContainer}>
@@ -117,7 +119,7 @@ const Profile = () => {
                 source={
                   userInfo.avatar
                     ? {uri: userInfo.avatar}
-                    : require('../images/avatar.jpg')
+                    : require('../assets/images/avatar.jpg')
                 }
                 style={styles.avatar}
               />
@@ -167,7 +169,16 @@ const Profile = () => {
         {
           (userCheckin.sort((a, b) => new Date(b.date) - new Date(a.date)),
           userCheckin.map((item, index) => (
-            <View key={item.id} style={styles.tableRow}>
+            <View
+              key={item.id}
+              style={[
+                styles.tableRow,
+                {
+                  backgroundColor: item.is_paid_leave
+                    ? THEME_COLOR
+                    : 'transparent',
+                },
+              ]}>
               <Text style={styles.cellText}>{item.date}</Text>
               <Text style={styles.cellText}>{item.time_in}</Text>
               <Text style={styles.cellText}>{item.time_out}</Text>

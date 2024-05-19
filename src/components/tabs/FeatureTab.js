@@ -1,11 +1,19 @@
 /* eslint-disable no-unused-vars */
 import React, {useEffect} from 'react';
-import {View, Text, StyleSheet, ScrollView, Platform} from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  StatusBar,
+  TouchableOpacity,
+} from 'react-native';
 import {TEXT_COLOR, THEME_COLOR_2, BG_COLOR} from '../../utils/Colors';
 import {useNavigation} from '@react-navigation/native';
 import i18next from '../../../services/i18next';
 import {useTranslation} from 'react-i18next';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import Icon from 'react-native-vector-icons/Ionicons';
 
 const FeatureTab = () => {
   const getLanguage = async () => {
@@ -13,6 +21,7 @@ const FeatureTab = () => {
   };
   const {t} = useTranslation();
   const navigation = useNavigation();
+
   useEffect(() => {
     const checkLanguage = async () => {
       const lang = await getLanguage();
@@ -22,140 +31,98 @@ const FeatureTab = () => {
     };
     checkLanguage();
   }, []);
+
+  const renderFeatureButton = (iconName, label, onPress) => (
+    <TouchableOpacity style={styles.featureBtn} onPress={onPress}>
+      <Icon name={iconName} size={30} color={THEME_COLOR_2} />
+      <Text style={styles.featureText}>{label}</Text>
+    </TouchableOpacity>
+  );
+
   return (
     <View style={styles.container}>
+      <StatusBar barStyle="dark-content" backgroundColor="#fff" />
       <Text style={styles.title}>{t('Fea')}</Text>
-      <ScrollView style={styles.scrollView}>
+      <ScrollView contentContainerStyle={styles.scrollView}>
         <View style={styles.featureRow}>
-          <View style={styles.featureBtn}>
-            <Text
-              style={styles.featureText}
-              onPress={() => {
-                navigation.navigate('Report');
-              }}>
-              {t('rp')}
-            </Text>
-          </View>
-          <View style={styles.featureBtn}>
-            <Text
-              style={styles.featureText}
-              onPress={() => {
-                navigation.navigate('Order');
-              }}>
-              {t('or')}
-            </Text>
-          </View>
+          {renderFeatureButton('clipboard-outline', t('rp'), () =>
+            navigation.navigate('Report'),
+          )}
+          {renderFeatureButton('file-tray-outline', t('or'), () =>
+            navigation.navigate('Order'),
+          )}
         </View>
-
         <View style={styles.featureRow}>
-          <View style={styles.featureBtn}>
-            <Text
-              style={styles.featureText}
-              onPress={() => {
-                navigation.navigate('Ai');
-              }}>
-              {t('Ai')}
-            </Text>
-          </View>
-          <View style={styles.featureBtn}>
-            <Text style={styles.featureText}>{t('Mk')}</Text>
-          </View>
+          {renderFeatureButton('logo-octocat', t('Ai'), () =>
+            navigation.navigate('Ai'),
+          )}
+          {renderFeatureButton('school-outline', t('Mk'))}
         </View>
-
         <View style={styles.featureRow}>
-          <View style={styles.featureBtn}>
-            <Text
-              style={styles.featureText}
-              onPress={() => {
-                navigation.navigate('Leave');
-              }}>
-              {t('Lea')}
-            </Text>
-          </View>
-          <View style={styles.featureBtn}>
-            <Text style={styles.featureText}>{t('Mess')}</Text>
-          </View>
+          {renderFeatureButton('calendar-outline', t('Lea'), () =>
+            navigation.navigate('Leave'),
+          )}
+          {renderFeatureButton('chatbubbles-outline', t('Mess'))}
         </View>
-
         <View style={styles.featureRow}>
-          <View style={styles.featureBtn}>
-            <Text
-              onPress={() => {
-                navigation.navigate('Upload');
-              }}
-              style={styles.featureText}>
-              {t('Up')}
-            </Text>
-          </View>
-          <View style={styles.featureBtn}>
-            <Text style={styles.featureText}>{t('Learn')}</Text>
-          </View>
+          {renderFeatureButton('cloud-upload-outline', t('Up'), () =>
+            navigation.navigate('Upload'),
+          )}
+          {renderFeatureButton('book-outline', t('Learn'))}
         </View>
-
         <View style={styles.featureRow}>
-          <View style={styles.featureBtn}>
-            <Text
-              style={styles.featureText}
-              onPress={() => {
-                navigation.navigate('ReportView');
-              }}>
-              {t('RpV')}
-            </Text>
-          </View>
-          <View style={styles.featureBtn}>
-            <Text
-              style={styles.featureText}
-              onPress={() => {
-                navigation.navigate('Daily');
-              }}>
-              {t('Dai')}
-            </Text>
-          </View>
+          {renderFeatureButton('stats-chart-outline', t('RpV'), () =>
+            navigation.navigate('ReportView'),
+          )}
+          {renderFeatureButton('today-outline', t('Dai'), () =>
+            navigation.navigate('Daily'),
+          )}
         </View>
       </ScrollView>
     </View>
   );
 };
 
-export default FeatureTab;
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    marginHorizontal: 5,
     backgroundColor: BG_COLOR,
+    padding: 16,
   },
   title: {
-    alignSelf: 'center',
-    fontSize: 20,
-    fontWeight: '700',
-    color: THEME_COLOR_2,
-    textDecorationLine: 'underline',
-    marginBottom: 10,
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: TEXT_COLOR,
+    marginVertical: 16,
+  },
+  scrollView: {
+    flexGrow: 1,
+    justifyContent: 'center',
   },
   featureRow: {
     flexDirection: 'row',
-    justifyContent: 'space-evenly',
-    alignItems: 'center',
-    marginTop: 10,
+    justifyContent: 'space-between',
+    marginBottom: 16,
   },
   featureBtn: {
     flex: 1,
-    height: 70,
-    borderWidth: 1,
-    borderRadius: 30,
-    marginHorizontal: 5,
-    justifyContent: 'center',
+    backgroundColor: '#fff',
+    padding: 16,
+    borderRadius: 10,
     alignItems: 'center',
-    backgroundColor: THEME_COLOR_2,
-  },
-  scrollView: {
-    flex: 1,
+    justifyContent: 'center',
+    marginHorizontal: 8,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 5,
   },
   featureText: {
+    marginTop: 8,
+    fontSize: 16,
     color: TEXT_COLOR,
-    fontSize: 20,
-    fontWeight: 'bold',
-    textDecorationLine: 'underline',
   },
 });
+
+export default FeatureTab;

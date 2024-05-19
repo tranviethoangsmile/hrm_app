@@ -12,6 +12,7 @@ import Login from './Login';
 import Leave from './Leave';
 import ReportView from './ReportView';
 import Report from './Report';
+import Notifications from './Notifications';
 
 export {
   Checkin,
@@ -28,4 +29,5 @@ export {
   Leave,
   ReportView,
   Report,
+  Notifications,
 };

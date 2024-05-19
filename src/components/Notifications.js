@@ -13,7 +13,7 @@ import {TEXT_COLOR, THEME_COLOR_2} from '../utils/Colors';
 import {useDispatch} from 'react-redux';
 import {setAuthData} from '../redux/AuthSlice';
 
-const Control = ({visible, onClose, t}) => {
+const Notifications = ({visible, onClose, t}) => {
   const [isVisible, setIsvisible] = useState(visible);
   const navigation = useNavigation();
   const disPatch = useDispatch();
@@ -54,7 +54,7 @@ const Control = ({visible, onClose, t}) => {
   );
 };
 
-export default Control;
+export default Notifications;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -63,10 +63,10 @@ const styles = StyleSheet.create({
     ...Platform.select({
       ios: {
         backgroundColor: THEME_COLOR_2,
-        top: 100,
-        width: 150,
-        height: 210,
-        right: 30,
+        top: 105,
+        width: 250,
+        height: 310,
+        right: 10,
         justifyContent: 'space-around',
         alignItems: 'center',
         borderRadius: 10,

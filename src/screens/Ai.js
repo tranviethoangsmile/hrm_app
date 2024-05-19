@@ -4,13 +4,15 @@ import React, {useEffect, useState, useRef} from 'react';
 import {
   View,
   Text,
-  FlatList,
   TextInput,
   TouchableOpacity,
   StyleSheet,
   ScrollView,
-  Keyboard,
+  KeyboardAvoidingView,
   Alert,
+  SafeAreaView,
+  Platform,
+  StatusBar,
 } from 'react-native';
 import socket from '../socket.io/socket.io';
 import i18next from '../../services/i18next';
@@ -75,44 +77,50 @@ const Ai = () => {
   };
 
   return (
-    <View style={styles.container}>
-      <ScrollView
-        ref={scrollViewRef}
-        contentContainerStyle={styles.messagesContainer}
-        keyboardShouldPersistTaps="handled"
-        onContentSizeChange={() => {
-          if (scrollViewRef.current) {
-            scrollViewRef.current.scrollToEnd({animated: true});
-          }
-        }}>
-        {messages.map((item, index) => (
-          <View
-            key={index}
-            style={[
-              styles.messageContainer,
-              {
-                alignSelf: item.sent ? 'flex-end' : 'flex-start',
-                backgroundColor: item.sent ? '#4CAF50' : '#2196F3',
-              },
-            ]}>
-            <Text style={styles.messageText}>{item.text}</Text>
-          </View>
-        ))}
-      </ScrollView>
+    <SafeAreaView style={{flex: 1}}>
+      <StatusBar barStyle="dark-content" backgroundColor="#fff" />
+      <KeyboardAvoidingView
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={styles.container}>
+        <ScrollView
+          ref={scrollViewRef}
+          contentContainerStyle={styles.messagesContainer}
+          keyboardShouldPersistTaps="handled"
+          onContentSizeChange={() => {
+            if (scrollViewRef.current) {
+              scrollViewRef.current.scrollToEnd({animated: true});
+            }
+          }}>
+          {messages.map((item, index) => (
+            <View
+              key={index}
+              style={[
+                styles.messageContainer,
+                {
+                  alignSelf: item.sent ? 'flex-end' : 'flex-start',
+                  backgroundColor: item.sent ? '#4CAF50' : '#2196F3',
+                },
+              ]}>
+              <Text style={styles.messageText}>{item.text}</Text>
+            </View>
+          ))}
+        </ScrollView>
 
-      <View style={styles.inputContainer}>
-        <TextInput
-          style={styles.input}
-          placeholder={t('tymess')}
-          placeholderTextColor="#757575"
-          value={newMessage}
-          onChangeText={text => setNewMessage(text)}
-        />
-        <TouchableOpacity style={styles.sendButton} onPress={sendMessage}>
-          <Text style={styles.sendButtonText}>{t('Send')}</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
+        <View style={styles.inputContainer}>
+          <TextInput
+            style={styles.input}
+            placeholder={t('tymess')}
+            placeholderTextColor="#757575"
+            value={newMessage}
+            onChangeText={text => setNewMessage(text)}
+          />
+          <TouchableOpacity style={styles.sendButton} onPress={sendMessage}>
+            <Text style={styles.sendButtonText}>{t('Send')}</Text>
+          </TouchableOpacity>
+        </View>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 };
 
@@ -120,6 +128,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F5F5F5',
+    justifyContent: 'center',
   },
   messagesContainer: {
     flexGrow: 1,
@@ -154,6 +163,8 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     marginRight: 10,
     color: 'black', // Text color
+    backgroundColor: '#FFF', // Thêm màu nền cho TextInput
+    marginVertical: 10,
   },
   sendButton: {
     backgroundColor: '#2196F3',

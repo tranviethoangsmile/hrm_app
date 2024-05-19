@@ -114,5 +114,12 @@
   "operator_history": "Operator history: ",
   "his.operation": "Please record today's operating history.",
   "not.empty": "Please do not leave it blank.",
-  "not.data": "No data available..."
+  "not.data": "No data available...",
+  "l.speed": "Low speed",
+  "h.speed": "Hight speed",
+  "per": "Percent",
+  "err": "Errors",
+  "cycle": "Cycle",
+  "acc": "ACC",
+  "lng": "Select language"
 }

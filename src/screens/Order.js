@@ -11,6 +11,7 @@ import {
   ScrollView,
   TouchableOpacity,
   Alert,
+  StatusBar,
 } from 'react-native';
 import {useSelector} from 'react-redux';
 import axios from 'axios';
@@ -143,6 +144,7 @@ const Order = () => {
 
   return (
     <View style={styles.container}>
+      <StatusBar barStyle="dark-content" backgroundColor="#fff" />
       <ScrollView contentContainerStyle={styles.scrollViewContent}>
         {yearlyDates.map((date, index) => (
           <View key={index} style={[styles.dayContainer]}>
@@ -152,7 +154,7 @@ const Order = () => {
                 {
                   backgroundColor:
                     date.format('dd') === 'Su' || date.format('dd') === 'Sa'
-                      ? '#3b5998'
+                      ? '#257abe'
                       : '#f5f5f5',
                 },
               ]}>
@@ -183,7 +185,7 @@ const Order = () => {
                         backgroundColor:
                           selectedMap[date.format('YYYY-MM-DD')] === check ||
                           check_ordered(date, check)
-                            ? '#3b5998'
+                            ? '#257abe'
                             : 'transparent',
                         borderWidth:
                           selectedMap[date.format('YYYY-MM-DD')] === check
@@ -277,7 +279,7 @@ const styles = StyleSheet.create({
   },
   orderDetailForUser: {
     height: 70,
-    backgroundColor: '#3b5998',
+    backgroundColor: '#257abe',
     justifyContent: 'space-around',
     alignItems: 'center',
     flexDirection: 'row',
