@@ -121,5 +121,16 @@
   "err": "Errors",
   "cycle": "Cycle",
   "acc": "ACC",
-  "lng": "Select language"
+  "lng": "Select language",
+  "confirm.c": "confirmation",
+  "safety.c": "Safety Confirmation",
+  "is_safety": "Are you safe?",
+  "safety.y": "Safe",
+  "safety.n": "Unsafe",
+  "s.help": "Request for Help",
+  "at_home": "Are you at home or at the office?",
+  "y": "Yes",
+  "n": "No",
+  "can_work": "Are you able to work?",
+  "not.event": "The event has ended"
 }

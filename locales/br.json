@@ -119,5 +119,16 @@
   "err": "Erros",
   "cycle": "Ciclo",
   "acc": "CONT",
-  "lng": "Selecionar idioma"
+  "lng": "Selecionar idioma",
+  "confirm.c": "Confirmação",
+  "safety.c": "Confirmação de Segurança",
+  "is_safety": "Você está seguro?",
+  "safety.y": "Seguro",
+  "safety.n": "Inseguro",
+  "s.help": "Pedido de Ajuda",
+  "at_home": "Você está em casa ou no escritório?",
+  "y": "Sim",
+  "n": "Não",
+  "can_work": "Você pode trabalhar?",
+  "not.event": "O evento terminou"
 }

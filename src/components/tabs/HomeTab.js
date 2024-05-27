@@ -8,6 +8,7 @@ import {
   RefreshControl,
   TouchableOpacity,
   StatusBar,
+  Button,
 } from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import {useSelector} from 'react-redux';
@@ -110,6 +111,17 @@ const HomeTab = () => {
           <Image source={{uri: item.media}} style={styles.media} />
         </TouchableOpacity>
       )}
+      {item.is_event ? (
+        <TouchableOpacity
+          style={styles.safetyBtn}
+          onPress={() => {
+            navigation.navigate('Event');
+          }}>
+          <Text style={styles.buttonText}>{t('confirm.c')}</Text>
+        </TouchableOpacity>
+      ) : (
+        ''
+      )}
     </View>
   );
 
@@ -202,6 +214,27 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f5f5f5',
+  },
+  buttonText: {
+    color: 'white',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  safetyBtn: {
+    backgroundColor: '#ff6347', // Tomato color
+    paddingVertical: 15,
+    paddingHorizontal: 30,
+    borderRadius: 10,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 8,
+    },
+    shadowOpacity: 0.44,
+    shadowRadius: 10.32,
+    elevation: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   titleBarsView: {
     flex: 0.1,

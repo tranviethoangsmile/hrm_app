@@ -121,5 +121,15 @@
   "err": "Lỗi",
   "cycle": "Chu kì",
   "acc": "Tính",
-  "lng": "Chọn ngôn ngữ"
+  "lng": "Chọn ngôn ngữ",
+  "confirm.c": "xác nhận",
+  "safety.c": "Xác nhận an toàn",
+  "is_safety": "Bạn đang an toàn chứ?",
+  "safety.y": "An toàn",
+  "safety.n": "Không an toàn",
+  "s.help": "Yêu cầu giúp đỡ",
+  "at_home": "Bạn đang ở nhà hoặc ở công ty",
+  "y": "Đúng",
+  "can_work": "Bạn có thể làm việc được chứ?",
+  "not.event": "Sự kiện đã kết thúc"
 }

@@ -291,6 +291,7 @@ const styles = StyleSheet.create({
     maxHeight: height * 0.5,
     flexDirection: 'row',
     justifyContent: 'space-around',
+    marginVertical: 5,
   },
   DailyReportView: {
     width: width,

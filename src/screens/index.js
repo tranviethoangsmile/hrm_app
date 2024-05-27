@@ -13,7 +13,7 @@ import Leave from './Leave';
 import ReportView from './ReportView';
 import Report from './Report';
 import Notifications from './Notifications';
-
+import Event from './Event';
 export {
   Checkin,
   Ai,
@@ -30,4 +30,5 @@ export {
   ReportView,
   Report,
   Notifications,
+  Event,
 };

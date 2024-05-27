@@ -17,6 +17,7 @@ import {
   ReportView,
   Report,
   Notifications,
+  Event,
 } from '../screens';
 const Stack = createStackNavigator();
 const MainNavigator = () => {
@@ -87,6 +88,11 @@ const MainNavigator = () => {
         <Stack.Screen
           name="Notifications"
           component={Notifications}
+          options={{headerShown: true}}
+        />
+        <Stack.Screen
+          name="Event"
+          component={Event}
           options={{headerShown: true}}
         />
         <Stack.Screen name="Ai" component={Ai} options={{headerShown: true}} />
