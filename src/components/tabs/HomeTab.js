@@ -8,7 +8,7 @@ import {
   RefreshControl,
   TouchableOpacity,
   StatusBar,
-  Button,
+  Alert,
 } from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import {useSelector} from 'react-redux';
@@ -30,6 +30,8 @@ import {
   V1,
   INFORMATION,
   GET_ALL_BY_FIELD,
+  EVENTS,
+  GET_ALL,
 } from '../../utils/Strings';
 
 const HomeTab = () => {
@@ -43,6 +45,9 @@ const HomeTab = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [notificationCount, setNotificationCount] = useState(5);
   const [is_notification, setIsNotification] = useState(false);
+  const showAlert = message => {
+    Alert.alert(t('noti'), t(message));
+  };
   const onClose = () => {
     setVisibleControl(false);
     setIsNotification(false);
@@ -50,7 +55,20 @@ const HomeTab = () => {
   const getLanguage = async () => {
     return await AsyncStorage.getItem('Language');
   };
-
+  const get_event_detail = async () => {
+    try {
+      const res = await axios.get(
+        `${BASE_URL}${PORT}${API}${VERSION}${V1}${EVENTS}${GET_ALL}`,
+      );
+      if (res?.data?.success) {
+        navigation.navigate('Event');
+      } else {
+        showAlert('not.event');
+      }
+    } catch (error) {
+      showAlert('not.event');
+    }
+  };
   const get_all_information = async () => {
     try {
       const userInforString = await AsyncStorage.getItem('userInfor');
@@ -112,11 +130,7 @@ const HomeTab = () => {
         </TouchableOpacity>
       )}
       {item.is_event ? (
-        <TouchableOpacity
-          style={styles.safetyBtn}
-          onPress={() => {
-            navigation.navigate('Event');
-          }}>
+        <TouchableOpacity style={styles.safetyBtn} onPress={get_event_detail}>
           <Text style={styles.buttonText}>{t('confirm.c')}</Text>
         </TouchableOpacity>
       ) : (

@@ -131,5 +131,7 @@
   "at_home": "Bạn đang ở nhà hoặc ở công ty",
   "y": "Đúng",
   "can_work": "Bạn có thể làm việc được chứ?",
-  "not.event": "Sự kiện đã kết thúc"
+  "not.event": "Sự kiện đã kết thúc",
+  "isConfirm": "Tham gia sự kiện",
+  "is_checked": "Bạn đã xác nhận sự kiện này."
 }
