@@ -132,5 +132,10 @@
   "can_work": "Você pode trabalhar?",
   "not.event": "O evento terminou",
   "isConfirm": "Participar do evento",
-  "is_checked": "Você confirmou este evento."
+  "is_checked": "Você confirmou este evento.",
+  "is_impor": "Importante",
+  "event": "Evento importante",
+  "d.start": "Iniciar",
+  "d.end": "Fim",
+  "position": "Posição"
 }

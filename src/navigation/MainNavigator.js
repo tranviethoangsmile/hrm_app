@@ -18,6 +18,7 @@ import {
   Report,
   Notifications,
   Event,
+  Important,
 } from '../screens';
 const Stack = createStackNavigator();
 const MainNavigator = () => {
@@ -88,6 +89,11 @@ const MainNavigator = () => {
         <Stack.Screen
           name="Notifications"
           component={Notifications}
+          options={{headerShown: true}}
+        />
+        <Stack.Screen
+          name="Important"
+          component={Important}
           options={{headerShown: true}}
         />
         <Stack.Screen

@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import React, {useEffect, useState, useCallback} from 'react';
 import {
   View,
@@ -22,6 +23,7 @@ import i18next from '../../../services/i18next';
 import VideoPlayer from 'react-native-video-player';
 import ImageViewer from 'react-native-image-zoom-viewer'; // Import ImageViewer
 import Icon from 'react-native-vector-icons/FontAwesome';
+import PopupEvent from '../PopupEvent';
 import {
   BASE_URL,
   PORT,
@@ -33,11 +35,13 @@ import {
   EVENTS,
   GET_ALL,
 } from '../../utils/Strings';
+import Loader from '../Loader';
 
 const HomeTab = () => {
   const navigation = useNavigation();
   const {t} = useTranslation();
   const [visibleControl, setVisibleControl] = useState(false);
+  const [isVisiblePopup, setIsVisiblePopup] = useState(false);
   const authData = useSelector(state => state.auth);
   const [userInfo, setUserInfo] = useState({});
   const [err, setError] = useState('');
@@ -45,6 +49,8 @@ const HomeTab = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [notificationCount, setNotificationCount] = useState(5);
   const [is_notification, setIsNotification] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [event, setEvent] = useState({});
   const showAlert = message => {
     Alert.alert(t('noti'), t(message));
   };
@@ -55,22 +61,30 @@ const HomeTab = () => {
   const getLanguage = async () => {
     return await AsyncStorage.getItem('Language');
   };
+  const handleGoToEventScreen = () => {
+    navigation.navigate('Event');
+  };
+
   const get_event_detail = async () => {
     try {
-      const res = await axios.get(
-        `${BASE_URL}${PORT}${API}${VERSION}${V1}${EVENTS}${GET_ALL}`,
-      );
+      const url = `${BASE_URL}${PORT}${API}${VERSION}${V1}${EVENTS}${GET_ALL}`;
+
+      const res = await axios.get(url);
+
       if (res?.data?.success) {
-        navigation.navigate('Event');
-      } else {
-        showAlert('not.event');
+        setEvent(res?.data.data[0]);
+        setTimeout(() => {
+          setIsVisiblePopup(true);
+        }, 3000);
       }
     } catch (error) {
       showAlert('not.event');
     }
   };
+
   const get_all_information = async () => {
     try {
+      setIsLoading(true);
       const userInforString = await AsyncStorage.getItem('userInfor');
       const userInfor = JSON.parse(userInforString);
       const field = {
@@ -82,15 +96,19 @@ const HomeTab = () => {
         {field},
       );
       if (informations?.data?.success) {
+        setIsLoading(false);
         setError('');
         const sortedPosts = informations.data.data.sort(
           (a, b) => new Date(b.date) - new Date(a.date),
         );
         setPosts(sortedPosts);
       } else {
+        setIsLoading(false);
         setError('Not have information here');
       }
     } catch (error) {
+      setIsLoading(false);
+
       setError(error.message);
     }
   };
@@ -130,7 +148,9 @@ const HomeTab = () => {
         </TouchableOpacity>
       )}
       {item.is_event ? (
-        <TouchableOpacity style={styles.safetyBtn} onPress={get_event_detail}>
+        <TouchableOpacity
+          style={styles.safetyBtn}
+          onPress={handleGoToEventScreen}>
           <Text style={styles.buttonText}>{t('confirm.c')}</Text>
         </TouchableOpacity>
       ) : (
@@ -164,11 +184,13 @@ const HomeTab = () => {
       // Fetch information
       get_all_information();
     };
+    get_event_detail();
     fetchData();
-  }, [authData]); // Update data when authData changes
+  }, []); // Update data when authData changes
 
   return (
     <View style={styles.container}>
+      <Loader visible={isLoading} />
       <View style={styles.titleView}>
         <View style={styles.titleTextView}>
           <Text style={styles.title}>{t('info')}</Text>
@@ -176,7 +198,8 @@ const HomeTab = () => {
         <View style={styles.notificationBellContainer}>
           <TouchableOpacity
             onPress={() => {
-              navigation.navigate('Notifications');
+              showAlert('auth');
+              // navigation.navigate('Notifications'); //go to Notificaition
             }}>
             <Icon name="bell" size={25} color="white" />
             {notificationCount > 0 && (
@@ -220,6 +243,15 @@ const HomeTab = () => {
           }
         />
       </View>
+      <PopupEvent
+        visible={isVisiblePopup}
+        event={event}
+        onClose={() => {
+          setIsVisiblePopup(false);
+        }}
+        t={t}
+        navigation={navigation}
+      />
     </View>
   );
 };

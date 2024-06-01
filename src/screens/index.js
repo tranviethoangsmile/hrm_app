@@ -14,6 +14,7 @@ import ReportView from './ReportView';
 import Report from './Report';
 import Notifications from './Notifications';
 import Event from './Event';
+import Important from './Important';
 export {
   Checkin,
   Ai,
@@ -31,4 +32,5 @@ export {
   Report,
   Notifications,
   Event,
+  Important,
 };

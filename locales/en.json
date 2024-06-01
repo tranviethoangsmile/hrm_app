@@ -134,5 +134,10 @@
   "can_work": "Are you able to work?",
   "not.event": "The event has ended",
   "isConfirm": "Join the event",
-  "is_checked": "You have confirmed this event."
+  "is_checked": "You have confirmed this event.",
+  "is_impor": "Important",
+  "event": "Important event",
+  "d.start": "Start",
+  "d.end": "End",
+  "position": "Position"
 }

@@ -11,6 +11,9 @@ import {
   TextInput,
   Keyboard,
   ScrollView,
+  TouchableWithoutFeedback,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import {useSelector} from 'react-redux';
 import axios from 'axios';
@@ -41,7 +44,6 @@ import {
   SEARCH_EVENT_CHECKED,
   SEARCH_SAFETY_CHECKED,
 } from '../utils/Strings';
-import {TouchableWithoutFeedback} from 'react-native-gesture-handler';
 
 const Event = () => {
   const getLanguage = async () => {
@@ -117,11 +119,11 @@ const Event = () => {
         setEventDescription(res.data.data[0].description);
       } else {
         showAlert('not.event');
-        navigation.navigate('Main');
+        // navigation.navigate('Main');
       }
     } catch (error) {
       showAlert('not.event');
-      navigation.navigate('Main');
+      // navigation.navigate('Main');
     }
   };
   useEffect(() => {
@@ -144,7 +146,7 @@ const Event = () => {
       setUserInfo(res.data.data);
     } catch (error) {
       showAlert('contactAdmin');
-      navigation.navigate('Main');
+      // navigation.navigate('Main');
     }
   };
 
@@ -183,7 +185,7 @@ const Event = () => {
       navigation.navigate('Main');
     } catch (error) {
       showAlert(error.message);
-      navigation.navigate('Main');
+      // navigation.navigate('Main');
     }
   };
 
@@ -194,7 +196,6 @@ const Event = () => {
         event_id: event_id,
         is_confirm: is_confirm,
       };
-      console.log(field);
       const result = await axios.post(
         `${BASE_URL}${PORT}${API}${VERSION}${V1}${EVENT_CHECK}${CREATE}`,
         {
@@ -209,8 +210,13 @@ const Event = () => {
       navigation.navigate('Main');
     } catch (error) {
       showAlert('unSuccess');
-      navigation.navigate('Main');
+      // navigation.navigate('Main');
     }
+  };
+
+  const handleCheckboxSafety = () => {
+    setIs_safety(!is_safety);
+    setFeedback('');
   };
 
   useEffect(() => {
@@ -226,7 +232,10 @@ const Event = () => {
   }, []);
 
   return (
-    <View style={styles.container}>
+    <KeyboardAvoidingView
+      oardVerticalOffset={Platform.OS === 'ios' ? 100 : 0}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#fff" />
       <Card containerStyle={styles.card}>
         <View style={styles.infoViewContainer}>
@@ -249,88 +258,58 @@ const Event = () => {
           </View>
         </View>
       </Card>
-      <ScrollView>
-        {isSafetyCheckEvent ? (
-          <Card containerStyle={styles.card}>
+      {isSafetyCheckEvent ? (
+        <Card containerStyle={styles.card}>
+          <ScrollView>
             <Text style={styles.eventName}>{eventName}</Text>
-            <Text style={styles.eventDescription}>{eventDescription}</Text>
-            <TouchableWithoutFeedback
-              onPress={() => {
-                Keyboard.dismiss();
-              }}>
-              <View style={styles.section}>
-                <Text style={styles.sectionTitle}>{t('safety.c')}</Text>
-                <View style={styles.checkboxContainer}>
-                  <CheckBox
-                    tintColors={{true: THEME_COLOR, false: 'black'}}
-                    value={is_safety}
-                    onValueChange={() => {
-                      setFeedback(''), setIs_safety(!is_safety);
-                    }}
-                    style={styles.checkbox}
-                  />
-                  <Text style={styles.checkboxLabel}>{t('is_safety')}</Text>
-                </View>
-                {!is_safety && (
-                  <View style={styles.feedbackContainer}>
-                    <Text style={styles.label}>{t('s.help')}</Text>
-                    <TextInput
-                      style={styles.input}
-                      placeholder={t('feedback')}
-                      placeholderTextColor={THEME_COLOR_2}
-                      multiline
-                      numberOfLines={5}
-                      onChangeText={txt => setFeedback(txt)}
-                    />
-                  </View>
-                )}
-              </View>
-              <View style={styles.section}>
-                <Text style={styles.sectionTitle}>{t('at_home')}</Text>
-                <View style={styles.checkboxContainer}>
-                  <CheckBox
-                    tintColors={{true: THEME_COLOR, false: 'black'}}
-                    value={is_at_home}
-                    onValueChange={() => setIs_at_home(!is_at_home)}
-                    style={styles.checkbox}
-                  />
-                  <Text style={styles.checkboxLabel}>{t('y')}</Text>
-                </View>
-              </View>
-              <View style={styles.section}>
-                <Text style={styles.sectionTitle}>{t('can_work')}</Text>
-                <View style={styles.checkboxContainer}>
-                  <CheckBox
-                    tintColors={{true: THEME_COLOR, false: 'black'}}
-                    value={is_can_work}
-                    onValueChange={() => setIs_can_work(!is_can_work)}
-                    style={styles.checkbox}
-                  />
-                  <Text style={styles.checkboxLabel}>{t('y')}</Text>
-                </View>
-              </View>
-            </TouchableWithoutFeedback>
-            <View style={styles.buttonContainer}>
-              <TouchableOpacity
-                onPress={handleSafetyConfirm}
-                style={styles.button}>
-                <Text style={styles.buttonText}>{t('confirm.c')}</Text>
-              </TouchableOpacity>
+            <View style={styles.descriptionContainer}>
+              <Text style={styles.eventDescription}>{eventDescription}</Text>
             </View>
-          </Card>
-        ) : (
-          <Card containerStyle={styles.card}>
-            <Text style={styles.eventName}>{eventName}</Text>
-            <Text style={styles.eventDescription}>{eventDescription}</Text>
+
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>{t('isConfirm')}</Text>
+              <Text style={styles.sectionTitle}>{t('safety.c')}</Text>
               <View style={styles.checkboxContainer}>
                 <CheckBox
                   tintColors={{true: THEME_COLOR, false: 'black'}}
-                  value={is_confirm}
-                  onValueChange={() => {
-                    setIsconfirm(!is_confirm);
-                  }}
+                  value={is_safety}
+                  onValueChange={handleCheckboxSafety}
+                  style={styles.checkbox}
+                />
+                <Text style={styles.checkboxLabel}>{t('is_safety')}</Text>
+              </View>
+              {!is_safety && (
+                <View style={styles.feedbackContainer}>
+                  <Text style={styles.label}>{t('s.help')}</Text>
+                  <TextInput
+                    style={styles.input}
+                    placeholder={t('feedback')}
+                    placeholderTextColor={THEME_COLOR_2}
+                    multiline
+                    numberOfLines={5}
+                    onChangeText={txt => setFeedback(txt)}
+                  />
+                </View>
+              )}
+            </View>
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>{t('at_home')}</Text>
+              <View style={styles.checkboxContainer}>
+                <CheckBox
+                  tintColors={{true: THEME_COLOR, false: 'black'}}
+                  value={is_at_home}
+                  onValueChange={() => setIs_at_home(!is_at_home)}
+                  style={styles.checkbox}
+                />
+                <Text style={styles.checkboxLabel}>{t('y')}</Text>
+              </View>
+            </View>
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>{t('can_work')}</Text>
+              <View style={styles.checkboxContainer}>
+                <CheckBox
+                  tintColors={{true: THEME_COLOR, false: 'black'}}
+                  value={is_can_work}
+                  onValueChange={() => setIs_can_work(!is_can_work)}
                   style={styles.checkbox}
                 />
                 <Text style={styles.checkboxLabel}>{t('y')}</Text>
@@ -338,15 +317,41 @@ const Event = () => {
             </View>
             <View style={styles.buttonContainer}>
               <TouchableOpacity
-                onPress={handleConfirmEventCheck}
+                onPress={handleSafetyConfirm}
                 style={styles.button}>
                 <Text style={styles.buttonText}>{t('confirm.c')}</Text>
               </TouchableOpacity>
             </View>
-          </Card>
-        )}
-      </ScrollView>
-    </View>
+          </ScrollView>
+        </Card>
+      ) : (
+        <Card containerStyle={styles.card}>
+          <Text style={styles.eventName}>{eventName}</Text>
+          <Text style={styles.eventDescription}>{eventDescription}</Text>
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>{t('isConfirm')}</Text>
+            <View style={styles.checkboxContainer}>
+              <CheckBox
+                tintColors={{true: THEME_COLOR, false: 'black'}}
+                value={is_confirm}
+                onValueChange={() => {
+                  setIsconfirm(!is_confirm);
+                }}
+                style={styles.checkbox}
+              />
+              <Text style={styles.checkboxLabel}>{t('y')}</Text>
+            </View>
+          </View>
+          <View style={styles.buttonContainer}>
+            <TouchableOpacity
+              onPress={handleConfirmEventCheck}
+              style={styles.button}>
+              <Text style={styles.buttonText}>{t('confirm.c')}</Text>
+            </TouchableOpacity>
+          </View>
+        </Card>
+      )}
+    </KeyboardAvoidingView>
   );
 };
 
@@ -361,6 +366,12 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     elevation: 2,
   },
+  descriptionContainer: {
+    backgroundColor: THEME_COLOR_2,
+    borderRadius: 5,
+    padding: 10,
+    marginBottom: 10,
+  },
   buttonText: {
     color: 'white',
     textAlign: 'center',
@@ -369,16 +380,15 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-    backgroundColor: BG_COLOR,
-    paddingHorizontal: 15,
-    paddingTop: 20,
+    backgroundColor: '#fff',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   card: {
+    width: '100%',
     borderRadius: 15,
-    marginBottom: 1,
-    padding: 10,
-    backgroundColor: '#fff',
-    elevation: 2,
+    backgroundColor: BG_COLOR,
+    justifyContent: 'center',
   },
   infoViewContainer: {
     flexDirection: 'row',
@@ -386,11 +396,11 @@ const styles = StyleSheet.create({
     marginBottom: 15,
   },
   avatarContainer: {
-    marginRight: 15,
+    marginRight: 10,
   },
   avatar: {
-    width: 60,
-    height: 60,
+    width: 70,
+    height: 70,
     borderRadius: 30,
   },
   infoContainer: {
@@ -407,7 +417,7 @@ const styles = StyleSheet.create({
     marginTop: 5,
   },
   section: {
-    marginBottom: 15,
+    // marginBottom: 15,
   },
   sectionTitle: {
     fontSize: 18,
@@ -446,18 +456,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   eventName: {
-    fontSize: 20,
+    fontSize: 23,
     fontWeight: 'bold',
-    color: TEXT_COLOR,
+    color: THEME_COLOR,
     marginBottom: 5,
   },
   eventDescription: {
-    fontSize: 16,
-    color: TEXT_COLOR,
+    fontSize: 18,
+    color: 'white',
     marginBottom: 15,
-    borderWidth: 1,
     padding: 2,
-    borderRadius: 10,
+    fontWeight: '400',
   },
 });
 

@@ -134,5 +134,10 @@
   "can_work": "仕事ができますか？",
   "not.event": "イベントは終了しました",
   "isConfirm": "イベントに参加する",
-  "is_checked": "このイベントを確認しました。"
+  "is_checked": "このイベントを確認しました。",
+  "is_impor": "重要",
+  "event": "重要なイベント",
+  "d.start": "開始",
+  "d.end": "終わり",
+  "position": "ポジション"
 }

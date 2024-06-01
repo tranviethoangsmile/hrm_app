@@ -66,11 +66,13 @@ const Upload = () => {
   };
   const getInformationPostedOfUser = async () => {
     try {
+      setIsLoading(true);
       const informationPosted = await axios.post(
         `${BASE_URL}${PORT}${API}${VERSION}${V1}${INFORMATION}${GET_INFOR_OF_USER}`,
         {user_id: USER_IF.id},
       );
       if (informationPosted?.data?.success) {
+        setIsLoading(false);
         const sortedPosts = informationPosted.data.data.sort(
           (a, b) => new Date(b.date) - new Date(a.date),
         );
@@ -78,6 +80,7 @@ const Upload = () => {
         setError('');
       }
     } catch (error) {
+      setIsLoading(true);
       setError(error.message);
     }
   };
@@ -194,6 +197,7 @@ const Upload = () => {
       keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0}
       style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#fff" />
+      <Loader visible={isLoading} />
       {err ? <Text style={styles.title}>{err}</Text> : ''}
       <SwipeListView
         data={posts}

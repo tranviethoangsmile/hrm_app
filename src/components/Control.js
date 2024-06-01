@@ -32,9 +32,9 @@ const Control = ({visible, onClose, t}) => {
               style={styles.textControl}
               onPress={() => {
                 onClose();
-                navigation.navigate('Profile');
+                navigation.navigate('Important');
               }}>
-              {t('Pro')}
+              {t('is_impor')}
             </Text>
             <Text
               style={styles.textControl}

@@ -133,5 +133,10 @@
   "can_work": "Bạn có thể làm việc được chứ?",
   "not.event": "Sự kiện đã kết thúc",
   "isConfirm": "Tham gia sự kiện",
-  "is_checked": "Bạn đã xác nhận sự kiện này."
+  "is_checked": "Bạn đã xác nhận sự kiện này.",
+  "is_impor": "Quan trọng",
+  "event": "Sự kiện quan trọng",
+  "d.start": "Bắt đầu",
+  "d.end": "Kết thúc",
+  "position": "Địa điểm"
 }
