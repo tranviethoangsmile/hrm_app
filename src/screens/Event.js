@@ -376,7 +376,14 @@ const styles = StyleSheet.create({
     color: 'white',
     textAlign: 'center',
     fontWeight: 'bold',
-    fontSize: 18,
+    fontSize: 20,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 1,
+      height: 8,
+    },
+    shadowOpacity: 0.44,
+    shadowRadius: 5,
   },
   container: {
     flex: 1,

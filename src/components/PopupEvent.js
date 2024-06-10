@@ -1,4 +1,5 @@
-import React, {memo} from 'react';
+/* eslint-disable react-hooks/exhaustive-deps */
+import React, {memo, useState} from 'react';
 import {
   View,
   Text,
@@ -55,13 +56,23 @@ const PopupEvent = ({visible, event, onClose, t, navigation}) => {
             </View>
           </TouchableWithoutFeedback>
           <View style={styles.confirmBtn}>
-            <TouchableOpacity
-              onPress={() => {
-                onClose();
-                navigation.navigate('Event');
-              }}>
-              <Icon name="arrow-right" size={40} color={THEME_COLOR} />
-            </TouchableOpacity>
+            <View style={[styles.confirmBtnRemove]}>
+              <TouchableOpacity
+                onPress={() => {
+                  onClose();
+                }}>
+                <Icon name="remove" size={40} color={THEME_COLOR} />
+              </TouchableOpacity>
+            </View>
+            <View style={[styles.confirmBtnRemove]}>
+              <TouchableOpacity
+                onPress={() => {
+                  onClose();
+                  navigation.navigate('Event');
+                }}>
+                <Icon name="arrow-right" size={40} color={THEME_COLOR} />
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
       </View>
@@ -78,10 +89,12 @@ const styles = StyleSheet.create({
   },
   confirmBtn: {
     width: '100%',
-    height: 50,
-    justifyContent: 'center',
-    alignItems: 'flex-end',
+    height: 40,
     paddingRight: 10,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginHorizontal: 5,
   },
   modalView: {
     width: '95%',

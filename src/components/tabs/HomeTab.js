@@ -10,6 +10,7 @@ import {
   TouchableOpacity,
   StatusBar,
   Alert,
+  useColorScheme,
 } from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import {useSelector} from 'react-redux';
@@ -54,10 +55,13 @@ const HomeTab = () => {
   const showAlert = message => {
     Alert.alert(t('noti'), t(message));
   };
+  const isDarkMode = useColorScheme() === 'dark';
   const onClose = () => {
     setVisibleControl(false);
     setIsNotification(false);
+    setIsVisiblePopup(false);
   };
+
   const getLanguage = async () => {
     return await AsyncStorage.getItem('Language');
   };
@@ -115,7 +119,6 @@ const HomeTab = () => {
 
   const renderPost = ({item}) => (
     <View style={styles.card}>
-      <StatusBar barStyle="dark-content" backgroundColor="#fff" />
       <View style={styles.headerPost}>
         <Image style={styles.avatar} source={{uri: item.user.avatar}} />
         <View style={styles.nameAndDayContainer}>
@@ -190,6 +193,7 @@ const HomeTab = () => {
 
   return (
     <View style={styles.container}>
+      <StatusBar barStyle={isDarkMode ? 'dark-content' : 'light-content'} />
       <Loader visible={isLoading} />
       <View style={styles.titleView}>
         <View style={styles.titleTextView}>
@@ -348,13 +352,13 @@ const styles = StyleSheet.create({
     color: '#333',
   },
   dateText: {
-    fontSize: 12,
+    fontSize: 8,
     color: '#999',
   },
   separator: {
     height: 1,
     backgroundColor: '#ddd',
-    marginVertical: 10,
+    marginVertical: 5,
   },
   titleText: {
     fontSize: 16,
@@ -374,7 +378,7 @@ const styles = StyleSheet.create({
     width: '100%',
     height: 200,
     borderRadius: 8,
-    marginTop: 10,
+    marginVertical: 5,
   },
   notificationBellContainer: {
     flex: 0.2,

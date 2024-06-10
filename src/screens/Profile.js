@@ -36,6 +36,7 @@ import {
   THEME_COLOR_2,
 } from '../utils/Colors';
 import UploadAvatar from '../components/UploadAvatar';
+
 const Profile = () => {
   const getLanguage = async () => {
     return await AsyncStorage.getItem('Language');
@@ -111,7 +112,7 @@ const Profile = () => {
   return (
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#fff" />
-      <Card containerStyle={styles.card}>
+      <View>
         <View style={styles.infoViewContainer}>
           <View style={styles.avatarContainer}>
             <TouchableOpacity onPress={handleUploadAvatar}>
@@ -126,69 +127,70 @@ const Profile = () => {
             </TouchableOpacity>
           </View>
           <View style={styles.infoContainer}>
-            <Text style={[styles.label, {fontSize: 20, fontWeight: '500'}]}>
-              {userInfo.name}
-            </Text>
-            <Text style={styles.label}>{userInfo.email}</Text>
+            <Text style={styles.nameText}>{userInfo.name}</Text>
             <Text style={styles.label}>
               {userInfo.employee_id} - {userInfo.role} - {userInfo.position}
             </Text>
+            <Text style={styles.label}>{userInfo.email}</Text>
           </View>
         </View>
-      </Card>
-      <Card containerStyle={styles.card}>
-        <View style={styles.tableHeader}>
-          <Text style={styles.headerText}>{t('m')}</Text>
-          <Text style={styles.headerText}>{t('wt')}</Text>
-          <Text style={styles.headerText}>{t('ot')}</Text>
-          <Text style={styles.headerText}>{t('wend')}</Text>
+        <View style={styles.tableView}>
+          <View style={styles.tableHeader}>
+            <Text style={styles.headerText1}>{t('m')}</Text>
+            <Text style={styles.headerText1}>{t('wt')}</Text>
+            <Text style={styles.headerText1}>{t('ot')}</Text>
+            <Text style={styles.headerText1}>{t('wend')}</Text>
+          </View>
+          <View style={styles.tableRow}>
+            <Text
+              onPress={() => {
+                setIsModalVisible(!isModalVisible);
+              }}
+              style={styles.cellText1}>
+              {year}/{month}
+            </Text>
+            <Text style={styles.cellText1}>{totalWorkTime}</Text>
+            <Text style={styles.cellText1}>{totalOverTime}</Text>
+            <Text style={styles.cellText1}>{totalWorkTimeWeekend}</Text>
+          </View>
         </View>
-        <View style={styles.tableRow}>
-          <Text
-            onPress={() => {
-              setIsModalVisible(!isModalVisible);
-            }}
-            style={styles.cellText}>
-            {year}/{month}
-          </Text>
-          <Text style={styles.cellText}>{totalWorkTime}</Text>
-          <Text style={styles.cellText}>{totalOverTime}</Text>
-          <Text style={styles.cellText}>{totalWorkTimeWeekend}</Text>
-        </View>
-      </Card>
-      <Text style={styles.subtitle}>{t('c-i-h')}</Text>
-      <View style={styles.tableHeader}>
-        <Text style={styles.headerText}>{t('D')}</Text>
-        <Text style={styles.headerText}>{t('I')}</Text>
-        <Text style={styles.headerText}>{t('O')}</Text>
-        <Text style={styles.headerText}>{t('wt')}</Text>
-        <Text style={styles.headerText}>{t('S')}</Text>
-        <Text style={styles.headerText}>{t('ot')}</Text>
       </View>
-      <ScrollView>
-        {
-          (userCheckin.sort((a, b) => new Date(b.date) - new Date(a.date)),
-          userCheckin.map((item, index) => (
-            <View
-              key={item.id}
-              style={[
-                styles.tableRow,
-                {
-                  backgroundColor: item.is_paid_leave
-                    ? THEME_COLOR
-                    : 'transparent',
-                },
-              ]}>
-              <Text style={styles.cellText}>{item.date}</Text>
-              <Text style={styles.cellText}>{item.time_in}</Text>
-              <Text style={styles.cellText}>{item.time_out}</Text>
-              <Text style={styles.cellText}>{item.work_time}</Text>
-              <Text style={styles.cellText}>{t(item.work_shift)}</Text>
-              <Text style={styles.cellText}>{item.over_time}</Text>
-            </View>
-          )))
-        }
-      </ScrollView>
+      <View>
+        <View style={styles.btnSalary}>
+          <Text style={styles.subtitle}>{t('c-i-h')}</Text>
+        </View>
+        <View style={styles.tableHeader}>
+          <Text style={styles.headerText}>{t('D')}</Text>
+          <Text style={styles.headerText}>{t('I')}</Text>
+          <Text style={styles.headerText}>{t('O')}</Text>
+          <Text style={styles.headerText}>{t('wt')}</Text>
+          <Text style={styles.headerText}>{t('S')}</Text>
+          <Text style={styles.headerText}>{t('ot')}</Text>
+        </View>
+        <ScrollView>
+          {userCheckin
+            .sort((a, b) => new Date(b.date) - new Date(a.date))
+            .map(item => (
+              <View
+                key={item.id}
+                style={[
+                  styles.tableRow,
+                  {
+                    backgroundColor: item.is_paid_leave
+                      ? THEME_COLOR
+                      : 'transparent',
+                  },
+                ]}>
+                <Text style={styles.cellText}>{item.date}</Text>
+                <Text style={styles.cellText}>{item.time_in}</Text>
+                <Text style={styles.cellText}>{item.time_out}</Text>
+                <Text style={styles.cellText}>{item.work_time}</Text>
+                <Text style={styles.cellText}>{t(item.work_shift)}</Text>
+                <Text style={styles.cellText}>{item.over_time}</Text>
+              </View>
+            ))}
+        </ScrollView>
+      </View>
       <SelectDate
         visible={isModalVisible}
         onClose={() => setIsModalVisible(!isModalVisible)}
@@ -209,45 +211,76 @@ const Profile = () => {
 };
 
 const styles = StyleSheet.create({
+  btnSalary: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  tableView: {
+    flexDirection: 'column',
+    alignItems: 'center',
+    backgroundColor: THEME_COLOR_2,
+    borderBottomRightRadius: 50,
+    borderBottomLeftRadius: 50,
+  },
+  cardInfor: {
+    flex: 1,
+    width: '100%',
+    height: 40,
+  },
   card: {
     marginVertical: 5,
     padding: 10,
+    borderRadius: 10,
+    backgroundColor: '#fff',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
   },
   infoViewContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    backgroundColor: THEME_COLOR_2,
+    padding: 10,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
   },
   avatarContainer: {
-    marginRight: 10,
+    marginRight: 15,
   },
   avatar: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
+    width: 70,
+    height: 70,
+    borderRadius: 35,
   },
   infoContainer: {
     flex: 1,
   },
+  nameText: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+  },
   label: {
-    fontSize: 16,
-    color: '#333',
+    fontSize: 14,
+    color: '#E0E0E0',
+    marginTop: 5,
   },
-  info: {
-    marginBottom: 5,
-    fontSize: 16,
-    color: '#555',
-  },
-  divider: {
-    marginVertical: 5,
-  },
-
   container: {
     flex: 1,
-    backgroundColor: '#f0f0f0',
-    paddingVertical: 5,
-    paddingHorizontal: 5,
+    backgroundColor: BG_COLOR,
   },
-
   title: {
     fontSize: 24,
     fontWeight: 'bold',
@@ -255,40 +288,49 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   subtitle: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: 'bold',
-    marginVertical: 20,
+    marginVertical: 10,
     color: THEME_COLOR,
+    paddingLeft: 10,
   },
-
   tableHeader: {
     flexDirection: 'row',
-    backgroundColor: '#eee',
     paddingVertical: 10,
     paddingHorizontal: 5,
-    borderTopWidth: 1,
-    borderBottomWidth: 1,
-    borderColor: '#ccc',
   },
   headerText: {
     flex: 1,
     textAlign: 'center',
     fontWeight: 'bold',
     fontSize: 16,
-    color: '#333',
+    color: '#555',
   },
   tableRow: {
     flexDirection: 'row',
     paddingVertical: 10,
     paddingHorizontal: 5,
-    borderBottomWidth: 1,
-    borderColor: '#ccc',
   },
   cellText: {
     flex: 1,
     textAlign: 'center',
     fontSize: 16,
     color: '#555',
+    fontWeight: '600',
+  },
+  headerText1: {
+    flex: 1,
+    textAlign: 'center',
+    fontWeight: 'bold',
+    fontSize: 16,
+    color: '#F8F4E1',
+  },
+  cellText1: {
+    flex: 1,
+    textAlign: 'center',
+    fontSize: 16,
+    color: '#F8F4E1',
+    fontWeight: '600',
   },
 });
 

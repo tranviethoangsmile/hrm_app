@@ -99,7 +99,7 @@ const MainNavigator = () => {
         <Stack.Screen
           name="Event"
           component={Event}
-          options={{headerShown: true}}
+          options={{headerShown: false}}
         />
         <Stack.Screen name="Ai" component={Ai} options={{headerShown: true}} />
       </Stack.Navigator>

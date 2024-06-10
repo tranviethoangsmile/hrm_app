@@ -261,7 +261,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   logo: {
-    width: 170,
+    width: 175,
     height: 160,
     alignSelf: 'center',
     marginTop: Dimensions.get('window').height / 8,
@@ -278,6 +278,14 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     justifyContent: 'center',
     alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 2,
+      height: 6,
+    },
+    shadowOpacity: 0.5,
+    shadowRadius: 1,
+    elevation: 10,
   },
   btnText: {
     textAlign: 'center',
