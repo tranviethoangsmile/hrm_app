@@ -99,6 +99,7 @@ const Daily = () => {
   const [fisrtPercent, setFisrtPercent] = useState(0);
   const [tempPercent, setTempPercent] = useState(0);
   const [isShowSendBtn, setIsShowSendBtn] = useState(false);
+
   const handleSendDailyReport = async () => {
     try {
       setLoader(true);
@@ -125,6 +126,7 @@ const Daily = () => {
       );
       if (!dailyReport?.data?.success) {
         setLoader(false);
+        console.log(dailyReport?.data?.message);
         throw new Error('unSuccess');
       }
       setLoader(false);
@@ -230,7 +232,6 @@ const Daily = () => {
               keyboardType="number-pad"
               onChangeText={txt => {
                 setFisrtProduct(txt);
-                Keyboard.dismiss();
               }}
             />
           </View>

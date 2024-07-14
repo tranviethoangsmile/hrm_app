@@ -15,6 +15,8 @@ import Report from './Report';
 import Notifications from './Notifications';
 import Event from './Event';
 import Important from './Important';
+import Salary from './Salary';
+import PlanProduction from './PlanProduction';
 export {
   Checkin,
   Ai,
@@ -33,4 +35,6 @@ export {
   Notifications,
   Event,
   Important,
+  Salary,
+  PlanProduction,
 };

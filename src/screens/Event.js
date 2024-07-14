@@ -96,7 +96,6 @@ const Event = () => {
           user_id: user_id,
         },
       );
-      console.log(response?.data);
       if (response?.data?.success) {
         showAlert('is_checked');
         navigation.navigate('Main');

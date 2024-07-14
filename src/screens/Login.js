@@ -135,6 +135,7 @@ const Login = () => {
           ios: IosLogin,
           android: AndroidLogin,
         })();
+
         if (!login?.data?.success) {
           if (login?.data?.message === 'Password wrong...!!!') {
             setBadPassword(login?.data?.message);
@@ -146,7 +147,6 @@ const Login = () => {
             'userInfor',
             JSON.stringify(login.data.data),
           );
-
           dispatch(setAuthData(login?.data));
           setUserName('');
           setPassword('');
@@ -278,14 +278,6 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 2,
-      height: 6,
-    },
-    shadowOpacity: 0.5,
-    shadowRadius: 1,
-    elevation: 10,
   },
   btnText: {
     textAlign: 'center',

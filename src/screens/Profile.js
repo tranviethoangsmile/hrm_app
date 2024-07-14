@@ -1,6 +1,7 @@
+/* eslint-disable react-native/no-inline-styles */
 /* eslint-disable react-hooks/exhaustive-deps */
 // Profile.js
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useState, useCallback} from 'react';
 import {
   View,
   Text,
@@ -10,15 +11,18 @@ import {
   Image,
   TouchableOpacity,
   StatusBar,
+  FlatList,
+  RefreshControl,
 } from 'react-native';
 import {useSelector} from 'react-redux';
 import axios from 'axios';
 import SelectDate from '../components/SelectDate';
-import {Card} from 'react-native-elements';
 import moment from 'moment';
 import i18next from '../../services/i18next';
 import {useTranslation} from 'react-i18next';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import Icon from 'react-native-vector-icons/FontAwesome';
+import {useNavigation} from '@react-navigation/native';
 import {
   BASE_URL,
   PORT,
@@ -38,6 +42,7 @@ import {
 import UploadAvatar from '../components/UploadAvatar';
 
 const Profile = () => {
+  const navigation = useNavigation();
   const getLanguage = async () => {
     return await AsyncStorage.getItem('Language');
   };
@@ -49,6 +54,8 @@ const Profile = () => {
   const [today, setToday] = useState(moment().format('YYYY-MM-DD'));
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [isModalUpAvataVisible, setIsModalUpAvataVisible] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const [err, setError] = useState('');
 
   const year = moment(today).format('YYYY');
   const month = moment(today).format('MM');
@@ -62,6 +69,10 @@ const Profile = () => {
     (total, checkin) => total + checkin.over_time,
     0,
   );
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
+    get_checkin_of_user().then(() => setRefreshing(false));
+  }, []);
   const totalWorkTimeWeekend = userCheckin.reduce((total, checkin) => {
     if (checkin.is_weekend) {
       return total + checkin.work_time;
@@ -81,10 +92,43 @@ const Profile = () => {
     );
 
     if (res?.data?.success) {
-      setUserCheckin(res?.data?.data);
+      setError('');
+      const sortedCheckin = res?.data?.data.sort(
+        (a, b) => new Date(b.date) - new Date(a.date),
+      );
+      setUserCheckin(sortedCheckin);
     } else {
-      Alert.alert(t('user_no_check_ins'));
+      setError('user_no_check_ins');
     }
+  };
+
+  const renderCheckin = ({item}) => {
+    return (
+      <View
+        style={[
+          styles.checkinDetail,
+          {
+            backgroundColor:
+              item.work_shift === 'NIGHT' ? 'rgba(0, 0, 0, 0.1)' : 'white',
+          },
+        ]}>
+        <View
+          key={item.id}
+          style={[
+            styles.tableRow,
+            {
+              backgroundColor: item.is_paid_leave ? THEME_COLOR : 'transparent',
+            },
+          ]}>
+          <Text style={[styles.cellText]}>{item.date}</Text>
+          <Text style={[styles.cellText]}>{item.time_in}</Text>
+          <Text style={[styles.cellText]}>{item.time_out}</Text>
+          <Text style={[styles.cellText]}>{item.work_time}</Text>
+          <Text style={[styles.cellText]}>{t(item.work_shift)}</Text>
+          <Text style={[styles.cellText]}>{item.over_time}</Text>
+        </View>
+      </View>
+    );
   };
 
   const get_user_info = async () => {
@@ -155,9 +199,16 @@ const Profile = () => {
           </View>
         </View>
       </View>
-      <View>
+      <View style={styles.checkinContainer}>
         <View style={styles.btnSalary}>
           <Text style={styles.subtitle}>{t('c-i-h')}</Text>
+          <TouchableOpacity
+            onPress={() => {
+              navigation.navigate('Salary');
+            }}
+            style={styles.showSalaryBtn}>
+            <Icon name="arrow-right" color={THEME_COLOR} size={20} />
+          </TouchableOpacity>
         </View>
         <View style={styles.tableHeader}>
           <Text style={styles.headerText}>{t('D')}</Text>
@@ -167,29 +218,16 @@ const Profile = () => {
           <Text style={styles.headerText}>{t('S')}</Text>
           <Text style={styles.headerText}>{t('ot')}</Text>
         </View>
-        <ScrollView>
-          {userCheckin
-            .sort((a, b) => new Date(b.date) - new Date(a.date))
-            .map(item => (
-              <View
-                key={item.id}
-                style={[
-                  styles.tableRow,
-                  {
-                    backgroundColor: item.is_paid_leave
-                      ? THEME_COLOR
-                      : 'transparent',
-                  },
-                ]}>
-                <Text style={styles.cellText}>{item.date}</Text>
-                <Text style={styles.cellText}>{item.time_in}</Text>
-                <Text style={styles.cellText}>{item.time_out}</Text>
-                <Text style={styles.cellText}>{item.work_time}</Text>
-                <Text style={styles.cellText}>{t(item.work_shift)}</Text>
-                <Text style={styles.cellText}>{item.over_time}</Text>
-              </View>
-            ))}
-        </ScrollView>
+        {err ? <Text style={styles.errorText}>{t(err)}</Text> : null}
+        <FlatList
+          data={userCheckin}
+          renderItem={renderCheckin}
+          keyExtractor={item => item.id.toString()}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }
+          showsVerticalScrollIndicator={false}
+        />
       </View>
       <SelectDate
         visible={isModalVisible}
@@ -211,10 +249,45 @@ const Profile = () => {
 };
 
 const styles = StyleSheet.create({
+  checkinContainer: {
+    flex: 1,
+  },
+  checkinDetail: {
+    width: '100%',
+    marginVertical: 1,
+    padding: 2,
+    backgroundColor: 'white',
+    borderRadius: 18,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 4},
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    borderWidth: 0.1,
+  },
+  errorText: {
+    color: 'red',
+    textAlign: 'center',
+    marginBottom: 10,
+  },
+  showSalaryBtn: {
+    width: 50,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 0.2,
+    borderRadius: 40,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 1,
+      height: 6,
+    },
+    shadowRadius: 10,
+    shadowOpacity: 0.55,
+  },
   btnSalary: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'space-around',
     alignItems: 'center',
+    borderBottomWidth: 0.2,
   },
   tableView: {
     flexDirection: 'column',

@@ -19,6 +19,8 @@ import {
   Notifications,
   Event,
   Important,
+  Salary,
+  PlanProduction,
 } from '../screens';
 const Stack = createStackNavigator();
 const MainNavigator = () => {
@@ -38,6 +40,11 @@ const MainNavigator = () => {
         <Stack.Screen
           name="ReportView"
           component={ReportView}
+          options={{headerShown: true}}
+        />
+        <Stack.Screen
+          name="Salary"
+          component={Salary}
           options={{headerShown: true}}
         />
         <Stack.Screen
@@ -99,6 +106,11 @@ const MainNavigator = () => {
         <Stack.Screen
           name="Event"
           component={Event}
+          options={{headerShown: false}}
+        />
+        <Stack.Screen
+          name="PlanProduction"
+          component={PlanProduction}
           options={{headerShown: false}}
         />
         <Stack.Screen name="Ai" component={Ai} options={{headerShown: true}} />

@@ -14,7 +14,12 @@ import {
 } from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import {useSelector} from 'react-redux';
-import {TEXT_COLOR, THEME_COLOR_2, THEME_COLOR} from '../../utils/Colors';
+import {
+  TEXT_COLOR,
+  THEME_COLOR_2,
+  THEME_COLOR,
+  BG_COLOR,
+} from '../../utils/Colors';
 import Control from '../Control';
 import Notifications from '../Notifications';
 import {useTranslation} from 'react-i18next';
@@ -37,21 +42,24 @@ import {
   GET_ALL,
 } from '../../utils/Strings';
 import Loader from '../Loader';
-
+import HappyModal from '../HappyModal';
+import moment from 'moment';
 const HomeTab = () => {
   const navigation = useNavigation();
   const {t} = useTranslation();
   const [visibleControl, setVisibleControl] = useState(false);
   const [isVisiblePopup, setIsVisiblePopup] = useState(false);
+  const [isVisibleHappy, setIsVisibleHappy] = useState(false);
   const authData = useSelector(state => state.auth);
   const [userInfo, setUserInfo] = useState({});
   const [err, setError] = useState('');
   const [posts, setPosts] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
-  const [notificationCount, setNotificationCount] = useState(5);
+  const [notificationCount, setNotificationCount] = useState(1);
   const [is_notification, setIsNotification] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [event, setEvent] = useState({});
+  const today = moment().format('MM-DD');
   const showAlert = message => {
     Alert.alert(t('noti'), t(message));
   };
@@ -60,6 +68,7 @@ const HomeTab = () => {
     setVisibleControl(false);
     setIsNotification(false);
     setIsVisiblePopup(false);
+    setIsVisibleHappy(false);
   };
 
   const getLanguage = async () => {
@@ -175,9 +184,8 @@ const HomeTab = () => {
     const fetchData = async () => {
       // Set user info if available
       if (authData?.data?.data) {
-        setUserInfo(authData.data.data);
+        setUserInfo(authData?.data.data);
       }
-
       // Check and change language
       const lang = await getLanguage();
       if (lang != null) {
@@ -186,10 +194,30 @@ const HomeTab = () => {
 
       // Fetch information
       get_all_information();
+      get_event_detail();
     };
-    get_event_detail();
     fetchData();
   }, []); // Update data when authData changes
+  useEffect(() => {
+    if (userInfo) {
+      checkBirthDay();
+    }
+  }, [userInfo]);
+  const checkBirthDay = () => {
+    try {
+      const userBirthday = moment(userInfo.dob).format('MM-DD');
+      if (today === userBirthday) {
+        setIsVisibleHappy(true);
+        setTimeout(() => {
+          setIsVisibleHappy(false);
+        }, 10000);
+      } else {
+        setIsVisibleHappy(false);
+      }
+    } catch (error) {
+      console.log(error.message);
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -256,14 +284,20 @@ const HomeTab = () => {
         t={t}
         navigation={navigation}
       />
+      <HappyModal onClose={onClose} visible={isVisibleHappy} />
     </View>
   );
 };
 
 const styles = StyleSheet.create({
+  background: {
+    flex: 1,
+    resizeMode: 'cover',
+    justifyContent: 'center',
+  },
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: BG_COLOR,
   },
   buttonText: {
     color: 'white',
