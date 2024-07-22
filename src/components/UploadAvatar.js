@@ -70,17 +70,16 @@ const UploadAvatar = ({visible, closeModal, t, user_id, avatar_url}) => {
           },
         },
       );
-      console.log(response?.data);
       if (response?.data?.success) {
         setIsloading(false);
         showAlert(t('success'));
         closeModal();
       } else {
-        setIsloading(false);
         showAlert(t('unSuccess'));
+        setIsloading(false);
+        closeModal();
       }
     } catch (error) {
-      console.log(error);
       showAlert(t('unSuccess'));
     }
   };
