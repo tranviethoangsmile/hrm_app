@@ -1,5 +1,5 @@
-// export const BASE_URL = 'http://192.168.0.101';
-// export const PORT = ':4000';
+export const BASE_URL = 'http://localhost';
+export const PORT = ':4000';
 
 export const BASE_URL = 'http://18.236.164.13';
 export const PORT = ':80';
@@ -32,3 +32,5 @@ export const EVENT_CHECK = '/eventcheck';
 export const SEARCH_EVENT_CHECKED = '/searcheventchecked';
 export const SEARCH_SAFETY_CHECKED = '/searchsafetychecked';
 export const PAYROLL = '/payroll';
+export const PLAN_PRODUCTION = '/planproduction';
+export const SEARCH_PLAN_PRODUCTION_WITH_FIELD = '/searchbydateanddepartment';

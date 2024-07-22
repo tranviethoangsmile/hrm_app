@@ -167,5 +167,7 @@
   "col": "Custo de vida ",
   "oth.d": "Outras deduções",
   "nSTime": "TURNO NOTURNO",
-  "planPro": "Planejar Produção"
+  "planPro": "Planejar Produção",
+  "line": "Linha de Produção",
+  "h": "Horas"
 }
