@@ -2,7 +2,7 @@
 // export const PORT = ':4000';
 
 export const BASE_URL = 'http://18.236.164.13';
-export const PORT = '';
+export const PORT = ':80';
 export const API = '/api';
 export const VERSION = '/version';
 export const V1 = '/v1';
