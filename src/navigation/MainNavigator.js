@@ -111,7 +111,7 @@ const MainNavigator = () => {
         <Stack.Screen
           name="PlanProduction"
           component={PlanProduction}
-          options={{headerShown: false}}
+          options={{headerShown: true}}
         />
         <Stack.Screen name="Ai" component={Ai} options={{headerShown: true}} />
       </Stack.Navigator>

@@ -68,7 +68,9 @@ const FeatureTab = () => {
           {renderFeatureButton('cloud-upload-outline', t('Up'), () =>
             navigation.navigate('Upload'),
           )}
-          {renderFeatureButton('book-outline', t('Learn'))}
+          {renderFeatureButton('book-outline', t('planPro'), () => {
+            navigation.navigate('PlanProduction');
+          })}
         </View>
         <View style={styles.featureRow}>
           {renderFeatureButton('stats-chart-outline', t('RpV'), () =>

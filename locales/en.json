@@ -169,5 +169,7 @@
   "col": "Cost of Living",
   "oth.d": "Other Deduction",
   "nSTime": "Night Shift work",
-  "planPro": "Plan Production"
+  "planPro": "Plan Production",
+  "line": "Production Line",
+  "h": "house"
 }
