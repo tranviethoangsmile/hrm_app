@@ -169,5 +169,6 @@
   "nSTime": "TURNO NOTURNO",
   "planPro": "Planejar Produção",
   "line": "Linha de Produção",
-  "h": "Horas"
+  "h": "Horas",
+  "change": "Mudança"
 }

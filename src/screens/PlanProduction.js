@@ -7,6 +7,7 @@ import {
   StatusBar,
   SafeAreaView,
   Alert,
+  TouchableOpacity,
 } from 'react-native';
 import {TEXT_COLOR, THEME_COLOR_2, BG_COLOR} from '../utils/Colors';
 import {
@@ -17,6 +18,7 @@ import {
   V1,
   PLAN_PRODUCTION,
   SEARCH_PLAN_PRODUCTION_WITH_FIELD,
+  SEARCH_BY_ID,
 } from '../utils/Strings';
 import {useSelector} from 'react-redux';
 import axios from 'axios';
@@ -26,11 +28,13 @@ import Icon from 'react-native-vector-icons/FontAwesome';
 import {useTranslation} from 'react-i18next';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {useNavigation} from '@react-navigation/native';
-
+import {EditPlanProduction} from '../components';
 const PlanProduction = () => {
   const {t} = useTranslation();
   const navigation = useNavigation();
   const [plans, setPlans] = useState([]);
+  const [isEditPLanProduction, setIsEditPlanProduction] = useState(false);
+  const [plan, setPlan] = useState({});
   const authData = useSelector(state => state.auth);
   const USER_INFOR = authData?.data?.data;
   const start_date = moment().format('YYYY-MM-DD');
@@ -55,12 +59,14 @@ const PlanProduction = () => {
         },
       );
       if (!res?.data?.success) {
-        throw new Error('contactAdmin');
+        throw new Error('not.data');
       }
-      console.log(res?.data?.data);
-      setPlans(res?.data?.data || []);
+      const sortPlans = res?.data.data.sort(
+        (a, b) => new Date(a.date) - new Date(b.date),
+      );
+      setPlans(sortPlans || []);
     } catch (error) {
-      showAlert(error?.message || 'Error occurred');
+      showAlert(error?.message || 'networkError');
     }
   };
 
@@ -88,6 +94,24 @@ const PlanProduction = () => {
     return acc;
   }, {});
 
+  const get_plan_production_by_id = async id => {
+    try {
+      const res = await axios.post(
+        `${BASE_URL}${PORT}${API}${VERSION}${V1}${PLAN_PRODUCTION}${SEARCH_BY_ID}`,
+        {
+          id: id,
+        },
+      );
+      if (!res?.data.success) {
+        throw new Error('not.data');
+      }
+      setIsEditPlanProduction(true);
+      setPlan(res?.data.data);
+    } catch (error) {
+      showAlert(error?.message || 'networkError');
+    }
+  };
+
   return (
     <SafeAreaView style={{flex: 1, backgroundColor: BG_COLOR}}>
       <StatusBar barStyle="dark-content" backgroundColor="#fff" />
@@ -103,23 +127,26 @@ const PlanProduction = () => {
               <Text style={styles.shiftTitle}>{t('DAY')}</Text>
               {groupedData[date].dayShift.map((item, idx) => (
                 <View key={idx} style={styles.lineSection}>
-                  <Text style={styles.productionLine}>
-                    {t('line')}: {item.production_line}
-                  </Text>
-                  <Text style={styles.productName}>
-                    {t('product')}:{item.product}
-                  </Text>
-                  <Text style={styles.quantity}>
-                    {t('quantity')}: {item.quantity}
-                  </Text>
-                  <Text style={styles.workingHours}>
-                    {t('ot')}: {item.operation_time} {t('h')}
-                  </Text>
-                  {item.is_custom ? (
-                    <Icon name="exchange" size={30} color={'red'} />
-                  ) : (
-                    ''
-                  )}
+                  <TouchableOpacity
+                    onPress={() => get_plan_production_by_id(item.id)}>
+                    <Text style={styles.productionLine}>
+                      {t('line')}: {item.production_line}
+                    </Text>
+                    <Text style={styles.productName}>
+                      {t('product')}:{item.product}
+                    </Text>
+                    <Text style={styles.quantity}>
+                      {t('quantity')}: {item.quantity}
+                    </Text>
+                    <Text style={styles.workingHours}>
+                      {t('ot')}: {item.operation_time} {t('h')}
+                    </Text>
+                    {item.is_custom ? (
+                      <Icon name="exchange" size={30} color={'red'} />
+                    ) : (
+                      ''
+                    )}
+                  </TouchableOpacity>
                 </View>
               ))}
             </View>
@@ -127,29 +154,39 @@ const PlanProduction = () => {
               <Text style={styles.shiftTitle}>{t('NIGHT')}</Text>
               {groupedData[date].nightShift.map((item, idx) => (
                 <View key={idx} style={styles.lineSection}>
-                  <Text style={styles.productionLine}>
-                    {t('line')}: {item.production_line}
-                  </Text>
-                  <Text style={styles.productName}>
-                    {t('product')}: {item.product}
-                  </Text>
-                  <Text style={styles.quantity}>
-                    {t('quantity')}: {item.quantity}
-                  </Text>
-                  <Text style={styles.workingHours}>
-                    {t('ot')}: {item.operation_time} {t('h')}
-                  </Text>
-                  {item.is_custom ? (
-                    <Icon name="exchange" size={30} color={'red'} />
-                  ) : (
-                    ''
-                  )}
+                  <TouchableOpacity
+                    onPress={() => get_plan_production_by_id(item.id)}>
+                    <Text style={styles.productionLine}>
+                      {t('line')}: {item.production_line}
+                    </Text>
+                    <Text style={styles.productName}>
+                      {t('product')}: {item.product}
+                    </Text>
+                    <Text style={styles.quantity}>
+                      {t('quantity')}: {item.quantity}
+                    </Text>
+                    <Text style={styles.workingHours}>
+                      {t('ot')}: {item.operation_time} {t('h')}
+                    </Text>
+                    {item.is_custom ? (
+                      <Icon name="exchange" size={30} color={'red'} />
+                    ) : (
+                      ''
+                    )}
+                  </TouchableOpacity>
                 </View>
               ))}
             </View>
           </View>
         ))}
       </ScrollView>
+      <EditPlanProduction
+        visible={isEditPLanProduction}
+        planProduction={plan}
+        t={t}
+        onClose={() => setIsEditPlanProduction(false)}
+        reCall={get_plan_production}
+      />
     </SafeAreaView>
   );
 };
@@ -161,11 +198,11 @@ const styles = StyleSheet.create({
     marginVertical: 0,
   },
   headerText: {
-    fontSize: 34,
+    fontSize: 30,
     fontWeight: 'bold',
     color: '#000',
     textAlign: 'center',
-    marginVertical: 16,
+    marginVertical: 10,
   },
   header: {
     alignItems: 'center',
@@ -179,7 +216,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderRadius: 12,
     padding: 20,
-    marginVertical: 10,
+    marginVertical: 5,
     shadowColor: '#000',
     shadowOffset: {
       width: 0,

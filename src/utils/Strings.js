@@ -1,8 +1,7 @@
+// export const BASE_URL = 'http://18.236.164.13';
+// export const PORT = ':80';
 export const BASE_URL = 'http://localhost';
 export const PORT = ':4000';
-
-export const BASE_URL = 'http://18.236.164.13';
-export const PORT = ':80';
 export const API = '/api';
 export const VERSION = '/version';
 export const V1 = '/v1';
@@ -34,3 +33,5 @@ export const SEARCH_SAFETY_CHECKED = '/searchsafetychecked';
 export const PAYROLL = '/payroll';
 export const PLAN_PRODUCTION = '/planproduction';
 export const SEARCH_PLAN_PRODUCTION_WITH_FIELD = '/searchbydateanddepartment';
+export const SEARCH_BY_ID = '/searchbyid';
+export const NOTIFICATION = '/notification';

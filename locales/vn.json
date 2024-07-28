@@ -10,7 +10,7 @@
   "pip": "Nhập mật khẩu",
   "info": "Bảng thông tin",
   "rp": "Báo cáo",
-  "or": "Đặt cơm",
+  "or": "Đăng kí cơm hộp",
   "Ai": "AI",
   "Mk": "Mua hàng",
   "Lea": "Xin nghỉ",
@@ -170,5 +170,6 @@
   "nSTime": "Làm ca đêm",
   "planPro": "Kế hoạch sản xuất",
   "line": "Line sản xuất",
-  "h": "giờ"
+  "h": "giờ",
+  "change": "thay thế"
 }

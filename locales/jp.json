@@ -171,5 +171,6 @@
   "nSTime": "夜勤",
   "planPro": "生産計画",
   "line": "生産ライン",
-  "h": "Hours"
+  "h": "Hours",
+  "change": "段替え"
 }

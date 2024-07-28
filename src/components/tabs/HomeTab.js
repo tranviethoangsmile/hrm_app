@@ -40,6 +40,8 @@ import {
   GET_ALL_BY_FIELD,
   EVENTS,
   GET_ALL,
+  NOTIFICATION,
+  SEARCH_BY_ID,
 } from '../../utils/Strings';
 import Loader from '../Loader';
 import HappyModal from '../HappyModal';
@@ -51,11 +53,11 @@ const HomeTab = () => {
   const [isVisiblePopup, setIsVisiblePopup] = useState(false);
   const [isVisibleHappy, setIsVisibleHappy] = useState(false);
   const authData = useSelector(state => state.auth);
-  const [userInfo, setUserInfo] = useState({});
+  const [userInfo, setUserInfo] = useState(authData?.data.data);
   const [err, setError] = useState('');
   const [posts, setPosts] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
-  const [notificationCount, setNotificationCount] = useState(1);
+  const [notificationCount, setNotificationCount] = useState(0);
   const [is_notification, setIsNotification] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [event, setEvent] = useState({});
@@ -63,7 +65,7 @@ const HomeTab = () => {
   const showAlert = message => {
     Alert.alert(t('noti'), t(message));
   };
-  const isDarkMode = useColorScheme() === 'dark';
+
   const onClose = () => {
     setVisibleControl(false);
     setIsNotification(false);
@@ -121,8 +123,24 @@ const HomeTab = () => {
       }
     } catch (error) {
       setIsLoading(false);
-
       setError(error.message);
+    }
+  };
+
+  const handle_get_notification = async () => {
+    try {
+      const user_id = userInfo?.id;
+      const notifications = await axios.post(
+        `${BASE_URL}${PORT}${API}${VERSION}${V1}${NOTIFICATION}${SEARCH_BY_ID}`,
+        {
+          user_id,
+        },
+      );
+      if (notifications?.data?.success) {
+        setNotificationCount(notifications?.data.data.length);
+      }
+    } catch (error) {
+      showAlert(error?.message || 'networkError');
     }
   };
 
@@ -178,26 +196,20 @@ const HomeTab = () => {
   const onRefresh = useCallback(() => {
     setRefreshing(true);
     get_all_information().then(() => setRefreshing(false));
-  }, []); // Update data when userInfo changes
+  }, []);
 
   useEffect(() => {
     const fetchData = async () => {
-      // Set user info if available
-      if (authData?.data?.data) {
-        setUserInfo(authData?.data.data);
-      }
-      // Check and change language
       const lang = await getLanguage();
       if (lang != null) {
         i18next.changeLanguage(lang);
       }
-
-      // Fetch information
       get_all_information();
       get_event_detail();
     };
+    handle_get_notification();
     fetchData();
-  }, []); // Update data when authData changes
+  }, []);
   useEffect(() => {
     if (userInfo) {
       checkBirthDay();
@@ -221,7 +233,7 @@ const HomeTab = () => {
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle={isDarkMode ? 'dark-content' : 'light-content'} />
+      <StatusBar barStyle="dark-content" backgroundColor="#fff" />
       <Loader visible={isLoading} />
       <View style={styles.titleView}>
         <View style={styles.titleTextView}>
@@ -230,8 +242,7 @@ const HomeTab = () => {
         <View style={styles.notificationBellContainer}>
           <TouchableOpacity
             onPress={() => {
-              showAlert('auth');
-              // navigation.navigate('Notifications'); //go to Notificaition
+              navigation.navigate('Notifications'); //go to Notificaition
             }}>
             <Icon name="bell" size={25} color="white" />
             {notificationCount > 0 && (
