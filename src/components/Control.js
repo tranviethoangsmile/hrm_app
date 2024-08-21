@@ -19,7 +19,7 @@ const Control = ({visible, onClose, t}) => {
   const disPatch = useDispatch();
   const handleLogout = () => {
     setIsvisible(!isVisible);
-    disPatch(setAuthData(null));
+    // disPatch(setAuthData(null));
     onClose();
     navigation.navigate('Login');
   };

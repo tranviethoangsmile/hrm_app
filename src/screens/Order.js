@@ -133,8 +133,7 @@ const Order = () => {
         showAlert(t('ordered'));
       }
     } catch (error) {
-      console.error('Error during order:', error);
-      showAlert(error.message);
+      showAlert(error.message || 'networkError');
     }
   };
 

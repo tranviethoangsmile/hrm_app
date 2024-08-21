@@ -35,6 +35,9 @@ import Loader from '../components/Loader';
 import {TouchableWithoutFeedback} from 'react-native-gesture-handler';
 
 const Login = () => {
+  const showAlert = message => {
+    Alert.alert(t('noti'), t(message));
+  };
   const getLanguage = async () => {
     return await AsyncStorage.getItem('Language');
   };
@@ -52,22 +55,21 @@ const Login = () => {
     const userIF = await AsyncStorage.getItem('USERINFO');
     return JSON.parse(userIF);
   };
-
+  const checkLanguage = async () => {
+    const lang = await getLanguage();
+    if (lang != null) {
+      i18next.changeLanguage(lang);
+    }
+  };
+  const fetchData = async () => {
+    const userIF = await getUserIF();
+    if (userIF != null) {
+      setUserName(userIF.username);
+      setPassword(userIF.password);
+      setSavePass(true);
+    }
+  };
   useEffect(() => {
-    const checkLanguage = async () => {
-      const lang = await getLanguage();
-      if (lang != null) {
-        i18next.changeLanguage(lang);
-      }
-    };
-    const fetchData = async () => {
-      const userIF = await getUserIF();
-      if (userIF != null) {
-        setUserName(userIF.username);
-        setPassword(userIF.password);
-        setSavePass(true);
-      }
-    };
     checkLanguage();
     fetchData();
   }, []);
@@ -111,30 +113,10 @@ const Login = () => {
           user_name: userName,
           password: password,
         };
-        const IosLogin = async () => {
-          try {
-            return await axios.post(
-              `${BASE_URL}${PORT}${API}${VERSION}${V1}${LOGIN_URL}`,
-              user,
-            );
-          } catch (error) {
-            Alert.alert('Error during iOS login:', error);
-          }
-        };
-        const AndroidLogin = async () => {
-          try {
-            return await axios.post(
-              `${BASE_URL}${PORT}${API}${VERSION}${V1}${LOGIN_URL}`,
-              user,
-            );
-          } catch (error) {
-            Alert.alert('Error during Android login:', error);
-          }
-        };
-        const login = await Platform.select({
-          ios: IosLogin,
-          android: AndroidLogin,
-        })();
+        const login = await axios.post(
+          `${BASE_URL}${PORT}${API}${VERSION}${V1}${LOGIN_URL}`,
+          user,
+        );
 
         if (!login?.data?.success) {
           if (login?.data?.message === 'Password wrong...!!!') {
@@ -153,7 +135,7 @@ const Login = () => {
           navigation.replace('Main');
         }
       } catch (error) {
-        console.error('Error during login:', error);
+        showAlert(error?.message || 'networkError');
       }
       setVisible(false);
     }

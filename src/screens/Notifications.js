@@ -34,7 +34,7 @@ const Notifications = () => {
     Alert.alert(t('noti'), t(message));
   };
 
-  const navigation = useNavigation();
+  // const navigation = useNavigation();
   const {t} = useTranslation();
   const authData = useSelector(state => state.auth);
   const USER_INFOR = authData?.data?.data;
@@ -107,12 +107,14 @@ const Notifications = () => {
     switch (type) {
       case 'SUCCESS':
         return '#4CAF50';
-      case 'ERROR':
+      case 'SYSTEM':
         return '#F44336';
       case 'INFO':
         return '#2196F3';
       case 'WARNING':
         return '#FF9800';
+      case 'ERROR':
+        return '#F44390';
       default:
         return '#757575';
     }
