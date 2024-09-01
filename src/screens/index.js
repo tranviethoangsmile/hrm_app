@@ -17,6 +17,8 @@ import Event from './Event';
 import Important from './Important';
 import Salary from './Salary';
 import PlanProduction from './PlanProduction';
+import Message from './Message';
+import ChatScreen from './ChatScreen';
 export {
   Checkin,
   Ai,
@@ -37,4 +39,6 @@ export {
   Important,
   Salary,
   PlanProduction,
+  Message,
+  ChatScreen,
 };

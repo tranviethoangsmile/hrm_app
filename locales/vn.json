@@ -171,5 +171,7 @@
   "planPro": "Kế hoạch sản xuất",
   "line": "Line sản xuất",
   "h": "giờ",
-  "change": "thay thế"
+  "change": "thay thế",
+  "not.mess": "Không có tin nhắn nào để hiển thị.",
+  "err.load.mess": "'Có lỗi xảy ra khi tải tin nhắn.'"
 }

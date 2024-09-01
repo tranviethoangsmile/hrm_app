@@ -62,7 +62,9 @@ const FeatureTab = () => {
           {renderFeatureButton('calendar-outline', t('Lea'), () =>
             navigation.navigate('Leave'),
           )}
-          {renderFeatureButton('chatbubbles-outline', t('Mess'))}
+          {renderFeatureButton('chatbubbles-outline', t('Mess'), () => {
+            navigation.navigate('Message');
+          })}
         </View>
         <View style={styles.featureRow}>
           {renderFeatureButton('cloud-upload-outline', t('Up'), () =>

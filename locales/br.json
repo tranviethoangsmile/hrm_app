@@ -170,5 +170,7 @@
   "planPro": "Planejar Produção",
   "line": "Linha de Produção",
   "h": "Horas",
-  "change": "Mudança"
+  "change": "Mudança",
+  "not.mess": "Nenhuma mensagem para exibir.",
+  "err.load.mess": "Ocorreu um erro ao carregar as mensagens."
 }
