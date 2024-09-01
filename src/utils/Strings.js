@@ -35,3 +35,7 @@ export const PLAN_PRODUCTION = '/planproduction';
 export const SEARCH_PLAN_PRODUCTION_WITH_FIELD = '/searchbydateanddepartment';
 export const SEARCH_BY_ID = '/searchbyid';
 export const NOTIFICATION = '/notification';
+export const FIND_USER_BY_FIELD = '/finduserwithfield';
+export const CONVERSATION = '/conversations';
+export const MESSAGE = '/message';
+export const SEARCH_MESSAGE_WITH_CONVERSATION = '/searchmessageofconversation';

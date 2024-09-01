@@ -124,6 +124,8 @@ const HomeTab = () => {
     } catch (error) {
       setIsLoading(false);
       setError(error.message);
+    } finally {
+      setIsLoading(false);
     }
   };
 

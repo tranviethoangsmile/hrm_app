@@ -21,6 +21,8 @@ import {
   Important,
   Salary,
   PlanProduction,
+  Message,
+  ChatScreen,
 } from '../screens';
 const Stack = createStackNavigator();
 const MainNavigator = () => {
@@ -114,6 +116,16 @@ const MainNavigator = () => {
           options={{headerShown: true}}
         />
         <Stack.Screen name="Ai" component={Ai} options={{headerShown: true}} />
+        <Stack.Screen
+          name="Message"
+          component={Message}
+          options={{headerShown: true}}
+        />
+        <Stack.Screen
+          name="ChatScreen"
+          component={ChatScreen}
+          options={{headerShown: false}}
+        />
       </Stack.Navigator>
     </NavigationContainer>
   );

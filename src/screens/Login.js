@@ -136,8 +136,9 @@ const Login = () => {
         }
       } catch (error) {
         showAlert(error?.message || 'networkError');
+      } finally {
+        setVisible(false);
       }
-      setVisible(false);
     }
   };
 

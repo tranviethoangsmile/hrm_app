@@ -172,5 +172,7 @@
   "planPro": "Plan Production",
   "line": "Production Line",
   "h": "house",
-  "change": "Change"
+  "change": "Change",
+  "not.mess": "No messages to display.",
+  "err.load.mess": "An error occurred while loading messages."
 }
