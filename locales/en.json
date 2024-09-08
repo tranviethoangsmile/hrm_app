@@ -174,5 +174,6 @@
   "h": "house",
   "change": "Change",
   "not.mess": "No messages to display.",
-  "err.load.mess": "An error occurred while loading messages."
+  "err.load.mess": "An error occurred while loading messages.",
+  "search": "Search"
 }

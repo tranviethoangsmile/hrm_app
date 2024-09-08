@@ -39,3 +39,5 @@ export const FIND_USER_BY_FIELD = '/finduserwithfield';
 export const CONVERSATION = '/conversations';
 export const MESSAGE = '/message';
 export const SEARCH_MESSAGE_WITH_CONVERSATION = '/searchmessageofconversation';
+export const GROUP_MEMBER = '/groupmember';
+export const GET_GROUP_MEMBER_OF_USER = '/getgroupmemberofuser';

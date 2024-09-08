@@ -264,6 +264,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     backgroundColor: '#F7F7F7',
     fontSize: 16,
+    color: TEXT_COLOR,
   },
   sendButton: {
     marginLeft: 10,

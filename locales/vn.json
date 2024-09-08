@@ -173,5 +173,6 @@
   "h": "giờ",
   "change": "thay thế",
   "not.mess": "Không có tin nhắn nào để hiển thị.",
-  "err.load.mess": "'Có lỗi xảy ra khi tải tin nhắn.'"
+  "err.load.mess": "'Có lỗi xảy ra khi tải tin nhắn.'",
+  "search": "Tìm kiếm"
 }
