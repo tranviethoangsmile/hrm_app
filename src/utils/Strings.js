@@ -41,3 +41,6 @@ export const MESSAGE = '/message';
 export const SEARCH_MESSAGE_WITH_CONVERSATION = '/searchmessageofconversation';
 export const GROUP_MEMBER = '/groupmember';
 export const GET_GROUP_MEMBER_OF_USER = '/getgroupmemberofuser';
+export const UNSEND = '/unsend';
+export const DELETE = '/delete';
+export const API_KEY_GOOGLE = 'AIzaSyDfbdLgQ4kK6A2TaVcSskFdUXYruFV3IBw';

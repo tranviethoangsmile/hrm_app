@@ -9,7 +9,11 @@ import {
   TouchableOpacity,
   Image,
   Alert,
+  TouchableWithoutFeedback,
+  KeyboardAvoidingView,
+  Keyboard,
 } from 'react-native';
+import Clipboard from '@react-native-clipboard/clipboard';
 import {
   BG_COLOR,
   TEXT_COLOR,
@@ -20,15 +24,18 @@ import Icon from 'react-native-vector-icons/FontAwesome';
 import {useTranslation} from 'react-i18next';
 import {useSelector} from 'react-redux';
 import axios from 'axios';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   API,
   BASE_URL,
   PORT,
   V1,
   VERSION,
-  CREATE,
   MESSAGE,
   SEARCH_MESSAGE_WITH_CONVERSATION,
+  UNSEND,
+  DELETE,
+  API_KEY_GOOGLE,
 } from '../utils/Strings';
 import socket from '../socket.io/socket.io';
 import Loader from '../components/Loader';
@@ -43,7 +50,12 @@ const ChatScreen = ({route}) => {
   const USER_INFOR = authData?.data?.data;
   const [isLoading, setIsloading] = useState(false);
   const flatListRef = useRef(null);
-
+  const [showOptions, setShowOptions] = useState(false);
+  const [selectedMessageId, setSelectedMessageId] = useState(null);
+  const url = `https://translation.googleapis.com/language/translate/v2?key=${API_KEY_GOOGLE}`;
+  const getLanguage = async () => {
+    return await AsyncStorage.getItem('Language');
+  };
   const showAlert = message => {
     Alert.alert(t('noti'), t(message));
   };
@@ -73,20 +85,27 @@ const ChatScreen = ({route}) => {
 
   const getAllMessage = async () => {
     try {
-      setIsloading(true);
       const response = await axios.post(
         `${BASE_URL}${PORT}${API}${VERSION}${V1}${MESSAGE}${SEARCH_MESSAGE_WITH_CONVERSATION}`,
         {
           conversation_id: conversationId,
         },
       );
+
       if (!response?.data.success) {
         setNotMessage('not.mess');
-        setIsloading(false);
       } else {
-        // Đảo ngược thứ tự tin nhắn để tin nhắn mới nhất nằm đầu tiên
-        setMessages(response?.data.data.reverse() || []);
-        setIsloading(false);
+        const messages = response?.data.data || [];
+        const filteredMessages = messages.filter(message => {
+          const deleteMessages = Array.isArray(message.delete_messages)
+            ? message.delete_messages
+            : [];
+          const isDeletedByUser = deleteMessages.some(
+            deleteMessage => deleteMessage.user_id === USER_INFOR.id,
+          );
+          return !isDeletedByUser;
+        });
+        setMessages(filteredMessages);
       }
     } catch (error) {
       setNotMessage('err.load.mess');
@@ -98,13 +117,7 @@ const ChatScreen = ({route}) => {
   useEffect(() => {
     getAllMessage();
     const handleNewMessage = newMessage => {
-      setMessages(prevMessages => {
-        // Thêm tin nhắn mới vào đầu danh sách
-        if (prevMessages.find(msg => msg.id === newMessage.data.id)) {
-          return prevMessages; // Nếu tin nhắn đã tồn tại, không thêm vào danh sách
-        }
-        return [newMessage.data, ...prevMessages];
-      });
+      setMessages(prevMessages => [...prevMessages, newMessage.data]);
     };
 
     socket.emit('joinConversation', conversationId);
@@ -116,17 +129,219 @@ const ChatScreen = ({route}) => {
   }, [conversationId]);
 
   useEffect(() => {
-    flatListRef.current?.scrollToOffset({offset: 0, animated: true});
+    flatListRef.current?.scrollToEnd({animated: true});
   }, [messages]);
+
+  const handleLongPress = message => {
+    setSelectedMessageId(message.id);
+    setShowOptions(true);
+  };
+
+  const handleUnsendMessage = async messageId => {
+    try {
+      const unsend = await axios.post(
+        `${BASE_URL}${PORT}${API}${VERSION}${V1}${MESSAGE}${UNSEND}`,
+        {
+          id: messageId,
+        },
+      );
+      if (!unsend?.data.success) {
+        setShowOptions(false);
+        showAlert('unSuccess');
+      }
+      setShowOptions(false);
+      setMessages(prevMessages =>
+        prevMessages.map(msg =>
+          msg.id === messageId ? {...msg, is_unsend: true} : msg,
+        ),
+      );
+    } catch (error) {
+      showAlert(`${error.message}` | 'networkError');
+    } finally {
+      setShowOptions(false);
+    }
+  };
+
+  const handleDeleteMessage = async messageId => {
+    try {
+      setShowOptions(false);
+      const delete_ = await axios.post(
+        `${BASE_URL}${PORT}${API}${VERSION}${V1}${MESSAGE}${DELETE}`,
+        {
+          message_id: messageId,
+          user_id: USER_INFOR.id,
+        },
+      );
+      if (!delete_?.data.success) {
+        showAlert('unSuccess');
+      }
+      showAlert('success');
+      getAllMessage();
+    } catch (error) {
+      showAlert(`${error.message}` | 'networkError');
+    } finally {
+      setShowOptions(false);
+    }
+  };
+
+  const handleCopy = async messageId => {
+    try {
+      // Find the message with the provided ID
+      const messageToCopy = messages.find(msg => msg.id === messageId);
+
+      if (!messageToCopy) {
+        showAlert('cannot copy Message');
+        return;
+      }
+      Clipboard.setString(messageToCopy.message);
+      setShowOptions(false);
+      showAlert('co.py');
+    } catch (error) {
+      showAlert('err');
+    } finally {
+      setShowOptions(false);
+      setSelectedMessageId(null);
+    }
+  };
+
+  const handleTranslateMessage = async messageId => {
+    try {
+      const lang = await getLanguage(); // Lấy ngôn ngữ từ AsyncStorage
+      const messageToTranslate = messages.find(msg => msg.id === messageId);
+
+      if (!messageToTranslate) {
+        throw new Error('Message not found');
+      }
+
+      const response = await axios.post(url, {
+        q: messageToTranslate.message,
+        target: lang,
+        key: API_KEY_GOOGLE, // Thay thế bằng API key của bạn
+      });
+
+      if (
+        !response ||
+        !response.data ||
+        !response.data.data ||
+        !response.data.data.translations ||
+        response.data.data.translations.length === 0
+      ) {
+        throw new Error('Translation error');
+      }
+
+      const translatedText = response.data.data.translations[0]?.translatedText;
+      if (!translatedText) {
+        throw new Error('Translation not found');
+      }
+      setShowOptions(false);
+      setMessages(prevMessages =>
+        prevMessages.map(msg =>
+          msg.id === messageId
+            ? {...msg, translatedMessage: translatedText}
+            : msg,
+        ),
+      );
+    } catch (error) {
+      showAlert('err' | 'networkError');
+    } finally {
+      setShowOptions(false);
+    }
+  };
+
+  const handleOutsidePress = () => {
+    setShowOptions(false);
+    setSelectedMessageId(null);
+    Keyboard.dismiss();
+  };
 
   const Message = ({item, isUser}) => (
     <View
       style={
         isUser ? styles.userMessageContainer : styles.otherMessageContainer
       }>
-      <Text style={isUser ? styles.userMessageText : styles.otherMessageText}>
-        {item.message}
-      </Text>
+      <TouchableOpacity
+        style={[
+          styles.messageContainer,
+          item.is_unsend ? styles.unsendMessageContainer : null,
+        ]}
+        onLongPress={() => handleLongPress(item)}>
+        <Text
+          style={[
+            isUser ? styles.userMessageText : styles.otherMessageText,
+            item.is_unsend ? styles.unsendMessageText : null,
+          ]}>
+          {item.is_unsend
+            ? t('un_send')
+            : item.translatedMessage || item.message}
+        </Text>
+      </TouchableOpacity>
+
+      {showOptions && selectedMessageId === item.id && (
+        <View style={styles.optionsContainer}>
+          {isUser ? (
+            <>
+              <TouchableOpacity
+                onPress={() => {
+                  Alert.alert(
+                    t('dl.mess'),
+                    '',
+                    [
+                      {
+                        text: t('dl'),
+                        onPress: () => handleDeleteMessage(item.id),
+                      },
+                      {
+                        text: t('c'),
+                        onPress: () => handleOutsidePress(),
+                        style: 'cancel',
+                      },
+                    ],
+                    {cancelable: true},
+                  );
+                }}
+                style={styles.optionButton}>
+                <Text style={styles.optionText}>{t('dl')}</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                onPress={() => {
+                  Alert.alert(
+                    t('un.send.noti'),
+                    '',
+                    [
+                      {
+                        text: t('un'),
+                        onPress: () => handleUnsendMessage(item.id),
+                      },
+                      {
+                        text: t('c'),
+                        onPress: () => handleOutsidePress(),
+                        style: 'cancel',
+                      },
+                    ],
+                    {cancelable: true},
+                  );
+                }}
+                style={styles.optionButton}>
+                <Text style={styles.optionText}>{t('back')}</Text>
+              </TouchableOpacity>
+            </>
+          ) : (
+            <>
+              <TouchableOpacity
+                onPress={() => handleCopy(item.id)}
+                style={styles.optionButton}>
+                <Text style={styles.optionText}>{t('copy')}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => handleTranslateMessage(item.id)}
+                style={styles.optionButton}>
+                <Text style={styles.optionText}>{t('tranS')}</Text>
+              </TouchableOpacity>
+            </>
+          )}
+        </View>
+      )}
     </View>
   );
 
@@ -135,46 +350,53 @@ const ChatScreen = ({route}) => {
   );
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <Image source={{uri: friendAvatar}} style={styles.avatar} />
-        <Text style={styles.headerText}>{friendName}</Text>
-        <View style={styles.callButtonsContainer}>
-          <TouchableOpacity style={styles.callButton}>
-            <Icon name="phone" color={THEME_COLOR} size={30} />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.callButton}>
-            <Icon name="video-camera" color={THEME_COLOR} size={30} />
-          </TouchableOpacity>
-        </View>
-      </View>
-      {messages.length === 0 ? (
-        <View style={styles.notMessageContainer}>
-          <Text style={styles.notMessageText}>{t(notMessage)}</Text>
-        </View>
-      ) : (
-        <FlatList
-          ref={flatListRef}
-          data={messages}
-          renderItem={renderItem}
-          keyExtractor={item => item.id.toString()} // Đảm bảo `id` là chuỗi
-          contentContainerStyle={styles.messagesList}
-        />
-      )}
-      <View style={styles.inputContainer}>
-        <TextInput
-          style={styles.textInput}
-          value={message}
-          onChangeText={setMessage}
-          placeholder={t('tymess')}
-          placeholderTextColor={TEXT_COLOR}
-        />
-        <TouchableOpacity onPress={handleSend} style={styles.sendButton}>
-          <Icon name="send" color={THEME_COLOR} size={30} />
-        </TouchableOpacity>
-      </View>
-      <Loader visible={isLoading} />
-    </SafeAreaView>
+    <KeyboardAvoidingView
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      style={styles.container}>
+      <TouchableWithoutFeedback onPress={handleOutsidePress}>
+        <SafeAreaView style={styles.container}>
+          <View style={styles.header}>
+            <Image source={{uri: friendAvatar}} style={styles.avatar} />
+            <Text style={styles.headerText}>{friendName}</Text>
+            <View style={styles.callButtonsContainer}>
+              <TouchableOpacity style={styles.callButton}>
+                <Icon name="phone" color={THEME_COLOR} size={30} />
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.callButton}>
+                <Icon name="video-camera" color={THEME_COLOR} size={30} />
+              </TouchableOpacity>
+            </View>
+          </View>
+          {messages.length === 0 ? (
+            <View style={styles.notMessageContainer}>
+              <Text style={styles.notMessageText}>{t(notMessage)}</Text>
+            </View>
+          ) : (
+            <FlatList
+              ref={flatListRef}
+              data={messages}
+              renderItem={renderItem}
+              keyExtractor={item => item.id.toString()}
+              contentContainerStyle={styles.messagesList}
+              contentInset={{bottom: 65}}
+            />
+          )}
+          <View style={styles.inputContainer}>
+            <TextInput
+              style={styles.textInput}
+              value={message}
+              onChangeText={setMessage}
+              placeholder={t('tymess')}
+              placeholderTextColor={TEXT_COLOR}
+            />
+            <TouchableOpacity onPress={handleSend} style={styles.sendButton}>
+              <Icon name="send" color="#FFF" size={30} />
+            </TouchableOpacity>
+          </View>
+          <Loader visible={isLoading} />
+        </SafeAreaView>
+      </TouchableWithoutFeedback>
+    </KeyboardAvoidingView>
   );
 };
 
@@ -229,6 +451,7 @@ const styles = StyleSheet.create({
     padding: 10,
     maxWidth: '75%',
     marginRight: 10,
+    position: 'relative', // Adjusted for positioning the options container
   },
   otherMessageContainer: {
     alignSelf: 'flex-start',
@@ -238,6 +461,7 @@ const styles = StyleSheet.create({
     padding: 10,
     maxWidth: '75%',
     marginLeft: 10,
+    position: 'relative', // Adjusted for positioning the options container
   },
   userMessageText: {
     fontSize: 16,
@@ -283,8 +507,34 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   notMessageText: {
+    fontSize: 18,
+    color: TEXT_COLOR,
+  },
+  messageContainer: {
+    padding: 10,
+  },
+  optionsContainer: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    backgroundColor: '#FFF',
+    borderRadius: 10,
+    elevation: 2,
+    flexDirection: 'row',
+  },
+  optionButton: {
+    padding: 10,
+  },
+  optionText: {
+    color: THEME_COLOR,
     fontSize: 16,
-    color: '#333',
+  },
+  unsendMessageContainer: {
+    opacity: 0.7,
+  },
+  unsendMessageText: {
+    color: '#A9A9A9', // Gray color for unsent messages
+    fontStyle: 'italic', // Optional: Makes the text italic for emphasis
   },
 });
 

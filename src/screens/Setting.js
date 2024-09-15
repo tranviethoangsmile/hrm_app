@@ -39,9 +39,9 @@ const Setting = () => {
 
   const supportedLocales = [
     {id: 'en', label: 'English'},
-    {id: 'vn', label: 'Tiếng Việt'},
-    {id: 'jp', label: '日本語'},
-    {id: 'br', label: 'Português (Brasil)'},
+    {id: 'vi', label: 'Tiếng Việt'},
+    {id: 'ja', label: '日本語'},
+    {id: 'pt', label: 'Português (Brasil)'},
   ];
 
   const onSelectLocale = async locale => {

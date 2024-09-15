@@ -42,7 +42,7 @@ const UserModal = ({isVisible, onClose, users, onSelectUser, t}) => {
       </View>
       <View style={styles.userInfo}>
         <Text style={styles.userName}>{item.name}</Text>
-        <Text style={styles.userPosition}>{item.position}</Text>
+        <Text style={styles.userPosition}>{item.department?.name}</Text>
       </View>
     </TouchableOpacity>
   );

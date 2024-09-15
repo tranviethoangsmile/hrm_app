@@ -67,7 +67,7 @@
   "dltSuc": "Đã xóa đơn hàng thành công",
   "ordered": "Thời gian đặt hàng đã kết thúc hoặc Hôm nay bạn đã đặt hàng rồi!",
   "ordSuc": "Đặt hàng thành công!",
-  "noti": "Thông báo!!  ",
+  "noti": "Thông báo",
   "size": "Kích thước tệp vượt quá giới hạn",
   "success": "Cập nhật thành công!!!",
   "unSuccess": "Cập nhật thất bại ...",
@@ -174,5 +174,12 @@
   "change": "thay thế",
   "not.mess": "Không có tin nhắn nào để hiển thị.",
   "err.load.mess": "'Có lỗi xảy ra khi tải tin nhắn.'",
-  "search": "Tìm kiếm"
+  "search": "Tìm kiếm",
+  "back": "Thu hồi",
+  "copy": "Sao chép",
+  "un_send": "Đã thu hồi tin nhắn",
+  "co.py": "Đã copy tin nhắn",
+  "dl.mess": "Tin nhắn này vẫn sẽ hiển thị ở người nhận",
+  "un.send.noti": "Tin nhắn này sẽ không còn hiển thị",
+  "tranS": "Dịch"
 }

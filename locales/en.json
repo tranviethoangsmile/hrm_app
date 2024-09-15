@@ -175,5 +175,12 @@
   "change": "Change",
   "not.mess": "No messages to display.",
   "err.load.mess": "An error occurred while loading messages.",
-  "search": "Search"
+  "search": "Search",
+  "back": "Recall",
+  "copy": "Copy",
+  "un_send": "Message has been unsent",
+  "co.py": "Message copied",
+  "dl.mess": "This message will still be visible to the recipient",
+  "un.send.noti": "This message will no longer be displayed",
+  "tranS": "Translate"
 }

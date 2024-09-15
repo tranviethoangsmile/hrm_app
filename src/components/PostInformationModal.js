@@ -9,7 +9,6 @@ import {
   Image,
   Alert,
   Keyboard,
-  TouchableNativeFeedback,
 } from 'react-native';
 import DocumentPicker from 'react-native-document-picker';
 import CheckBox from '@react-native-community/checkbox';
@@ -27,6 +26,7 @@ import {
 } from '../utils/Strings';
 import axios from 'axios';
 import {TEXT_COLOR, THEME_COLOR, THEME_COLOR_2} from '../utils/Colors';
+
 const PostInformationModal = ({visible, onClose, t, USER_IF, refresh}) => {
   const date = moment().format('YYYY-MM-DD');
   const [content, setContent] = useState('');
@@ -37,7 +37,7 @@ const PostInformationModal = ({visible, onClose, t, USER_IF, refresh}) => {
   const [mediaName, setMediaName] = useState('');
   const [title, setTitle] = useState('');
   const [error, setError] = useState(null);
-  const [fileSelected, setFileSelected] = useState(false); // State to track file selection
+  const [fileSelected, setFileSelected] = useState(false);
 
   const showAlert = message => {
     Alert.alert(t('noti'), message);
@@ -48,45 +48,39 @@ const PostInformationModal = ({visible, onClose, t, USER_IF, refresh}) => {
       setError(null);
       setIsloading(true);
       const formData = new FormData();
-      formData.append('media', {
-        uri: mediaUri,
-        type: 'image/jpeg',
-        name: mediaName,
-      });
+      if (mediaUri) {
+        formData.append('media', {
+          uri: mediaUri,
+          type: isVideo ? 'video/mp4' : 'image/jpeg',
+          name: mediaName,
+        });
+      }
       formData.append('user_id', USER_IF.id);
       formData.append('title', title);
       formData.append('content', content);
       formData.append('date', date);
       formData.append('is_video', isVideo);
       formData.append('is_public', isPublic);
+
       const response = await axios.post(
         `${BASE_URL}${PORT}${API}${VERSION}${V1}${INFORMATION}${CREATE}`,
         formData,
-        {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
-        },
+        {headers: {'Content-Type': 'multipart/form-data'}},
       );
+
       if (response?.data?.success) {
         setIsloading(false);
         showAlert(t('success'));
-        setContent('');
-        setMediaUri(null);
-        setMediaName('');
-        setIsVideo(false);
-        setTitle('');
-        setFileSelected(false); // Reset file selection state
-        onClose(); // Close the modal
-        setError(null);
+        resetForm();
+        onClose();
         refresh();
       } else {
         setIsloading(false);
         showAlert(t('unSuccess'));
       }
     } catch (error) {
-      setIsloading(false); // Dừng hiển thị loader
-      setError('Failed to post information. Please try again.'); //
+      setIsloading(false);
+      setError('Failed to post information. Please try again.');
     }
   };
 
@@ -98,10 +92,10 @@ const PostInformationModal = ({visible, onClose, t, USER_IF, refresh}) => {
       });
 
       setMediaName(res.name);
-      setIsVideo(res.type === 'video/mp4' || res.type === 'video/quicktime');
+      setIsVideo(res.type.includes('video'));
       setMediaUri(res.uri);
-      setFileSelected(true); // Set fileSelected to true when file is selected
-      Keyboard.dismiss(); // Dismiss the keyboard
+      setFileSelected(true);
+      Keyboard.dismiss();
     } catch (err) {
       if (DocumentPicker.isCancel(err)) {
         console.log('User cancelled the file selection.');
@@ -111,7 +105,7 @@ const PostInformationModal = ({visible, onClose, t, USER_IF, refresh}) => {
     }
   };
 
-  const closeModal = () => {
+  const resetForm = () => {
     setContent('');
     setMediaUri(null);
     setMediaName('');
@@ -119,6 +113,10 @@ const PostInformationModal = ({visible, onClose, t, USER_IF, refresh}) => {
     setTitle('');
     setFileSelected(false);
     setError(null);
+  };
+
+  const closeModal = () => {
+    resetForm();
     onClose();
   };
 
@@ -135,23 +133,25 @@ const PostInformationModal = ({visible, onClose, t, USER_IF, refresh}) => {
             <Text style={styles.modalTitle}>
               {t('Up')} {t('info')}
             </Text>
-            <TouchableOpacity onPress={closeModal}>
-              <Text style={styles.closeButton}>✕</Text>
+            <TouchableOpacity onPress={closeModal} style={styles.closeButton}>
+              <Text style={styles.closeButtonText}>✕</Text>
             </TouchableOpacity>
           </View>
           <TextInput
             placeholder={t('til')}
             style={styles.input}
-            onChangeText={text => setTitle(text)}
+            onChangeText={setTitle}
             placeholderTextColor={THEME_COLOR_2}
+            value={title}
           />
           <TextInput
             placeholder={t('post')}
             style={[styles.input, styles.captionInput]}
-            onChangeText={text => setContent(text)}
+            onChangeText={setContent}
             placeholderTextColor={THEME_COLOR_2}
             multiline
             numberOfLines={5}
+            value={content}
             onFocus={() => {
               if (fileSelected) Keyboard.dismiss();
             }}
@@ -159,7 +159,7 @@ const PostInformationModal = ({visible, onClose, t, USER_IF, refresh}) => {
           <TouchableOpacity
             onPress={chooseMedia}
             style={styles.chooseMediaButton}>
-            <Text>{t('choo')}</Text>
+            <Text style={styles.chooseMediaButtonText}>{t('choo')}</Text>
           </TouchableOpacity>
           {mediaUri && (
             <View style={styles.mediaContainer}>
@@ -167,7 +167,7 @@ const PostInformationModal = ({visible, onClose, t, USER_IF, refresh}) => {
                 <VideoPlayer
                   autoplay={false}
                   video={{uri: mediaUri}}
-                  defaultMuted={true}
+                  defaultMuted
                   videoWidth={300}
                   videoHeight={200}
                   thumbnail={require('../assets/images/thumbnail.jpg')}
@@ -179,9 +179,9 @@ const PostInformationModal = ({visible, onClose, t, USER_IF, refresh}) => {
           )}
           <View style={styles.postOptions}>
             <CheckBox
-              tintColors={{true: 'red', false: 'black'}}
+              tintColors={{true: THEME_COLOR, false: 'black'}}
               value={isPublic}
-              onValueChange={() => setIsPublic(!isPublic)}
+              onValueChange={setIsPublic}
               style={styles.checkbox}
             />
             <Text style={styles.label}>{t('pub')}</Text>
@@ -199,52 +199,6 @@ const PostInformationModal = ({visible, onClose, t, USER_IF, refresh}) => {
 };
 
 const styles = StyleSheet.create({
-  input: {
-    color: TEXT_COLOR,
-    borderBottomWidth: 1,
-    borderColor: THEME_COLOR_2,
-    marginBottom: 20,
-  },
-  chooseMediaButton: {
-    backgroundColor: THEME_COLOR,
-    padding: 10,
-    borderRadius: 5,
-    marginBottom: 20,
-  },
-  selectedImage: {
-    width: 300,
-    height: 200,
-    borderRadius: 5,
-  },
-  mediaContainer: {
-    marginBottom: 20,
-  },
-  postOptions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  checkbox: {
-    marginRight: 10,
-  },
-  label: {
-    fontSize: 16,
-    marginRight: 10,
-    color: TEXT_COLOR,
-  },
-  postButton: {
-    backgroundColor: THEME_COLOR,
-    padding: 10,
-    borderRadius: 5,
-  },
-  postButtonText: {
-    color: TEXT_COLOR,
-    fontWeight: 'bold',
-    fontSize: 16,
-  },
-  captionInput: {
-    height: 100,
-    textAlignVertical: 'top',
-  },
   modalContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -253,10 +207,10 @@ const styles = StyleSheet.create({
   },
   modalContent: {
     backgroundColor: 'white',
-    borderRadius: 10,
+    borderRadius: 12,
     padding: 20,
     width: '90%',
-    color: TEXT_COLOR,
+    maxWidth: 400,
   },
   header: {
     flexDirection: 'row',
@@ -265,17 +219,71 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   modalTitle: {
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: 'bold',
     color: TEXT_COLOR,
   },
   closeButton: {
-    fontSize: 20,
-    color: TEXT_COLOR,
+    padding: 10,
+  },
+  closeButtonText: {
+    fontSize: 22,
+    color: THEME_COLOR,
   },
   errorText: {
     color: 'red',
     marginBottom: 10,
+  },
+  input: {
+    color: TEXT_COLOR,
+    borderBottomWidth: 1,
+    borderColor: THEME_COLOR_2,
+    marginBottom: 20,
+    fontSize: 16,
+  },
+  captionInput: {
+    height: 100,
+    textAlignVertical: 'top',
+  },
+  chooseMediaButton: {
+    backgroundColor: THEME_COLOR,
+    padding: 10,
+    borderRadius: 5,
+    marginBottom: 20,
+  },
+  chooseMediaButtonText: {
+    color: 'white',
+    fontSize: 16,
+  },
+  mediaContainer: {
+    marginBottom: 20,
+  },
+  selectedImage: {
+    width: '100%',
+    height: 200,
+    borderRadius: 10,
+  },
+  postOptions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  checkbox: {
+    marginRight: 10,
+  },
+  label: {
+    fontSize: 16,
+    color: TEXT_COLOR,
+  },
+  postButton: {
+    backgroundColor: THEME_COLOR,
+    padding: 10,
+    borderRadius: 5,
+  },
+  postButtonText: {
+    color: 'white',
+    fontWeight: 'bold',
+    fontSize: 16,
   },
 });
 

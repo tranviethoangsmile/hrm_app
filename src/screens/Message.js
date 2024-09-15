@@ -28,6 +28,8 @@ import {
   GROUP_MEMBER,
   GET_GROUP_MEMBER_OF_USER,
   VERSION,
+  CONVERSATION,
+  CREATE,
 } from '../utils/Strings';
 import Loader from '../components/Loader';
 import defaultAvatar from '../assets/images/avatar.jpg';
@@ -62,7 +64,10 @@ const Message = () => {
       );
       if (response?.data?.success) {
         const friends = response?.data?.data || [];
-        setFriendsList(friends);
+        const filterList = friends.filter(
+          friend => friend.id !== USER_INFOR.id,
+        );
+        setFriendsList(filterList);
       }
     } catch (error) {
       showAlert(error?.message || 'networkError');
@@ -120,11 +125,30 @@ const Message = () => {
     setModalVisible(true);
   };
 
-  const handleSelectUser = user => {
-    // Xử lý khi chọn người bạn
-    // handleSelectConversation('new-conversation-id', user);
-    // setModalVisible(false);
-    console.log(user);
+  const handleSelectUser = async user => {
+    try {
+      setIsloading(true);
+      const conversation = await axios.post(
+        `${BASE_URL}${PORT}${API}${VERSION}${V1}${CONVERSATION}${CREATE}`,
+        {
+          sender_id: USER_INFOR?.id,
+          receiver_id: user.id,
+        },
+      );
+
+      if (!conversation?.data.success) {
+        throw new Error('contactAdmin');
+      }
+      setModalVisible(false);
+      setIsloading(false);
+      const conversationId = conversation?.data.data.conversation_id;
+      handleSelectConversation(conversationId, user);
+    } catch (error) {
+      showAlert(error?.message || 'networkError');
+    } finally {
+      setModalVisible(false);
+      setIsloading(false);
+    }
   };
 
   const handleSelectConversation = (conversationId, friend) => {
