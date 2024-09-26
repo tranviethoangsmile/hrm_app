@@ -30,11 +30,12 @@ import {
   VERSION,
   CONVERSATION,
   CREATE,
+  DELETE,
 } from '../utils/Strings';
 import Loader from '../components/Loader';
 import defaultAvatar from '../assets/images/avatar.jpg';
 import UserModal from '../components/UserModal';
-import {TEXT_COLOR} from '../utils/Colors';
+import {TEXT_COLOR, THEME_COLOR, BG_COLOR} from '../utils/Colors';
 
 const Message = () => {
   const {t} = useTranslation();
@@ -45,61 +46,112 @@ const Message = () => {
   const [searchText, setSearchText] = useState('');
   const [filteredConversations, setFilteredConversations] = useState([]);
   const [allConversations, setAllConversations] = useState([]);
-  const [isLoading, setIsloading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [friendsList, setFriendsList] = useState([]);
+  const [showOptions, setShowOptions] = useState(false);
+  const [selectedMessageId, setSelectedMessageId] = useState(null);
 
   const showAlert = message => {
     Alert.alert(t('noti'), t(message));
   };
 
   const getAllFriendList = async () => {
+    setIsLoading(true);
     try {
-      setIsloading(true);
       const response = await axios.post(
         `${BASE_URL}${PORT}${API}${VERSION}${V1}${USER_URL}${FIND_USER_BY_FIELD}`,
-        {
-          position: USER_INFOR?.position,
-        },
+        {position: USER_INFOR?.position},
       );
+
       if (response?.data?.success) {
-        const friends = response?.data?.data || [];
-        const filterList = friends.filter(
+        const friends = response.data.data || [];
+        const filteredFriends = friends.filter(
           friend => friend.id !== USER_INFOR.id,
         );
-        setFriendsList(filterList);
+        setFriendsList(filteredFriends);
       }
     } catch (error) {
       showAlert(error?.message || 'networkError');
     } finally {
-      setIsloading(false);
+      setIsLoading(false);
     }
+  };
+
+  const handleLongPress = message => {
+    setSelectedMessageId(message.id);
+    setShowOptions(true);
   };
 
   const onClose = () => {
     setModalVisible(false);
-    Keyboard.dismiss(); // Ẩn bàn phím khi đóng modal
+    Keyboard.dismiss();
+  };
+
+  const handleDeleteConversation = async id => {
+    try {
+      // Close the modal before making the API call
+      setModalVisible(false);
+
+      // Send the delete request
+      const result = await axios.post(
+        `${BASE_URL}${PORT}${API}${VERSION}${V1}${CONVERSATION}${DELETE}`,
+        {
+          user_id: USER_INFOR?.id,
+          conversation_id: id,
+        },
+      );
+
+      // Check if the API response was successful
+      if (!result?.data?.success) {
+        showAlert('unSuccess');
+        return;
+      }
+
+      // Show success alert
+      showAlert('success');
+
+      // Refresh the conversations list after successful deletion
+      handleGetConversations();
+    } catch (error) {
+      // Show error alert with error message for debugging
+      showAlert(error?.message || 'unSuccess');
+    } finally {
+      // Ensure the modal is closed even if an error occurs
+      setModalVisible(false);
+    }
   };
 
   const handleGetConversations = async () => {
+    setIsLoading(true);
     try {
-      setIsloading(true);
       const response = await axios.post(
         `${BASE_URL}${PORT}${API}${VERSION}${V1}${GROUP_MEMBER}${GET_GROUP_MEMBER_OF_USER}`,
-        {
-          user_id: USER_INFOR?.id,
-        },
+        {user_id: USER_INFOR?.id},
       );
+
       if (!response?.data?.success) {
-        throw new Error('not.data');
+        throw new Error('Failed to fetch conversations.');
       }
-      const conversations = response?.data?.data || [];
-      setAllConversations(conversations);
-      setFilteredConversations(conversations);
+
+      const conversations = response.data.data || [];
+      if (!Array.isArray(conversations)) {
+        throw new Error('Data format is invalid.');
+      }
+
+      const filteredConversations = conversations.filter(
+        conversation =>
+          !conversation.conversation?.delete_conversations?.some(
+            deleted => deleted.user_id === USER_INFOR.id,
+          ),
+      );
+
+      setAllConversations(filteredConversations);
+      setFilteredConversations(filteredConversations);
     } catch (error) {
-      showAlert(error?.message || 'networkError');
+      showAlert(error?.message || 'Network error');
     } finally {
-      setIsloading(false);
+      setIsLoading(false);
     }
   };
 
@@ -113,21 +165,18 @@ const Message = () => {
     if (text.trim() === '') {
       setFilteredConversations(allConversations);
     } else {
-      const filtered = allConversations.filter(conversation => {
-        const user = conversation.users;
-        return user && user.name.toLowerCase().includes(text.toLowerCase());
-      });
+      const filtered = allConversations.filter(conversation =>
+        conversation.users?.name.toLowerCase().includes(text.toLowerCase()),
+      );
       setFilteredConversations(filtered);
     }
   };
 
-  const handleOpenModal = () => {
-    setModalVisible(true);
-  };
+  const handleOpenModal = () => setModalVisible(true);
 
   const handleSelectUser = async user => {
+    setIsLoading(true);
     try {
-      setIsloading(true);
       const conversation = await axios.post(
         `${BASE_URL}${PORT}${API}${VERSION}${V1}${CONVERSATION}${CREATE}`,
         {
@@ -139,15 +188,14 @@ const Message = () => {
       if (!conversation?.data.success) {
         throw new Error('contactAdmin');
       }
-      setModalVisible(false);
-      setIsloading(false);
-      const conversationId = conversation?.data.data.conversation_id;
+
+      const conversationId = conversation.data.data.conversation_id;
       handleSelectConversation(conversationId, user);
     } catch (error) {
       showAlert(error?.message || 'networkError');
     } finally {
       setModalVisible(false);
-      setIsloading(false);
+      setIsLoading(false);
     }
   };
 
@@ -162,18 +210,30 @@ const Message = () => {
   const renderItem = ({item}) => (
     <TouchableOpacity
       style={styles.conversationItem}
-      onPress={() =>
-        handleSelectConversation(item.conversation_id, item.users)
-      }>
-      <View style={styles.avatarContainer}>
-        <Image
-          source={item.users.avatar ? {uri: item.users.avatar} : defaultAvatar}
-          style={styles.avatar}
-        />
-        <View style={styles.onlineStatus} />
-      </View>
-      <View style={styles.conversationInfo}>
-        <Text style={styles.friendName}>{item.users?.name}</Text>
+      onPress={() => handleSelectConversation(item.conversation_id, item.users)}
+      onLongPress={() => handleLongPress(item)}>
+      <View style={styles.itemContent}>
+        <View style={styles.avatarContainer}>
+          <Image
+            source={
+              item.users.avatar ? {uri: item.users.avatar} : defaultAvatar
+            }
+            style={styles.avatar}
+          />
+          <View style={styles.onlineStatus} />
+        </View>
+        <View style={styles.conversationInfo}>
+          <Text style={styles.friendName}>{item.users?.name}</Text>
+        </View>
+        {showOptions && selectedMessageId === item.id && (
+          <View style={styles.optionsContainer}>
+            <TouchableOpacity
+              onPress={() => handleDeleteConversation(item.conversation_id)}
+              style={styles.optionButton}>
+              <Text style={styles.optionText}>{t('tranS')}</Text>
+            </TouchableOpacity>
+          </View>
+        )}
       </View>
     </TouchableOpacity>
   );
@@ -193,7 +253,7 @@ const Message = () => {
       </View>
       <FlatList
         data={filteredConversations}
-        keyExtractor={item => item.conversation_id}
+        keyExtractor={item => item.conversation_id.toString()}
         renderItem={renderItem}
       />
       <TouchableOpacity
@@ -202,13 +262,29 @@ const Message = () => {
         <Icon name="plus" size={30} color="#fff" />
       </TouchableOpacity>
       <Loader visible={isLoading} />
-      <UserModal
-        isVisible={modalVisible}
-        users={friendsList}
-        onClose={onClose}
-        onSelectUser={handleSelectUser}
-        t={t}
-      />
+
+      {/* Modal for User Selection */}
+      <Modal
+        visible={modalVisible}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={onClose}>
+        <TouchableWithoutFeedback onPress={onClose}>
+          <View style={styles.modalOverlay}>
+            <TouchableWithoutFeedback>
+              <View style={styles.modalContent}>
+                <UserModal
+                  isVisible={modalVisible}
+                  users={friendsList}
+                  onClose={onClose}
+                  onSelectUser={handleSelectUser}
+                  t={t}
+                />
+              </View>
+            </TouchableWithoutFeedback>
+          </View>
+        </TouchableWithoutFeedback>
+      </Modal>
     </View>
   );
 };
@@ -216,9 +292,8 @@ const Message = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8f8f8',
+    backgroundColor: BG_COLOR,
     padding: 15,
-    zIndex: -1,
   },
   searchContainer: {
     flexDirection: 'row',
@@ -230,81 +305,86 @@ const styles = StyleSheet.create({
     paddingHorizontal: 15,
     marginBottom: 15,
   },
-  modalOverlay: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)', // Nền mờ xung quanh
-  },
-  modalContent: {
-    width: '70%', // Modal chiếm 70% màn hình
-    maxHeight: '70%', // Đảm bảo modal không quá cao
-    backgroundColor: '#fff',
-    borderRadius: 10,
-    padding: 20,
-    shadowColor: '#000',
-    shadowOffset: {width: 0, height: 2},
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 5,
-  },
   searchIcon: {
     marginRight: 10,
   },
   searchInput: {
     flex: 1,
-    height: 45,
-    fontSize: 16,
-    color: '#333',
-  },
-  conversationItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: '#ddd',
-    backgroundColor: '#fff',
-    borderRadius: 10,
-    marginBottom: 10,
-  },
-  avatarContainer: {
-    position: 'relative',
-  },
-  avatar: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    marginRight: 15,
-  },
-  onlineStatus: {
-    position: 'absolute',
-    bottom: 0,
-    right: 0,
-    width: 15,
-    height: 15,
-    borderRadius: 7.5,
-    backgroundColor: 'green',
-    borderWidth: 2,
-    borderColor: '#fff',
-  },
-  conversationInfo: {
-    flex: 1,
-  },
-  friendName: {
-    fontWeight: 'bold',
-    fontSize: 18,
-    color: '#333',
+    color: TEXT_COLOR,
   },
   createConversationButton: {
     position: 'absolute',
     bottom: 20,
     right: 20,
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: '#007bff',
+    backgroundColor: THEME_COLOR,
+    borderRadius: 50,
+    padding: 10,
+    elevation: 5,
+  },
+  conversationItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    padding: 15,
+    marginBottom: 10,
+    elevation: 2,
+  },
+  itemContent: {
+    flexDirection: 'row',
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  avatarContainer: {
+    marginRight: 10,
+    position: 'relative',
+  },
+  avatar: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+  },
+  onlineStatus: {
+    position: 'absolute',
+    bottom: 5,
+    right: 5,
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: 'green',
+  },
+  conversationInfo: {
+    flex: 1,
+  },
+  friendName: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: TEXT_COLOR,
+  },
+  optionsContainer: {
+    flexDirection: 'row',
+  },
+  optionButton: {
+    backgroundColor: THEME_COLOR,
+    borderRadius: 5,
+    padding: 5,
+    marginLeft: 5,
+  },
+  optionText: {
+    color: '#fff',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  modalContent: {
+    width: '90%',
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    padding: 20,
   },
 });
 

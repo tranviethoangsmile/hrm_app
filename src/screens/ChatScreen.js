@@ -195,7 +195,6 @@ const ChatScreen = ({route}) => {
       }
       Clipboard.setString(messageToCopy.message);
       setShowOptions(false);
-      showAlert('co.py');
     } catch (error) {
       showAlert('err');
     } finally {
@@ -206,7 +205,7 @@ const ChatScreen = ({route}) => {
 
   const handleTranslateMessage = async messageId => {
     try {
-      const lang = await getLanguage(); // Lấy ngôn ngữ từ AsyncStorage
+      const lang = await getLanguage();
       const messageToTranslate = messages.find(msg => msg.id === messageId);
 
       if (!messageToTranslate) {
@@ -216,7 +215,7 @@ const ChatScreen = ({route}) => {
       const response = await axios.post(url, {
         q: messageToTranslate.message,
         target: lang,
-        key: API_KEY_GOOGLE, // Thay thế bằng API key của bạn
+        key: API_KEY_GOOGLE,
       });
 
       if (
@@ -269,6 +268,7 @@ const ChatScreen = ({route}) => {
           style={[
             isUser ? styles.userMessageText : styles.otherMessageText,
             item.is_unsend ? styles.unsendMessageText : null,
+            item.translatedMessage ? styles.translatedMessageText : null, // Apply different style for translated message
           ]}>
           {item.is_unsend
             ? t('un_send')
@@ -448,27 +448,27 @@ const styles = StyleSheet.create({
     backgroundColor: '#D0E6F4',
     borderRadius: 20,
     marginVertical: 4,
-    padding: 10,
+    padding: 10, // Increased to fit text and options better
     maxWidth: '75%',
     marginRight: 10,
-    position: 'relative', // Adjusted for positioning the options container
+    position: 'relative',
   },
   otherMessageContainer: {
     alignSelf: 'flex-start',
     backgroundColor: '#E6F9E6',
     borderRadius: 20,
     marginVertical: 4,
-    padding: 10,
+    padding: 10, // Increased to fit text and options better
     maxWidth: '75%',
     marginLeft: 10,
-    position: 'relative', // Adjusted for positioning the options container
+    position: 'relative',
   },
   userMessageText: {
-    fontSize: 16,
+    fontSize: 18,
     color: '#003366',
   },
   otherMessageText: {
-    fontSize: 16,
+    fontSize: 18,
     color: '#004d00',
   },
   inputContainer: {
@@ -511,19 +511,20 @@ const styles = StyleSheet.create({
     color: TEXT_COLOR,
   },
   messageContainer: {
-    padding: 10,
+    padding: 5,
+    marginBottom: 5, // Adds space to prevent overlapping with the next message
   },
   optionsContainer: {
-    position: 'absolute',
-    top: 0,
-    right: 0,
     backgroundColor: '#FFF',
     borderRadius: 10,
     elevation: 2,
     flexDirection: 'row',
+    padding: 5, // Ensures options fit better within the message
+    marginTop: 5, // Space between message text and options
+    justifyContent: 'space-around',
   },
   optionButton: {
-    padding: 10,
+    padding: 5,
   },
   optionText: {
     color: THEME_COLOR,
@@ -535,6 +536,10 @@ const styles = StyleSheet.create({
   unsendMessageText: {
     color: '#A9A9A9', // Gray color for unsent messages
     fontStyle: 'italic', // Optional: Makes the text italic for emphasis
+  },
+  translatedMessageText: {
+    color: '#FF5733', // Different color for translated messages
+    fontStyle: 'italic',
   },
 });
 

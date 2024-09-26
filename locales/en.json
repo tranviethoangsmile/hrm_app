@@ -176,7 +176,7 @@
   "not.mess": "No messages to display.",
   "err.load.mess": "An error occurred while loading messages.",
   "search": "Search",
-  "back": "Recall",
+  "back": "Unsent",
   "copy": "Copy",
   "un_send": "Message has been unsent",
   "co.py": "Message copied",
