@@ -1,6 +1,6 @@
 export const BASE_URL = 'http://18.236.164.13';
 export const PORT = ':80';
-// export const BASE_URL = 'http://localhost';
+// export const BASE_URL = 'http://192.168.1.4';
 // export const PORT = ':4000';
 export const API = '/api';
 export const VERSION = '/version';
@@ -44,3 +44,4 @@ export const GET_GROUP_MEMBER_OF_USER = '/getgroupmemberofuser';
 export const UNSEND = '/unsend';
 export const DELETE = '/delete';
 export const API_KEY_GOOGLE = 'AIzaSyDfbdLgQ4kK6A2TaVcSskFdUXYruFV3IBw';
+export const FCM_TOKEN = '/fcmtoken';

@@ -182,5 +182,6 @@
   "co.py": "Message copied",
   "dl.mess": "This message will still be visible to the recipient",
   "un.send.noti": "This message will no longer be displayed",
-  "tranS": "Translate"
+  "tranS": "Translate",
+  "loading.pic": "Uploading image..."
 }

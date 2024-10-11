@@ -13,6 +13,7 @@ import {
 import DocumentPicker from 'react-native-document-picker';
 import CheckBox from '@react-native-community/checkbox';
 import VideoPlayer from 'react-native-video-player';
+import {launchImageLibrary} from 'react-native-image-picker';
 import Loader from './Loader';
 import moment from 'moment';
 import {
@@ -26,6 +27,7 @@ import {
 } from '../utils/Strings';
 import axios from 'axios';
 import {TEXT_COLOR, THEME_COLOR, THEME_COLOR_2} from '../utils/Colors';
+import RNFS from 'react-native-fs';
 
 const PostInformationModal = ({visible, onClose, t, USER_IF, refresh}) => {
   const date = moment().format('YYYY-MM-DD');
@@ -38,6 +40,37 @@ const PostInformationModal = ({visible, onClose, t, USER_IF, refresh}) => {
   const [title, setTitle] = useState('');
   const [error, setError] = useState(null);
   const [fileSelected, setFileSelected] = useState(false);
+  const getRealPathFromURI = async uri => {
+    if (Platform.OS === 'android') {
+      const fileStat = await RNFS.stat(uri);
+      return fileStat.path;
+    }
+    return uri;
+  };
+  const handleImagePicker = () => {
+    const options = {
+      mediaType: 'mixed',
+      quality: 1,
+      selectionLimit: 1,
+    };
+
+    // Mở thư viện ảnh hoặc video
+    launchImageLibrary(options, async response => {
+      if (response.didCancel) {
+        console.log('Người dùng đã hủy việc chọn ảnh.');
+      } else if (response.errorCode) {
+        console.log('Lỗi: ', response.errorCode);
+      } else {
+        const asset = response.assets[0];
+        const realUri = await getRealPathFromURI(asset.uri);
+        setMediaName(asset.fileName);
+        setIsVideo(asset.type.includes('video'));
+        setMediaUri(realUri);
+        setFileSelected(true);
+        Keyboard.dismiss();
+      }
+    });
+  };
 
   const showAlert = message => {
     Alert.alert(t('noti'), message);
@@ -81,27 +114,8 @@ const PostInformationModal = ({visible, onClose, t, USER_IF, refresh}) => {
     } catch (error) {
       setIsloading(false);
       setError('Failed to post information. Please try again.');
-    }
-  };
-
-  const chooseMedia = async () => {
-    try {
-      const res = await DocumentPicker.pickSingle({
-        type: [DocumentPicker.types.images, DocumentPicker.types.video],
-        allowMultiSelection: false,
-      });
-
-      setMediaName(res.name);
-      setIsVideo(res.type.includes('video'));
-      setMediaUri(res.uri);
-      setFileSelected(true);
-      Keyboard.dismiss();
-    } catch (err) {
-      if (DocumentPicker.isCancel(err)) {
-        console.log('User cancelled the file selection.');
-      } else {
-        console.log('Error: ', err);
-      }
+    } finally {
+      setIsloading(false);
     }
   };
 
@@ -157,7 +171,7 @@ const PostInformationModal = ({visible, onClose, t, USER_IF, refresh}) => {
             }}
           />
           <TouchableOpacity
-            onPress={chooseMedia}
+            onPress={handleImagePicker}
             style={styles.chooseMediaButton}>
             <Text style={styles.chooseMediaButtonText}>{t('choo')}</Text>
           </TouchableOpacity>

@@ -9,8 +9,6 @@ import {
   Image,
   Alert,
   StatusBar,
-  Modal,
-  TouchableWithoutFeedback,
   Keyboard,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
@@ -90,10 +88,7 @@ const Message = () => {
 
   const handleDeleteConversation = async id => {
     try {
-      // Close the modal before making the API call
       setModalVisible(false);
-
-      // Send the delete request
       const result = await axios.post(
         `${BASE_URL}${PORT}${API}${VERSION}${V1}${CONVERSATION}${DELETE}`,
         {
@@ -101,23 +96,15 @@ const Message = () => {
           conversation_id: id,
         },
       );
-
-      // Check if the API response was successful
       if (!result?.data?.success) {
         showAlert('unSuccess');
         return;
       }
-
-      // Show success alert
       showAlert('success');
-
-      // Refresh the conversations list after successful deletion
       handleGetConversations();
     } catch (error) {
-      // Show error alert with error message for debugging
       showAlert(error?.message || 'unSuccess');
     } finally {
-      // Ensure the modal is closed even if an error occurs
       setModalVisible(false);
     }
   };
@@ -158,7 +145,7 @@ const Message = () => {
   useEffect(() => {
     handleGetConversations();
     getAllFriendList();
-  }, []);
+  }, [navigation]);
 
   const handleSearch = text => {
     setSearchText(text);
@@ -172,7 +159,17 @@ const Message = () => {
     }
   };
 
-  const handleOpenModal = () => setModalVisible(true);
+  const handleOpenModal = async () => {
+    setIsLoading(true);
+    try {
+      await getAllFriendList();
+      setModalVisible(true);
+    } catch (error) {
+      showAlert(error?.message || 'Network error');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleSelectUser = async user => {
     setIsLoading(true);
@@ -230,7 +227,7 @@ const Message = () => {
             <TouchableOpacity
               onPress={() => handleDeleteConversation(item.conversation_id)}
               style={styles.optionButton}>
-              <Text style={styles.optionText}>{t('tranS')}</Text>
+              <Text style={styles.optionText}>{t('dl')}</Text>
             </TouchableOpacity>
           </View>
         )}
@@ -262,29 +259,15 @@ const Message = () => {
         <Icon name="plus" size={30} color="#fff" />
       </TouchableOpacity>
       <Loader visible={isLoading} />
-
-      {/* Modal for User Selection */}
-      <Modal
-        visible={modalVisible}
-        transparent={true}
-        animationType="fade"
-        onRequestClose={onClose}>
-        <TouchableWithoutFeedback onPress={onClose}>
-          <View style={styles.modalOverlay}>
-            <TouchableWithoutFeedback>
-              <View style={styles.modalContent}>
-                <UserModal
-                  isVisible={modalVisible}
-                  users={friendsList}
-                  onClose={onClose}
-                  onSelectUser={handleSelectUser}
-                  t={t}
-                />
-              </View>
-            </TouchableWithoutFeedback>
-          </View>
-        </TouchableWithoutFeedback>
-      </Modal>
+      {modalVisible && (
+        <UserModal
+          isVisible={modalVisible}
+          users={friendsList}
+          onClose={onClose}
+          onSelectUser={handleSelectUser}
+          t={t}
+        />
+      )}
     </View>
   );
 };
@@ -302,7 +285,8 @@ const styles = StyleSheet.create({
     borderColor: '#ddd',
     borderWidth: 1,
     borderRadius: 25,
-    paddingHorizontal: 15,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
     marginBottom: 15,
   },
   searchIcon: {
@@ -310,34 +294,26 @@ const styles = StyleSheet.create({
   },
   searchInput: {
     flex: 1,
+    fontSize: 16,
     color: TEXT_COLOR,
-  },
-  createConversationButton: {
-    position: 'absolute',
-    bottom: 20,
-    right: 20,
-    backgroundColor: THEME_COLOR,
-    borderRadius: 50,
-    padding: 10,
-    elevation: 5,
   },
   conversationItem: {
     flexDirection: 'row',
-    alignItems: 'center',
+    padding: 10,
     backgroundColor: '#fff',
     borderRadius: 10,
-    padding: 15,
     marginBottom: 10,
-    elevation: 2,
+    borderWidth: 1,
+    borderColor: '#ddd',
+    alignItems: 'center',
   },
   itemContent: {
     flexDirection: 'row',
-    flex: 1,
     alignItems: 'center',
-    justifyContent: 'space-between',
+    flex: 1,
   },
   avatarContainer: {
-    marginRight: 10,
+    marginRight: 15,
     position: 'relative',
   },
   avatar: {
@@ -346,45 +322,56 @@ const styles = StyleSheet.create({
     borderRadius: 25,
   },
   onlineStatus: {
-    position: 'absolute',
-    bottom: 5,
-    right: 5,
-    width: 10,
-    height: 10,
-    borderRadius: 5,
+    width: 12,
+    height: 12,
+    borderRadius: 6,
     backgroundColor: 'green',
+    position: 'absolute',
+    right: 0,
+    bottom: 0,
+    borderWidth: 1,
+    borderColor: '#fff',
   },
   conversationInfo: {
     flex: 1,
   },
   friendName: {
-    fontSize: 16,
-    fontWeight: 'bold',
+    fontSize: 18,
     color: TEXT_COLOR,
+    fontWeight: 'bold',
   },
   optionsContainer: {
-    flexDirection: 'row',
+    marginLeft: 'auto',
   },
   optionButton: {
     backgroundColor: THEME_COLOR,
+    padding: 10,
     borderRadius: 5,
-    padding: 5,
-    marginLeft: 5,
   },
   optionText: {
     color: '#fff',
   },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  createConversationButton: {
+    position: 'absolute',
+    right: 20,
+    bottom: 20,
+    backgroundColor: THEME_COLOR,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
     justifyContent: 'center',
     alignItems: 'center',
   },
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'center',
+    backgroundColor: 'rgba(0,0,0,0.5)',
+  },
   modalContent: {
-    width: '90%',
     backgroundColor: '#fff',
     borderRadius: 10,
     padding: 20,
+    marginHorizontal: 20,
   },
 });
 

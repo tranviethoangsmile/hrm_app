@@ -50,7 +50,7 @@ const UserModal = ({isVisible, onClose, users, onSelectUser, t}) => {
   return (
     <Modal
       transparent={true}
-      animationType="slide"
+      animationType="fade"
       visible={isVisible}
       onRequestClose={onClose}>
       <Pressable style={styles.modalOverlay} onPress={onClose}>

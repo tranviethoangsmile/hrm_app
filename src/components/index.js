@@ -1,3 +1,3 @@
 import EditPlanProduction from './planProduction/EditPlanProduction';
-
-export {EditPlanProduction};
+import Loader from './loader/Loader.message';
+export {EditPlanProduction, Loader};

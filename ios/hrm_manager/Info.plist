@@ -47,6 +47,8 @@
 	<string>photos</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string></string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>PhotoLibrary</string>
 	<key>UIAppFonts</key>
 	<array>
 		<string>AntDesign.ttf</string>

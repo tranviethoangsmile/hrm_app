@@ -180,5 +180,6 @@
   "co.py": "Mensagem copiada",
   "dl.mess": "Esta mensagem ainda será visível para o destinatário.",
   "un.send.noti": "Esta mensagem não será mais exibida",
-  "tranS": "Traduzir"
+  "tranS": "Traduzir",
+  "loading.pic": "Carregando imagem..."
 }

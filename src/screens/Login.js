@@ -25,6 +25,10 @@ import {API, BASE_URL, LOGIN_URL, PORT, V1, VERSION} from '../utils/Strings';
 import CheckBox from '@react-native-community/checkbox';
 
 import {
+  NotificationServices,
+  requestUserPermission,
+} from '../utils/notification/PushNotifications';
+import {
   BG_COLOR,
   TEXT_COLOR,
   THEME_COLOR,
@@ -132,6 +136,11 @@ const Login = () => {
           dispatch(setAuthData(login?.data));
           setUserName('');
           setPassword('');
+          const os = Platform.OS;
+          if (os === 'android') {
+            NotificationServices();
+            requestUserPermission(login?.data.data);
+          }
           navigation.replace('Main');
         }
       } catch (error) {

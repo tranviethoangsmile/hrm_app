@@ -34,6 +34,7 @@ import {
 import InformationDetail from '../components/InformationDetail';
 import {TEXT_COLOR} from '../utils/Colors';
 import Loader from '../components/Loader';
+
 const Upload = () => {
   const {t} = useTranslation();
   const authData = useSelector(state => state.auth);
@@ -48,6 +49,7 @@ const Upload = () => {
   const showAlert = message => {
     Alert.alert(t('noti'), t(message));
   };
+
   const handleGetValueOfInformation = async id => {
     try {
       const information = await axios.post(
