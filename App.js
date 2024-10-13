@@ -18,7 +18,6 @@ const App = () => {
         granted['android.permission.WRITE_EXTERNAL_STORAGE'] ===
           PermissionsAndroid.RESULTS.GRANTED
       ) {
-        console.log('Permissions granted');
       } else {
         console.log('Permissions denied');
       }

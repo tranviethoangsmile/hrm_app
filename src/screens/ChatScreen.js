@@ -50,7 +50,6 @@ const ChatScreen = ({route}) => {
   const {conversationId, friendName, friendAvatar} = route.params;
   const [messages, setMessages] = useState([]);
   const [message, setMessage] = useState('');
-  const [selectedImage, setSelectedImage] = useState(null);
   const [notMessage, setNotMessage] = useState('');
   const {t} = useTranslation();
   const authData = useSelector(state => state.auth);
@@ -209,15 +208,19 @@ const ChatScreen = ({route}) => {
         setNotMessage('not.mess');
       } else {
         const messages = response?.data.data || [];
+
+        // Lọc tin nhắn dựa vào delete_messages
         const filteredMessages = messages.filter(message => {
           const deleteMessages = Array.isArray(message.delete_messages)
             ? message.delete_messages
             : [];
+          // Kiểm tra xem người dùng đã xóa tin nhắn này chưa
           const isDeletedByUser = deleteMessages.some(
             deleteMessage => deleteMessage.user_id === USER_INFOR.id,
           );
-          return !isDeletedByUser;
+          return !isDeletedByUser; // Giữ lại những tin nhắn chưa bị xóa
         });
+
         setMessages(filteredMessages);
       }
     } catch (error) {
@@ -235,6 +238,29 @@ const ChatScreen = ({route}) => {
 
     socket.emit('joinConversation', conversationId);
     socket.on(`${conversationId}`, handleNewMessage);
+    socket.on('message_un_sended', data => {
+      if (data.success) {
+        setMessages(prevMessages =>
+          prevMessages.map(message => {
+            if (message.id === data.id) {
+              return {
+                ...message,
+                is_unsend: true,
+              };
+            }
+            return message;
+          }),
+        );
+      }
+    });
+
+    socket.on('deleted_message', data => {
+      if (data.success) {
+        getAllMessage();
+      } else {
+        showAlert('unSuccess');
+      }
+    });
 
     return () => {
       socket.off(`${conversationId}`, handleNewMessage);
@@ -252,22 +278,11 @@ const ChatScreen = ({route}) => {
 
   const handleUnsendMessage = async messageId => {
     try {
-      const unsend = await axios.post(
-        `${BASE_URL}${PORT}${API}${VERSION}${V1}${MESSAGE}${UNSEND}`,
-        {
-          id: messageId,
-        },
-      );
-      if (!unsend?.data.success) {
-        setShowOptions(false);
-        showAlert('unSuccess');
-      }
+      socket.emit('un_send_message', {
+        message_id: messageId,
+        conversation_id: conversationId,
+      });
       setShowOptions(false);
-      setMessages(prevMessages =>
-        prevMessages.map(msg =>
-          msg.id === messageId ? {...msg, is_unsend: true} : msg,
-        ),
-      );
     } catch (error) {
       showAlert(`${error.message}` | 'networkError');
     } finally {
@@ -277,19 +292,12 @@ const ChatScreen = ({route}) => {
 
   const handleDeleteMessage = async messageId => {
     try {
+      socket.emit('delete_message', {
+        message_id: messageId,
+        user_id: USER_INFOR.id,
+        conversation_id: conversationId,
+      });
       setShowOptions(false);
-      const delete_ = await axios.post(
-        `${BASE_URL}${PORT}${API}${VERSION}${V1}${MESSAGE}${DELETE}`,
-        {
-          message_id: messageId,
-          user_id: USER_INFOR.id,
-        },
-      );
-      if (!delete_?.data.success) {
-        showAlert('unSuccess');
-      }
-      showAlert('success');
-      getAllMessage();
     } catch (error) {
       showAlert(`${error.message}` | 'networkError');
     } finally {
@@ -373,22 +381,28 @@ const ChatScreen = ({route}) => {
 
   const Message = ({item, isUser}) => {
     const renderMessageContent = () => {
+      if (item.is_unsend) {
+        // Nếu là tin nhắn unsend, hiển thị text 'un_send' cho tất cả các loại tin nhắn
+        return <Text style={styles.unsendMessageText}>{t('un_send')}</Text>;
+      }
+
+      // Hiển thị nội dung bình thường nếu không phải là tin nhắn unsend
       switch (item.message_type) {
         case 'IMAGE':
           return (
             <Image
-              source={{uri: item.message}} // Assuming `item.message` contains the image URL
-              style={styles.imageStyle} // Define your image style here
+              source={{uri: item.message}}
+              style={styles.imageStyle}
               resizeMode="cover"
             />
           );
         case 'VIDEO':
           return (
             <Video
-              source={{uri: item.message}} // Assuming `item.message` contains the video URL
-              style={styles.videoStyle} // Define your video style here
+              source={{uri: item.message}}
+              style={styles.videoStyle}
               resizeMode="cover"
-              controls // Display video controls
+              controls
             />
           );
         case 'TEXT':
@@ -397,12 +411,9 @@ const ChatScreen = ({route}) => {
             <Text
               style={[
                 isUser ? styles.userMessageText : styles.otherMessageText,
-                item.is_unsend ? styles.unsendMessageText : null,
                 item.translatedMessage ? styles.translatedMessageText : null,
               ]}>
-              {item.is_unsend
-                ? t('un_send')
-                : item.translatedMessage || item.message}
+              {item.translatedMessage || item.message}
             </Text>
           );
       }

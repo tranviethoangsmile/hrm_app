@@ -44,8 +44,6 @@ const Splash = () => {
   );
 };
 
-export default Splash;
-
 const styles = StyleSheet.create({
   versionTextView: {
     flex: 1,
@@ -69,3 +67,4 @@ const styles = StyleSheet.create({
     color: '#fff',
   },
 });
+export default Splash;
