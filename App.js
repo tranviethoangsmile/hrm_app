@@ -1,5 +1,5 @@
 import React, {useEffect} from 'react';
-import {PermissionsAndroid} from 'react-native';
+import {PermissionsAndroid, Platform} from 'react-native';
 import {Provider} from 'react-redux';
 import MainNavigator from './src/navigation/MainNavigator';
 import MyStore from './src/redux/MyStore';
@@ -27,7 +27,9 @@ const App = () => {
   };
   useEffect(() => {
     NotificationServices();
-    requestStoragePermission();
+    if (Platform.OS === 'android') {
+      requestStoragePermission();
+    }
   }, []);
   return (
     <Provider store={MyStore}>
