@@ -24,7 +24,7 @@ import {
   PORT,
   V1,
   VERSION,
-} from '../utils/Strings';
+} from '../utils/constans';
 
 import {useSelector} from 'react-redux';
 import DailyModal from '../components/DailyModal';

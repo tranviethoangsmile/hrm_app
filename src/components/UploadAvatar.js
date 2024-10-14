@@ -18,37 +18,51 @@ import {
   PORT,
   V1,
   VERSION,
-} from '../utils/Strings';
+} from '../utils/constans';
 import Loader from './Loader';
+import RNFS from 'react-native-fs';
+import {launchImageLibrary} from 'react-native-image-picker';
 
 const UploadAvatar = ({visible, closeModal, t, user_id, avatar_url}) => {
   const [imageUri, setImageUri] = useState(null);
   const [imageName, setImageName] = useState('');
   const [isloading, setIsloading] = useState(false);
   const [updateDisabled, setUpdateDisabled] = useState(true);
+  const getRealPathFromURI = async uri => {
+    if (Platform.OS === 'android') {
+      const fileStat = await RNFS.stat(uri);
+      return fileStat.path;
+    }
+    return uri;
+  };
+  const handleImagePicker = () => {
+    const options = {
+      mediaType: 'image',
+      quality: 1,
+      selectionLimit: 1,
+    };
+
+    // Mở thư viện ảnh hoặc video
+    launchImageLibrary(options, async response => {
+      if (response.didCancel) {
+        console.log('Người dùng đã hủy việc chọn ảnh.');
+      } else if (response.errorCode) {
+        console.log('Lỗi: ', response.errorCode);
+      } else {
+        const asset = response.assets[0];
+        const realUri = await getRealPathFromURI(asset.uri);
+        setImageName(asset.fileName);
+        setImageUri(realUri);
+      }
+    });
+  };
+
   useEffect(() => {
     setUpdateDisabled(!imageUri);
   }, [imageUri]);
 
   const showAlert = mess => {
     Alert.alert('Notification!! ', mess);
-  };
-  const handleChoiceImage = async () => {
-    try {
-      const image = await DocumentPicker.pickSingle({
-        type: DocumentPicker.types.images,
-        allowMultiSelection: false,
-      });
-      const maxSizeInBytes = 10 * 1024 * 1024; // 5MB
-      if (image.size > maxSizeInBytes) {
-        showAlert(t('size'));
-      } else {
-        setImageUri(image.uri);
-        setImageName(image.name);
-      }
-    } catch (error) {
-      showAlert(error);
-    }
   };
 
   const handleUploadImage = async () => {
@@ -80,7 +94,10 @@ const UploadAvatar = ({visible, closeModal, t, user_id, avatar_url}) => {
         closeModal();
       }
     } catch (error) {
+      setIsloading(false);
       showAlert(t('unSuccess'));
+    } finally {
+      setIsloading(false);
     }
   };
 
@@ -101,7 +118,7 @@ const UploadAvatar = ({visible, closeModal, t, user_id, avatar_url}) => {
             </TouchableOpacity>
           </View>
           <View style={styles.body}>
-            <TouchableOpacity onPress={handleChoiceImage}>
+            <TouchableOpacity onPress={handleImagePicker}>
               <Image
                 source={
                   imageUri

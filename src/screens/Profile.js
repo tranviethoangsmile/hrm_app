@@ -32,7 +32,7 @@ import {
   USER_URL,
   CHECKIN,
   SEARCH,
-} from '../utils/Strings';
+} from '../utils/constans';
 import {
   BG_COLOR,
   TEXT_COLOR,

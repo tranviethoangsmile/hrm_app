@@ -4,15 +4,7 @@ import DeviceInfo from 'react-native-device-info';
 import {Platform, Alert} from 'react-native';
 import axios from 'axios';
 import {useNavigation} from '@react-navigation/native';
-import {
-  API,
-  BASE_URL,
-  V1,
-  VERSION,
-  CREATE,
-  FCM_TOKEN,
-  PORT,
-} from '../../utils/Strings';
+import {API, BASE_URL, V1, VERSION, CREATE, FCM_TOKEN, PORT} from '../constans';
 export async function requestUserPermission(USER_INFOR) {
   const authStatus = await messaging().requestPermission();
   const enabled =

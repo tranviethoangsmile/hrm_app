@@ -38,7 +38,7 @@ import {
   PAID_LEAVE,
   CREATE,
   SEARCH,
-} from '../utils/Strings';
+} from '../utils/constans';
 import axios from 'axios';
 import {TEXT_COLOR, THEME_COLOR, THEME_COLOR_2} from '../utils/Colors';
 import CheckBox from '@react-native-community/checkbox';

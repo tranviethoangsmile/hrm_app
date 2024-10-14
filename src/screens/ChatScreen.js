@@ -12,8 +12,8 @@ import {
   TouchableWithoutFeedback,
   KeyboardAvoidingView,
   Keyboard,
-  PermissionsAndroid,
 } from 'react-native';
+import Video from 'react-native-video';
 import RNFS from 'react-native-fs';
 import Clipboard from '@react-native-clipboard/clipboard';
 import {
@@ -41,7 +41,7 @@ import {
   DELETE,
   API_KEY_GOOGLE,
   CREATE,
-} from '../utils/Strings';
+} from '../utils/constans';
 import socket from '../socket.io/socket.io';
 import {Loader} from '../components';
 

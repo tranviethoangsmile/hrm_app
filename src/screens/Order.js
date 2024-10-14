@@ -16,7 +16,7 @@ import {
 import {useSelector} from 'react-redux';
 import axios from 'axios';
 import moment from 'moment';
-import {API, BASE_URL, ORDER_URL, PORT, V1, VERSION} from '../utils/Strings';
+import {API, BASE_URL, ORDER_URL, PORT, V1, VERSION} from '../utils/constans';
 import OrderModal from '../components/OrderModal';
 import i18next from '../../services/i18next';
 import {useTranslation} from 'react-i18next';

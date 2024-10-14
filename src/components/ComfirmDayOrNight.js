@@ -17,7 +17,7 @@ import {
   VERSION,
   CHECKIN,
   CREATE,
-} from '../utils/Strings';
+} from '../utils/constans';
 import {useNavigation} from '@react-navigation/native';
 const ConfirmDayOrNight = ({visible, closeModal, checkin, time, t}) => {
   const navigate = useNavigation();

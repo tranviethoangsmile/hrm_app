@@ -1,5 +1,5 @@
 import io from 'socket.io-client';
-import {BASE_URL, PORT} from '../utils/Strings';
+import {BASE_URL, PORT} from '../utils/constans';
 
 const socket = io(`${BASE_URL}${PORT}`);
 socket.on('connect', () => {

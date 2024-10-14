@@ -25,7 +25,7 @@ import {
   NOTIFICATION,
   SEARCH_BY_ID,
   UPDATE,
-} from '../utils/Strings';
+} from '../utils/constans';
 import Loader from '../components/Loader';
 import {TEXT_COLOR} from '../utils/Colors';
 
