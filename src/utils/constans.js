@@ -45,3 +45,4 @@ export const UNSEND = '/unsend';
 export const DELETE = '/delete';
 export const API_KEY_GOOGLE = 'AIzaSyDfbdLgQ4kK6A2TaVcSskFdUXYruFV3IBw';
 export const FCM_TOKEN = '/fcmtoken';
+export const GET_EVENTS_WITH_POSITION = '/getwithposition';

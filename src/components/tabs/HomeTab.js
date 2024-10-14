@@ -10,16 +10,10 @@ import {
   TouchableOpacity,
   StatusBar,
   Alert,
-  useColorScheme,
 } from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import {useSelector} from 'react-redux';
-import {
-  TEXT_COLOR,
-  THEME_COLOR_2,
-  THEME_COLOR,
-  BG_COLOR,
-} from '../../utils/Colors';
+import {THEME_COLOR_2, BG_COLOR} from '../../utils/Colors';
 import Control from '../Control';
 import Notifications from '../Notifications';
 import {useTranslation} from 'react-i18next';
@@ -39,9 +33,9 @@ import {
   INFORMATION,
   GET_ALL_BY_FIELD,
   EVENTS,
-  GET_ALL,
   NOTIFICATION,
   SEARCH_BY_ID,
+  GET_EVENTS_WITH_POSITION,
 } from '../../utils/constans';
 import Loader from '../Loader';
 import HappyModal from '../HappyModal';
@@ -82,12 +76,13 @@ const HomeTab = () => {
 
   const get_event_detail = async () => {
     try {
-      const url = `${BASE_URL}${PORT}${API}${VERSION}${V1}${EVENTS}${GET_ALL}`;
+      const url = `${BASE_URL}${PORT}${API}${VERSION}${V1}${EVENTS}${GET_EVENTS_WITH_POSITION}`;
 
-      const res = await axios.get(url);
-
-      if (res?.data?.success) {
-        setEvent(res?.data.data[0]);
+      const events = await axios.post(url, {
+        position: userInfo.position,
+      });
+      if (events?.data?.success) {
+        setEvent(events?.data.data[0]);
         setTimeout(() => {
           setIsVisiblePopup(true);
         }, 3000);
