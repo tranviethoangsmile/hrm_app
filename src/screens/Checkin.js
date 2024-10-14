@@ -21,7 +21,7 @@ import {
   VERSION,
   CHECKIN,
   CREATE,
-} from '../utils/Strings';
+} from '../utils/constans';
 import {useNavigation} from '@react-navigation/native';
 
 import ConfirmDayOrNight from '../components/ComfirmDayOrNight';

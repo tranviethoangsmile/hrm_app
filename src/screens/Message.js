@@ -29,7 +29,7 @@ import {
   CONVERSATION,
   CREATE,
   DELETE,
-} from '../utils/Strings';
+} from '../utils/constans';
 import Loader from '../components/Loader';
 import defaultAvatar from '../assets/images/avatar.jpg';
 import UserModal from '../components/UserModal';

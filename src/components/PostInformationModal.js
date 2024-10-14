@@ -10,7 +10,6 @@ import {
   Alert,
   Keyboard,
 } from 'react-native';
-import DocumentPicker from 'react-native-document-picker';
 import CheckBox from '@react-native-community/checkbox';
 import VideoPlayer from 'react-native-video-player';
 import {launchImageLibrary} from 'react-native-image-picker';
@@ -24,7 +23,7 @@ import {
   PORT,
   V1,
   VERSION,
-} from '../utils/Strings';
+} from '../utils/constans';
 import axios from 'axios';
 import {TEXT_COLOR, THEME_COLOR, THEME_COLOR_2} from '../utils/Colors';
 import RNFS from 'react-native-fs';

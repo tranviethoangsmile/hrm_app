@@ -10,7 +10,7 @@ import {
   TouchableOpacity,
   Button,
 } from 'react-native';
-import {API, BASE_URL, ORDER_URL, PORT, V1, VERSION} from '../utils/Strings';
+import {API, BASE_URL, ORDER_URL, PORT, V1, VERSION} from '../utils/constans';
 import axios from 'axios';
 import moment from 'moment';
 

@@ -43,7 +43,7 @@ import {
   EVENT_CHECK,
   SEARCH_EVENT_CHECKED,
   SEARCH_SAFETY_CHECKED,
-} from '../utils/Strings';
+} from '../utils/constans';
 
 const Event = () => {
   const getLanguage = async () => {

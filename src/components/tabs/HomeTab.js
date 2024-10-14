@@ -42,7 +42,7 @@ import {
   GET_ALL,
   NOTIFICATION,
   SEARCH_BY_ID,
-} from '../../utils/Strings';
+} from '../../utils/constans';
 import Loader from '../Loader';
 import HappyModal from '../HappyModal';
 import moment from 'moment';

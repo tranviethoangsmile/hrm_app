@@ -19,7 +19,7 @@ import {
   V1,
   PLAN_PRODUCTION,
   UPDATE,
-} from '../../utils/Strings';
+} from '../../utils/constans';
 import {TEXT_COLOR} from '../../utils/Colors';
 const EditPlanProduction = ({visible, planProduction, t, onClose, reCall}) => {
   const [editableData, setEditableData] = useState(planProduction);

@@ -32,7 +32,7 @@ import {
   INVENTORY,
   DAILY_REPORT,
   GET_ALL,
-} from '../utils/Strings';
+} from '../utils/constans';
 import {LineChart, BarChart, PieChart} from 'react-native-chart-kit';
 import DropDownPicker from 'react-native-dropdown-picker';
 import {shiftArr, products} from '../utils/interface';

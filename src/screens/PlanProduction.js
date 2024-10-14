@@ -19,7 +19,7 @@ import {
   PLAN_PRODUCTION,
   SEARCH_PLAN_PRODUCTION_WITH_FIELD,
   SEARCH_BY_ID,
-} from '../utils/Strings';
+} from '../utils/constans';
 import {useSelector} from 'react-redux';
 import axios from 'axios';
 import moment from 'moment';

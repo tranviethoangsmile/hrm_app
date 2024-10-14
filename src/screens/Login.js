@@ -21,7 +21,7 @@ import {useTranslation} from 'react-i18next';
 import i18next from '../../services/i18next';
 import {useDispatch} from 'react-redux';
 import {setAuthData} from '../redux/AuthSlice';
-import {API, BASE_URL, LOGIN_URL, PORT, V1, VERSION} from '../utils/Strings';
+import {API, BASE_URL, LOGIN_URL, PORT, V1, VERSION} from '../utils/constans';
 import CheckBox from '@react-native-community/checkbox';
 
 import {
