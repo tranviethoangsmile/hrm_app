@@ -23,6 +23,7 @@ import {
   PlanProduction,
   Message,
   ChatScreen,
+  Uniform,
 } from '../screens';
 const Stack = createStackNavigator();
 const MainNavigator = () => {
@@ -68,6 +69,11 @@ const MainNavigator = () => {
         <Stack.Screen
           name="Login"
           component={Login}
+          options={{headerShown: false}}
+        />
+        <Stack.Screen
+          name="Uniform"
+          component={Uniform}
           options={{headerShown: false}}
         />
         <Stack.Screen

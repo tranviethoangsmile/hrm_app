@@ -14,11 +14,13 @@ import i18next from '../../../services/i18next';
 import {useTranslation} from 'react-i18next';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Icon from 'react-native-vector-icons/Ionicons';
-
+import {useSelector} from 'react-redux';
 const FeatureTab = () => {
   const getLanguage = async () => {
     return await AsyncStorage.getItem('Language');
   };
+  const authData = useSelector(state => state.auth);
+  const USER_INFOR = authData?.data?.data;
   const {t} = useTranslation();
   const navigation = useNavigation();
 
@@ -48,7 +50,7 @@ const FeatureTab = () => {
           {renderFeatureButton('clipboard-outline', t('rp'), () =>
             navigation.navigate('Report'),
           )}
-          {renderFeatureButton('file-tray-outline', t('or'), () =>
+          {renderFeatureButton('restaurant-outline', t('or'), () =>
             navigation.navigate('Order'),
           )}
         </View>
@@ -56,7 +58,11 @@ const FeatureTab = () => {
           {renderFeatureButton('logo-octocat', t('Ai'), () =>
             navigation.navigate('Ai'),
           )}
-          {renderFeatureButton('school-outline', t('Mk'))}
+          {renderFeatureButton('shirt-outline', t('Mk'), () => {
+            navigation.navigate('Uniform', {
+              USER_INFOR: USER_INFOR,
+            });
+          })}
         </View>
         <View style={styles.featureRow}>
           {renderFeatureButton('calendar-outline', t('Lea'), () =>

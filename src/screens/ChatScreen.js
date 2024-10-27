@@ -44,7 +44,7 @@ import {
 } from '../utils/constans';
 import socket from '../socket.io/socket.io';
 import {Loader} from '../components';
-
+import {encrypt, decrypt} from '../services';
 const ChatScreen = ({route}) => {
   const textInputRef = React.useRef(null);
   const {conversationId, friendName, friendAvatar} = route.params;
@@ -181,6 +181,7 @@ const ChatScreen = ({route}) => {
           message: message,
           message_type: 'TEXT',
         };
+        console.log(newMessage);
 
         socket.emit('send-message', newMessage);
         setMessage('');
@@ -382,11 +383,8 @@ const ChatScreen = ({route}) => {
   const Message = ({item, isUser}) => {
     const renderMessageContent = () => {
       if (item.is_unsend) {
-        // Nếu là tin nhắn unsend, hiển thị text 'un_send' cho tất cả các loại tin nhắn
         return <Text style={styles.unsendMessageText}>{t('un_send')}</Text>;
       }
-
-      // Hiển thị nội dung bình thường nếu không phải là tin nhắn unsend
       switch (item.message_type) {
         case 'IMAGE':
           return (

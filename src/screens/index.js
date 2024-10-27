@@ -19,6 +19,7 @@ import Salary from './Salary';
 import PlanProduction from './PlanProduction';
 import Message from './Message';
 import ChatScreen from './ChatScreen';
+import Uniform from './Uniform';
 export {
   Checkin,
   Ai,
@@ -41,4 +42,5 @@ export {
   PlanProduction,
   Message,
   ChatScreen,
+  Uniform,
 };

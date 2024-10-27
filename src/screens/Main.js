@@ -11,6 +11,7 @@ import {
   TouchableOpacity,
   Image,
 } from 'react-native';
+import Icon from 'react-native-vector-icons/Ionicons';
 import {THEME_COLOR, THEME_COLOR_2} from '../utils/Colors';
 import {useSelector} from 'react-redux';
 import HomeTab from '../components/tabs/HomeTab';
@@ -32,12 +33,10 @@ const Main = () => {
           onPress={() => {
             setSelectedTab(0);
           }}>
-          <Image
-            source={require('../assets/images/home_icon.png')}
-            style={[
-              styles.btnIcon,
-              {tintColor: selectedTab === 0 ? THEME_COLOR_2 : '#000'},
-            ]}
+          <Icon
+            name={'home'}
+            size={50}
+            color={selectedTab === 0 ? THEME_COLOR_2 : '#000'}
           />
         </TouchableOpacity>
         <TouchableOpacity
@@ -45,22 +44,17 @@ const Main = () => {
             navigation.navigate('Checkin');
           }}>
           <View style={styles.checkInIcon}>
-            <Image
-              source={require('../assets/images/checkin_icon.png')}
-              style={[styles.btnIcon, {tintColor: '#fff'}]}
-            />
+            <Icon name={'finger-print-outline'} size={50} color={'white'} />
           </View>
         </TouchableOpacity>
         <TouchableOpacity
           onPress={() => {
             setSelectedTab(1);
           }}>
-          <Image
-            source={require('../assets/images/features_icon.png')}
-            style={[
-              styles.btnIcon,
-              {tintColor: selectedTab === 1 ? THEME_COLOR_2 : '#000'},
-            ]}
+          <Icon
+            name={'reorder-four'}
+            size={60}
+            color={selectedTab === 1 ? THEME_COLOR_2 : '#000'}
           />
         </TouchableOpacity>
       </View>
