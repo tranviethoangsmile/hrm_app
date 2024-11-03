@@ -210,5 +210,11 @@
   "status": "Status",
   "pending": "Processando",
   "completed": "Confirmado",
-  "delivery": "Data de Entrega"
+  "delivery": "Data de Entrega",
+  "image.send.error": "Falha ao enviar a imagem!!!",
+  "image.send.success": "Imagem enviada com sucesso!!!",
+  "copy.not.success": "Falha ao copiar a mensagem.",
+  "delete.success": "Mensagem deletada com sucesso.",
+  "checkin.success": "Check-in realizado com sucesso.",
+  "checkin.error": "Falha no check-in."
 }

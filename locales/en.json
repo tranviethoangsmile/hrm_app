@@ -212,5 +212,11 @@
   "status": "Status",
   "pending": "Pending",
   "completed": "Confirmed",
-  "delivery": "Delivery Date"
+  "delivery": "Delivery Date",
+  "image.send.error": "Failed to send image!!!",
+  "image.send.success": "Image sent successfully!!!",
+  "copy.not.success": "Failed to copy the message.",
+  "delete.success": "Message deleted successfully.",
+  "checkin.success": "Check-in successful.",
+  "checkin.error": "Check-in failed."
 }

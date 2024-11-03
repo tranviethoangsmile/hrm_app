@@ -45,6 +45,7 @@ import {
 import socket from '../socket.io/socket.io';
 import {Loader} from '../components';
 import {encrypt, decrypt} from '../services';
+import {ModalMessage} from '../components';
 const ChatScreen = ({route}) => {
   const textInputRef = React.useRef(null);
   const {conversationId, friendName, friendAvatar} = route.params;
@@ -60,7 +61,16 @@ const ChatScreen = ({route}) => {
   const [selectedMessageId, setSelectedMessageId] = useState(null);
   const url = `https://translation.googleapis.com/language/translate/v2?key=${API_KEY_GOOGLE}`;
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
-
+  const [messageModal, setMessageModal] = useState('');
+  const [messageType, setMessageType] = useState('success');
+  const [duration, setDuration] = useState(1000);
+  const [isMessageModalVisible, setMessageModalVisible] = useState(false);
+  const showMessage = (msg, type, dur) => {
+    setMessageModalVisible(true);
+    setMessageModal(msg);
+    setMessageType(type);
+    setDuration(dur);
+  };
   const handleEmojiSelect = emoji => {
     setMessage(prevMessage => prevMessage + emoji);
   };
@@ -70,9 +80,6 @@ const ChatScreen = ({route}) => {
   };
   const getLanguage = async () => {
     return await AsyncStorage.getItem('Language');
-  };
-  const showAlert = message => {
-    Alert.alert(t('noti'), t(message));
   };
   function getMessageType(asset) {
     if (!asset.type || asset.type === '') {
@@ -140,28 +147,31 @@ const ChatScreen = ({route}) => {
           );
 
           if (!res?.data.success) {
-            showAlert('not');
+            showMessage('image.send.error', 'error', 2000);
           }
-
+          showMessage('image.send.success', 'success', 1000);
           const newMessage = {
             conversation_id: conversationId,
             user_id: USER_INFOR.id,
             message: res?.data.data,
             message_type: getMessageType(asset),
           };
-
           socket.emit('send-message', newMessage);
           Keyboard.dismiss();
           setShowEmojiPicker(false);
         } catch (error) {
           setIsloading(false);
+          showMessage('image.send.error', 'error', 2000);
           // Log chi tiết lỗi Axios
           if (error.response) {
+            showMessage('networkError', 'error', 2000);
             console.log('Error response data:', error.response.data);
             console.log('Error response status:', error.response.status);
           } else if (error.request) {
+            showMessage('networkError', 'error', 2000);
             console.log('Error request:', error.request);
           } else {
+            showMessage('networkError', 'error', 2000);
             console.log('Error message:', error.message);
           }
         } finally {
@@ -181,16 +191,15 @@ const ChatScreen = ({route}) => {
           message: message,
           message_type: 'TEXT',
         };
-        console.log(newMessage);
 
         socket.emit('send-message', newMessage);
         setMessage('');
       } else {
-        showAlert('tymess');
+        showMessage('networkError', 'error', 2000);
         setIsloading(false);
       }
     } catch (error) {
-      showAlert('networkError');
+      showMessage('networkError', 'error', 2000);
     } finally {
       setIsloading(false);
     }
@@ -225,6 +234,7 @@ const ChatScreen = ({route}) => {
         setMessages(filteredMessages);
       }
     } catch (error) {
+      showMessage('networkError', 'error', 2000);
       setNotMessage('err.load.mess');
     } finally {
       setIsloading(false);
@@ -241,6 +251,7 @@ const ChatScreen = ({route}) => {
     socket.on(`${conversationId}`, handleNewMessage);
     socket.on('message_un_sended', data => {
       if (data.success) {
+        showMessage('un_send', 'success', 1000);
         setMessages(prevMessages =>
           prevMessages.map(message => {
             if (message.id === data.id) {
@@ -252,14 +263,17 @@ const ChatScreen = ({route}) => {
             return message;
           }),
         );
+      } else {
+        showMessage('unSuccess', 'error', 2000);
       }
     });
 
     socket.on('deleted_message', data => {
       if (data.success) {
+        showMessage('delete.success', 'success', 1000);
         getAllMessage();
       } else {
-        showAlert('unSuccess');
+        showMessage('unSuccess', 'error', 2000);
       }
     });
 
@@ -285,7 +299,7 @@ const ChatScreen = ({route}) => {
       });
       setShowOptions(false);
     } catch (error) {
-      showAlert(`${error.message}` | 'networkError');
+      showMessage('networkError', 'error', 2000);
     } finally {
       setShowOptions(false);
     }
@@ -300,7 +314,7 @@ const ChatScreen = ({route}) => {
       });
       setShowOptions(false);
     } catch (error) {
-      showAlert(`${error.message}` | 'networkError');
+      showMessage('networkError', 'error', 2000);
     } finally {
       setShowOptions(false);
     }
@@ -312,13 +326,14 @@ const ChatScreen = ({route}) => {
       const messageToCopy = messages.find(msg => msg.id === messageId);
 
       if (!messageToCopy) {
-        showAlert('cannot copy Message');
+        showMessage('copy.not.success', 'error', 1500);
         return;
       }
       Clipboard.setString(messageToCopy.message);
+      showMessage('co.py', 'success', 1000);
       setShowOptions(false);
     } catch (error) {
-      showAlert('err');
+      showMessage('err', 'error', 1500);
     } finally {
       setShowOptions(false);
       setSelectedMessageId(null);
@@ -363,7 +378,7 @@ const ChatScreen = ({route}) => {
         ),
       );
     } catch (error) {
-      showAlert('err' | 'networkError');
+      showMessage('networkError', 'error', 1500);
     } finally {
       setShowOptions(false);
     }
@@ -576,6 +591,14 @@ const ChatScreen = ({route}) => {
             </View>
           )}
           {isLoading && <Loader t={t} />}
+          <ModalMessage
+            isVisible={isMessageModalVisible}
+            onClose={() => setMessageModalVisible(false)}
+            message={messageModal}
+            type={messageType}
+            t={t}
+            duration={duration}
+          />
         </SafeAreaView>
       </TouchableWithoutFeedback>
     </KeyboardAvoidingView>

@@ -23,15 +23,24 @@ import {
   CREATE,
 } from '../utils/constans';
 import {useNavigation} from '@react-navigation/native';
-
+import {ModalMessage} from '../components';
 import ConfirmDayOrNight from '../components/ComfirmDayOrNight';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {useTranslation} from 'react-i18next';
 import i18next from '../../services/i18next';
 const Checkin = () => {
   const navigate = useNavigation();
-
   const {t} = useTranslation();
+  const [messageModal, setMessageModal] = useState('');
+  const [messageType, setMessageType] = useState('success');
+  const [duration, setDuration] = useState(1000);
+  const [isMessageModalVisible, setMessageModalVisible] = useState(false);
+  const showMessage = (msg, type, dur) => {
+    setMessageModalVisible(true);
+    setMessageModal(msg);
+    setMessageType(type);
+    setDuration(dur);
+  };
   const getLanguage = async () => {
     return await AsyncStorage.getItem('Language');
   };
@@ -80,9 +89,9 @@ const Checkin = () => {
           },
         );
         if (checked?.success) {
-          showAlert(t(checked?.data?.message));
+          showMessage('picked success', 'success', 1000);
         } else {
-          showAlert(checked?.data?.message);
+          showMessage('unSuccess', 'error', 1500);
         }
       } else {
         const checked = await axios.put(
@@ -92,13 +101,13 @@ const Checkin = () => {
           },
         );
         if (checked?.success) {
-          showAlert(t(checked?.data?.message));
+          showMessage('success', 'success', 1000);
         } else {
-          showAlert(checked?.data?.message);
+          showMessage('unSuccess', 'error', 1500);
         }
       }
     } catch (error) {
-      console.log(error);
+      showMessage('err', 'error', 1500);
     }
   };
 
@@ -128,13 +137,13 @@ const Checkin = () => {
         },
       );
       if (result?.data?.success) {
-        showAlert('cSuc');
+        showMessage('checkin.success', 'success', 1000);
         navigate.goBack();
       } else {
-        showAlert('pta');
+        showMessage('pta', 'warning', 1000);
       }
     } catch (error) {
-      showAlert(t('unSuccess'));
+      showMessage('err', 'error', 1000);
     }
   };
 
@@ -152,8 +161,7 @@ const Checkin = () => {
         // handleCheckinWithQr();
       }
     } else {
-      console.log(qrValue);
-      showAlert('QR not avaiable');
+      showMessage('QR not avaiable', 'error', 1000);
     }
   };
   // end dev
@@ -174,10 +182,6 @@ const Checkin = () => {
   // const handleCheckinWithQr = qrValue => {
   //   setTimeCheckin(qrValue);
   // };
-
-  const showAlert = message => {
-    Alert.alert(t('noti'), t(message));
-  };
 
   const handleRetryScan = () => {
     setScanned(false);
@@ -222,6 +226,14 @@ const Checkin = () => {
         checkin={checkin}
         time={timeCheckin}
         t={t}
+      />
+      <ModalMessage
+        isVisible={isMessageModalVisible}
+        onClose={() => setMessageModalVisible(false)}
+        message={messageModal}
+        type={messageType}
+        t={t}
+        duration={duration}
       />
     </View>
   );

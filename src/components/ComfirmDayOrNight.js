@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useState} from 'react';
 import {
   StyleSheet,
   Text,
@@ -19,8 +19,19 @@ import {
   CREATE,
 } from '../utils/constans';
 import {useNavigation} from '@react-navigation/native';
+import ModalMessage from './ModalMessage';
 const ConfirmDayOrNight = ({visible, closeModal, checkin, time, t}) => {
   const navigate = useNavigation();
+  const [messageModal, setMessageModal] = useState('');
+  const [messageType, setMessageType] = useState('success');
+  const [duration, setDuration] = useState(1000);
+  const [isMessageModalVisible, setMessageModalVisible] = useState(false);
+  const showMessage = (msg, type, dur) => {
+    setMessageModalVisible(true);
+    setMessageModal(msg);
+    setMessageType(type);
+    setDuration(dur);
+  };
   const showAlert = message => {
     Alert.alert(t('noti'), t(message));
   };
@@ -48,19 +59,28 @@ const ConfirmDayOrNight = ({visible, closeModal, checkin, time, t}) => {
       work_shift: shift,
     };
 
-    const result = await axios.post(
-      `${BASE_URL}${PORT}${API}${VERSION}${V1}${CHECKIN}${CREATE}`,
-      {
-        ...field,
-      },
-    );
-    if (result?.data?.success) {
-      showAlert('cSuc');
-      navigate.goBack();
-      closeModal();
-    } else {
-      closeModal();
-      showAlert('pta');
+    try {
+      const result = await axios.post(
+        `${BASE_URL}${PORT}${API}${VERSION}${V1}${CHECKIN}${CREATE}`,
+        {
+          ...field,
+        },
+      );
+      if (!result?.data?.success) {
+        showAlert('pta');
+        closeModal();
+      } else {
+        showMessage('checkin.success', 'success', 500);
+        setTimeout(() => {
+          closeModal();
+          navigate.goBack();
+        }, 500); // Đóng modal sau 3 giây
+      }
+    } catch (error) {
+      showMessage('checkin.error', 'error', 1000);
+      setTimeout(() => {
+        closeModal();
+      }, 1000); // Đóng modal sau 1 giây
     }
   };
 
@@ -108,6 +128,14 @@ const ConfirmDayOrNight = ({visible, closeModal, checkin, time, t}) => {
             </TouchableOpacity>
           </View>
         </View>
+        <ModalMessage
+          isVisible={isMessageModalVisible}
+          onClose={() => setMessageModalVisible(false)}
+          message={messageModal}
+          type={messageType}
+          t={t}
+          duration={duration}
+        />
       </View>
     </Modal>
   );

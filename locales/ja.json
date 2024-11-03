@@ -212,5 +212,11 @@
   "status": "ステータス",
   "pending": "処理中",
   "completed": "確認済み",
-  "delivery": "配達日"
+  "delivery": "配達日",
+  "image.send.error": "画像の送信に失敗しました!!!",
+  "image.send.success": "画像が正常に送信されました!!!",
+  "copy.not.success": "メッセージのコピーに失敗しました。",
+  "delete.success": "メッセージが削除されました",
+  "checkin.success": "チェックイン成功。",
+  "checkin.error": "チェックインに失敗しました。"
 }

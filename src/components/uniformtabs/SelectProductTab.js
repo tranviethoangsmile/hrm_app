@@ -36,11 +36,13 @@ const SelectProductTab = ({USER_INFOR}) => {
   const [isMessageModalVisible, setMessageModalVisible] = useState(false);
   const [message, setMessage] = useState('');
   const [messageType, setMessageType] = useState('success');
+  const [duration, setDuration] = useState(1000);
   const [isChecked, setIsChecked] = useState(false);
   const [notes, setNotes] = useState('');
-  const showMessage = (msg, type) => {
+  const showMessage = (msg, type, dur) => {
     setMessage(msg);
     setMessageType(type);
+    setDuration(dur);
     setMessageModalVisible(true);
   };
   const handleAddToCart = itemId => {
@@ -49,7 +51,7 @@ const SelectProductTab = ({USER_INFOR}) => {
     const product = uniformProducts.find(p => p.id === itemId);
 
     if (!uniform_size) {
-      showMessage('choose.size.before', 'warning');
+      showMessage('choose.size.before', 'warning', 1500);
       setMessageModalVisible(true);
       return;
     }
@@ -70,7 +72,7 @@ const SelectProductTab = ({USER_INFOR}) => {
         {itemId, uniform_size, quantity, uniform_type: product.type},
       ]);
     }
-    showMessage('add.to.cart', 'success');
+    showMessage('add.to.cart', 'success', 1000);
   };
 
   const handleCart = cart => {
@@ -94,13 +96,13 @@ const SelectProductTab = ({USER_INFOR}) => {
       setIsChecked(false);
       setNotes('');
       if (!uniformOrder?.data.success) {
-        showMessage('not.success', 'warning');
+        showMessage('not.success', 'warning', 1500);
       }
       setCart([]);
-      showMessage('success', 'success');
+      showMessage('success', 'success', 1000);
     } catch (error) {
       setMessageModalVisible(true);
-      showMessage('err', 'error');
+      showMessage('err', 'error', 2000);
     } finally {
       setModalVisible(false);
     }
@@ -174,6 +176,7 @@ const SelectProductTab = ({USER_INFOR}) => {
           onChangeText={value =>
             setQuantity({...qty, [item.id]: parseInt(value) || 1})
           }
+          placeholderTextColor={TEXT_COLOR}
         />
 
         <TouchableOpacity
@@ -221,13 +224,16 @@ const SelectProductTab = ({USER_INFOR}) => {
             />
 
             {/* Checkbox */}
-            <View style={styles.checkboxContainer}>
-              <CheckBox
-                value={isChecked}
-                onValueChange={newValue => setIsChecked(newValue)}
-              />
-              <Text style={styles.checkboxLabel}>{t('note')}</Text>
-            </View>
+            {cart.length > 0 && (
+              <View style={styles.checkboxContainer}>
+                <CheckBox
+                  tintColors={{true: 'red', false: 'black'}}
+                  value={isChecked}
+                  onValueChange={newValue => setIsChecked(newValue)}
+                />
+                <Text style={styles.checkboxLabel}>{t('note')}</Text>
+              </View>
+            )}
 
             {/* TextInput for Note (conditionally rendered) */}
             {isChecked && (
@@ -257,6 +263,7 @@ const SelectProductTab = ({USER_INFOR}) => {
         message={message}
         type={messageType}
         t={t}
+        duration={duration}
       />
     </View>
   );
@@ -287,10 +294,12 @@ const styles = StyleSheet.create({
   name: {
     fontSize: 18,
     fontWeight: '500',
+    color: TEXT_COLOR,
   },
   label: {
     fontSize: 16,
     marginBottom: 4,
+    color: TEXT_COLOR,
   },
   sizePicker: {
     flexDirection: 'row',
@@ -301,6 +310,7 @@ const styles = StyleSheet.create({
     marginRight: 8,
     backgroundColor: '#ddd',
     borderRadius: 4,
+    color: TEXT_COLOR,
   },
   selectedSize: {
     backgroundColor: '#4CAF50',
@@ -313,6 +323,7 @@ const styles = StyleSheet.create({
     borderColor: '#ccc',
     marginBottom: 12,
     textAlign: 'center',
+    color: TEXT_COLOR,
   },
   addButton: {
     backgroundColor: THEME_COLOR,
@@ -327,7 +338,7 @@ const styles = StyleSheet.create({
   cartButton: {
     position: 'absolute',
     bottom: 20,
-    right: 20,
+    left: 20,
     backgroundColor: '#4CAF50',
     padding: 15,
     borderRadius: 30,
@@ -355,6 +366,7 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: 'bold',
     marginBottom: 20,
+    color: TEXT_COLOR,
   },
   cartItem: {
     flexDirection: 'row',
@@ -383,7 +395,7 @@ const styles = StyleSheet.create({
   cartName: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#333',
+    color: TEXT_COLOR,
     marginBottom: 4,
   },
   cartInfo: {
@@ -393,12 +405,12 @@ const styles = StyleSheet.create({
   },
   cartText: {
     fontSize: 14,
-    color: '#777',
+    color: TEXT_COLOR,
     marginRight: 4,
   },
   cartTextBold: {
     fontWeight: 'bold',
-    color: '#333',
+    color: TEXT_COLOR,
   },
   deleteButton: {
     padding: 6,
@@ -428,10 +440,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginTop: 15,
+    borderColor: TEXT_COLOR,
   },
   checkboxLabel: {
     fontSize: 16,
     marginLeft: 8,
+    color: TEXT_COLOR,
   },
   noteInput: {
     height: 40,
@@ -440,6 +454,7 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     marginTop: 15,
     paddingHorizontal: 10,
+    color: TEXT_COLOR,
   },
   checkoutButton: {
     backgroundColor: '#4CAF50',

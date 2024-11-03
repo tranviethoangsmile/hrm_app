@@ -1,5 +1,5 @@
 /* eslint-disable react/self-closing-comp */
-import React from 'react';
+import React, {useState} from 'react';
 import {
   StyleSheet,
   Text,
@@ -13,20 +13,22 @@ import {
 import {API, BASE_URL, ORDER_URL, PORT, V1, VERSION} from '../utils/constans';
 import axios from 'axios';
 import moment from 'moment';
-
-const OrderModal = ({
-  visible,
-  onClose,
-  orders,
-  showAlert,
-  getUserOrders,
-  t,
-}) => {
+import ModalMessage from './ModalMessage';
+const OrderModal = ({visible, onClose, orders, getUserOrders, t}) => {
   const today = moment();
   const closeModal = () => {
     onClose();
   };
-
+  const [messageModal, setMessageModal] = useState('');
+  const [messageType, setMessageType] = useState('success');
+  const [duration, setDuration] = useState(1000);
+  const [isMessageModalVisible, setMessageModalVisible] = useState(false);
+  const showMessage = (msg, type, dur) => {
+    setMessageModalVisible(true);
+    setMessageModal(msg);
+    setMessageType(type);
+    setDuration(dur);
+  };
   const handleCancelOrder = async id => {
     try {
       const deleteOrder = await axios.delete(
@@ -34,13 +36,13 @@ const OrderModal = ({
       );
       if (deleteOrder?.data?.success) {
         getUserOrders();
-        showAlert(t('dltSuc'));
+        showMessage('dltSuc', 'success', 1000);
       } else {
         getUserOrders();
-        showAlert(deleteOrder?.data?.message);
+        showMessage('unSuccess', 'warning', 1000);
       }
     } catch (error) {
-      showAlert(error.message);
+      showMessage('err', 'error', 1000);
     }
   };
 
@@ -92,6 +94,14 @@ const OrderModal = ({
           </ScrollView>
         </View>
       </View>
+      <ModalMessage
+        isVisible={isMessageModalVisible}
+        onClose={() => setMessageModalVisible(false)}
+        message={messageModal}
+        type={messageType}
+        t={t}
+        duration={duration}
+      />
     </Modal>
   );
 };

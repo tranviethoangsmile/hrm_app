@@ -211,5 +211,11 @@
   "status": "Tình trạng",
   "pending": "Đang xử lý",
   "completed": "Đã xác nhận",
-  "delivery": "Ngày nhận"
+  "delivery": "Ngày nhận",
+  "image.send.error": "Gửi ảnh không thành công !!!",
+  "image.send.success": "Gửi ảnh thành công !!!",
+  "copy.not.success": "Copy tin nhắn không thành công.",
+  "delete.success": "Đã xóa tin nhắn",
+  "checkin.success": "Checkin Thành công",
+  "checkin.error": "Checkin không thành công"
 }

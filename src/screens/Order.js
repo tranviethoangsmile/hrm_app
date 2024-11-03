@@ -13,6 +13,7 @@ import {
   Alert,
   StatusBar,
 } from 'react-native';
+import {ModalMessage} from '../components';
 import {useSelector} from 'react-redux';
 import axios from 'axios';
 import moment from 'moment';
@@ -34,7 +35,16 @@ const Order = () => {
   const [picked, setPicked] = useState(0);
   const [isVisible, setIsVisible] = useState(false);
   const [orderedDates, setOrderedDates] = useState([]);
-
+  const [messageModal, setMessageModal] = useState('');
+  const [messageType, setMessageType] = useState('success');
+  const [duration, setDuration] = useState(1000);
+  const [isMessageModalVisible, setMessageModalVisible] = useState(false);
+  const showMessage = (msg, type, dur) => {
+    setMessageModalVisible(true);
+    setMessageModal(msg);
+    setMessageType(type);
+    setDuration(dur);
+  };
   const config = {
     headers: {
       'Content-Type': 'application/json',
@@ -67,11 +77,9 @@ const Order = () => {
           }
           setPicked(pick);
         }
-      } else {
-        showAlert('please back to home page and login again!');
       }
     } catch (error) {
-      showAlert(error.message);
+      showMessage('networkError', 'error', 1000);
     }
   };
   const check_ordered = (date, check) => {
@@ -126,14 +134,14 @@ const Order = () => {
       );
 
       if (orderSuccess?.data?.success) {
+        showMessage('ordSuc', 'success', 1000);
         getUserOrders();
-        showAlert(t('ordSuc'));
       } else {
         getUserOrders();
-        showAlert(t('ordered'));
+        showMessage('ordered', 'warning', 1000);
       }
     } catch (error) {
-      showAlert(error.message || 'networkError');
+      showMessage('networkError', 'error', 1000);
     }
   };
 
@@ -216,13 +224,20 @@ const Order = () => {
           </Text>
         </View>
       </TouchableOpacity>
+      <ModalMessage
+        isVisible={isMessageModalVisible}
+        onClose={() => setMessageModalVisible(false)}
+        message={messageModal}
+        type={messageType}
+        t={t}
+        duration={duration}
+      />
       <OrderModal
         visible={isVisible}
         orders={ordered}
         onClose={() => {
           setIsVisible(!isVisible);
         }}
-        showAlert={showAlert}
         getUserOrders={getUserOrders}
         t={t}
       />

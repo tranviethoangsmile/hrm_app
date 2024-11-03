@@ -29,10 +29,12 @@ const ProcessingOrdersTab = ({USER_INFOR}) => {
   const [isMessageModalVisible, setMessageModalVisible] = useState(false);
   const [message, setMessage] = useState('');
   const [messageType, setMessageType] = useState('success');
+  const [duration, setDuration] = useState(1000);
   const [uniformOrders, setUniformOrders] = useState([]);
-  const showMessage = (msg, type) => {
+  const showMessage = (msg, type, dur) => {
     setMessage(msg);
     setMessageType(type);
+    setDuration(dur);
     setMessageModalVisible(true);
   };
   const handle_get_all_uniform_order_of_user = async () => {
@@ -43,7 +45,7 @@ const ProcessingOrdersTab = ({USER_INFOR}) => {
         order_status: 'pending',
       });
       if (!response?.data.success || response?.data.data.length === 0) {
-        showMessage('not.data', 'warning');
+        showMessage('not.data', 'warning', 1500);
         setUniformOrders([]);
       } else {
         setUniformOrders(response?.data.data);
@@ -60,15 +62,15 @@ const ProcessingOrdersTab = ({USER_INFOR}) => {
         id: orderId,
       });
       if (response.data.success) {
-        showMessage('success', 'success');
+        showMessage('success', 'success', 1000);
         setUniformOrders(orders =>
           orders.filter(order => order.id !== orderId),
         );
       } else {
-        showMessage('succunSuccessess', 'warning');
+        showMessage('succunSuccessess', 'warning', 1500);
       }
     } catch (error) {
-      showMessage('err', 'error');
+      showMessage('err', 'error', 2000);
     }
   };
 
@@ -140,6 +142,7 @@ const ProcessingOrdersTab = ({USER_INFOR}) => {
         onClose={() => setMessageModalVisible(false)}
         message={message}
         type={messageType}
+        duration={duration}
         t={t}
       />
     </View>
