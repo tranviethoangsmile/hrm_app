@@ -216,5 +216,6 @@
   "copy.not.success": "Falha ao copiar a mensagem.",
   "delete.success": "Mensagem deletada com sucesso.",
   "checkin.success": "Check-in realizado com sucesso.",
-  "checkin.error": "Falha no check-in."
+  "checkin.error": "Falha no check-in.",
+  "encryptedMessage": "Mensagem criptografada"
 }

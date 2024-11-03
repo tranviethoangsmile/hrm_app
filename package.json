@@ -28,6 +28,7 @@
     "react-native": "0.73.2",
     "react-native-camera-kit": "^13.0.0",
     "react-native-chart-kit": "^6.12.0",
+    "react-native-crypto-js": "^1.0.0",
     "react-native-date-picker": "^4.3.6",
     "react-native-device-info": "^13.0.0",
     "react-native-document-picker": "^9.1.1",

@@ -218,5 +218,6 @@
   "copy.not.success": "メッセージのコピーに失敗しました。",
   "delete.success": "メッセージが削除されました",
   "checkin.success": "チェックイン成功。",
-  "checkin.error": "チェックインに失敗しました。"
+  "checkin.error": "チェックインに失敗しました。",
+  "encryptedMessage": "暗号化されたメッセージ"
 }

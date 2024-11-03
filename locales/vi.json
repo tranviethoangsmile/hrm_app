@@ -217,5 +217,6 @@
   "copy.not.success": "Copy tin nhắn không thành công.",
   "delete.success": "Đã xóa tin nhắn",
   "checkin.success": "Checkin Thành công",
-  "checkin.error": "Checkin không thành công"
+  "checkin.error": "Checkin không thành công",
+  "encryptedMessage": "Tin nhắn được mã hóa"
 }

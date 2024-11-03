@@ -176,7 +176,7 @@
   "not.mess": "No messages to display.",
   "err.load.mess": "An error occurred while loading messages.",
   "search": "Search",
-  "back": "Unsent",
+  "back": "unSend",
   "copy": "Copy",
   "un_send": "Message has been unsent",
   "co.py": "Message copied",
@@ -218,5 +218,6 @@
   "copy.not.success": "Failed to copy the message.",
   "delete.success": "Message deleted successfully.",
   "checkin.success": "Check-in successful.",
-  "checkin.error": "Check-in failed."
+  "checkin.error": "Check-in failed.",
+  "encryptedMessage": "Encrypted message"
 }

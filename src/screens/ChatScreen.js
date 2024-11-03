@@ -22,7 +22,7 @@ import {
   THEME_COLOR,
   THEME_COLOR_2,
 } from '../utils/Colors';
-import Icon from 'react-native-vector-icons/FontAwesome';
+import Icon from 'react-native-vector-icons/Ionicons';
 import {useTranslation} from 'react-i18next';
 import {useSelector} from 'react-redux';
 import axios from 'axios';
@@ -124,17 +124,13 @@ const ChatScreen = ({route}) => {
         const asset = response.assets[0];
         try {
           setIsloading(true);
-
-          // Lấy đường dẫn thực của file
           const realUri = await getRealPathFromURI(asset.uri);
-
           const form = new FormData();
           form.append('media', {
-            uri: realUri, // Đường dẫn thực của file
-            name: asset.fileName, // Tên file
-            type: asset.type || 'image/jpeg', // Xác định kiểu MIME
+            uri: realUri,
+            name: asset.fileName,
+            type: asset.type || 'image/jpeg',
           });
-
           const res = await axios.post(
             `${BASE_URL}${PORT}${API}${VERSION}${V1}${MESSAGE}${CREATE}`,
             form,
@@ -145,7 +141,6 @@ const ChatScreen = ({route}) => {
               },
             },
           );
-
           if (!res?.data.success) {
             showMessage('image.send.error', 'error', 2000);
           }
@@ -162,17 +157,12 @@ const ChatScreen = ({route}) => {
         } catch (error) {
           setIsloading(false);
           showMessage('image.send.error', 'error', 2000);
-          // Log chi tiết lỗi Axios
           if (error.response) {
             showMessage('networkError', 'error', 2000);
-            console.log('Error response data:', error.response.data);
-            console.log('Error response status:', error.response.status);
           } else if (error.request) {
             showMessage('networkError', 'error', 2000);
-            console.log('Error request:', error.request);
           } else {
             showMessage('networkError', 'error', 2000);
-            console.log('Error message:', error.message);
           }
         } finally {
           setIsloading(false);
@@ -188,7 +178,7 @@ const ChatScreen = ({route}) => {
         const newMessage = {
           conversation_id: conversationId,
           user_id: USER_INFOR.id,
-          message: message,
+          message: encrypt(message, conversationId),
           message_type: 'TEXT',
         };
 
@@ -224,11 +214,10 @@ const ChatScreen = ({route}) => {
           const deleteMessages = Array.isArray(message.delete_messages)
             ? message.delete_messages
             : [];
-          // Kiểm tra xem người dùng đã xóa tin nhắn này chưa
           const isDeletedByUser = deleteMessages.some(
             deleteMessage => deleteMessage.user_id === USER_INFOR.id,
           );
-          return !isDeletedByUser; // Giữ lại những tin nhắn chưa bị xóa
+          return !isDeletedByUser;
         });
 
         setMessages(filteredMessages);
@@ -322,14 +311,12 @@ const ChatScreen = ({route}) => {
 
   const handleCopy = async messageId => {
     try {
-      // Find the message with the provided ID
       const messageToCopy = messages.find(msg => msg.id === messageId);
-
       if (!messageToCopy) {
         showMessage('copy.not.success', 'error', 1500);
         return;
       }
-      Clipboard.setString(messageToCopy.message);
+      Clipboard.setString(decrypt(messageToCopy.message, conversationId));
       showMessage('co.py', 'success', 1000);
       setShowOptions(false);
     } catch (error) {
@@ -350,7 +337,7 @@ const ChatScreen = ({route}) => {
       }
 
       const response = await axios.post(url, {
-        q: messageToTranslate.message,
+        q: decrypt(messageToTranslate.message, conversationId),
         target: lang,
         key: API_KEY_GOOGLE,
       });
@@ -385,7 +372,7 @@ const ChatScreen = ({route}) => {
   };
   const handleFocusInput = () => {
     if (showEmojiPicker) {
-      setShowEmojiPicker(false); // Đóng emoji picker khi focus vào TextInput
+      setShowEmojiPicker(false);
     }
   };
   const handleOutsidePress = () => {
@@ -426,7 +413,7 @@ const ChatScreen = ({route}) => {
                 isUser ? styles.userMessageText : styles.otherMessageText,
                 item.translatedMessage ? styles.translatedMessageText : null,
               ]}>
-              {item.translatedMessage || item.message}
+              {item.translatedMessage || decrypt(item.message, conversationId)}
             </Text>
           );
       }
@@ -519,7 +506,6 @@ const ChatScreen = ({route}) => {
   const renderItem = ({item}) => (
     <Message item={item} isUser={item.user_id === USER_INFOR.id} />
   );
-
   return (
     <KeyboardAvoidingView
       style={styles.container}
@@ -528,16 +514,29 @@ const ChatScreen = ({route}) => {
         <SafeAreaView style={styles.container}>
           <View style={styles.header}>
             <Image source={{uri: friendAvatar}} style={styles.avatar} />
-            <Text style={styles.headerText}>{friendName}</Text>
+            <View style={styles.nameContainer}>
+              <Text style={styles.headerText}>{friendName}</Text>
+              <View style={styles.encryptedMessageContainer}>
+                <Text style={styles.encryptedMessageText}>
+                  {t(`encryptedMessage`)}
+                </Text>
+                <Icon
+                  name="lock-closed-sharp"
+                  size={15}
+                  style={styles.lockIcon}
+                />
+              </View>
+            </View>
             <View style={styles.callButtonsContainer}>
               <TouchableOpacity style={styles.callButton}>
-                <Icon name="phone" color={THEME_COLOR} size={30} />
+                <Icon name="call" color={THEME_COLOR} size={28} />
               </TouchableOpacity>
               <TouchableOpacity style={styles.callButton}>
-                <Icon name="video-camera" color={THEME_COLOR} size={30} />
+                <Icon name="videocam" color={THEME_COLOR} size={28} />
               </TouchableOpacity>
             </View>
           </View>
+
           {messages.length === 0 ? (
             <View style={styles.notMessageContainer}>
               <Text style={styles.notMessageText}>{t(notMessage)}</Text>
@@ -552,17 +551,18 @@ const ChatScreen = ({route}) => {
               contentInset={{bottom: 65}}
             />
           )}
+
           <View style={styles.inputContainer}>
             <TouchableOpacity
               style={styles.iconButton}
               onPress={handleToggleEmojiPicker}>
-              <Icon name="smile-o" color={THEME_COLOR} size={24} />
+              <Icon name="happy-outline" color={THEME_COLOR} size={24} />
             </TouchableOpacity>
 
             <TouchableOpacity
               style={styles.iconButton}
               onPress={handleImagePicker}>
-              <Icon name="image" color={THEME_COLOR} size={24} />
+              <Icon name="images-outline" color={THEME_COLOR} size={24} />
             </TouchableOpacity>
 
             <TextInput
@@ -571,7 +571,7 @@ const ChatScreen = ({route}) => {
               value={message}
               onChangeText={setMessage}
               placeholder={t('tymess')}
-              placeholderTextColor="#999" // Màu placeholder nhẹ
+              placeholderTextColor="#999"
               onFocus={handleFocusInput}
             />
 
@@ -579,6 +579,7 @@ const ChatScreen = ({route}) => {
               <Icon name="send" color="#FFF" size={24} />
             </TouchableOpacity>
           </View>
+
           {showEmojiPicker && (
             <View style={styles.showEmojiTab}>
               <EmojiSelector
@@ -590,6 +591,7 @@ const ChatScreen = ({route}) => {
               />
             </View>
           )}
+
           {isLoading && <Loader t={t} />}
           <ModalMessage
             isVisible={isMessageModalVisible}
@@ -608,40 +610,41 @@ const ChatScreen = ({route}) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#F5F5F5',
   },
-  inputContainer: {
+  messageContainer: {
+    padding: 5,
+    marginBottom: 5, // Adds space to prevent overlapping with the next message
+  },
+  unsendMessageContainer: {
+    opacity: 0.7,
+  },
+  unsendMessageText: {
+    color: '#A9A9A9', // Gray color for unsent messages
+    fontStyle: 'italic', // Optional: Makes the text italic for emphasis
+  },
+  optionsContainer: {
+    backgroundColor: '#FFF',
+    borderRadius: 10,
+    elevation: 2,
     flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: 8,
-    borderTopWidth: 1,
-    borderTopColor: '#e0e0e0',
-    backgroundColor: '#fafafa', // Màu nền nhẹ nhàng
+    padding: 5, // Ensures options fit better within the message
+    marginTop: 5, // Space between message text and options
+    justifyContent: 'space-around',
   },
-  iconButton: {
-    paddingHorizontal: 4, // Đảm bảo khoảng cách tốt giữa các biểu tượng
+  options: {
+    justifyContent: 'space-around',
   },
-  textInput: {
-    flex: 1,
-    borderRadius: 25, // Bo góc cho mềm mại
-    paddingVertical: 8,
-    paddingHorizontal: 15,
-    marginHorizontal: 10,
-    backgroundColor: '#f0f0f0', // Màu nền input nhẹ
+  optionButton: {
+    padding: 5,
+  },
+  optionText: {
+    color: THEME_COLOR,
     fontSize: 16,
-    color: TEXT_COLOR, // Màu chữ chính
   },
-  sendButton: {
-    backgroundColor: THEME_COLOR, // Nền nổi bật cho nút gửi
-    borderRadius: 25,
-    padding: 10,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  showEmojiTab: {
-    height: 250,
-    backgroundColor: 'white',
-    zIndex: 1000,
+  encryptedMessageContainer: {
+    flexDirection: 'row',
+    alignItems: 'center', // Căn giữa icon và văn bản
   },
   header: {
     height: 60,
@@ -650,31 +653,80 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 16,
     justifyContent: 'space-between',
+    elevation: 4,
+  },
+  imageStyle: {
+    width: 200, // Adjust the size as needed
+    height: 200,
+    borderRadius: 1,
+  },
+  // Video message style
+  videoStyle: {
+    width: 250,
+    height: 150,
+    borderRadius: 10,
   },
   avatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 45,
+    height: 45,
+    borderRadius: 22.5,
     backgroundColor: '#FFF',
     marginRight: 12,
+    borderWidth: 1,
+    borderColor: '#D1D1D1',
+  },
+  nameContainer: {
+    flex: 1,
+    justifyContent: 'center',
   },
   headerText: {
-    flex: 1,
-    fontSize: 18,
+    fontSize: 20,
     color: '#FFF',
     fontWeight: '600',
   },
+  encryptedMessageText: {
+    fontSize: 14,
+    color: '#B0B0B0', // Thay đổi màu chữ cho mã hóa
+    marginRight: 1, // Khoảng cách giữa văn bản và icon
+  },
+  lockIcon: {
+    marginLeft: 1, // Thêm khoảng cách cho icon
+    color: '#B0B0B0', // Thay đổi màu sắc cho icon nếu cần
+  },
   callButtonsContainer: {
     flexDirection: 'row',
+    alignItems: 'center',
   },
   callButton: {
-    backgroundColor: '#FFF',
-    borderRadius: 20,
-    marginLeft: 8,
+    marginLeft: 10,
+  },
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 10,
+    borderTopWidth: 1,
+    borderTopColor: '#E0E0E0',
+    backgroundColor: '#FFFFFF',
+  },
+  iconButton: {
+    paddingHorizontal: 10,
+  },
+  textInput: {
+    flex: 1,
+    borderRadius: 25,
+    paddingVertical: 10,
+    paddingHorizontal: 15,
+    marginHorizontal: 10,
+    backgroundColor: '#E9E9E9',
+    fontSize: 16,
+    color: '#003366',
+  },
+  sendButton: {
+    backgroundColor: THEME_COLOR,
+    borderRadius: 25,
+    padding: 10,
     justifyContent: 'center',
     alignItems: 'center',
-    width: 40,
-    height: 40,
     elevation: 2,
   },
   messagesList: {
@@ -686,36 +738,30 @@ const styles = StyleSheet.create({
     backgroundColor: '#D0E6F4',
     borderRadius: 20,
     marginVertical: 4,
-    padding: 10, // Increased to fit text and options better
+    padding: 12,
     maxWidth: '75%',
     marginRight: 10,
     position: 'relative',
+    elevation: 1,
   },
   otherMessageContainer: {
     alignSelf: 'flex-start',
     backgroundColor: '#E6F9E6',
     borderRadius: 20,
     marginVertical: 4,
-    padding: 10, // Increased to fit text and options better
+    padding: 12,
     maxWidth: '75%',
     marginLeft: 10,
     position: 'relative',
+    elevation: 1,
   },
   userMessageText: {
-    fontSize: 18,
+    fontSize: 16,
     color: '#003366',
   },
   otherMessageText: {
-    fontSize: 18,
+    fontSize: 16,
     color: '#004d00',
-  },
-  inputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingBottom: 16,
-    borderTopColor: '#E0E0E0',
-    backgroundColor: '#FFF',
   },
   notMessageContainer: {
     flex: 1,
@@ -725,51 +771,13 @@ const styles = StyleSheet.create({
   },
   notMessageText: {
     fontSize: 18,
-    color: TEXT_COLOR,
+    color: '#777',
   },
-  messageContainer: {
-    padding: 5,
-    marginBottom: 5, // Adds space to prevent overlapping with the next message
-  },
-  optionsContainer: {
-    backgroundColor: '#FFF',
-    borderRadius: 10,
-    elevation: 2,
-    flexDirection: 'row',
-    padding: 5, // Ensures options fit better within the message
-    marginTop: 5, // Space between message text and options
-    justifyContent: 'space-around',
-  },
-  optionButton: {
-    padding: 5,
-  },
-  optionText: {
-    color: THEME_COLOR,
-    fontSize: 16,
-  },
-  unsendMessageContainer: {
-    opacity: 0.7,
-  },
-  unsendMessageText: {
-    color: '#A9A9A9', // Gray color for unsent messages
-    fontStyle: 'italic', // Optional: Makes the text italic for emphasis
-  },
-  translatedMessageText: {
-    color: '#FF5733', // Different color for translated messages
-    fontStyle: 'black',
-  },
-  imageStyle: {
-    width: 200, // Adjust the size as needed
-    height: 200,
-    borderRadius: 10,
-    marginTop: 10,
-  },
-  // Video message style
-  videoStyle: {
-    width: 250,
-    height: 150,
-    borderRadius: 10,
-    marginTop: 10,
+  showEmojiTab: {
+    height: 250,
+    backgroundColor: 'white',
+    zIndex: 1000,
+    elevation: 4,
   },
 });
 

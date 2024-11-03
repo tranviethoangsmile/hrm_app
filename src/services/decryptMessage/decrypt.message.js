@@ -1,8 +1,20 @@
-// Hàm giải mã
-import CryptoJS from 'crypto-js';
+import CryptoJS from 'react-native-crypto-js';
+
+// Hàm giả mã (giải mã)
 export const decrypt = (ciphertext, key) => {
-  const parsedKey = CryptoJS.enc.Utf8.parse(key); // Chuyển key sang WordArray
-  const bytes = CryptoJS.AES.decrypt(ciphertext, parsedKey);
-  const originalText = bytes.toString(CryptoJS.enc.Utf8);
-  return originalText;
+  if (!ciphertext || !key) {
+    return null;
+  }
+
+  try {
+    const bytes = CryptoJS.AES.decrypt(ciphertext, key);
+    const originalText = bytes.toString(CryptoJS.enc.Utf8);
+
+    if (!originalText) {
+      return null;
+    }
+    return originalText;
+  } catch (error) {
+    return null;
+  }
 };
