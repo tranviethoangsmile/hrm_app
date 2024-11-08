@@ -125,7 +125,7 @@ const MainNavigator = () => {
         <Stack.Screen
           name="Message"
           component={Message}
-          options={{headerShown: true}}
+          options={{headerShown: false}}
         />
         <Stack.Screen
           name="ChatScreen"

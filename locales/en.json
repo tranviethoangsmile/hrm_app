@@ -219,5 +219,7 @@
   "delete.success": "Message deleted successfully.",
   "checkin.success": "Check-in successful.",
   "checkin.error": "Check-in failed.",
-  "encryptedMessage": "Encrypted message"
+  "encryptedMessage": "Encrypted message",
+  "oneChat": "Chat",
+  "groupChat": "Group Chat"
 }

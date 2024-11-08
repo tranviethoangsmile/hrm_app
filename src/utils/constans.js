@@ -1,7 +1,7 @@
-export const BASE_URL = 'http://18.236.164.13';
-export const PORT = ':80';
-// export const BASE_URL = 'http://192.168.1.23';
-// export const PORT = ':4000';
+// export const BASE_URL = 'http://18.236.164.13';
+// export const PORT = ':80';
+export const BASE_URL = 'http://localhost';
+export const PORT = ':4000';
 export const API = '/api';
 export const VERSION = '/version';
 export const V1 = '/v1';
@@ -50,3 +50,4 @@ export const UNIFORM_ORDER = '/uniformorder';
 export const GET_UNIFORM_ORDER_DETAIL = '/getuniformorderdetail';
 export const WITH_USER_ID = '/withuserid';
 export const WITH_POSITION = '/withposition';
+export const CREATE_GROUP = '/creategroup';

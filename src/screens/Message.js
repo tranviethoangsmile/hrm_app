@@ -2,14 +2,12 @@ import React, {useEffect, useState} from 'react';
 import {
   View,
   Text,
-  FlatList,
   TouchableOpacity,
-  TextInput,
   StyleSheet,
-  Image,
   Alert,
   StatusBar,
   Keyboard,
+  SafeAreaView,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import axios from 'axios';
@@ -29,11 +27,11 @@ import {
   CONVERSATION,
   CREATE,
   DELETE,
+  CREATE_GROUP,
 } from '../utils/constans';
 import Loader from '../components/Loader';
-import defaultAvatar from '../assets/images/avatar.jpg';
-import UserModal from '../components/UserModal';
-import {TEXT_COLOR, THEME_COLOR, BG_COLOR} from '../utils/Colors';
+import {UserModal, ModalMessage, PersonalTab, GroupTabs} from '../components';
+import {THEME_COLOR} from '../utils/Colors';
 
 const Message = () => {
   const {t} = useTranslation();
@@ -41,6 +39,7 @@ const Message = () => {
   const USER_INFOR = authData?.data?.data;
   const navigation = useNavigation();
 
+  const [activeTab, setActiveTab] = useState('personal'); // personal hoặc group
   const [searchText, setSearchText] = useState('');
   const [filteredConversations, setFilteredConversations] = useState([]);
   const [allConversations, setAllConversations] = useState([]);
@@ -49,6 +48,17 @@ const Message = () => {
   const [friendsList, setFriendsList] = useState([]);
   const [showOptions, setShowOptions] = useState(false);
   const [selectedMessageId, setSelectedMessageId] = useState(null);
+  const [messageModal, setMessageModal] = useState('');
+  const [messageType, setMessageType] = useState('success');
+  const [duration, setDuration] = useState(1000);
+  const [isMessageModalVisible, setMessageModalVisible] = useState(false);
+
+  const showMessage = (msg, type, dur) => {
+    setMessageModalVisible(true);
+    setMessageModal(msg);
+    setMessageType(type);
+    setDuration(dur);
+  };
 
   const showAlert = message => {
     Alert.alert(t('noti'), t(message));
@@ -70,15 +80,15 @@ const Message = () => {
         setFriendsList(filteredFriends);
       }
     } catch (error) {
-      showAlert(error?.message || 'networkError');
+      showMessage('networkError', 'error', 1000);
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleLongPress = message => {
-    setSelectedMessageId(message.id);
-    setShowOptions(true);
+    setSelectedMessageId(message.conversation_id);
+    setShowOptions(!showOptions);
   };
 
   const onClose = () => {
@@ -88,7 +98,6 @@ const Message = () => {
 
   const handleDeleteConversation = async id => {
     try {
-      setModalVisible(false);
       const result = await axios.post(
         `${BASE_URL}${PORT}${API}${VERSION}${V1}${CONVERSATION}${DELETE}`,
         {
@@ -105,7 +114,7 @@ const Message = () => {
     } catch (error) {
       showAlert(error?.message || 'unSuccess');
     } finally {
-      setModalVisible(false);
+      setShowOptions(false);
     }
   };
 
@@ -116,7 +125,6 @@ const Message = () => {
         `${BASE_URL}${PORT}${API}${VERSION}${V1}${GROUP_MEMBER}${GET_GROUP_MEMBER_OF_USER}`,
         {user_id: USER_INFOR?.id},
       );
-
       if (!response?.data?.success) {
         throw new Error('Failed to fetch conversations.');
       }
@@ -136,7 +144,7 @@ const Message = () => {
       setAllConversations(filteredConversations);
       setFilteredConversations(filteredConversations);
     } catch (error) {
-      showAlert(error?.message || 'Network error');
+      showMessage('networkError', 'error', 1000);
     } finally {
       setIsLoading(false);
     }
@@ -165,31 +173,53 @@ const Message = () => {
       await getAllFriendList();
       setModalVisible(true);
     } catch (error) {
-      showAlert(error?.message || 'Network error');
+      showMessage('networkError', 'error', 1000);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleSelectUser = async user => {
-    setIsLoading(true);
+  const handleSelectUser = async (selectedUsers, title) => {
     try {
-      const conversation = await axios.post(
-        `${BASE_URL}${PORT}${API}${VERSION}${V1}${CONVERSATION}${CREATE}`,
-        {
-          sender_id: USER_INFOR?.id,
-          receiver_id: user.id,
-        },
-      );
+      if (selectedUsers.length === 1) {
+        const user = selectedUsers[0];
+        const conversation = await axios.post(
+          `${BASE_URL}${PORT}${API}${VERSION}${V1}${CONVERSATION}${CREATE}`,
+          {
+            sender_id: USER_INFOR?.id,
+            receiver_id: user.id,
+          },
+        );
 
-      if (!conversation?.data.success) {
-        throw new Error('contactAdmin');
+        if (!conversation?.data.success) {
+          throw new Error('contactAdmin');
+        }
+        const conversationId = conversation.data.data.conversation_id;
+        setIsLoading(false);
+        handleSelectConversation(conversationId, user);
+      } else {
+        const receivers = selectedUsers.map(user => ({user_id: user.id}));
+        const conversation = await axios.post(
+          `${BASE_URL}${PORT}${API}${VERSION}${V1}${CONVERSATION}${CREATE_GROUP}`,
+          {
+            title: title,
+            sender_id: USER_INFOR?.id,
+            receivers: receivers,
+          },
+        );
+
+        if (!conversation?.data.success) {
+          showMessage('contactAdmin', 'error', 1500);
+        }
+
+        const conversationId = conversation?.data.conversation_id;
+        handleSelectConversation(conversationId, {
+          name: title,
+          avatar: null,
+        });
       }
-
-      const conversationId = conversation.data.data.conversation_id;
-      handleSelectConversation(conversationId, user);
     } catch (error) {
-      showAlert(error?.message || 'networkError');
+      showMessage(error?.message || 'networkError', 'error', 1000);
     } finally {
       setModalVisible(false);
       setIsLoading(false);
@@ -204,55 +234,53 @@ const Message = () => {
     });
   };
 
-  const renderItem = ({item}) => (
-    <TouchableOpacity
-      style={styles.conversationItem}
-      onPress={() => handleSelectConversation(item.conversation_id, item.users)}
-      onLongPress={() => handleLongPress(item)}>
-      <View style={styles.itemContent}>
-        <View style={styles.avatarContainer}>
-          <Image
-            source={
-              item.users.avatar ? {uri: item.users.avatar} : defaultAvatar
-            }
-            style={styles.avatar}
-          />
-          <View style={styles.onlineStatus} />
-        </View>
-        <View style={styles.conversationInfo}>
-          <Text style={styles.friendName}>{item.users?.name}</Text>
-        </View>
-        {showOptions && selectedMessageId === item.id && (
-          <View style={styles.optionsContainer}>
-            <TouchableOpacity
-              onPress={() => handleDeleteConversation(item.conversation_id)}
-              style={styles.optionButton}>
-              <Text style={styles.optionText}>{t('dl')}</Text>
-            </TouchableOpacity>
-          </View>
-        )}
-      </View>
-    </TouchableOpacity>
-  );
-
   return (
-    <View style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#fff" />
-      <View style={styles.searchContainer}>
-        <Icon name="search" size={20} color="#999" style={styles.searchIcon} />
-        <TextInput
-          style={styles.searchInput}
-          placeholder={t('search')}
-          value={searchText}
-          onChangeText={handleSearch}
-          placeholderTextColor={TEXT_COLOR}
-        />
+    <SafeAreaView style={styles.container}>
+      <StatusBar barStyle="light-content" backgroundColor="#1E1E1E" />
+
+      <View style={styles.tabContainer}>
+        <TouchableOpacity
+          style={[
+            styles.tabButton,
+            activeTab === 'personal' && styles.activeTab,
+          ]}
+          onPress={() => setActiveTab('personal')}>
+          <Text
+            style={[
+              styles.tabText,
+              activeTab === 'personal' && styles.activeTabText,
+            ]}>
+            {t('oneChat')}
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.tabButton, activeTab === 'group' && styles.activeTab]}
+          onPress={() => setActiveTab('group')}>
+          <Text
+            style={[
+              styles.tabText,
+              activeTab === 'group' && styles.activeTabText,
+            ]}>
+            {t('groupChat')}
+          </Text>
+        </TouchableOpacity>
       </View>
-      <FlatList
-        data={filteredConversations}
-        keyExtractor={item => item.conversation_id.toString()}
-        renderItem={renderItem}
-      />
+      {activeTab === 'personal' ? (
+        <PersonalTab
+          filteredConversations={filteredConversations}
+          t={t}
+          handleLongPress={handleLongPress}
+          handleDeleteConversation={handleDeleteConversation}
+          handleSelectConversation={handleSelectConversation}
+          searchText={searchText}
+          setSearchText={setSearchText}
+          handleSearch={handleSearch}
+          USER_INFOR={USER_INFOR}
+        />
+      ) : (
+        <GroupTabs />
+      )}
+
       <TouchableOpacity
         style={styles.createConversationButton}
         onPress={handleOpenModal}>
@@ -268,23 +296,29 @@ const Message = () => {
           t={t}
         />
       )}
-    </View>
+      <ModalMessage
+        isVisible={isMessageModalVisible}
+        onClose={() => setMessageModalVisible(false)}
+        message={messageModal}
+        type={messageType}
+        t={t}
+        duration={duration}
+      />
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: BG_COLOR,
+    backgroundColor: '#1E1E1E',
     padding: 15,
   },
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fff',
-    borderColor: '#ddd',
-    borderWidth: 1,
-    borderRadius: 25,
+    backgroundColor: '#2E2E2E',
+    borderRadius: 20,
     paddingHorizontal: 10,
     paddingVertical: 5,
     marginBottom: 15,
@@ -295,61 +329,30 @@ const styles = StyleSheet.create({
   searchInput: {
     flex: 1,
     fontSize: 16,
-    color: TEXT_COLOR,
+    color: '#FFFFFF',
   },
-  conversationItem: {
+  tabContainer: {
     flexDirection: 'row',
-    padding: 10,
-    backgroundColor: '#fff',
-    borderRadius: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#333333',
     marginBottom: 10,
-    borderWidth: 1,
-    borderColor: '#ddd',
-    alignItems: 'center',
   },
-  itemContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  tabButton: {
     flex: 1,
+    alignItems: 'center',
+    paddingVertical: 8,
   },
-  avatarContainer: {
-    marginRight: 15,
-    position: 'relative',
+  activeTab: {
+    borderBottomWidth: 2,
+    borderBottomColor: THEME_COLOR,
   },
-  avatar: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
+  tabText: {
+    color: '#B0B0B0',
+    fontSize: 16,
   },
-  onlineStatus: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    backgroundColor: 'green',
-    position: 'absolute',
-    right: 0,
-    bottom: 0,
-    borderWidth: 1,
-    borderColor: '#fff',
-  },
-  conversationInfo: {
-    flex: 1,
-  },
-  friendName: {
-    fontSize: 18,
-    color: TEXT_COLOR,
+  activeTabText: {
+    color: '#FFFFFF',
     fontWeight: 'bold',
-  },
-  optionsContainer: {
-    marginLeft: 'auto',
-  },
-  optionButton: {
-    backgroundColor: THEME_COLOR,
-    padding: 10,
-    borderRadius: 5,
-  },
-  optionText: {
-    color: '#fff',
   },
   createConversationButton: {
     position: 'absolute',
@@ -361,17 +364,7 @@ const styles = StyleSheet.create({
     borderRadius: 30,
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  modalOverlay: {
-    flex: 1,
-    justifyContent: 'center',
-    backgroundColor: 'rgba(0,0,0,0.5)',
-  },
-  modalContent: {
-    backgroundColor: '#fff',
-    borderRadius: 10,
-    padding: 20,
-    marginHorizontal: 20,
+    elevation: 6,
   },
 });
 

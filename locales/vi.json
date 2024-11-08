@@ -172,7 +172,7 @@
   "line": "Line sản xuất",
   "h": "giờ",
   "change": "thay thế",
-  "not.mess": "Không có tin nhắn nào để hiển thị.",
+  "not.mess": "Không có tin nhắn.",
   "err.load.mess": "Có lỗi xảy ra khi tải tin nhắn.",
   "search": "Tìm kiếm",
   "back": "Thu hồi",
@@ -218,5 +218,7 @@
   "delete.success": "Đã xóa tin nhắn",
   "checkin.success": "Checkin Thành công",
   "checkin.error": "Checkin không thành công",
-  "encryptedMessage": "Tin nhắn được mã hóa"
+  "encryptedMessage": "Tin nhắn được mã hóa",
+  "oneChat": "Đoạn chat",
+  "groupChat": "Nhóm chat"
 }
