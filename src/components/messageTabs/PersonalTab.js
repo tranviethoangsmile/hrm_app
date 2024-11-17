@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useState, useEffect} from 'react';
 import {
   View,
   Text,
@@ -12,6 +12,7 @@ import Icon from 'react-native-vector-icons/FontAwesome';
 import {TEXT_COLOR, THEME_COLOR} from '../../utils/Colors';
 import defaultAvatar from '../../assets/images/avatar.jpg';
 import {decrypt} from '../../services';
+
 const PersonalTab = ({
   filteredConversations,
   t,
@@ -23,6 +24,20 @@ const PersonalTab = ({
   USER_INFOR,
 }) => {
   const [selectedMessageId, setSelectedMessageId] = useState(null);
+  const [uniqueConversations, setUniqueConversations] = useState([]);
+  // Remove duplicates by grouping conversations based on conversation_id
+  useEffect(() => {
+    const filteredUniqueConversations = filteredConversations.reduce((acc, current) => {
+      const found = acc.find(
+        item => item.conversation_id === current.conversation_id
+      );
+      if (!found) {
+        acc.push(current);
+      }
+      return acc;
+    }, []);
+    setUniqueConversations(filteredUniqueConversations);
+  }, [filteredConversations]);
 
   const onLongPressHandler = message => {
     setSelectedMessageId(prevId =>
@@ -31,9 +46,28 @@ const PersonalTab = ({
     handleLongPress(message);
   };
 
+  const onDeleteConversation = (conversationId) => {
+    handleDeleteConversation(conversationId);
+    setUniqueConversations(prev =>
+      prev.filter(conversation => conversation.conversation_id !== conversationId)
+    );
+  };
+
   const renderItem = ({item}) => {
-    const messages = item.conversation.messages;
+    const messages = item.conversation?.messages || [];
     let lastMessageText = '';
+  
+    // Determine the display name or title based on conversation type
+    const name =
+      item.group_type === 'GROUP'
+        ? item.conversation?.title || 'Group Conversation'
+        : item.users?.name;
+    const avatar = item.group_type === 'GROUP'? null :
+     item.users.avatar 
+    // Check if there is a last message to display
+    const friend = {
+      name, avatar
+    }
     if (
       messages.length > 0 &&
       messages[0].message_type === 'TEXT' &&
@@ -42,7 +76,7 @@ const PersonalTab = ({
     ) {
       lastMessageText = messages[0].message;
     }
-
+  
     return (
       <TouchableOpacity
         style={[
@@ -50,36 +84,31 @@ const PersonalTab = ({
           selectedMessageId === item.conversation_id && styles.selectedItem,
         ]}
         onPress={() =>
-          handleSelectConversation(item.conversation_id, item.users)
-        }
+          handleSelectConversation(item.conversation_id, friend)
+        } // Pass displayName, which is either the title or user's name
         onLongPress={() => onLongPressHandler(item)}>
         <View style={styles.itemContent}>
           <View style={styles.avatarContainer}>
             <Image
               source={
-                item.users.avatar ? {uri: item.users.avatar} : defaultAvatar
+                item.users?.avatar ? {uri: item.users.avatar} : defaultAvatar
               }
               style={styles.avatar}
             />
             <View style={styles.onlineStatus} />
           </View>
-
+  
           <View style={styles.conversationInfo}>
-            <Text style={styles.friendName}>{item.users?.name}</Text>
+            <Text style={styles.friendName}>{name}</Text>
             <Text style={styles.messagePreview}>
               {decrypt(lastMessageText, item.conversation_id)}
             </Text>
           </View>
-
+  
           {selectedMessageId === item.conversation_id && (
             <View style={styles.optionsContainer}>
               <TouchableOpacity
-                onPress={() =>
-                  handleDeleteConversation(
-                    item.conversation_id,
-                    item.conversation_id,
-                  )
-                }
+                onPress={() => onDeleteConversation(item.conversation_id)}
                 style={styles.optionButton}>
                 <Text style={styles.optionText}>{t('dl')}</Text>
               </TouchableOpacity>
@@ -89,6 +118,7 @@ const PersonalTab = ({
       </TouchableOpacity>
     );
   };
+  
 
   return (
     <View style={styles.container}>
@@ -102,9 +132,9 @@ const PersonalTab = ({
           placeholderTextColor="#999"
         />
       </View>
-      {filteredConversations.length > 0 ? (
+      {uniqueConversations.length > 0 ? (
         <FlatList
-          data={filteredConversations.filter(c => !c.conversation.isGroup)}
+          data={uniqueConversations} // Use unique conversations
           keyExtractor={item => item.conversation_id.toString()}
           renderItem={renderItem}
         />
@@ -233,5 +263,6 @@ const styles = StyleSheet.create({
     color: '#999999',
   },
 });
+
 
 export default PersonalTab;

@@ -103,7 +103,7 @@
   "confirm_approve": "You are confirming approval of this request.",
   "feedback": "feedback",
   "half.d": "half day",
-  "inventory": "inventory",
+  "inventory": "Inventory",
   "dailyRP": "Daily Report",
   "product": "Product's name: ",
   "A.s": "Shift A",
@@ -221,5 +221,9 @@
   "checkin.error": "Check-in failed.",
   "encryptedMessage": "Encrypted message",
   "oneChat": "Chat",
-  "groupChat": "Group Chat"
+  "groupChat": "Group Chat",
+  "newGroup": "New Group",
+  "selected": "Selected",
+  "groupNameMake": "Set Group Name",
+  "searchFriend": "Search Friend"
 }

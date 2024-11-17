@@ -8,26 +8,30 @@ import {
   Image,
   Modal,
   TouchableOpacity,
-  ScrollView,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import defaultAvatar from '../assets/images/avatar.jpg';
 import {BG_COLOR, TEXT_COLOR, THEME_COLOR} from '../utils/Colors';
 import ModalMessage from './ModalMessage';
+
 const UserModal = ({isVisible, onClose, users, onSelectUser, t}) => {
   const [searchText, setSearchText] = useState('');
   const [selectedUsers, setSelectedUsers] = useState([]);
-  const [groupName, setGroupName] = useState(''); // State để lưu tên nhóm
+  const [groupName, setGroupName] = useState('');
   const [messageModal, setMessageModal] = useState('');
   const [messageType, setMessageType] = useState('success');
   const [duration, setDuration] = useState(1000);
   const [isMessageModalVisible, setMessageModalVisible] = useState(false);
+
   const showMessage = (msg, type, dur) => {
     setMessageModalVisible(true);
     setMessageModal(msg);
     setMessageType(type);
     setDuration(dur);
   };
+
   const handleSearch = text => {
     setSearchText(text);
   };
@@ -73,10 +77,10 @@ const UserModal = ({isVisible, onClose, users, onSelectUser, t}) => {
       showMessage('Nhập tên nhóm', 'warning', 1000);
       return;
     }
-    onSelectUser(selectedUsers, groupName); // Truyền danh sách người dùng và tên nhóm vào hàm onSelectUser
-    setGroupName(''); // Xóa giá trị sau khi tạo nhóm
-    setSelectedUsers([]); // Đặt lại danh sách người dùng đã chọn
-    onClose(); // Đóng modal
+    onSelectUser(selectedUsers, groupName);
+    setGroupName('');
+    setSelectedUsers([]);
+    onClose();
   };
 
   return (
@@ -85,76 +89,85 @@ const UserModal = ({isVisible, onClose, users, onSelectUser, t}) => {
       animationType="slide"
       visible={isVisible}
       onRequestClose={onClose}>
-      <View style={styles.modalOverlay}>
+      <KeyboardAvoidingView
+        style={styles.modalOverlay}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <View style={styles.modalContent}>
-          <View style={styles.header}>
-            <TouchableOpacity onPress={onClose}>
-              <Icon name="arrow-left" size={24} color="#fff" />
-            </TouchableOpacity>
-            <Text style={styles.headerTitle}>{t('Nhóm mới')}</Text>
-            <Text
-              style={
-                styles.headerSelectedCount
-              }>{`Đã chọn: ${selectedUsers.length}`}</Text>
-          </View>
-
-          {/* Chỉ hiển thị phần nhập tên nhóm nếu có hơn 1 người dùng được chọn */}
-          {selectedUsers.length > 1 && (
-            <View style={styles.groupNameContainer}>
-              <TextInput
-                style={styles.groupNameInput}
-                placeholder={t('Đặt tên nhóm')}
-                placeholderTextColor="#999"
-                value={groupName} // Liên kết với state groupName
-                onChangeText={text => setGroupName(text)} // Cập nhật state khi nhập tên nhóm
-              />
-            </View>
-          )}
-
-          <TextInput
-            style={styles.searchInput}
-            placeholder={t('Tìm tên hoặc số điện thoại')}
-            value={searchText}
-            onChangeText={handleSearch}
-            placeholderTextColor="#999"
-          />
-
           <FlatList
             data={filteredUsers}
             keyExtractor={item => item.id.toString()}
             renderItem={renderUserItem}
-            style={styles.userList}
+            contentContainerStyle={styles.flatListContent}
+            keyboardShouldPersistTaps="handled"
+            ListHeaderComponent={
+              <>
+                {/* Header */}
+                <View style={styles.header}>
+                  <TouchableOpacity onPress={onClose}>
+                    <Icon name="arrow-left" size={24} color="#fff" />
+                  </TouchableOpacity>
+                  <Text style={styles.headerTitle}>{t('newGroup')}</Text>
+                  <Text style={styles.headerSelectedCount}>
+                    {`${t('selected')}: ${selectedUsers.length}`}
+                  </Text>
+                </View>
+
+                {/* Nhập tên nhóm */}
+                {selectedUsers.length > 1 && (
+                  <View style={styles.groupNameContainer}>
+                    <TextInput
+                      style={styles.groupNameInput}
+                      placeholder={t('groupNameMake')}
+                      placeholderTextColor="#999"
+                      value={groupName}
+                      onChangeText={text => setGroupName(text)}
+                    />
+                  </View>
+                )}
+
+                {/* Ô tìm kiếm */}
+                <TextInput
+                  style={styles.searchInput}
+                  placeholder={t('searchFriend')}
+                  placeholderTextColor="#999"
+                  value={searchText}
+                  onChangeText={handleSearch}
+                />
+              </>
+            }
+            ListFooterComponent={
+              <View style={styles.selectedUserList}>
+                {selectedUsers.map(user => (
+                  <View key={user.id} style={styles.selectedUserItem}>
+                    <Image
+                      source={user.avatar ? {uri: user.avatar} : defaultAvatar}
+                      style={styles.selectedUserAvatar}
+                    />
+                  </View>
+                ))}
+              </View>
+            }
           />
 
-          <ScrollView horizontal style={styles.selectedUserList}>
-            {selectedUsers.map(user => (
-              <View key={user.id} style={styles.selectedUserItem}>
-                <Image
-                  source={user.avatar ? {uri: user.avatar} : defaultAvatar}
-                  style={styles.selectedUserAvatar}
-                />
-              </View>
-            ))}
-          </ScrollView>
-
+          {/* Nút tạo nhóm */}
           {selectedUsers.length > 0 && (
             <TouchableOpacity
               style={styles.createGroupButton}
-              onPress={handleCreateGroup} // Gọi hàm handleCreateGroup khi nhấn nút
-            >
+              onPress={handleCreateGroup}>
               <Icon name="arrow-right" size={20} color="#fff" />
             </TouchableOpacity>
           )}
+
+          <ModalMessage
+            isVisible={isMessageModalVisible}
+            onClose={() => setMessageModalVisible(false)}
+            message={messageModal}
+            type={messageType}
+            t={t}
+            duration={duration}
+          />
         </View>
-        <ModalMessage
-          isVisible={isMessageModalVisible}
-          onClose={() => setMessageModalVisible(false)}
-          message={messageModal}
-          type={messageType}
-          t={t}
-          duration={duration}
-        />
-      </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 };
@@ -167,17 +180,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   modalContent: {
+    flex: 1,
     width: '90%',
+    maxHeight: '90%',
     backgroundColor: '#1e1e1e',
     borderRadius: 15,
     paddingVertical: 20,
     paddingHorizontal: 15,
-    alignItems: 'center',
     elevation: 10,
+  },
+  flatListContent: {
+    paddingBottom: 20,
   },
   header: {
     flexDirection: 'row',
-    width: '100%',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingBottom: 15,
@@ -194,23 +210,16 @@ const styles = StyleSheet.create({
     color: '#888',
   },
   groupNameContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginVertical: 15,
-    width: '100%',
-    paddingHorizontal: 10,
+    marginVertical: 10,
   },
   groupNameInput: {
-    flex: 1,
-    marginLeft: 10,
-    color: '#fff',
     borderBottomWidth: 1,
     borderBottomColor: '#555',
+    color: '#fff',
     paddingBottom: 5,
     fontSize: 16,
   },
   searchInput: {
-    width: '100%',
     height: 40,
     borderColor: '#444',
     borderWidth: 1,
@@ -218,17 +227,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 15,
     color: '#fff',
     backgroundColor: '#333',
-    marginBottom: 15,
+    marginVertical: 10,
     fontSize: 16,
-  },
-  userList: {
-    width: '100%',
-    marginBottom: 15,
   },
   userItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 12,
+    paddingVertical: 10,
     borderBottomWidth: 1,
     borderBottomColor: '#555',
   },
@@ -246,7 +251,6 @@ const styles = StyleSheet.create({
   userName: {
     fontSize: 16,
     color: '#fff',
-    fontWeight: 'bold',
   },
   userSubInfo: {
     fontSize: 12,
@@ -257,10 +261,9 @@ const styles = StyleSheet.create({
   },
   selectedUserList: {
     flexDirection: 'row',
-    marginBottom: 15,
+    marginVertical: 10,
   },
   selectedUserItem: {
-    alignItems: 'center',
     marginHorizontal: 5,
   },
   selectedUserAvatar: {
@@ -274,9 +277,9 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 20,
     right: 20,
-    width: 45,
-    height: 45,
-    borderRadius: 22.5,
+    width: 50,
+    height: 50,
+    borderRadius: 25,
     backgroundColor: THEME_COLOR,
     justifyContent: 'center',
     alignItems: 'center',

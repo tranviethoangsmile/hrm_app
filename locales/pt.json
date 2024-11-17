@@ -219,5 +219,9 @@
   "checkin.error": "Falha no check-in.",
   "encryptedMessage": "Mensagem criptografada",
   "oneChat": "Bate-papo",
-  "groupChat": "Bate-papo em grupo"
+  "groupChat": "Bate-papo em grupo",
+  "newGroup": "Novo Grupo",
+  "selected": "Selecionado",
+  "groupNameMake": "Definir Nome do Grupo",
+  "searchFriend": "Procurar Amigo"
 }

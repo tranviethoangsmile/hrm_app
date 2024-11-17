@@ -26,7 +26,7 @@ const App = () => {
     }
   };
   useEffect(() => {
-    NotificationServices();
+    // NotificationServices();
     if (Platform.OS === 'android') {
       requestStoragePermission();
     }

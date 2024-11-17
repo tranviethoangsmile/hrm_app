@@ -32,6 +32,7 @@ import {
 import Loader from '../components/Loader';
 import {UserModal, ModalMessage, PersonalTab, GroupTabs} from '../components';
 import {THEME_COLOR} from '../utils/Colors';
+import defaultAvatar from '../assets/images/avatar.jpg';
 
 const Message = () => {
   const {t} = useTranslation();
@@ -125,10 +126,6 @@ const Message = () => {
         `${BASE_URL}${PORT}${API}${VERSION}${V1}${GROUP_MEMBER}${GET_GROUP_MEMBER_OF_USER}`,
         {user_id: USER_INFOR?.id},
       );
-      if (!response?.data?.success) {
-        throw new Error('Failed to fetch conversations.');
-      }
-
       const conversations = response.data.data || [];
       if (!Array.isArray(conversations)) {
         throw new Error('Data format is invalid.');
@@ -140,7 +137,6 @@ const Message = () => {
             deleted => deleted.user_id === USER_INFOR.id,
           ),
       );
-
       setAllConversations(filteredConversations);
       setFilteredConversations(filteredConversations);
     } catch (error) {
@@ -211,7 +207,6 @@ const Message = () => {
         if (!conversation?.data.success) {
           showMessage('contactAdmin', 'error', 1500);
         }
-
         const conversationId = conversation?.data.conversation_id;
         handleSelectConversation(conversationId, {
           name: title,
@@ -230,9 +225,10 @@ const Message = () => {
     navigation.navigate('ChatScreen', {
       conversationId,
       friendName: friend.name,
-      friendAvatar: friend.avatar,
+      friendAvatar: friend.avatar
     });
   };
+  
 
   return (
     <SafeAreaView style={styles.container}>
@@ -255,7 +251,7 @@ const Message = () => {
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.tabButton, activeTab === 'group' && styles.activeTab]}
-          onPress={() => setActiveTab('group')}>
+          onPress={() => setActiveTab('group')} disabled={true}>
           <Text
             style={[
               styles.tabText,

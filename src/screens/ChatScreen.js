@@ -1,3 +1,6 @@
+/* eslint-disable no-shadow */
+/* eslint-disable react/no-unstable-nested-components */
+/* eslint-disable react-hooks/exhaustive-deps */
 import React, {useState, useEffect, useRef} from 'react';
 import {
   View,
@@ -12,6 +15,8 @@ import {
   TouchableWithoutFeedback,
   KeyboardAvoidingView,
   Keyboard,
+  Platform,
+  StatusBar,
 } from 'react-native';
 import Video from 'react-native-video';
 import RNFS from 'react-native-fs';
@@ -46,6 +51,7 @@ import socket from '../socket.io/socket.io';
 import {Loader} from '../components';
 import {encrypt, decrypt} from '../services';
 import {ModalMessage} from '../components';
+import defaultAvatar from '../assets/images/avatar.jpg';
 const ChatScreen = ({route}) => {
   const textInputRef = React.useRef(null);
   const {conversationId, friendName, friendAvatar} = route.params;
@@ -83,10 +89,8 @@ const ChatScreen = ({route}) => {
   };
   function getMessageType(asset) {
     if (!asset.type || asset.type === '') {
-      return 'text'; // Trường hợp tin nhắn là văn bản
+      return 'text';
     }
-
-    // Kiểm tra loại file dựa trên asset.type
     if (asset.type.startsWith('image/')) {
       return 'IMAGE';
     } else if (asset.type.startsWith('video/')) {
@@ -94,8 +98,6 @@ const ChatScreen = ({route}) => {
     } else if (asset.type === 'application/pdf') {
       return 'DOCUMENT';
     }
-
-    // Nếu không xác định được, mặc định là 'other'
     return 'OTHER';
   }
 
@@ -113,8 +115,6 @@ const ChatScreen = ({route}) => {
       }
       return uri;
     };
-
-    // Mở thư viện ảnh hoặc video
     launchImageLibrary(options, async response => {
       if (response.didCancel) {
         console.log('Người dùng đã hủy việc chọn ảnh.');
@@ -208,8 +208,6 @@ const ChatScreen = ({route}) => {
         setNotMessage('not.mess');
       } else {
         const messages = response?.data.data || [];
-
-        // Lọc tin nhắn dựa vào delete_messages
         const filteredMessages = messages.filter(message => {
           const deleteMessages = Array.isArray(message.delete_messages)
             ? message.delete_messages
@@ -219,7 +217,6 @@ const ChatScreen = ({route}) => {
           );
           return !isDeletedByUser;
         });
-
         setMessages(filteredMessages);
       }
     } catch (error) {
@@ -382,11 +379,12 @@ const ChatScreen = ({route}) => {
     Keyboard.dismiss();
   };
 
-  const Message = ({item, isUser}) => {
+  const Message = ({item, isUser, isLastFromSender}) => {
     const renderMessageContent = () => {
       if (item.is_unsend) {
         return <Text style={styles.unsendMessageText}>{t('un_send')}</Text>;
       }
+
       switch (item.message_type) {
         case 'IMAGE':
           return (
@@ -410,6 +408,7 @@ const ChatScreen = ({route}) => {
           return (
             <Text
               style={[
+                styles.messageText,
                 isUser ? styles.userMessageText : styles.otherMessageText,
                 item.translatedMessage ? styles.translatedMessageText : null,
               ]}>
@@ -432,6 +431,16 @@ const ChatScreen = ({route}) => {
           onLongPress={() => handleLongPress(item)}>
           {renderMessageContent()}
         </TouchableOpacity>
+
+        {/* Chỉ hiển thị avatar nếu là tin nhắn cuối cùng từ người gửi */}
+        {!isUser && isLastFromSender && (
+          <Image
+            source={
+              item?.user.avatar ? {uri: item?.user.avatar} : defaultAvatar
+            }
+            style={styles.senderAvatar}
+          />
+        )}
 
         {showOptions && selectedMessageId === item.id && (
           <View style={styles.optionsContainer}>
@@ -503,17 +512,33 @@ const ChatScreen = ({route}) => {
     );
   };
 
-  const renderItem = ({item}) => (
-    <Message item={item} isUser={item.user_id === USER_INFOR.id} />
-  );
+  const renderItem = ({item, index}) => {
+    const isUser = item.user_id === USER_INFOR.id;
+    const isLastFromSender =
+      index === messages.length - 1 || // Nếu là tin nhắn cuối cùng trong danh sách
+      messages[index + 1]?.user_id !== item.user_id; // Nếu tin nhắn tiếp theo không cùng người gửi
+
+    return (
+      <Message
+        item={item}
+        isUser={isUser}
+        isLastFromSender={isLastFromSender}
+      />
+    );
+  };
+
   return (
     <KeyboardAvoidingView
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+      <StatusBar barStyle="dark-content" backgroundColor="#fff" />
       <TouchableWithoutFeedback onPress={handleOutsidePress}>
         <SafeAreaView style={styles.container}>
           <View style={styles.header}>
-            <Image source={{uri: friendAvatar}} style={styles.avatar} />
+            <Image
+              source={friendAvatar ? {uri: friendAvatar} : defaultAvatar}
+              style={styles.avatar}
+            />
             <View style={styles.nameContainer}>
               <Text style={styles.headerText}>{friendName}</Text>
               <View style={styles.encryptedMessageContainer}>
@@ -608,6 +633,45 @@ const ChatScreen = ({route}) => {
 };
 
 const styles = StyleSheet.create({
+  userMessageContainer: {
+    alignSelf: 'flex-end',
+    backgroundColor: '#D0E6F4',
+    borderRadius: 20,
+    marginVertical: 4,
+    padding: 12,
+    maxWidth: '75%',
+    marginRight: 10,
+    position: 'relative',
+  },
+  otherMessageContainer: {
+    alignSelf: 'flex-start',
+    backgroundColor: '#E6F9E6',
+    borderRadius: 20,
+    marginVertical: 4,
+    padding: 12,
+    maxWidth: '75%',
+    marginLeft: 10,
+    position: 'relative',
+  },
+  senderAvatar: {
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    position: 'absolute',
+    bottom: -12, // Đặt vị trí dưới bubble
+    left: -12, // Đặt vị trí bên trái bubble
+    backgroundColor: '#FFF',
+    borderWidth: 1,
+    borderColor: '#D1D1D1',
+  },
+  messageText: {
+    fontSize: 16,
+    lineHeight: 22,
+  },
+  translatedMessageText: {
+    fontStyle: 'italic',
+    color: 'red',
+  },
   container: {
     flex: 1,
     backgroundColor: '#F5F5F5',

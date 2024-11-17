@@ -8,12 +8,12 @@ import {
   StatusBar,
   TouchableOpacity,
 } from 'react-native';
-import {TEXT_COLOR, THEME_COLOR_2, BG_COLOR} from '../../utils/Colors';
 import {useNavigation} from '@react-navigation/native';
-import i18next from '../../../services/i18next';
-import {useTranslation} from 'react-i18next';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Icon from 'react-native-vector-icons/Ionicons';
+import {TEXT_COLOR, THEME_COLOR_2, BG_COLOR} from '../../utils/Colors';
+import i18next from '../../../services/i18next';
+import {useTranslation} from 'react-i18next';
 import {useSelector} from 'react-redux';
 const FeatureTab = () => {
   const getLanguage = async () => {
@@ -47,7 +47,7 @@ const FeatureTab = () => {
       <Text style={styles.title}>{t('Fea')}</Text>
       <ScrollView contentContainerStyle={styles.scrollView}>
         <View style={styles.featureRow}>
-          {renderFeatureButton('clipboard-outline', t('rp'), () =>
+          {renderFeatureButton('clipboard-outline', t('inventory'), () =>
             navigation.navigate('Report'),
           )}
           {renderFeatureButton('restaurant-outline', t('or'), () =>

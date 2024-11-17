@@ -221,5 +221,9 @@
   "checkin.error": "チェックインに失敗しました。",
   "encryptedMessage": "暗号化されたメッセージ",
   "oneChat": "チャット",
-  "groupChat": "グループチャット"
+  "groupChat": "グループチャット",
+  "newGroup": "新しいグループ",
+  "selected": "選択済み",
+  "groupNameMake": "グループ名を設定",
+  "searchFriend": "友達を検索"
 }
