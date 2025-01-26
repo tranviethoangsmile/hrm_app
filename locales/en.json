@@ -225,5 +225,8 @@
   "newGroup": "New Group",
   "selected": "Selected",
   "groupNameMake": "Set Group Name",
-  "searchFriend": "Search Friend"
+  "searchFriend": "Search Friend",
+  "create": "Create",
+  "safetyReport": "Safety Report",
+  "editReport": "Edit Report"
 }

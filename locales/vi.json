@@ -224,5 +224,8 @@
   "newGroup": "Nhóm mới",
   "selected": "Đã chọn",
   "groupNameMake": "Đặt tên nhóm",
-  "searchFriend": "Tìm bạn"
+  "searchFriend": "Tìm bạn",
+  "create": "Tạo",
+  "safetyReport": "Báo Cáo An Toàn",
+  "editReport": "Chỉnh sửa Báo Cáo"
 }

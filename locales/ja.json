@@ -225,5 +225,8 @@
   "newGroup": "新しいグループ",
   "selected": "選択済み",
   "groupNameMake": "グループ名を設定",
-  "searchFriend": "友達を検索"
+  "searchFriend": "友達を検索",
+  "create": "作る",
+  "safetyReport": "安全報告",
+  "editReport": "レポートを編集"
 }

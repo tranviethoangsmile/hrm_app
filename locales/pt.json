@@ -223,5 +223,8 @@
   "newGroup": "Novo Grupo",
   "selected": "Selecionado",
   "groupNameMake": "Definir Nome do Grupo",
-  "searchFriend": "Procurar Amigo"
+  "searchFriend": "Procurar Amigo",
+  "create": "Create",
+  "safetyReport": "Relatório de Segurança",
+  "editReport": "Editar Relatório"
 }

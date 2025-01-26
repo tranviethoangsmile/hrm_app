@@ -1,12 +1,390 @@
-import {View, Text} from 'react-native';
-import React from 'react';
+import {
+  View,
+  Text,
+  FlatList,
+  StyleSheet,
+  ActivityIndicator,
+  TouchableOpacity,
+  Modal,
+  TextInput,
+  Alert,
+  TouchableWithoutFeedback,
+  SafeAreaView,
+  StatusBar,
+} from 'react-native';
+import React, {useEffect, useState} from 'react';
+import axios from 'axios';
+import Icon from 'react-native-vector-icons/Ionicons';
+import {useTranslation} from 'react-i18next';
+import {
+  API,
+  BASE_URL,
+  PORT,
+  V1,
+  VERSION,
+  SAFETY_REPORT,
+  GET_ALL_BY_USER_ID,
+} from '../utils/constans';
+import {TEXT_COLOR} from '../utils/Colors';
+const Important = ({route}) => {
+  const {t} = useTranslation();
+  const {USER_INFOR} = route.params;
+  const [data, setData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [newReport, setNewReport] = useState({title: '', content: ''});
+  const [longPressedItem, setLongPressedItem] = useState(null);
 
-const Important = () => {
+  const getAllSafetyReportByUserI = async userID => {
+    try {
+      const result = await axios.post(
+        `${BASE_URL}${PORT}${API}${VERSION}${V1}${SAFETY_REPORT}${GET_ALL_BY_USER_ID}`,
+        {id: userID},
+      );
+      setData(result.data.data || []);
+    } catch (error) {
+      console.error('API error:', error.response || error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const createSafetyReport = async () => {
+    if (newReport.title && newReport.content) {
+      try {
+        const result = await axios.post(
+          `${BASE_URL}${PORT}${API}${VERSION}${V1}${SAFETY_REPORT}`,
+          {
+            title: newReport.title,
+            content: newReport.content,
+            user_id: USER_INFOR.id,
+          },
+        );
+        if (result.data.success) {
+          setData(prev => [result.data.data, ...prev]);
+          setModalVisible(false);
+          setNewReport({title: '', content: ''});
+        }
+      } catch (error) {
+        console.error('Create report error:', error.response || error.message);
+      }
+    }
+  };
+
+  const deleteReport = async id => {
+    Alert.alert('Xóa báo cáo', 'Bạn có chắc chắn muốn xóa báo cáo này?', [
+      {
+        text: 'Hủy',
+        style: 'cancel',
+      },
+      {
+        text: 'Xóa',
+        onPress: async () => {
+          try {
+            const result = await axios.delete(
+              `${BASE_URL}${PORT}${API}${VERSION}${V1}${SAFETY_REPORT}/${id}`,
+            );
+            if (result.data.success) {
+              setData(prev => prev.filter(item => item.id !== id));
+              Alert.alert('Thành công', 'Đã xóa báo cáo.');
+            }
+          } catch (error) {
+            console.error(
+              'Delete report error:',
+              error.response || error.message,
+            );
+          }
+        },
+      },
+    ]);
+  };
+
+  const editReport = item => {
+    setNewReport({title: item.title, content: item.content});
+    setModalVisible(true);
+  };
+
+  const handleLongPress = item => {
+    setLongPressedItem(item);
+  };
+
+  const handleCloseOptions = () => {
+    setLongPressedItem(null);
+  };
+
+  const handleOptionPress = action => {
+    if (action === 'edit') {
+      editReport(longPressedItem);
+    } else if (action === 'delete') {
+      deleteReport(longPressedItem.id);
+    }
+    handleCloseOptions(); // Close options after action
+  };
+
+  useEffect(() => {
+    getAllSafetyReportByUserI(USER_INFOR.id);
+  }, []);
+
+  const renderItem = ({item}) => (
+    <TouchableOpacity
+      style={styles.card}
+      onLongPress={() => handleLongPress(item)}
+      activeOpacity={0.9}>
+      <View style={styles.cardContent}>
+        <Text style={styles.title}>{item.title}</Text>
+        <Text style={styles.content}>{item.content}</Text>
+        <Text style={styles.meta}>
+          {t('D')}: {item.created_at}
+        </Text>
+        <Text
+          style={[
+            styles.meta,
+            {color: item.is_confirm ? '#28a745' : '#dc3545'},
+          ]}>
+          {item.is_confirm ? t('completed') : t('pending')}
+        </Text>
+      </View>
+
+      {/* Footer: Hiển thị các nút Sửa và Xóa nếu nhấn giữ */}
+      {longPressedItem === item && !item.is_confirm && (
+        <View style={styles.footer}>
+          <TouchableOpacity
+            style={[styles.button, styles.editButton]}
+            onPress={() => handleOptionPress('edit')}>
+            <Text style={styles.buttonText}>{t('EDIT')}</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.button, styles.deleteButton]}
+            onPress={() => handleOptionPress('delete')}>
+            <Text style={styles.buttonText}>{t('DELETE')}</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+    </TouchableOpacity>
+  );
+
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#007BFF" />
+        <Text style={styles.loadingText}>Đang tải dữ liệu...</Text>
+      </View>
+    );
+  }
+
   return (
-    <View>
-      <Text>Important</Text>
-    </View>
+    <SafeAreaView style={styles.container}>
+      <StatusBar barStyle="dark-content" backgroundColor="#fff" />
+      <Text style={styles.header}>{t('safetyReport')}</Text>
+      <FlatList
+        data={data}
+        keyExtractor={item => item.id?.toString()}
+        renderItem={renderItem}
+        ListEmptyComponent={
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyText}>{t('not.data')}</Text>
+          </View>
+        }
+      />
+
+      {/* Nút tạo báo cáo */}
+      <TouchableOpacity
+        style={styles.addButton}
+        onPress={() => setModalVisible(true)}>
+        <Icon name="add" size={28} color="#FFF" />
+      </TouchableOpacity>
+
+      {/* Modal tạo báo cáo */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={modalVisible}
+        onRequestClose={() => setModalVisible(false)}>
+        <TouchableWithoutFeedback onPress={() => setModalVisible(false)}>
+          <View style={styles.modalOverlay} />
+        </TouchableWithoutFeedback>
+        <View style={styles.modalContent}>
+          <Text style={styles.modalTitle}>
+            {newReport.title ? t('editReport') : t('safetyReport')}
+          </Text>
+          <TextInput
+            style={styles.input}
+            placeholder={t('til')}
+            placeholderTextColor={TEXT_COLOR}
+            value={newReport.title}
+            onChangeText={text =>
+              setNewReport(prev => ({...prev, title: text}))
+            }
+          />
+          <TextInput
+            style={[styles.input, styles.textArea]}
+            placeholder={t('enter_note')}
+            placeholderTextColor={TEXT_COLOR}
+            value={newReport.content}
+            onChangeText={text =>
+              setNewReport(prev => ({...prev, content: text}))
+            }
+            multiline
+          />
+          <View style={styles.modalActions}>
+            <TouchableOpacity
+              style={[styles.button, styles.cancelButton]}
+              onPress={() => setModalVisible(false)}>
+              <Text style={styles.buttonText}>{t('c')}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.button, styles.createButton]}
+              onPress={createSafetyReport}>
+              <Text style={styles.buttonText}>
+                {newReport.title ? t('Save') : t('create')}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+    </SafeAreaView>
   );
 };
 
 export default Important;
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#F5F5F5',
+  },
+  header: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    color: '#333',
+    marginBottom: 20,
+  },
+  card: {
+    backgroundColor: '#FFF',
+    borderRadius: 10,
+    marginBottom: 15,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 5,
+    padding: 15,
+    marginHorizontal: 10,
+    overflow: 'hidden', // Đảm bảo không có phần nào tràn ra ngoài
+  },
+  cardContent: {
+    marginBottom: 10,
+  },
+  title: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 5,
+  },
+  content: {
+    fontSize: 16,
+    color: '#555',
+    marginBottom: 10,
+  },
+  meta: {
+    fontSize: 14,
+    color: '#777',
+    marginBottom: 5,
+  },
+  footer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 10,
+  },
+  button: {
+    paddingVertical: 8,
+    paddingHorizontal: 15,
+    borderRadius: 5,
+    flex: 1,
+    marginHorizontal: 5,
+  },
+  editButton: {
+    backgroundColor: '#FFD700',
+  },
+  deleteButton: {
+    backgroundColor: '#FF6347',
+  },
+  buttonText: {
+    color: '#FFF',
+    fontSize: 16,
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+  addButton: {
+    backgroundColor: '#28a745',
+    position: 'absolute',
+    bottom: 20,
+    right: 20,
+    borderRadius: 50,
+    padding: 15,
+    elevation: 5,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modalContent: {
+    backgroundColor: '#FFF',
+    borderRadius: 10,
+    padding: 20,
+    position: 'absolute',
+    top: '20%',
+    left: '10%',
+    right: '10%',
+    elevation: 5,
+    alignItems: 'center',
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 10,
+    textAlign: 'center',
+  },
+  input: {
+    borderBottomWidth: 1,
+    borderColor: '#ddd',
+    paddingVertical: 8,
+    paddingHorizontal: 10,
+    marginBottom: 15,
+    fontSize: 16,
+    width: '100%',
+  },
+  textArea: {
+    height: 100,
+  },
+  modalActions: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+  },
+  cancelButton: {
+    backgroundColor: '#6c757d',
+  },
+  createButton: {
+    backgroundColor: '#28a745',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    fontSize: 18,
+    color: '#333',
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  emptyText: {
+    fontSize: 16,
+    color: '#777',
+  },
+});

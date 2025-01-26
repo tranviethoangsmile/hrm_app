@@ -11,10 +11,12 @@ import React, {useState} from 'react';
 import {useNavigation} from '@react-navigation/native';
 import {TEXT_COLOR, THEME_COLOR_2} from '../utils/Colors';
 import {useDispatch} from 'react-redux';
-import {setAuthData} from '../redux/AuthSlice';
+import {useSelector} from 'react-redux';
 
 const Control = ({visible, onClose, t}) => {
   const [isVisible, setIsvisible] = useState(visible);
+  const authData = useSelector(state => state.auth);
+  const USER_INFOR = authData?.data?.data;
   const navigation = useNavigation();
   const disPatch = useDispatch();
   const handleLogout = () => {
@@ -32,7 +34,9 @@ const Control = ({visible, onClose, t}) => {
               style={styles.textControl}
               onPress={() => {
                 onClose();
-                navigation.navigate('Important');
+                navigation.navigate('Important', {
+                  USER_INFOR: USER_INFOR,
+                });
               }}>
               {t('is_impor')}
             </Text>
