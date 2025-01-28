@@ -228,5 +228,6 @@
   "searchFriend": "Search Friend",
   "create": "Create",
   "safetyReport": "Safety Report",
-  "editReport": "Edit Report"
+  "editReport": "Edit Report",
+  "loading": "Loading..."
 }

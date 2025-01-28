@@ -226,5 +226,6 @@
   "searchFriend": "Procurar Amigo",
   "create": "Create",
   "safetyReport": "Relatório de Segurança",
-  "editReport": "Editar Relatório"
+  "editReport": "Editar Relatório",
+  "loading": "Carregando..."
 }

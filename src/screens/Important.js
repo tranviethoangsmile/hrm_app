@@ -24,8 +24,10 @@ import {
   VERSION,
   SAFETY_REPORT,
   GET_ALL_BY_USER_ID,
+  DELETE,
 } from '../utils/constans';
 import {TEXT_COLOR} from '../utils/Colors';
+import {ModalMessage} from '../components';
 const Important = ({route}) => {
   const {t} = useTranslation();
   const {USER_INFOR} = route.params;
@@ -34,7 +36,17 @@ const Important = ({route}) => {
   const [modalVisible, setModalVisible] = useState(false);
   const [newReport, setNewReport] = useState({title: '', content: ''});
   const [longPressedItem, setLongPressedItem] = useState(null);
+  const [isMessageModalVisible, setMessageModalVisible] = useState(false);
+  const [messageModal, setMessageModal] = useState('');
+  const [messageType, setMessageType] = useState('success');
+  const [duration, setDuration] = useState(1000);
 
+  const showMessage = (msg, type, dur) => {
+    setMessageModalVisible(true);
+    setMessageModal(msg);
+    setMessageType(type);
+    setDuration(dur);
+  };
   const getAllSafetyReportByUserI = async userID => {
     try {
       const result = await axios.post(
@@ -72,27 +84,27 @@ const Important = ({route}) => {
   };
 
   const deleteReport = async id => {
-    Alert.alert('Xóa báo cáo', 'Bạn có chắc chắn muốn xóa báo cáo này?', [
+    Alert.alert(t('plzcof'), t('wantDelete'), [
       {
-        text: 'Hủy',
+        text: t('c'),
         style: 'cancel',
       },
       {
-        text: 'Xóa',
+        text: t('dl'),
         onPress: async () => {
           try {
-            const result = await axios.delete(
-              `${BASE_URL}${PORT}${API}${VERSION}${V1}${SAFETY_REPORT}/${id}`,
+            const result = await axios.post(
+              `${BASE_URL}${PORT}${API}${VERSION}${V1}${SAFETY_REPORT}${DELETE}`,
+              {
+                id: id,
+              },
             );
             if (result.data.success) {
               setData(prev => prev.filter(item => item.id !== id));
-              Alert.alert('Thành công', 'Đã xóa báo cáo.');
+              showMessage('success', 'success', 1000);
             }
           } catch (error) {
-            console.error(
-              'Delete report error:',
-              error.response || error.message,
-            );
+            showMessage('contactAdmin', 'warning', 1000);
           }
         },
       },
@@ -128,6 +140,9 @@ const Important = ({route}) => {
   const renderItem = ({item}) => (
     <TouchableOpacity
       style={styles.card}
+      onPress={() => {
+        setLongPressedItem(null);
+      }}
       onLongPress={() => handleLongPress(item)}
       activeOpacity={0.9}>
       <View style={styles.cardContent}>
@@ -167,7 +182,7 @@ const Important = ({route}) => {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#007BFF" />
-        <Text style={styles.loadingText}>Đang tải dữ liệu...</Text>
+        <Text style={styles.loadingText}>{t('loading')}</Text>
       </View>
     );
   }
@@ -242,6 +257,14 @@ const Important = ({route}) => {
           </View>
         </View>
       </Modal>
+      <ModalMessage
+        isVisible={isMessageModalVisible}
+        onClose={() => setMessageModalVisible(false)}
+        message={messageModal}
+        type={messageType}
+        t={t}
+        duration={duration}
+      />
     </SafeAreaView>
   );
 };
