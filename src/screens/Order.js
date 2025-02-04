@@ -12,6 +12,7 @@ import {
   TouchableOpacity,
   Alert,
   StatusBar,
+  SafeAreaView,
 } from 'react-native';
 import {ModalMessage} from '../components';
 import {useSelector} from 'react-redux';
@@ -150,7 +151,7 @@ const Order = () => {
   };
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#fff" />
       <ScrollView contentContainerStyle={styles.scrollViewContent}>
         {yearlyDates.map((date, index) => (
@@ -241,7 +242,7 @@ const Order = () => {
         getUserOrders={getUserOrders}
         t={t}
       />
-    </View>
+    </SafeAreaView>
   );
 };
 

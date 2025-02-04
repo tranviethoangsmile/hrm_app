@@ -15,6 +15,7 @@ import {
 import React, {useEffect, useState} from 'react';
 import axios from 'axios';
 import Icon from 'react-native-vector-icons/Ionicons';
+import moment from 'moment';
 import {useTranslation} from 'react-i18next';
 import {
   API,
@@ -25,6 +26,8 @@ import {
   SAFETY_REPORT,
   GET_ALL_BY_USER_ID,
   DELETE,
+  CREATE,
+  UPDATE,
 } from '../utils/constans';
 import {TEXT_COLOR} from '../utils/Colors';
 import {ModalMessage} from '../components';
@@ -40,6 +43,8 @@ const Important = ({route}) => {
   const [messageModal, setMessageModal] = useState('');
   const [messageType, setMessageType] = useState('success');
   const [duration, setDuration] = useState(1000);
+  const [idReportEdit, setIdReportEdit] = useState('');
+  const today = moment();
 
   const showMessage = (msg, type, dur) => {
     setMessageModalVisible(true);
@@ -55,7 +60,7 @@ const Important = ({route}) => {
       );
       setData(result.data.data || []);
     } catch (error) {
-      console.error('API error:', error.response || error.message);
+      showMessage('contactAdmin', 'error', 1000);
     } finally {
       setLoading(false);
     }
@@ -65,21 +70,64 @@ const Important = ({route}) => {
     if (newReport.title && newReport.content) {
       try {
         const result = await axios.post(
-          `${BASE_URL}${PORT}${API}${VERSION}${V1}${SAFETY_REPORT}`,
+          `${BASE_URL}${PORT}${API}${VERSION}${V1}${SAFETY_REPORT}${CREATE}`,
           {
             title: newReport.title,
             content: newReport.content,
             user_id: USER_INFOR.id,
+            date: today.format('YYYY-MM-DD'),
+            department_id: USER_INFOR.department_id,
           },
         );
+        setLoading(true);
         if (result.data.success) {
           setData(prev => [result.data.data, ...prev]);
           setModalVisible(false);
           setNewReport({title: '', content: ''});
+          setLoading(false);
         }
       } catch (error) {
-        console.error('Create report error:', error.response || error.message);
+        showMessage('unSuccess', 'error', 1000);
+      } finally {
+        setLoading(false);
       }
+    }
+  };
+
+  const handleSaveAfterEditReport = async () => {
+    try {
+      const result = await axios.post(
+        `${BASE_URL}${PORT}${API}${VERSION}${V1}${SAFETY_REPORT}${UPDATE}`,
+        {
+          title: newReport.title,
+          content: newReport.content,
+          user_id: USER_INFOR.id,
+          id: idReportEdit,
+        },
+      );
+      setLoading(true);
+      if (result.data.success) {
+        setModalVisible(false);
+        setLoading(false);
+        setData(reports => {
+          return reports.map(report => {
+            if (report.id === idReportEdit) {
+              return {
+                ...report,
+                title: newReport.title,
+                content: newReport.content,
+              };
+            }
+            return report;
+          });
+        });
+        setNewReport({title: '', content: ''});
+        setIdReportEdit('');
+      }
+    } catch (error) {
+      showMessage('unSuccess', 'error', 1000);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -111,8 +159,14 @@ const Important = ({route}) => {
     ]);
   };
 
+  const handleCancelBtn = () => {
+    setModalVisible(false);
+    setNewReport({title: '', content: ''});
+  };
+
   const editReport = item => {
     setNewReport({title: item.title, content: item.content});
+    setIdReportEdit(item.id);
     setModalVisible(true);
   };
 
@@ -244,16 +298,22 @@ const Important = ({route}) => {
           <View style={styles.modalActions}>
             <TouchableOpacity
               style={[styles.button, styles.cancelButton]}
-              onPress={() => setModalVisible(false)}>
+              onPress={handleCancelBtn}>
               <Text style={styles.buttonText}>{t('c')}</Text>
             </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.button, styles.createButton]}
-              onPress={createSafetyReport}>
-              <Text style={styles.buttonText}>
-                {newReport.title ? t('Save') : t('create')}
-              </Text>
-            </TouchableOpacity>
+            {newReport.title ? (
+              <TouchableOpacity
+                style={[styles.button, styles.editButton]}
+                onPress={handleSaveAfterEditReport}>
+                <Text style={styles.buttonText}>{t('Save')}</Text>
+              </TouchableOpacity>
+            ) : (
+              <TouchableOpacity
+                style={[styles.button, styles.createButton]}
+                onPress={createSafetyReport}>
+                <Text style={styles.buttonText}>{t('create')}</Text>
+              </TouchableOpacity>
+            )}
           </View>
         </View>
       </Modal>
@@ -391,6 +451,9 @@ const styles = StyleSheet.create({
   },
   createButton: {
     backgroundColor: '#28a745',
+  },
+  editButton: {
+    backgroundColor: '#dfa745',
   },
   loadingContainer: {
     flex: 1,

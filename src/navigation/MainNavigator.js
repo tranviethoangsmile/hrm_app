@@ -38,28 +38,28 @@ const MainNavigator = () => {
         <Stack.Screen
           name="Profile"
           component={Profile}
-          options={{headerShown: true}}
+          options={{headerShown: false}}
         />
         <Stack.Screen
           name="ReportView"
           component={ReportView}
-          options={{headerShown: true}}
+          options={{headerShown: false}}
         />
         <Stack.Screen
           name="Salary"
           component={Salary}
-          options={{headerShown: true}}
+          options={{headerShown: false}}
         />
         <Stack.Screen
           name="Report"
           component={Report}
-          options={{headerShown: true}}
+          options={{headerShown: false}}
         />
         <Stack.Screen name="Leave" component={Leave} />
         <Stack.Screen
           name="Upload"
           component={Upload}
-          options={{headerShown: true}}
+          options={{headerShown: false}}
         />
         <Stack.Screen
           name="Language"
@@ -79,17 +79,17 @@ const MainNavigator = () => {
         <Stack.Screen
           name="Daily"
           component={Daily}
-          options={{headerShown: true}}
+          options={{headerShown: false}}
         />
         <Stack.Screen
           name="Order"
           component={Order}
-          options={{headerShown: true}}
+          options={{headerShown: false}}
         />
         <Stack.Screen
           name="Checkin"
           component={Checkin}
-          options={{headerShown: true}}
+          options={{headerShown: false}}
         />
         <Stack.Screen
           name="Main"
