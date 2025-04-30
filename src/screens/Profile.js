@@ -117,7 +117,11 @@ const Profile = () => {
           style={[
             styles.tableRow,
             {
-              backgroundColor: item.is_paid_leave ? THEME_COLOR : 'transparent',
+              backgroundColor: item.is_paid_leave
+                ? THEME_COLOR
+                : item.is_weekend
+                ? THEME_COLOR
+                : 'transparent',
             },
           ]}>
           <Text style={[styles.cellText]}>{item.date}</Text>
