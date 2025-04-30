@@ -38,6 +38,7 @@ const Important = ({route}) => {
   const [loading, setLoading] = useState(true);
   const [modalVisible, setModalVisible] = useState(false);
   const [newReport, setNewReport] = useState({title: '', content: ''});
+  const [isEdit, setIsEdit] = useState(false);
   const [longPressedItem, setLongPressedItem] = useState(null);
   const [isMessageModalVisible, setMessageModalVisible] = useState(false);
   const [messageModal, setMessageModal] = useState('');
@@ -123,11 +124,14 @@ const Important = ({route}) => {
         });
         setNewReport({title: '', content: ''});
         setIdReportEdit('');
+        setIsEdit(false);
       }
     } catch (error) {
       showMessage('unSuccess', 'error', 1000);
+      setIsEdit(false);
     } finally {
       setLoading(false);
+      setIsEdit(false);
     }
   };
 
@@ -168,6 +172,7 @@ const Important = ({route}) => {
     setNewReport({title: item.title, content: item.content});
     setIdReportEdit(item.id);
     setModalVisible(true);
+    setIsEdit(true);
   };
 
   const handleLongPress = item => {
@@ -274,7 +279,7 @@ const Important = ({route}) => {
         </TouchableWithoutFeedback>
         <View style={styles.modalContent}>
           <Text style={styles.modalTitle}>
-            {newReport.title ? t('editReport') : t('safetyReport')}
+            {newReport.title && isEdit ? t('editReport') : t('safetyReport')}
           </Text>
           <TextInput
             style={styles.input}
@@ -301,7 +306,7 @@ const Important = ({route}) => {
               onPress={handleCancelBtn}>
               <Text style={styles.buttonText}>{t('c')}</Text>
             </TouchableOpacity>
-            {newReport.title ? (
+            {newReport.title && isEdit ? (
               <TouchableOpacity
                 style={[styles.button, styles.editButton]}
                 onPress={handleSaveAfterEditReport}>
@@ -428,6 +433,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 10,
     textAlign: 'center',
+    color: TEXT_COLOR,
   },
   input: {
     borderBottomWidth: 1,
@@ -437,6 +443,7 @@ const styles = StyleSheet.create({
     marginBottom: 15,
     fontSize: 16,
     width: '100%',
+    color: TEXT_COLOR,
   },
   textArea: {
     height: 100,
