@@ -18,11 +18,21 @@ import {ModalMessage} from '../components';
 import {useSelector} from 'react-redux';
 import axios from 'axios';
 import moment from 'moment';
-import {API, BASE_URL, ORDER_URL, PORT, V1, VERSION} from '../utils/constans';
+import {
+  API,
+  BASE_URL,
+  ORDER_URL,
+  PORT,
+  V1,
+  VERSION,
+  DAY_OFFS,
+  GET_ALL,
+} from '../utils/constans';
 import OrderModal from '../components/OrderModal';
 import i18next from '../../services/i18next';
 import {useTranslation} from 'react-i18next';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import {THEME_COLOR} from '../utils/Colors';
 const Order = () => {
   const {t} = useTranslation();
   const getLanguage = async () => {
@@ -40,11 +50,28 @@ const Order = () => {
   const [messageType, setMessageType] = useState('success');
   const [duration, setDuration] = useState(1000);
   const [isMessageModalVisible, setMessageModalVisible] = useState(false);
+  const [dayoffs, setDayOffs] = useState([]);
   const showMessage = (msg, type, dur) => {
     setMessageModalVisible(true);
     setMessageModal(msg);
     setMessageType(type);
     setDuration(dur);
+  };
+
+  const get_all_day_off = async () => {
+    try {
+      const res = await axios.get(
+        `${BASE_URL}${PORT}${API}${VERSION}${V1}${DAY_OFFS}${GET_ALL}`,
+      );
+      if (res?.data?.success) {
+        const offs = res?.data?.data.map(item => {
+          return item.date;
+        });
+        setDayOffs(offs);
+      }
+    } catch (error) {
+      showMessage('networkError', 'error', 1000);
+    }
   };
   const config = {
     headers: {
@@ -52,9 +79,7 @@ const Order = () => {
       Authorization: `Bearer ${authData.data.token}`,
     },
   };
-  const showAlert = message => {
-    Alert.alert(t('noti'), message);
-  };
+
   const getUserOrders = async () => {
     try {
       const res = await axios.post(
@@ -105,6 +130,7 @@ const Order = () => {
         i18next.changeLanguage(lang);
       }
     };
+    get_all_day_off();
     const today = moment();
     setMonth(today.format('YYYY-MM'));
     const yearDays = Array.from({length: 30}, (_, index) =>
@@ -161,7 +187,9 @@ const Order = () => {
                 styles.dayHeader,
                 {
                   backgroundColor:
-                    date.format('dd') === 'Su' || date.format('dd') === 'Sa'
+                    date.format('dd') === 'Su' ||
+                    date.format('dd') === 'Sa' ||
+                    dayoffs.includes(date.format('YYYY-MM-DD'))
                       ? '#257abe'
                       : '#f5f5f5',
                 },
@@ -170,10 +198,11 @@ const Order = () => {
                 style={[
                   styles.dayHeaderText,
                   {
-                    color:
-                      date.format('dd') === 'Su' || date.format('dd') === 'Sa'
-                        ? 'white'
-                        : 'black',
+                    color: dayoffs.includes(date.format('YYYY-MM-DD'))
+                      ? THEME_COLOR
+                      : date.format('dd') === 'Su' || date.format('dd') === 'Sa'
+                      ? 'white'
+                      : 'black',
                   },
                 ]}>
                 {t(date.format('dd'))} {date.format('YYYY-MM-DD')}
@@ -181,7 +210,9 @@ const Order = () => {
             </View>
             <View style={styles.checkBoxContainer}>
               {['DAY', 'NIGHT'].map(check =>
-                date.format('dd') === 'Su' || date.format('dd') === 'Sa' ? (
+                date.format('dd') === 'Su' ||
+                date.format('dd') === 'Sa' ||
+                dayoffs.includes(date.format('YYYY-MM-DD')) ? (
                   <View key={check} style={styles.emptyCheckBox}></View>
                 ) : (
                   <TouchableOpacity
