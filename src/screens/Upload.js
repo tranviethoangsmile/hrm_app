@@ -14,7 +14,7 @@ import {
 } from 'react-native';
 import {useSelector} from 'react-redux';
 import {SwipeListView} from 'react-native-swipe-list-view';
-import VideoPlayer from 'react-native-video-player';
+import Video from 'react-native-video';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {useTranslation} from 'react-i18next';
 import i18next from '../../services/i18next';
@@ -162,13 +162,14 @@ const Upload = () => {
     <View key={index} style={styles.rowFront}>
       <TouchableOpacity style={styles.avatarContainer}>
         {item.is_video ? (
-          <VideoPlayer
-            autoplay={false}
-            video={{uri: item.media}}
-            defaultMuted={true}
-            videoWidth={300}
-            videoHeight={200}
-            thumbnail={require('../assets/images/thumbnail.jpg')}
+          <Video
+            source={{uri: item.media}}
+            style={{width: 50, height: 50, borderRadius: 25}}
+            controls={true}
+            paused={true}
+            resizeMode="cover"
+            poster={require('../assets/images/thumbnail.jpg')}
+            posterResizeMode="cover"
           />
         ) : (
           <Image

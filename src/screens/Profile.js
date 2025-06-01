@@ -13,6 +13,7 @@ import {
   StatusBar,
   FlatList,
   RefreshControl,
+  ActivityIndicator,
 } from 'react-native';
 import {useSelector} from 'react-redux';
 import axios from 'axios';
@@ -56,6 +57,7 @@ const Profile = () => {
   const [isModalUpAvataVisible, setIsModalUpAvataVisible] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [err, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
   const year = moment(today).format('YYYY');
   const month = moment(today).format('MM');
@@ -83,54 +85,50 @@ const Profile = () => {
     setIsModalUpAvataVisible(!isModalUpAvataVisible);
   };
   const get_checkin_of_user = async () => {
-    const res = await axios.post(
-      `${BASE_URL}${PORT}${API}${VERSION}${V1}${CHECKIN}${SEARCH}`,
-      {
-        user_id: user_id,
-        date: today,
-      },
-    );
-
-    if (res?.data?.success) {
-      setError('');
-      const sortedCheckin = res?.data?.data.sort(
-        (a, b) => new Date(b.date) - new Date(a.date),
+    setIsLoading(true);
+    try {
+      const res = await axios.post(
+        `${BASE_URL}${PORT}${API}${VERSION}${V1}${CHECKIN}${SEARCH}`,
+        {
+          user_id: user_id,
+          date: today,
+        },
       );
-      setUserCheckin(sortedCheckin);
-    } else {
+      if (res?.data?.success) {
+        setError('');
+        const sortedCheckin = res?.data?.data.sort(
+          (a, b) => new Date(b.date) - new Date(a.date),
+        );
+        setUserCheckin(sortedCheckin);
+      } else {
+        setError('user_no_check_ins');
+        setUserCheckin([]);
+      }
+    } catch (e) {
       setError('user_no_check_ins');
+      setUserCheckin([]);
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const renderCheckin = ({item}) => {
+    let rowStyle = styles.checkinRow;
+    if (item.is_paid_leave) {
+      rowStyle = [rowStyle, {backgroundColor: '#e6f7fb'}];
+    } else if (item.is_weekend) {
+      rowStyle = [rowStyle, {backgroundColor: '#fbeee6'}];
+    } else if (item.work_shift === 'NIGHT') {
+      rowStyle = [rowStyle, {backgroundColor: '#e6f0fa'}];
+    }
     return (
-      <View
-        style={[
-          styles.checkinDetail,
-          {
-            backgroundColor:
-              item.work_shift === 'NIGHT' ? 'rgba(0, 0, 0, 0.1)' : 'white',
-          },
-        ]}>
-        <View
-          key={item.id}
-          style={[
-            styles.tableRow,
-            {
-              backgroundColor: item.is_paid_leave
-                ? THEME_COLOR
-                : item.is_weekend
-                ? THEME_COLOR
-                : 'transparent',
-            },
-          ]}>
-          <Text style={[styles.cellText]}>{item.date}</Text>
-          <Text style={[styles.cellText]}>{item.time_in}</Text>
-          <Text style={[styles.cellText]}>{item.time_out}</Text>
-          <Text style={[styles.cellText]}>{item.work_time}</Text>
-          <Text style={[styles.cellText]}>{t(item.work_shift)}</Text>
-          <Text style={[styles.cellText]}>{item.over_time}</Text>
-        </View>
+      <View style={rowStyle}>
+        <Text style={styles.cellText}>{item.date}</Text>
+        <Text style={styles.cellText}>{item.time_in}</Text>
+        <Text style={styles.cellText}>{item.time_out}</Text>
+        <Text style={styles.cellText}>{item.work_time}</Text>
+        <Text style={styles.cellText}>{t(item.work_shift)}</Text>
+        <Text style={styles.cellText}>{item.over_time}</Text>
       </View>
     );
   };
@@ -142,7 +140,7 @@ const Profile = () => {
     if (res?.data?.success) {
       setUserInfo(res.data.data);
     } else {
-      console.log(res?.data?.message);
+      setUserInfo({});
     }
   };
   useEffect(() => {
@@ -155,83 +153,121 @@ const Profile = () => {
     get_user_info();
     get_checkin_of_user();
     checkLanguage();
+    // eslint-disable-next-line
   }, []);
 
   return (
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#fff" />
-      <View>
-        <View style={styles.infoViewContainer}>
-          <View style={styles.avatarContainer}>
-            <TouchableOpacity onPress={handleUploadAvatar}>
-              <Image
-                source={
-                  userInfo.avatar
-                    ? {uri: userInfo.avatar}
-                    : require('../assets/images/avatar.jpg')
-                }
-                style={styles.avatar}
-              />
-            </TouchableOpacity>
-          </View>
-          <View style={styles.infoContainer}>
-            <Text style={styles.nameText}>{userInfo.name}</Text>
-            <Text style={styles.label}>
-              {userInfo.employee_id} - {userInfo.role} - {userInfo.position}
+      {/* Card Thông tin cá nhân */}
+      <View style={styles.cardProfile}>
+        <View style={styles.avatarSection}>
+          <TouchableOpacity
+            onPress={handleUploadAvatar}
+            style={styles.avatarWrapper}>
+            <Image
+              source={
+                userInfo.avatar
+                  ? {uri: userInfo.avatar}
+                  : require('../assets/images/avatar.jpg')
+              }
+              style={styles.avatar}
+            />
+            <View style={styles.avatarEditBtn}>
+              <Icon name="camera" size={16} color="#fff" />
+            </View>
+          </TouchableOpacity>
+          <View style={styles.infoSection}>
+            <Text style={styles.nameText}>{userInfo.name || '---'}</Text>
+            <Text style={styles.infoText}>
+              <Icon name="id-badge" size={14} color={THEME_COLOR_2} />{' '}
+              {userInfo.employee_id || '---'}
             </Text>
-            <Text style={styles.label}>{userInfo.email}</Text>
-          </View>
-        </View>
-        <View style={styles.tableView}>
-          <View style={styles.tableHeader}>
-            <Text style={styles.headerText1}>{t('m')}</Text>
-            <Text style={styles.headerText1}>{t('wt')}</Text>
-            <Text style={styles.headerText1}>{t('ot')}</Text>
-            <Text style={styles.headerText1}>{t('wend')}</Text>
-          </View>
-          <View style={styles.tableRow}>
-            <Text
-              onPress={() => {
-                setIsModalVisible(!isModalVisible);
-              }}
-              style={styles.cellText1}>
-              {year}/{month}
+            <Text style={styles.infoText}>
+              <Icon name="user" size={14} color={THEME_COLOR_2} />{' '}
+              {userInfo.role || '---'} - {userInfo.position || '---'}
             </Text>
-            <Text style={styles.cellText1}>{totalWorkTime}</Text>
-            <Text style={styles.cellText1}>{totalOverTime}</Text>
-            <Text style={styles.cellText1}>{totalWorkTimeWeekend}</Text>
+            <Text style={styles.infoText}>
+              <Icon name="envelope" size={14} color={THEME_COLOR_2} />{' '}
+              {userInfo.email || '---'}
+            </Text>
           </View>
         </View>
       </View>
-      <View style={styles.checkinContainer}>
-        <View style={styles.btnSalary}>
-          <Text style={styles.subtitle}>{t('c-i-h')}</Text>
+      {/* Card Tổng hợp công tháng */}
+      <View style={styles.cardSummary}>
+        <View style={styles.summaryHeader}>
+          <Icon
+            name="calendar"
+            size={18}
+            color={THEME_COLOR}
+            style={{marginRight: 8}}
+          />
+          <Text style={styles.summaryTitle}>{t('summary')}</Text>
+        </View>
+        <View style={styles.summaryRow}>
+          <Text style={styles.summaryLabel}>{t('m')}</Text>
+          <Text style={styles.summaryLabel}>{t('wt')}</Text>
+          <Text style={styles.summaryLabel}>{t('ot')}</Text>
+          <Text style={styles.summaryLabel}>{t('wend')}</Text>
+        </View>
+        <TouchableOpacity
+          style={styles.summaryDataRow}
+          onPress={() => setIsModalVisible(!isModalVisible)}>
+          <Text style={styles.summaryValue}>
+            {year}/{month}
+          </Text>
+          <Text style={styles.summaryValue}>{totalWorkTime}</Text>
+          <Text style={styles.summaryValue}>{totalOverTime}</Text>
+          <Text style={styles.summaryValue}>{totalWorkTimeWeekend}</Text>
+        </TouchableOpacity>
+      </View>
+      {/* Card Bảng chấm công từng ngày */}
+      <View style={styles.cardCheckin}>
+        <View style={styles.checkinHeaderRow}>
+          <Icon
+            name="clock-o"
+            size={18}
+            color={THEME_COLOR}
+            style={{marginRight: 8}}
+          />
+          <Text style={styles.checkinTitle}>{t('c-i-h')}</Text>
           <TouchableOpacity
-            onPress={() => {
-              navigation.navigate('Salary');
-            }}
-            style={styles.showSalaryBtn}>
-            <Icon name="arrow-right" color={THEME_COLOR} size={20} />
+            onPress={() => navigation.navigate('Salary')}
+            style={styles.salaryBtn}>
+            <Icon name="money" color={THEME_COLOR_2} size={20} />
+            <Text style={styles.salaryBtnText}>{t('payroll.s')}</Text>
+            <Icon name="chevron-right" color={THEME_COLOR_2} size={16} />
           </TouchableOpacity>
         </View>
-        <View style={styles.tableHeader}>
-          <Text style={styles.headerText}>{t('D')}</Text>
-          <Text style={styles.headerText}>{t('I')}</Text>
-          <Text style={styles.headerText}>{t('O')}</Text>
-          <Text style={styles.headerText}>{t('wt')}</Text>
-          <Text style={styles.headerText}>{t('S')}</Text>
-          <Text style={styles.headerText}>{t('ot')}</Text>
+        <View style={styles.checkinTableHeader}>
+          <Text style={styles.checkinHeaderText}>{t('D')}</Text>
+          <Text style={styles.checkinHeaderText}>{t('I')}</Text>
+          <Text style={styles.checkinHeaderText}>{t('O')}</Text>
+          <Text style={styles.checkinHeaderText}>{t('wt')}</Text>
+          <Text style={styles.checkinHeaderText}>{t('S')}</Text>
+          <Text style={styles.checkinHeaderText}>{t('ot')}</Text>
         </View>
         {err ? <Text style={styles.errorText}>{t(err)}</Text> : null}
-        <FlatList
-          data={userCheckin}
-          renderItem={renderCheckin}
-          keyExtractor={item => item.id.toString()}
-          refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-          }
-          showsVerticalScrollIndicator={false}
-        />
+        {isLoading ? (
+          <ActivityIndicator
+            size="large"
+            color={THEME_COLOR}
+            style={{marginVertical: 20}}
+          />
+        ) : userCheckin.length === 0 ? (
+          <Text style={styles.emptyText}>{t('not.data')}</Text>
+        ) : (
+          <FlatList
+            data={userCheckin}
+            renderItem={renderCheckin}
+            keyExtractor={item => item.id.toString()}
+            refreshControl={
+              <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+            }
+            showsVerticalScrollIndicator={false}
+          />
+        )}
       </View>
       <SelectDate
         visible={isModalVisible}
@@ -253,161 +289,192 @@ const Profile = () => {
 };
 
 const styles = StyleSheet.create({
-  checkinContainer: {
+  container: {
+    flex: 1,
+    backgroundColor: BG_COLOR,
+    padding: 10,
+  },
+  cardProfile: {
+    backgroundColor: THEME_COLOR_2,
+    borderRadius: 18,
+    padding: 18,
+    marginBottom: 18,
+    flexDirection: 'row',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  avatarSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
     flex: 1,
   },
-  checkinDetail: {
-    width: '100%',
-    marginVertical: 1,
-    padding: 2,
-    backgroundColor: 'white',
-    borderRadius: 18,
+  avatarWrapper: {
+    marginRight: 18,
+    position: 'relative',
+  },
+  avatar: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    borderWidth: 2,
+    borderColor: '#fff',
+  },
+  avatarEditBtn: {
+    position: 'absolute',
+    bottom: 4,
+    right: 4,
+    backgroundColor: THEME_COLOR,
+    borderRadius: 16,
+    padding: 4,
+    borderWidth: 2,
+    borderColor: '#fff',
+    zIndex: 2,
+  },
+  infoSection: {
+    flex: 1,
+    justifyContent: 'center',
+  },
+  nameText: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: '#fff',
+    marginBottom: 4,
+  },
+  infoText: {
+    fontSize: 15,
+    color: '#f0f0f0',
+    marginBottom: 2,
+  },
+  cardSummary: {
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 18,
     shadowColor: '#000',
-    shadowOffset: {width: 0, height: 4},
-    shadowOpacity: 0.1,
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.08,
     shadowRadius: 8,
-    borderWidth: 0.1,
+    elevation: 3,
+  },
+  summaryHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  summaryTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: THEME_COLOR,
+  },
+  summaryRow: {
+    flexDirection: 'row',
+    marginBottom: 4,
+  },
+  summaryLabel: {
+    flex: 1,
+    textAlign: 'center',
+    color: '#888',
+    fontWeight: '600',
+    fontSize: 15,
+  },
+  summaryDataRow: {
+    flexDirection: 'row',
+    backgroundColor: THEME_COLOR_2,
+    borderRadius: 10,
+    paddingVertical: 8,
+    paddingHorizontal: 4,
+    marginTop: 2,
+  },
+  summaryValue: {
+    flex: 1,
+    textAlign: 'center',
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
+  cardCheckin: {
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    padding: 12,
+    marginBottom: 18,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  checkinHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+    justifyContent: 'space-between',
+  },
+  checkinTitle: {
+    fontSize: 17,
+    fontWeight: 'bold',
+    color: THEME_COLOR,
+    flex: 1,
+  },
+  salaryBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f4f6fa',
+    borderRadius: 16,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    marginLeft: 8,
+  },
+  salaryBtnText: {
+    color: THEME_COLOR_2,
+    fontWeight: 'bold',
+    marginHorizontal: 4,
+    fontSize: 15,
+  },
+  checkinTableHeader: {
+    flexDirection: 'row',
+    paddingVertical: 6,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+    marginBottom: 2,
+  },
+  checkinHeaderText: {
+    flex: 1,
+    textAlign: 'center',
+    fontWeight: 'bold',
+    fontSize: 15,
+    color: '#888',
+  },
+  checkinRow: {
+    flexDirection: 'row',
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f2f2f2',
+    alignItems: 'center',
+    borderRadius: 8,
+    marginBottom: 2,
+    backgroundColor: '#fff',
+  },
+  cellText: {
+    flex: 1,
+    textAlign: 'center',
+    fontSize: 15,
+    color: '#555',
+    fontWeight: '500',
   },
   errorText: {
     color: 'red',
     textAlign: 'center',
     marginBottom: 10,
   },
-  showSalaryBtn: {
-    width: 50,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 0.2,
-    borderRadius: 40,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 1,
-      height: 6,
-    },
-    shadowRadius: 10,
-    shadowOpacity: 0.55,
-  },
-  btnSalary: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    alignItems: 'center',
-    borderBottomWidth: 0.2,
-  },
-  tableView: {
-    flexDirection: 'column',
-    alignItems: 'center',
-    backgroundColor: THEME_COLOR_2,
-    borderBottomRightRadius: 50,
-    borderBottomLeftRadius: 50,
-  },
-  cardInfor: {
-    flex: 1,
-    width: '100%',
-    height: 40,
-  },
-  card: {
-    marginVertical: 5,
-    padding: 10,
-    borderRadius: 10,
-    backgroundColor: '#fff',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
-  },
-  infoViewContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: THEME_COLOR_2,
-    padding: 10,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
-  },
-  avatarContainer: {
-    marginRight: 15,
-  },
-  avatar: {
-    width: 70,
-    height: 70,
-    borderRadius: 35,
-  },
-  infoContainer: {
-    flex: 1,
-  },
-  nameText: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
-  },
-  label: {
-    fontSize: 14,
-    color: '#E0E0E0',
-    marginTop: 5,
-  },
-  container: {
-    flex: 1,
-    backgroundColor: BG_COLOR,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 20,
-    textAlign: 'center',
-  },
-  subtitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginVertical: 10,
-    color: THEME_COLOR,
-    paddingLeft: 10,
-  },
-  tableHeader: {
-    flexDirection: 'row',
-    paddingVertical: 10,
-    paddingHorizontal: 5,
-  },
-  headerText: {
-    flex: 1,
-    textAlign: 'center',
-    fontWeight: 'bold',
+  emptyText: {
+    color: '#aaa',
     fontSize: 16,
-    color: '#555',
-  },
-  tableRow: {
-    flexDirection: 'row',
-    paddingVertical: 10,
-    paddingHorizontal: 5,
-  },
-  cellText: {
-    flex: 1,
     textAlign: 'center',
-    fontSize: 16,
-    color: '#555',
-    fontWeight: '600',
-  },
-  headerText1: {
-    flex: 1,
-    textAlign: 'center',
-    fontWeight: 'bold',
-    fontSize: 16,
-    color: '#F8F4E1',
-  },
-  cellText1: {
-    flex: 1,
-    textAlign: 'center',
-    fontSize: 16,
-    color: '#F8F4E1',
-    fontWeight: '600',
+    marginVertical: 30,
   },
 });
 

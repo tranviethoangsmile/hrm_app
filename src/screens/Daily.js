@@ -15,6 +15,7 @@ import {
   KeyboardAvoidingView,
   ScrollView,
   StatusBar,
+  FlatList,
 } from 'react-native';
 import {
   API,
@@ -35,9 +36,17 @@ import moment from 'moment';
 import {useTranslation} from 'react-i18next';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import i18next from '../../services/i18next';
-import Icon from 'react-native-vector-icons/FontAwesome';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import axios from 'axios';
 import Loader from '../components/Loader';
+import ModalMessage from '../components/ModalMessage';
+
+// Modern UI components and theme
+import {COLORS, SIZES, FONTS, SHADOWS} from '../config/theme';
+import Button from '../components/common/Button';
+import Input from '../components/common/Input';
+import Card from '../components/common/Card';
+
 const Daily = () => {
   const {t} = useTranslation();
   const authData = useSelector(state => state.auth);
@@ -99,6 +108,7 @@ const Daily = () => {
   const [fisrtPercent, setFisrtPercent] = useState(0);
   const [tempPercent, setTempPercent] = useState(0);
   const [isShowSendBtn, setIsShowSendBtn] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   const handleSendDailyReport = async () => {
     try {
@@ -126,14 +136,16 @@ const Daily = () => {
       );
       if (!dailyReport?.data?.success) {
         setLoader(false);
-        console.log(dailyReport?.data?.message);
         throw new Error('unSuccess');
       }
       setLoader(false);
-      showAlert('success');
-      navigation.navigate('Main');
+      setShowModalSendReport(false);
+      setShowSuccessModal(true);
     } catch (error) {
+      setLoader(false);
       showAlert(error.message);
+    } finally {
+      setLoader(false);
     }
   };
   const handleClickChoiceProduct = product => {
@@ -186,25 +198,38 @@ const Daily = () => {
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#fff" />
+      style={styles.modernContainer}>
+      <StatusBar barStyle="light-content" backgroundColor={COLORS.primary} />
+      <View style={styles.header}>
+        <TouchableOpacity onPress={handleCancel} style={styles.headerButton}>
+          <Icon name="arrow-left" size={SIZES.h2} color={COLORS.white} />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>{t('daily.report')}</Text>
+        <View style={styles.headerButton} />
+      </View>
+
       <ScrollView
-        contentContainerStyle={styles.scrollView}
-        keyboardShouldPersistTaps="handled">
-        <View style={styles.container}>
+        contentContainerStyle={styles.scrollViewContent}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}>
+        <View style={styles.formContainer}>
           <Loader visible={loader} />
-          <View style={styles.productChoice}>
-            <Text style={styles.text}>
-              {t('product')} {productName}
-            </Text>
+
+          <Card style={styles.card}>
+            <Text style={styles.cardTitle}>{t('product.information')}</Text>
             <TouchableOpacity
+              style={styles.productSelector}
               onPress={() => {
                 setIsModalProductChoiceVisible(!isModalProductChoiceVisible);
               }}>
-              <Image
-                style={styles.arrowChoiceProduct}
-                source={require('../assets/images/arrow_icon.png')}
-              />
+              <Text
+                style={[
+                  styles.productSelectorText,
+                  !productName && styles.placeholderText,
+                ]}>
+                {productName || t('select.product')}
+              </Text>
+              <Icon name="chevron-down" size={SIZES.h3} color={COLORS.icon} />
             </TouchableOpacity>
             <DailyModal
               products={listProduct}
@@ -214,371 +239,529 @@ const Daily = () => {
               }}
               onProductSelected={handleClickChoiceProduct}
             />
-          </View>
-          <View style={styles.quatityProduct}>
-            <Text style={styles.text}>{t('quantity')}</Text>
-            <TextInput
-              style={styles.textInput}
+          </Card>
+
+          <Card style={styles.card}>
+            <Text style={styles.cardTitle}>{t('production.details')}</Text>
+            <Input
+              label={t('quantity')}
               keyboardType="number-pad"
-              onChangeText={txt => {
-                setQuatity(txt);
-              }}
+              value={quatity === 0 || quatity === '0' ? '' : quatity.toString()}
+              onChangeText={txt => setQuatity(txt)}
+              placeholder={t('enter.quantity')}
+              containerStyle={styles.inputField}
             />
-          </View>
-          <View style={styles.quatityProduct}>
-            <Text style={styles.text}>{t('l.speed')}:</Text>
-            <TextInput
-              style={styles.textInput}
+            <Input
+              label={t('l.speed')}
               keyboardType="number-pad"
-              onChangeText={txt => {
-                setFisrtProduct(txt);
-              }}
+              value={
+                fisrtProduct === 0 || fisrtProduct === '0'
+                  ? ''
+                  : fisrtProduct.toString()
+              }
+              onChangeText={txt => setFisrtProduct(txt)}
+              placeholder={t('enter.l.speed')}
+              containerStyle={styles.inputField}
             />
-          </View>
-          <View style={styles.quatityProduct}>
-            <Text style={styles.text}>{t('h.speed')}:</Text>
-            <TextInput
-              style={styles.textInput}
+            <Input
+              label={t('h.speed')}
               keyboardType="number-pad"
-              onChangeText={txt => {
-                setTemperature(txt);
-              }}
+              value={
+                temperature === 0 || temperature === '0'
+                  ? ''
+                  : temperature.toString()
+              }
+              onChangeText={txt => setTemperature(txt)}
+              placeholder={t('enter.h.speed')}
+              containerStyle={styles.inputField}
             />
-          </View>
-          <View style={styles.quatityProduct}>
-            <Text style={styles.text}>{t('err')}:</Text>
-            <TextInput
-              style={styles.textInput}
+            <Input
+              label={t('err')}
               keyboardType="number-pad"
-              onChangeText={txt => {
-                setError(txt);
-              }}
+              value={error === 0 || error === '0' ? '' : error.toString()}
+              onChangeText={txt => setError(txt)}
+              placeholder={t('enter.error.count')}
+              containerStyle={styles.inputField}
             />
-          </View>
-          <View style={styles.quatityProduct}>
-            <Text style={styles.text}>{t('shutdown_time')}</Text>
-            <TextInput
-              style={styles.textInput}
+            <Input
+              label={t('shutdown_time')}
               keyboardType="number-pad"
-              onChangeText={txt => {
-                setShutdown_time(txt);
-              }}
+              value={
+                shutdown_time === 0 || shutdown_time === '0'
+                  ? ''
+                  : shutdown_time.toString()
+              }
+              onChangeText={txt => setShutdown_time(txt)}
+              placeholder={t('enter.shutdown.time')}
+              containerStyle={styles.inputField}
             />
-          </View>
-          <View style={styles.quatityProduct}>
-            <Text style={styles.text}>{t('operated_time')}</Text>
-            <TextInput
-              style={styles.textInput}
+            <Input
+              label={t('operated_time')}
               keyboardType="number-pad"
-              onChangeText={txt => {
-                setTimeWork(txt);
-              }}
+              value={
+                timeWork === 0 || timeWork === '0' ? '' : timeWork.toString()
+              }
+              onChangeText={txt => setTimeWork(txt)}
+              placeholder={t('enter.operated.time')}
+              containerStyle={styles.inputField}
             />
-          </View>
-          <View style={styles.resulView}>
-            <View style={styles.resultViewElement}>
-              <Text style={[styles.text, styles.resultText]}>
-                {t('per')}: {percent}
-              </Text>
-            </View>
-            <View style={styles.resultViewElement}>
-              <Text style={[styles.text, styles.resultText]}>
-                {t('l.speed')}: {fisrtPercent}
-              </Text>
-            </View>
-            <View style={styles.resultViewElement}>
-              <Text style={[styles.text, styles.resultText]}>
-                {t('h.speed')}: {tempPercent}
-              </Text>
-            </View>
-            <View style={styles.resultViewElement}>
-              <Text style={[styles.text, styles.resultText]}>
-                {t('err')}: {errPercemt}
-              </Text>
-            </View>
-          </View>
-          <View style={styles.handleBtn}>
-            <TouchableOpacity onPress={handleCal} style={styles.btnCal}>
-              <Text style={styles.btnText}>{t('acc')}</Text>
-            </TouchableOpacity>
+          </Card>
+
+          {isShowSendBtn && (
+            <Card style={styles.card}>
+              <Text style={styles.cardTitle}>{t('results')}</Text>
+              {percent !== 0 && percent !== '0' && percent !== '0.0' && (
+                <View style={styles.resultItem}>
+                  <Text style={styles.resultLabel}>{t('per')}:</Text>
+                  <Text style={styles.resultValue}>{percent}%</Text>
+                </View>
+              )}
+              {fisrtPercent !== 0 &&
+                fisrtPercent !== '0' &&
+                fisrtPercent !== '0.0' && (
+                  <View style={styles.resultItem}>
+                    <Text style={styles.resultLabel}>{t('l.speed')}:</Text>
+                    <Text style={styles.resultValue}>{fisrtPercent}%</Text>
+                  </View>
+                )}
+              {tempPercent !== 0 &&
+                tempPercent !== '0' &&
+                tempPercent !== '0.0' && (
+                  <View style={styles.resultItem}>
+                    <Text style={styles.resultLabel}>{t('h.speed')}:</Text>
+                    <Text style={styles.resultValue}>{tempPercent}%</Text>
+                  </View>
+                )}
+              {errPercemt !== 0 &&
+                errPercemt !== '0' &&
+                errPercemt !== '0.0' && (
+                  <View style={styles.resultItem}>
+                    <Text style={styles.resultLabel}>{t('err')}:</Text>
+                    <Text style={styles.resultValue}>{errPercemt}%</Text>
+                  </View>
+                )}
+              {quantity !== 0 && quantity !== '0' && (
+                <View style={styles.resultItem}>
+                  <Text style={styles.resultLabel}>
+                    {t('total.quantity.final')}:
+                  </Text>
+                  <Text style={styles.resultValue}>{quantity}</Text>
+                </View>
+              )}
+            </Card>
+          )}
+
+          <View style={styles.buttonContainer}>
+            <Button
+              title={t('acc')}
+              onPress={handleCal}
+              style={styles.actionButton}
+              variant="primary"
+            />
             {isShowSendBtn && (
-              <TouchableOpacity
+              <Button
+                title={t('Send')}
                 onPress={() => {
                   setShowModalSendReport(true);
                 }}
-                style={styles.btnCal}>
-                <Text style={styles.btnText}>{t('Send')}</Text>
-              </TouchableOpacity>
+                style={styles.actionButton}
+                variant="success"
+              />
             )}
-            <TouchableOpacity onPress={handleCancel} style={styles.btnCancel}>
-              <Text style={styles.btnText}>{t('c')}</Text>
-            </TouchableOpacity>
+            <Button
+              title={t('c')}
+              onPress={handleCancel}
+              style={styles.actionButton}
+              variant="outline"
+            />
           </View>
+
           <Modal
-            animationType="none"
-            transparent
-            visible={isShowModalSendReport}>
-            <View style={styles.modalSenReportContainer}>
-              <View style={styles.cancelModal}>
-                <TouchableOpacity
-                  onPress={() => {
-                    setShowModalSendReport(!isShowModalSendReport);
+            animationType="slide"
+            transparent={true}
+            visible={isShowModalSendReport}
+            onRequestClose={() => setShowModalSendReport(false)}>
+            <View
+              style={{
+                flex: 1,
+                justifyContent: 'center',
+                alignItems: 'center',
+                backgroundColor: 'rgba(0,0,0,0.5)',
+              }}>
+              <View
+                style={{
+                  width: 300,
+                  minHeight: 320,
+                  backgroundColor: '#fff',
+                  borderRadius: 16,
+                  padding: 20,
+                  alignItems: 'stretch',
+                  justifyContent: 'flex-start',
+                }}>
+                {/* Header */}
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    marginBottom: 12,
                   }}>
-                  <Icon name="times" color={THEME_COLOR} size={30} />
-                </TouchableOpacity>
-              </View>
-              <View style={styles.modalContent}>
-                <View style={styles.modalTile}>
-                  <View>
-                    <Text style={styles.textTitle}>{t('dailyRP')}</Text>
-                  </View>
-                  <View>
-                    <Text style={styles.textTitle}>
-                      {moment(today).format('YYYY-MM-DD')}
-                    </Text>
-                  </View>
+                  <Text
+                    style={{
+                      fontSize: 20,
+                      fontWeight: 'bold',
+                      color: '#1976D2',
+                    }}>
+                    {t('confirm.report.submission')}
+                  </Text>
+                  <TouchableOpacity
+                    onPress={() => setShowModalSendReport(false)}>
+                    <Text style={{color: 'red', fontSize: 24}}>X</Text>
+                  </TouchableOpacity>
                 </View>
-                <View style={styles.modalBody}>
-                  <View style={styles.modalBodyElement}>
-                    <Text style={styles.text}>{t('product')}</Text>
-                    <Text style={styles.text}>{productName}</Text>
-                  </View>
-                  <View style={styles.modalBodyElement}>
-                    <Text style={styles.text}>{t('quantity')}</Text>
-                    <Text style={styles.text}>{quantity}</Text>
-                  </View>
-                  <View style={styles.modalBodyElement}>
-                    <CheckBox
-                      tintColors={{true: 'red', false: 'black'}}
-                      value={Acheck}
-                      style={styles.checkBox}
-                      onChange={() => {
-                        setShift('A');
-                        setAcheck(true);
-                        setBcheck(false);
-                      }}
-                    />
-                    <Text style={[styles.text, {padding: 10}]}>{t('A.s')}</Text>
-                    <CheckBox
-                      tintColors={{true: 'red', false: 'black'}}
-                      value={Bcheck}
-                      style={styles.checkBox}
-                      onChange={() => {
-                        setShift('B');
-                        setAcheck(false);
-                        setBcheck(true);
-                      }}
-                    />
-                    <Text style={[styles.text, {padding: 10}]}>{t('B.s')}</Text>
-                  </View>
-                  <View style={styles.modalBodyElement}>
-                    <Text style={styles.text}>{t('operated_time')}</Text>
-                    <Text style={styles.text}>{timeWork}</Text>
-                  </View>
-                  <View style={styles.modalBodyElement}>
-                    <Text style={styles.text}>{t('cycle')}: </Text>
-                    <Text style={styles.text}>{productValue}</Text>
-                  </View>
-                  <View style={styles.modalBodyElement}>
-                    <Text style={styles.text}>{t('shutdown_time')}</Text>
-                    <Text style={styles.text}>{shutdown_time}</Text>
-                  </View>
-                  <View
-                    style={[
-                      styles.modalBodyElement,
-                      {flexDirection: 'column'},
-                    ]}>
-                    <Text style={styles.text}>{t('operator_history')}</Text>
-                    <TextInput
-                      placeholder={t('his.operation')}
-                      placeholderTextColor={TEXT_COLOR}
+                {/* Shift selector */}
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    justifyContent: 'space-around',
+                    marginBottom: 12,
+                  }}>
+                  <TouchableOpacity
+                    style={{
+                      flex: 1,
+                      marginHorizontal: 8,
+                      paddingVertical: 10,
+                      borderRadius: 8,
+                      backgroundColor: shift === 'A' ? '#1976D2' : '#fff',
+                      borderWidth: 1,
+                      borderColor: '#1976D2',
+                      alignItems: 'center',
+                    }}
+                    onPress={() => setShift('A')}>
+                    <Text
                       style={{
-                        borderWidth: 1,
-                        marginTop: 10,
-                        borderRadius: 20,
-                        padding: 5,
-                        height: 90,
-                        width: '100%',
-                        borderColor: 'black',
-                        color: TEXT_COLOR,
-                      }}
-                      multiline={true}
-                      onChangeText={text => {
-                        setOperator_history(text);
-                      }}
-                    />
-                  </View>
-                  <View style={styles.modalFooter}>
-                    <View style={[styles.btnCal, {borderRadius: 20}]}>
-                      <TouchableOpacity onPress={handleSendDailyReport}>
-                        <Icon name="send" size={30} color={BG_COLOR} />
-                      </TouchableOpacity>
-                    </View>
-                    <View style={[styles.btnCal, {borderRadius: 20}]}>
-                      <TouchableOpacity
-                        onPress={() => {
-                          setShowModalSendReport(!isShowModalSendReport);
-                        }}>
-                        <Icon name="remove" size={30} />
-                      </TouchableOpacity>
-                    </View>
-                  </View>
+                        color: shift === 'A' ? '#fff' : '#1976D2',
+                        fontWeight: 'bold',
+                      }}>
+                      A
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={{
+                      flex: 1,
+                      marginHorizontal: 8,
+                      paddingVertical: 10,
+                      borderRadius: 8,
+                      backgroundColor: shift === 'B' ? '#1976D2' : '#fff',
+                      borderWidth: 1,
+                      borderColor: '#1976D2',
+                      alignItems: 'center',
+                    }}
+                    onPress={() => setShift('B')}>
+                    <Text
+                      style={{
+                        color: shift === 'B' ? '#fff' : '#1976D2',
+                        fontWeight: 'bold',
+                      }}>
+                      B
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+                {/* Operator history */}
+                <Text style={{fontWeight: 'bold', marginBottom: 4}}>
+                  {t('operator_history')}
+                </Text>
+                <TextInput
+                  value={operator_history}
+                  onChangeText={text => setOperator_history(text)}
+                  placeholder={t('enter.operator.history')}
+                  multiline
+                  numberOfLines={3}
+                  style={{
+                    borderWidth: 1,
+                    borderColor: '#ccc',
+                    borderRadius: 8,
+                    padding: 10,
+                    minHeight: 50,
+                    marginBottom: 12,
+                    backgroundColor: '#fafafa',
+                  }}
+                />
+                {/* Summary */}
+                <Text style={{fontWeight: 'bold', marginBottom: 4}}>
+                  {t('summary')}
+                </Text>
+                <View style={{marginBottom: 12}}>
+                  <Text>
+                    {t('product')}: {productName}
+                  </Text>
+                  <Text>
+                    {t('quantity')}: {quantity}
+                  </Text>
+                  <Text>
+                    {t('shift')}: {shift}
+                  </Text>
+                  <Text>
+                    {t('operated_time')}: {timeWork}
+                  </Text>
+                  <Text>
+                    {t('cycle')}: {productValue}
+                  </Text>
+                  <Text>
+                    {t('shutdown_time')}: {shutdown_time}
+                  </Text>
+                  <Text>
+                    {t('date')}: {moment(today).format('YYYY-MM-DD')}
+                  </Text>
+                </View>
+                {/* Buttons */}
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    justifyContent: 'space-between',
+                  }}>
+                  <TouchableOpacity
+                    style={{
+                      flex: 1,
+                      marginRight: 8,
+                      paddingVertical: 12,
+                      borderRadius: 8,
+                      backgroundColor: '#fff',
+                      borderWidth: 1,
+                      borderColor: '#1976D2',
+                      alignItems: 'center',
+                    }}
+                    onPress={() => setShowModalSendReport(false)}>
+                    <Text style={{color: '#1976D2', fontWeight: 'bold'}}>
+                      {t('cancel')}
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={{
+                      flex: 1,
+                      marginLeft: 8,
+                      paddingVertical: 12,
+                      borderRadius: 8,
+                      backgroundColor: '#1976D2',
+                      alignItems: 'center',
+                    }}
+                    onPress={handleSendDailyReport}>
+                    <Text style={{color: '#fff', fontWeight: 'bold'}}>
+                      {t('send')}
+                    </Text>
+                  </TouchableOpacity>
                 </View>
               </View>
             </View>
           </Modal>
         </View>
       </ScrollView>
+      <ModalMessage
+        isVisible={showSuccessModal}
+        onClose={() => {
+          setShowSuccessModal(false);
+          navigation.navigate('Main');
+        }}
+        message={'success'}
+        type={'success'}
+        t={t}
+        duration={1500}
+      />
     </KeyboardAvoidingView>
   );
 };
 
-export default Daily;
-
 const styles = StyleSheet.create({
-  resultViewElement: {
-    width: '25%',
-    padding: 10,
+  modernContainer: {
+    flex: 1,
+    backgroundColor: COLORS.background,
   },
-  modalFooter: {
-    marginTop: 10,
+  header: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: SIZES.padding / 1.5,
+    paddingVertical: SIZES.base * 1.5,
+    backgroundColor: COLORS.primary,
+    height: SIZES.headerHeight,
+    ...SHADOWS.light,
   },
-  checkBox: {
-    borderColor: 'black',
-    color: TEXT_COLOR,
-    marginTop: 5,
+  headerButton: {
+    padding: SIZES.base,
+    minWidth: SIZES.h1,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  modalBodyElement: {
-    flexDirection: 'row',
-    marginTop: 5,
+  headerTitle: {
+    ...FONTS.h3,
+    color: COLORS.white,
+    fontWeight: 'bold',
   },
-  modalBody: {
-    marginTop: 10,
-    padding: 20,
+  scrollViewContent: {
+    paddingBottom: SIZES.padding * 2,
   },
-  modalTile: {
+  formContainer: {
+    paddingHorizontal: SIZES.padding,
+    paddingTop: SIZES.padding,
+  },
+  card: {
+    marginBottom: SIZES.padding * 1.2,
+    padding: SIZES.padding * 0.8,
+  },
+  cardTitle: {
+    ...FONTS.h4,
+    color: COLORS.text,
+    marginBottom: SIZES.padding * 0.8,
+    fontWeight: 'bold',
     borderBottomWidth: 1,
-    borderBottomColor: 'gray',
-    padding: 5,
+    borderBottomColor: COLORS.borderColor,
+    paddingBottom: SIZES.base,
+  },
+  productSelector: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: SIZES.base * 1.5,
+    paddingHorizontal: SIZES.inputPaddingHorizontal || SIZES.base,
+    borderWidth: 1,
+    borderColor: COLORS.borderColor,
+    borderRadius: SIZES.radius,
+    backgroundColor: COLORS.white,
+    height: SIZES.inputHeight,
+    marginBottom: SIZES.base,
+  },
+  productSelectorText: {
+    ...FONTS.body3,
+    color: COLORS.text,
+    flex: 1,
+  },
+  placeholderText: {
+    color: COLORS.placeholder,
+  },
+  inputField: {
+    marginBottom: SIZES.base * 1.8,
+  },
+  resultItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: SIZES.base,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.lightGray2,
+    ':last-child': {
+      borderBottomWidth: 0,
+    },
+  },
+  resultLabel: {
+    ...FONTS.body3,
+    color: COLORS.textSecondary,
+  },
+  resultValue: {
+    ...FONTS.body3,
+    color: COLORS.primary,
+    fontWeight: 'bold',
+  },
+  buttonContainer: {
+    marginTop: SIZES.padding,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  actionButton: {
+    flex: 1,
+    marginHorizontal: SIZES.base / 2,
+  },
+
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.6)',
+  },
+  modalCardModern: {
+    width: SIZES.width * 0.92,
+    maxHeight: SIZES.height * 0.85,
+    borderRadius: SIZES.radiusLg || 16,
+    backgroundColor: COLORS.white,
+    ...SHADOWS.medium,
+    padding: SIZES.padding,
+  },
+  modalHeaderModern: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: SIZES.padding,
+    paddingTop: SIZES.padding,
+    paddingBottom: SIZES.base,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.borderColor,
+    backgroundColor: COLORS.background,
+  },
+  modalTitleModern: {
+    ...FONTS.h2,
+    color: COLORS.primary,
+    fontWeight: '700',
+  },
+  closeButtonModern: {
+    padding: SIZES.base,
+    borderRadius: 20,
+    backgroundColor: COLORS.lightGray3,
+  },
+  modalSectionTitleModern: {
+    ...FONTS.h5,
+    color: COLORS.primary,
+    fontWeight: '600',
+    marginTop: SIZES.base,
+    marginBottom: SIZES.base,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.lightGray2,
+  },
+  summaryListModern: {
+    marginVertical: SIZES.base,
+  },
+  summaryItemModern: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: SIZES.base,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.lightGray3,
+  },
+  summaryLabelModern: {
+    ...FONTS.body4,
+    color: COLORS.textSecondary,
+  },
+  summaryValueModern: {
+    ...FONTS.body3,
+    color: COLORS.text,
+    fontWeight: '500',
+  },
+  modalButtonContainerModern: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: SIZES.padding,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.borderColor,
+    paddingTop: SIZES.base,
+  },
+  modalButtonModern: {
+    flex: 1,
+    marginHorizontal: SIZES.base * 0.5,
+  },
+  inputFieldModalModern: {
+    marginBottom: SIZES.padding,
+  },
+  modalInputTextStyleModern: {},
+  shiftSelectorContainerModern: {
     flexDirection: 'row',
     justifyContent: 'space-around',
+    marginBottom: SIZES.padding,
   },
-  cancelModal: {
-    position: 'absolute',
-    top: 100,
-    right: 30,
-  },
-  modalContent: {
-    width: Dimensions.get('screen').width * 0.9,
-    height: Dimensions.get('screen').height * 0.6,
-    backgroundColor: BG_COLOR,
-    borderRadius: 10,
-    padding: 10,
-    flexDirection: 'column',
-  },
-  modalSenReportContainer: {
+  shiftButton: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.8)',
+    marginHorizontal: SIZES.base / 2,
   },
-  container: {
-    flex: 1,
-    padding: 20,
-    backgroundColor: BG_COLOR,
-  },
-  productChoice: {
-    height: 40,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: THEME_COLOR,
-    borderRadius: 5,
-    paddingHorizontal: 10,
-    marginBottom: 10,
-  },
-  arrowChoiceProduct: {
-    width: 30,
-    height: 30,
-  },
-  text: {
-    color: TEXT_COLOR,
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  textTitle: {
-    color: TEXT_COLOR,
-    fontSize: 20,
-    fontWeight: 'bold',
-  },
-  quatityProduct: {
-    height: 40,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: THEME_COLOR,
-    borderRadius: 5,
-    paddingHorizontal: 10,
-    marginBottom: 10,
-  },
-  textInput: {
-    width: '50%',
-    fontSize: 16,
-    fontWeight: 'bold',
-    padding: 5,
-    color: TEXT_COLOR,
-  },
-  resulView: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: THEME_COLOR,
-    borderRadius: 5,
-  },
-  resultText: {
-    fontSize: 13,
-    fontWeight: 'bold',
-  },
-  handleBtn: {
-    flexDirection: 'row',
-    justifyContent: 'space-evenly',
-    marginTop: 20,
-    flex: 1,
-  },
-  btnCal: {
-    backgroundColor: THEME_COLOR,
-    borderWidth: 1,
-    height: 40,
-    borderRadius: 5,
-    width: '20%',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  btnsend: {
-    backgroundColor: THEME_COLOR,
-    borderWidth: 1,
-    height: 40,
-    borderRadius: 5,
-    justifyContent: 'center',
-    alignItems: 'center',
-    flex: 1,
-  },
-  btnCancel: {
-    backgroundColor: 'red',
-    borderWidth: 1,
-    height: 40,
-    borderRadius: 5,
-    width: '30%',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  btnText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
+  shiftButtonText: {},
+  shiftButtonTextActive: {},
 });
+
+export default Daily;

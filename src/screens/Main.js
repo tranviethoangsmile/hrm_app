@@ -1,6 +1,6 @@
 /* eslint-disable eqeqeq */
 /* eslint-disable react-native/no-inline-styles */
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useState, useRef} from 'react';
 import {
   View,
   Text,
@@ -10,6 +10,7 @@ import {
   StyleSheet,
   TouchableOpacity,
   Image,
+  Animated,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import {THEME_COLOR, THEME_COLOR_2} from '../utils/Colors';
@@ -24,40 +25,93 @@ const Main = () => {
   const navigation = useNavigation();
   const [selectedTab, setSelectedTab] = useState(0);
 
+  const lastScrollY = useRef(0);
+  const bottomNavHeight = 65; // Adjusted height
+  const bottomNavTranslateY = useRef(new Animated.Value(0)).current;
+  const [isBottomNavVisible, setIsBottomNavVisible] = useState(true);
+
+  const handleScroll = event => {
+    if (!event) return; // Guard clause
+    const currentScrollY = event.nativeEvent.contentOffset.y;
+    const scrollDirection =
+      currentScrollY > lastScrollY.current ? 'down' : 'up';
+
+    if (currentScrollY <= 0) {
+      if (!isBottomNavVisible) {
+        Animated.timing(bottomNavTranslateY, {
+          toValue: 0,
+          duration: 200, // Slightly faster animation
+          useNativeDriver: true,
+        }).start();
+        setIsBottomNavVisible(true);
+      }
+    } else {
+      if (scrollDirection === 'down' && isBottomNavVisible) {
+        Animated.timing(bottomNavTranslateY, {
+          toValue: bottomNavHeight,
+          duration: 200,
+          useNativeDriver: true,
+        }).start();
+        setIsBottomNavVisible(false);
+      } else if (scrollDirection === 'up' && !isBottomNavVisible) {
+        Animated.timing(bottomNavTranslateY, {
+          toValue: 0,
+          duration: 200,
+          useNativeDriver: true,
+        }).start();
+        setIsBottomNavVisible(true);
+      }
+    }
+    lastScrollY.current = Math.max(0, currentScrollY); // Ensure lastScrollY is not negative
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
-      {selectedTab === 0 ? <HomeTab /> : <FeatureTab />}
-      <View style={styles.bottomNav}>
+      {selectedTab === 0 ? (
+        <HomeTab onScrollList={handleScroll} />
+      ) : (
+        <FeatureTab onScrollList={handleScroll} />
+      )}
+      <Animated.View
+        style={[
+          styles.bottomNav,
+          {
+            transform: [{translateY: bottomNavTranslateY}],
+          },
+        ]}>
         <TouchableOpacity
+          style={styles.tabItem}
           onPress={() => {
             setSelectedTab(0);
           }}>
           <Icon
-            name={'home'}
-            size={50}
-            color={selectedTab === 0 ? THEME_COLOR_2 : '#000'}
+            name={selectedTab === 0 ? 'home' : 'home-outline'}
+            size={28}
+            color={selectedTab === 0 ? THEME_COLOR_2 : '#888888'}
           />
         </TouchableOpacity>
+
         <TouchableOpacity
+          style={styles.tabItem}
           onPress={() => {
             navigation.navigate('Checkin');
           }}>
-          <View style={styles.checkInIcon}>
-            <Icon name={'finger-print-outline'} size={50} color={'white'} />
-          </View>
+          <Icon name={'finger-print-outline'} size={28} color={'#888888'} />
         </TouchableOpacity>
+
         <TouchableOpacity
+          style={styles.tabItem}
           onPress={() => {
             setSelectedTab(1);
           }}>
           <Icon
-            name={'reorder-four'}
-            size={60}
-            color={selectedTab === 1 ? THEME_COLOR_2 : '#000'}
+            name={selectedTab === 1 ? 'apps' : 'apps-outline'}
+            size={28}
+            color={selectedTab === 1 ? THEME_COLOR_2 : '#888888'}
           />
         </TouchableOpacity>
-      </View>
+      </Animated.View>
     </SafeAreaView>
   );
 };
@@ -67,34 +121,32 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#fff',
   },
-  textTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: THEME_COLOR_2,
-    marginLeft: 20,
-  },
   bottomNav: {
     position: 'absolute',
     width: '100%',
-    height: 80,
-    backgroundColor: '#f2f2f2',
+    height: 65, // Adjusted height to match bottomNavHeight
+    backgroundColor: '#FFFFFF', // Changed to white
     bottom: 0,
     flexDirection: 'row',
-    justifyContent: 'space-evenly',
+    justifyContent: 'space-around', // Changed to space-around for even spacing
+    alignItems: 'center', // Align items to center for vertical alignment of icon+text
+    borderTopWidth: 1, // Add a subtle top border
+    borderTopColor: '#E0E0E0', // Light gray border color
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: -2},
+    shadowOpacity: 0.05, // Softer shadow
+    shadowRadius: 3.84,
+    elevation: 3, // Elevation for Android shadow
+  },
+  tabItem: {
+    flex: 1, // Each tab takes equal width
     alignItems: 'center',
-  },
-  btnIcon: {
-    width: 50,
-    height: 50,
-  },
-  checkInIcon: {
-    backgroundColor: THEME_COLOR_2,
-    marginBottom: 50,
-    borderRadius: 35,
-    width: 70,
-    height: 70,
     justifyContent: 'center',
-    alignItems: 'center',
+    paddingVertical: 8, // Padding for touchable area and spacing
+  },
+  tabLabel: {
+    fontSize: 11, // Smaller font size for labels
+    marginTop: 4, // Space between icon and label
   },
 });
 
