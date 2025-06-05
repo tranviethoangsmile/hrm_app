@@ -4,6 +4,7 @@ import React, {useEffect} from 'react';
 import {useNavigation} from '@react-navigation/native';
 import {useSelector} from 'react-redux';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+
 const Splash = () => {
   const getLanguage = async () => {
     return await AsyncStorage.getItem('Language');

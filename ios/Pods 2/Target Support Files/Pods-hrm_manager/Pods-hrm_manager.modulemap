@@ -1,0 +1,6 @@
+module Pods_hrm_manager {
+  umbrella header "Pods-hrm_manager-umbrella.h"
+
+  export *
+  module * { export * }
+}

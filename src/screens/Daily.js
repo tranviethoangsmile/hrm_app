@@ -443,7 +443,7 @@ const Daily = () => {
                         color: shift === 'A' ? '#fff' : '#1976D2',
                         fontWeight: 'bold',
                       }}>
-                      A
+                      {t('shiftA', 'A')}
                     </Text>
                   </TouchableOpacity>
                   <TouchableOpacity
@@ -463,7 +463,7 @@ const Daily = () => {
                         color: shift === 'B' ? '#fff' : '#1976D2',
                         fontWeight: 'bold',
                       }}>
-                      B
+                      {t('shiftB', 'B')}
                     </Text>
                   </TouchableOpacity>
                 </View>
@@ -485,33 +485,64 @@ const Daily = () => {
                     minHeight: 50,
                     marginBottom: 12,
                     backgroundColor: '#fafafa',
+                    color: COLORS.text || '#222',
                   }}
+                  placeholderTextColor={COLORS.placeholder || '#888'}
                 />
                 {/* Summary */}
                 <Text style={{fontWeight: 'bold', marginBottom: 4}}>
                   {t('summary')}
                 </Text>
-                <View style={{marginBottom: 12}}>
+                <View
+                  style={{
+                    marginBottom: 12,
+                    borderWidth: 1,
+                    borderColor: '#eee',
+                    borderRadius: 8,
+                    padding: 8,
+                    backgroundColor: '#f9f9f9',
+                  }}>
                   <Text>
-                    {t('product')}: {productName}
+                    {t('product')}:{' '}
+                    <Text style={{color: COLORS.primary, fontWeight: 'bold'}}>
+                      {t(productName, productName)}
+                    </Text>
                   </Text>
                   <Text>
-                    {t('quantity')}: {quantity}
+                    {t('quantity')}:{' '}
+                    <Text style={{color: COLORS.primary, fontWeight: 'bold'}}>
+                      {quantity}
+                    </Text>
                   </Text>
                   <Text>
-                    {t('shift')}: {shift}
+                    {t('shift')}:{' '}
+                    <Text style={{color: COLORS.primary, fontWeight: 'bold'}}>
+                      {t('shift' + shift, shift)}
+                    </Text>
                   </Text>
                   <Text>
-                    {t('operated_time')}: {timeWork}
+                    {t('operated_time')}:{' '}
+                    <Text style={{color: COLORS.primary, fontWeight: 'bold'}}>
+                      {timeWork}
+                    </Text>
                   </Text>
                   <Text>
-                    {t('cycle')}: {productValue}
+                    {t('cycle')}:{' '}
+                    <Text style={{color: COLORS.primary, fontWeight: 'bold'}}>
+                      {productValue}
+                    </Text>
                   </Text>
                   <Text>
-                    {t('shutdown_time')}: {shutdown_time}
+                    {t('shutdown_time')}:{' '}
+                    <Text style={{color: COLORS.primary, fontWeight: 'bold'}}>
+                      {shutdown_time}
+                    </Text>
                   </Text>
                   <Text>
-                    {t('date')}: {moment(today).format('YYYY-MM-DD')}
+                    {t('date')}:{' '}
+                    <Text style={{color: COLORS.primary, fontWeight: 'bold'}}>
+                      {moment(today).format('YYYY-MM-DD')}
+                    </Text>
                   </Text>
                 </View>
                 {/* Buttons */}

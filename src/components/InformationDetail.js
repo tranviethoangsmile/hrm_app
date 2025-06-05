@@ -9,7 +9,7 @@ import {
   TouchableWithoutFeedback,
   ScrollView,
 } from 'react-native';
-import Video from 'react-native-video';
+import VideoPlayer from 'react-native-video-player';
 import {TEXT_COLOR, THEME_COLOR, THEME_COLOR_2} from '../utils/Colors';
 
 const InformationDetail = ({visible, onClose, t, post}) => {
@@ -29,14 +29,13 @@ const InformationDetail = ({visible, onClose, t, post}) => {
           </View>
           <View style={styles.mediaContainer}>
             {post.is_video ? (
-              <Video
-                source={{uri: post.media}}
-                style={{width: 300, height: 200, borderRadius: 10}}
-                controls={true}
-                paused={true}
-                resizeMode="cover"
-                poster={require('../assets/images/thumbnail.jpg')}
-                posterResizeMode="cover"
+              <VideoPlayer
+                autoplay={false}
+                video={{uri: post.media}}
+                defaultMuted={true}
+                videoWidth={300}
+                videoHeight={200}
+                thumbnail={require('../assets/images/thumbnail.jpg')}
               />
             ) : (
               <Image source={{uri: post.media}} style={styles.media} />

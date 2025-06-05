@@ -46,6 +46,7 @@ import {
 import Loader from '../Loader';
 import HappyModal from '../HappyModal';
 import moment from 'moment';
+import LinkPreview from 'react-native-link-preview';
 
 const {width} = Dimensions.get('window');
 
@@ -150,15 +151,42 @@ const HomeTab = ({onScrollList}) => {
     }
   };
 
-  const renderPost = ({item}) => {
-    // Generate a random-like view count for demonstration
+  // Hàm nhận diện link trong text
+  function extractFirstUrl(text) {
+    const urlRegex =
+      /(https?:\/\/[\w\-._~:/?#[\]@!$&'()*+,;=%]+)|(www\.[\w\-._~:/?#[\]@!$&'()*+,;=%]+)/gi;
+    const match = text.match(urlRegex);
+    return match ? match[0] : null;
+  }
+
+  const PostItem = ({item, t, handleGoToEventScreen}) => {
+    const [linkPreview, setLinkPreview] = React.useState(null);
+    React.useEffect(() => {
+      const url = extractFirstUrl(item.content);
+      if (url) {
+        LinkPreview.getPreview(url)
+          .then(data => {
+            setLinkPreview({
+              title: data.title || url,
+              description: data.description || '',
+              image:
+                data.images && data.images.length > 0 ? data.images[0] : null,
+              url: data.url || url,
+            });
+          })
+          .catch(e => {
+            setLinkPreview(null);
+          });
+      } else {
+        setLinkPreview(null);
+      }
+    }, [item.content]);
+
     const viewCount = Math.floor(Math.random() * 5000) + 100;
     const formattedViewCount =
       viewCount > 1000
         ? `${(viewCount / 1000).toFixed(1)}K`
         : viewCount.toString();
-
-    // Placeholder action handlers
     const handleLike = () => console.log('Liked post:', item.id);
     const handleComment = () => console.log('Comment on post:', item.id);
     const handleShare = () => console.log('Share post:', item.id);
@@ -178,6 +206,37 @@ const HomeTab = ({onScrollList}) => {
         <Text style={styles.postContent} numberOfLines={3} ellipsizeMode="tail">
           {item.content}
         </Text>
+        {linkPreview && (
+          <TouchableOpacity
+            style={styles.linkPreviewBox}
+            onPress={() => {
+              if (linkPreview.url) {
+                try {
+                  require('react-native').Linking.openURL(linkPreview.url);
+                } catch (e) {}
+              }
+            }}>
+            {linkPreview.image && (
+              <Image
+                source={{uri: linkPreview.image}}
+                style={styles.linkPreviewImg}
+              />
+            )}
+            <View style={{flex: 1, marginLeft: 10}}>
+              <Text style={styles.linkPreviewTitle} numberOfLines={2}>
+                {linkPreview.title}
+              </Text>
+              {linkPreview.description ? (
+                <Text style={styles.linkPreviewDesc} numberOfLines={2}>
+                  {linkPreview.description}
+                </Text>
+              ) : null}
+              <Text style={styles.linkPreviewUrl} numberOfLines={1}>
+                {linkPreview.url}
+              </Text>
+            </View>
+          </TouchableOpacity>
+        )}
         {item.content.length > 100 && (
           <TouchableOpacity
             onPress={() =>
@@ -208,18 +267,15 @@ const HomeTab = ({onScrollList}) => {
               <Image source={{uri: item.media}} style={styles.mediaImage} />
             </TouchableOpacity>
           ))}
-
         <View style={styles.postMetaContainer}>
           <View style={styles.postActionsGroup}>
             <TouchableOpacity onPress={handleLike} style={styles.actionButton}>
               <Icon name="heart-o" size={18} color="#555" />
-              {/* <Text style={styles.actionText}>15</Text> */}
             </TouchableOpacity>
             <TouchableOpacity
               onPress={handleComment}
               style={styles.actionButton}>
               <Icon name="comment-o" size={18} color="#555" />
-              {/* <Text style={styles.actionText}>3</Text> */}
             </TouchableOpacity>
             <TouchableOpacity
               onPress={handleShare}
@@ -227,7 +283,6 @@ const HomeTab = ({onScrollList}) => {
               <Icon name="share-square-o" size={18} color="#555" />
             </TouchableOpacity>
           </View>
-
           <View style={styles.viewCountContainer}>
             <Icon name="eye" size={14} color="#777" style={styles.metaIcon} />
             <Text style={styles.metaText}>
@@ -235,7 +290,6 @@ const HomeTab = ({onScrollList}) => {
             </Text>
           </View>
         </View>
-
         {item.is_event ? (
           <TouchableOpacity
             style={styles.eventButton}
@@ -343,7 +397,13 @@ const HomeTab = ({onScrollList}) => {
         {err ? <Text style={styles.errorText}>{err}</Text> : null}
         <FlatList
           data={posts}
-          renderItem={renderPost}
+          renderItem={({item}) => (
+            <PostItem
+              item={item}
+              t={t}
+              handleGoToEventScreen={handleGoToEventScreen}
+            />
+          )}
           keyExtractor={item => item.id.toString()}
           ItemSeparatorComponent={renderItemSeparator}
           refreshControl={
@@ -546,6 +606,41 @@ const styles = StyleSheet.create({
   metaText: {
     fontSize: 12,
     color: '#777',
+  },
+  linkPreviewBox: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    backgroundColor: '#181a20',
+    borderRadius: 10,
+    padding: 10,
+    marginTop: 10,
+    marginBottom: 4,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 1},
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+  },
+  linkPreviewImg: {
+    width: 60,
+    height: 60,
+    borderRadius: 8,
+    backgroundColor: '#222',
+  },
+  linkPreviewTitle: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 15,
+    marginBottom: 2,
+  },
+  linkPreviewDesc: {
+    color: '#aaa',
+    fontSize: 13,
+    marginBottom: 2,
+  },
+  linkPreviewUrl: {
+    color: THEME_COLOR_2,
+    fontSize: 12,
+    textDecorationLine: 'underline',
   },
 });
 
