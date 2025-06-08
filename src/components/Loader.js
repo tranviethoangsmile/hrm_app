@@ -1,34 +1,36 @@
 /* eslint-disable react/self-closing-comp */
-import {View, Text, Modal, StyleSheet, ActivityIndicator} from 'react-native';
 import React from 'react';
-import {BG_COLOR} from '../utils/Colors';
+import {View, ActivityIndicator, StyleSheet, Modal} from 'react-native';
+import {COLORS} from '../config/theme';
 
-const Loader = ({visible}) => {
+const Loader = ({visible = false}) => {
   return (
-    <Modal transparent visible={visible}>
-      <View style={styles.mainView}>
-        <View style={styles.loaderView}>
-          <ActivityIndicator size="large" color="red" />
+    <Modal transparent={true} animationType={'none'} visible={visible}>
+      <View style={styles.modalBackground}>
+        <View style={styles.activityIndicatorWrapper}>
+          <ActivityIndicator size="large" color={COLORS.primary} />
         </View>
       </View>
     </Modal>
   );
 };
 
-export default Loader;
 const styles = StyleSheet.create({
-  mainView: {
+  modalBackground: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.3)',
-    justifyContent: 'center',
     alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(0,0,0,0.5)', // Semi-transparent background
   },
-  loaderView: {
-    width: 60,
-    height: 60,
-    backgroundColor: BG_COLOR,
+  activityIndicatorWrapper: {
+    backgroundColor: COLORS.white,
+    height: 100,
+    width: 100,
     borderRadius: 10,
-    justifyContent: 'center',
+    display: 'flex',
     alignItems: 'center',
+    justifyContent: 'center',
   },
 });
+
+export default Loader;

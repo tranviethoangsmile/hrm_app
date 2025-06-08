@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useState, useCallback} from 'react';
 import {
   View,
   Text,
@@ -7,7 +7,8 @@ import {
   Alert,
   StatusBar,
   Keyboard,
-  SafeAreaView,
+  Platform,
+  Dimensions,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import axios from 'axios';
@@ -31,8 +32,11 @@ import {
 } from '../utils/constans';
 import Loader from '../components/Loader';
 import {UserModal, ModalMessage, PersonalTab, GroupTabs} from '../components';
-import {THEME_COLOR} from '../utils/Colors';
-import defaultAvatar from '../assets/images/avatar.jpg';
+import {THEME_COLOR_2} from '../utils/Colors';
+import Header from '../components/common/Header';
+import {COLORS, SIZES, FONTS, SHADOWS} from '../config/theme';
+
+const {width: SCREEN_WIDTH, height: SCREEN_HEIGHT} = Dimensions.get('window');
 
 const Message = () => {
   const {t} = useTranslation();
@@ -40,7 +44,7 @@ const Message = () => {
   const USER_INFOR = authData?.data?.data;
   const navigation = useNavigation();
 
-  const [activeTab, setActiveTab] = useState('personal'); // personal hoặc group
+  const [activeTab, setActiveTab] = useState('personal');
   const [searchText, setSearchText] = useState('');
   const [filteredConversations, setFilteredConversations] = useState([]);
   const [allConversations, setAllConversations] = useState([]);
@@ -54,25 +58,24 @@ const Message = () => {
   const [duration, setDuration] = useState(1000);
   const [isMessageModalVisible, setMessageModalVisible] = useState(false);
 
-  const showMessage = (msg, type, dur) => {
+  const showMessage = useCallback((msg, type, dur) => {
     setMessageModalVisible(true);
     setMessageModal(msg);
     setMessageType(type);
     setDuration(dur);
-  };
+  }, []);
 
   const showAlert = message => {
     Alert.alert(t('noti'), t(message));
   };
 
-  const getAllFriendList = async () => {
+  const getAllFriendList = useCallback(async () => {
     setIsLoading(true);
     try {
       const response = await axios.post(
         `${BASE_URL}${PORT}${API}${VERSION}${V1}${USER_URL}${FIND_USER_BY_FIELD}`,
         {position: USER_INFOR?.position},
       );
-
       if (response?.data?.success) {
         const friends = response.data.data || [];
         const filteredFriends = friends.filter(
@@ -85,7 +88,33 @@ const Message = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [USER_INFOR, showMessage]);
+
+  const handleGetConversations = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const response = await axios.post(
+        `${BASE_URL}${PORT}${API}${VERSION}${V1}${GROUP_MEMBER}${GET_GROUP_MEMBER_OF_USER}`,
+        {user_id: USER_INFOR?.id},
+      );
+      const conversations = response.data.data || [];
+      if (!Array.isArray(conversations)) {
+        throw new Error('Data format is invalid.');
+      }
+      const filteredConversations = conversations.filter(
+        conversation =>
+          !conversation.conversation?.delete_conversations?.some(
+            deleted => deleted.user_id === USER_INFOR.id,
+          ),
+      );
+      setAllConversations(filteredConversations);
+      setFilteredConversations(filteredConversations);
+    } catch (error) {
+      showMessage('networkError', 'error', 1000);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [USER_INFOR, showMessage]);
 
   const handleLongPress = message => {
     setSelectedMessageId(message.conversation_id);
@@ -119,37 +148,10 @@ const Message = () => {
     }
   };
 
-  const handleGetConversations = async () => {
-    setIsLoading(true);
-    try {
-      const response = await axios.post(
-        `${BASE_URL}${PORT}${API}${VERSION}${V1}${GROUP_MEMBER}${GET_GROUP_MEMBER_OF_USER}`,
-        {user_id: USER_INFOR?.id},
-      );
-      const conversations = response.data.data || [];
-      if (!Array.isArray(conversations)) {
-        throw new Error('Data format is invalid.');
-      }
-
-      const filteredConversations = conversations.filter(
-        conversation =>
-          !conversation.conversation?.delete_conversations?.some(
-            deleted => deleted.user_id === USER_INFOR.id,
-          ),
-      );
-      setAllConversations(filteredConversations);
-      setFilteredConversations(filteredConversations);
-    } catch (error) {
-      showMessage('networkError', 'error', 1000);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   useEffect(() => {
     handleGetConversations();
     getAllFriendList();
-  }, [navigation]);
+  }, [navigation, handleGetConversations, getAllFriendList]);
 
   const handleSearch = text => {
     setSearchText(text);
@@ -186,7 +188,6 @@ const Message = () => {
             receiver_id: user.id,
           },
         );
-
         if (!conversation?.data.success) {
           throw new Error('contactAdmin');
         }
@@ -203,7 +204,6 @@ const Message = () => {
             receivers: receivers,
           },
         );
-
         if (!conversation?.data.success) {
           showMessage('contactAdmin', 'error', 1500);
         }
@@ -225,62 +225,68 @@ const Message = () => {
     navigation.navigate('ChatScreen', {
       conversationId,
       friendName: friend.name,
-      friendAvatar: friend.avatar
+      friendAvatar: friend.avatar,
     });
   };
-  
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#1E1E1E" />
-
-      <View style={styles.tabContainer}>
+    <View style={styles.root}>
+      <Header
+        title={t('Mess', 'Tin nhắn')}
+        onBack={() => navigation.goBack()}
+      />
+      <View style={styles.tabBar}>
         <TouchableOpacity
           style={[
-            styles.tabButton,
-            activeTab === 'personal' && styles.activeTab,
+            styles.tabBtn,
+            activeTab === 'personal' && styles.activeTabBtn,
           ]}
-          onPress={() => setActiveTab('personal')}>
+          onPress={() => setActiveTab('personal')}
+          activeOpacity={0.8}>
           <Text
             style={[
-              styles.tabText,
-              activeTab === 'personal' && styles.activeTabText,
+              styles.tabLabel,
+              activeTab === 'personal' && styles.activeTabLabel,
             ]}>
             {t('oneChat')}
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={[styles.tabButton, activeTab === 'group' && styles.activeTab]}
-          onPress={() => setActiveTab('group')} disabled={true}>
+          style={[styles.tabBtn, activeTab === 'group' && styles.activeTabBtn]}
+          onPress={() => setActiveTab('group')}
+          activeOpacity={0.8}
+          disabled={true}>
           <Text
             style={[
-              styles.tabText,
-              activeTab === 'group' && styles.activeTabText,
+              styles.tabLabel,
+              activeTab === 'group' && styles.activeTabLabel,
             ]}>
             {t('groupChat')}
           </Text>
         </TouchableOpacity>
       </View>
-      {activeTab === 'personal' ? (
-        <PersonalTab
-          filteredConversations={filteredConversations}
-          t={t}
-          handleLongPress={handleLongPress}
-          handleDeleteConversation={handleDeleteConversation}
-          handleSelectConversation={handleSelectConversation}
-          searchText={searchText}
-          setSearchText={setSearchText}
-          handleSearch={handleSearch}
-          USER_INFOR={USER_INFOR}
-        />
-      ) : (
-        <GroupTabs />
-      )}
-
+      <View style={styles.listContainer}>
+        {activeTab === 'personal' ? (
+          <PersonalTab
+            filteredConversations={filteredConversations}
+            t={t}
+            handleLongPress={handleLongPress}
+            handleDeleteConversation={handleDeleteConversation}
+            handleSelectConversation={handleSelectConversation}
+            searchText={searchText}
+            setSearchText={setSearchText}
+            handleSearch={handleSearch}
+            USER_INFOR={USER_INFOR}
+          />
+        ) : (
+          <GroupTabs />
+        )}
+      </View>
       <TouchableOpacity
-        style={styles.createConversationButton}
-        onPress={handleOpenModal}>
-        <Icon name="plus" size={30} color="#fff" />
+        style={styles.fab}
+        onPress={handleOpenModal}
+        activeOpacity={0.85}>
+        <Icon name="plus" size={28} color="#fff" />
       </TouchableOpacity>
       <Loader visible={isLoading} />
       {modalVisible && (
@@ -300,67 +306,63 @@ const Message = () => {
         t={t}
         duration={duration}
       />
-    </SafeAreaView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
+  root: {
     flex: 1,
-    backgroundColor: '#1E1E1E',
-    padding: 15,
+    backgroundColor: COLORS.background,
   },
-  searchContainer: {
+  tabBar: {
     flexDirection: 'row',
+    backgroundColor: COLORS.white,
+    borderRadius: SIZES.radius,
+    marginHorizontal: SIZES.base,
+    marginTop: 10,
+    marginBottom: 2,
+    overflow: 'hidden',
+    ...SHADOWS.light,
+    height: 44,
     alignItems: 'center',
-    backgroundColor: '#2E2E2E',
-    borderRadius: 20,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    marginBottom: 15,
   },
-  searchIcon: {
-    marginRight: 10,
-  },
-  searchInput: {
-    flex: 1,
-    fontSize: 16,
-    color: '#FFFFFF',
-  },
-  tabContainer: {
-    flexDirection: 'row',
-    borderBottomWidth: 1,
-    borderBottomColor: '#333333',
-    marginBottom: 10,
-  },
-  tabButton: {
+  tabBtn: {
     flex: 1,
     alignItems: 'center',
-    paddingVertical: 8,
+    justifyContent: 'center',
+    height: 44,
+    backgroundColor: COLORS.white,
   },
-  activeTab: {
-    borderBottomWidth: 2,
-    borderBottomColor: THEME_COLOR,
+  activeTabBtn: {
+    backgroundColor: COLORS.lightGray1,
   },
-  tabText: {
-    color: '#B0B0B0',
-    fontSize: 16,
+  tabLabel: {
+    ...FONTS.body3,
+    color: COLORS.textSecondary,
+    fontWeight: '500',
   },
-  activeTabText: {
-    color: '#FFFFFF',
+  activeTabLabel: {
+    color: THEME_COLOR_2,
     fontWeight: 'bold',
   },
-  createConversationButton: {
+  listContainer: {
+    flex: 1,
+    paddingHorizontal: 0,
+    paddingTop: 2,
+  },
+  fab: {
     position: 'absolute',
-    right: 20,
-    bottom: 20,
-    backgroundColor: THEME_COLOR,
-    width: 60,
-    height: 60,
-    borderRadius: 30,
+    right: 24,
+    bottom: 32,
+    backgroundColor: THEME_COLOR_2,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
     justifyContent: 'center',
     alignItems: 'center',
-    elevation: 6,
+    ...SHADOWS.medium,
+    zIndex: 10,
   },
 });
 

@@ -7,9 +7,10 @@ import {
   StyleSheet,
   Image,
   TextInput,
+  TouchableWithoutFeedback,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
-import {TEXT_COLOR, THEME_COLOR} from '../../utils/Colors';
+import {COLORS, SIZES, FONTS, SHADOWS} from '../../config/theme';
 import defaultAvatar from '../../assets/images/avatar.jpg';
 import {decrypt} from '../../services';
 
@@ -25,17 +26,21 @@ const PersonalTab = ({
 }) => {
   const [selectedMessageId, setSelectedMessageId] = useState(null);
   const [uniqueConversations, setUniqueConversations] = useState([]);
+  const [showMenuId, setShowMenuId] = useState(null);
   // Remove duplicates by grouping conversations based on conversation_id
   useEffect(() => {
-    const filteredUniqueConversations = filteredConversations.reduce((acc, current) => {
-      const found = acc.find(
-        item => item.conversation_id === current.conversation_id
-      );
-      if (!found) {
-        acc.push(current);
-      }
-      return acc;
-    }, []);
+    const filteredUniqueConversations = filteredConversations.reduce(
+      (acc, current) => {
+        const found = acc.find(
+          item => item.conversation_id === current.conversation_id,
+        );
+        if (!found) {
+          acc.push(current);
+        }
+        return acc;
+      },
+      [],
+    );
     setUniqueConversations(filteredUniqueConversations);
   }, [filteredConversations]);
 
@@ -46,28 +51,24 @@ const PersonalTab = ({
     handleLongPress(message);
   };
 
-  const onDeleteConversation = (conversationId) => {
+  const onDeleteConversation = conversationId => {
     handleDeleteConversation(conversationId);
     setUniqueConversations(prev =>
-      prev.filter(conversation => conversation.conversation_id !== conversationId)
+      prev.filter(
+        conversation => conversation.conversation_id !== conversationId,
+      ),
     );
   };
 
   const renderItem = ({item}) => {
     const messages = item.conversation?.messages || [];
     let lastMessageText = '';
-  
-    // Determine the display name or title based on conversation type
     const name =
       item.group_type === 'GROUP'
         ? item.conversation?.title || 'Group Conversation'
         : item.users?.name;
-    const avatar = item.group_type === 'GROUP'? null :
-     item.users.avatar 
-    // Check if there is a last message to display
-    const friend = {
-      name, avatar
-    }
+    const avatar = item.group_type === 'GROUP' ? null : item.users.avatar;
+    const friend = {name, avatar};
     if (
       messages.length > 0 &&
       messages[0].message_type === 'TEXT' &&
@@ -76,181 +77,186 @@ const PersonalTab = ({
     ) {
       lastMessageText = messages[0].message;
     }
-  
     return (
       <TouchableOpacity
-        style={[
-          styles.conversationItem,
-          selectedMessageId === item.conversation_id && styles.selectedItem,
-        ]}
-        onPress={() =>
-          handleSelectConversation(item.conversation_id, friend)
-        } // Pass displayName, which is either the title or user's name
+        style={styles.conversationItem}
+        activeOpacity={0.8}
+        onPress={() => handleSelectConversation(item.conversation_id, friend)}
         onLongPress={() => onLongPressHandler(item)}>
-        <View style={styles.itemContent}>
-          <View style={styles.avatarContainer}>
-            <Image
-              source={
-                item.users?.avatar ? {uri: item.users.avatar} : defaultAvatar
-              }
-              style={styles.avatar}
-            />
-            <View style={styles.onlineStatus} />
-          </View>
-  
-          <View style={styles.conversationInfo}>
-            <Text style={styles.friendName}>{name}</Text>
-            <Text style={styles.messagePreview}>
-              {decrypt(lastMessageText, item.conversation_id)}
-            </Text>
-          </View>
-  
-          {selectedMessageId === item.conversation_id && (
-            <View style={styles.optionsContainer}>
-              <TouchableOpacity
-                onPress={() => onDeleteConversation(item.conversation_id)}
-                style={styles.optionButton}>
-                <Text style={styles.optionText}>{t('dl')}</Text>
-              </TouchableOpacity>
-            </View>
-          )}
+        <View style={styles.avatarContainer}>
+          <Image
+            source={
+              item.users?.avatar ? {uri: item.users.avatar} : defaultAvatar
+            }
+            style={styles.avatar}
+          />
         </View>
+        <View style={styles.conversationInfo}>
+          <Text
+            style={styles.friendName}
+            numberOfLines={1}
+            ellipsizeMode="tail">
+            {name}
+          </Text>
+          <Text
+            style={styles.messagePreview}
+            numberOfLines={1}
+            ellipsizeMode="tail">
+            {decrypt(lastMessageText, item.conversation_id)}
+          </Text>
+        </View>
+        <TouchableOpacity
+          style={styles.menuBtn}
+          onPress={() =>
+            setShowMenuId(
+              showMenuId === item.conversation_id ? null : item.conversation_id,
+            )
+          }>
+          <Icon name="ellipsis-v" size={18} color={COLORS.textSecondary} />
+        </TouchableOpacity>
+        {showMenuId === item.conversation_id && (
+          <View style={styles.menuPopup}>
+            <TouchableOpacity
+              style={styles.menuItem}
+              onPress={() => {
+                onDeleteConversation(item.conversation_id);
+                setShowMenuId(null);
+              }}>
+              <Text style={styles.menuText}>{t('dl')}</Text>
+            </TouchableOpacity>
+          </View>
+        )}
       </TouchableOpacity>
     );
   };
-  
 
   return (
-    <View style={styles.container}>
-      <View style={styles.searchContainer}>
-        <Icon name="search" size={20} color="#999" style={styles.searchIcon} />
-        <TextInput
-          style={styles.searchInput}
-          placeholder={t('search')}
-          value={searchText}
-          onChangeText={handleSearch}
-          placeholderTextColor="#999"
-        />
-      </View>
-      {uniqueConversations.length > 0 ? (
-        <FlatList
-          data={uniqueConversations} // Use unique conversations
-          keyExtractor={item => item.conversation_id.toString()}
-          renderItem={renderItem}
-        />
-      ) : (
-        <View style={styles.noDataContainer}>
-          <Text style={styles.noDataText}>{t('not.mess')}</Text>
+    <TouchableWithoutFeedback onPress={() => setShowMenuId(null)}>
+      <View style={styles.container}>
+        <View style={styles.searchContainer}>
+          <Icon
+            name="search"
+            size={18}
+            color={COLORS.placeholder}
+            style={styles.searchIcon}
+          />
+          <TextInput
+            style={styles.searchInput}
+            placeholder={t('search')}
+            value={searchText}
+            onChangeText={handleSearch}
+            placeholderTextColor={COLORS.placeholder}
+          />
         </View>
-      )}
-    </View>
+        {uniqueConversations.length > 0 ? (
+          <FlatList
+            data={uniqueConversations}
+            keyExtractor={item => item.conversation_id.toString()}
+            renderItem={renderItem}
+            contentContainerStyle={styles.listContent}
+          />
+        ) : (
+          <View style={styles.noDataContainer}>
+            <Text style={styles.noDataText}>{t('not.mess')}</Text>
+          </View>
+        )}
+      </View>
+    </TouchableWithoutFeedback>
   );
 };
 
 const styles = StyleSheet.create({
-  messagePreview: {
-    color: '#e0e0e0',
-  },
   container: {
     flex: 1,
-    backgroundColor: '#1E1E1E',
-    padding: 10,
+    backgroundColor: COLORS.background,
+    paddingHorizontal: SIZES.base,
+    paddingTop: SIZES.base,
   },
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#2E2E2E',
-    borderRadius: 20,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    marginBottom: 15,
+    backgroundColor: COLORS.lightGray1,
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 0,
+    marginBottom: 8,
+    ...SHADOWS.light,
+    height: 40,
   },
   searchIcon: {
-    marginRight: 10,
+    marginRight: 8,
   },
   searchInput: {
     flex: 1,
     fontSize: 16,
-    color: '#FFFFFF',
+    color: COLORS.textSecondary,
+    paddingLeft: 2,
+    paddingVertical: 6,
+  },
+  listContent: {
+    paddingBottom: 24,
   },
   conversationItem: {
     flexDirection: 'row',
-    padding: 12,
-    backgroundColor: '#333333',
-    borderRadius: 12,
-    marginBottom: 12,
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: {width: 0, height: 2},
-    shadowOpacity: 0.2,
-    shadowRadius: 5,
-    elevation: 4,
-    position: 'relative',
-  },
-  selectedItem: {
-    backgroundColor: '#444444',
-  },
-  itemContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
+    backgroundColor: COLORS.white,
+    borderRadius: SIZES.radius,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    marginBottom: 10,
+    ...SHADOWS.light,
   },
   avatarContainer: {
-    marginRight: 15,
-    position: 'relative',
+    marginRight: 14,
   },
   avatar: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     borderWidth: 2,
-    borderColor: '#e0e0e0',
-  },
-  onlineStatus: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    backgroundColor: '#4CAF50',
-    position: 'absolute',
-    right: -2,
-    bottom: -2,
-    borderWidth: 2,
-    borderColor: '#FFFFFF',
+    borderColor: COLORS.lightGray2,
+    backgroundColor: COLORS.lightGray1,
   },
   conversationInfo: {
     flex: 1,
+    justifyContent: 'center',
   },
   friendName: {
-    fontSize: 16,
-    color: '#FFFFFF',
+    ...FONTS.h4,
+    color: COLORS.text,
     fontWeight: 'bold',
     marginBottom: 2,
   },
-  optionsContainer: {
-    position: 'absolute',
-    top: '50%',
-    right: 15,
-    backgroundColor: '#333333',
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    shadowColor: '#000',
-    shadowOffset: {width: 0, height: 2},
-    shadowOpacity: 0.4,
-    shadowRadius: 4,
-    elevation: 5,
+  messagePreview: {
+    ...FONTS.body4,
+    color: COLORS.textSecondary,
+  },
+  menuBtn: {
+    marginLeft: 10,
+    padding: 6,
+    borderRadius: 16,
+    backgroundColor: 'transparent',
+    justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#444444',
   },
-  optionButton: {
-    backgroundColor: THEME_COLOR,
-    paddingVertical: 5,
-    paddingHorizontal: 15,
-    borderRadius: 5,
+  menuPopup: {
+    position: 'absolute',
+    top: 40,
+    right: 10,
+    backgroundColor: COLORS.white,
+    borderRadius: 8,
+    paddingVertical: 6,
+    paddingHorizontal: 16,
+    ...SHADOWS.light,
+    zIndex: 100,
   },
-  optionText: {
-    color: '#FFFFFF',
+  menuItem: {
+    paddingVertical: 6,
+    paddingHorizontal: 2,
+  },
+  menuText: {
+    ...FONTS.body4,
+    color: COLORS.danger,
     fontWeight: 'bold',
   },
   noDataContainer: {
@@ -259,10 +265,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   noDataText: {
-    fontSize: 18,
-    color: '#999999',
+    ...FONTS.body3,
+    color: COLORS.textSecondary,
+    marginTop: 40,
   },
 });
-
 
 export default PersonalTab;

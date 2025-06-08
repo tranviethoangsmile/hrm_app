@@ -44,6 +44,7 @@ import Loader from '../components/Loader';
 import {SwipeListView} from 'react-native-swipe-list-view';
 import {useNavigation} from '@react-navigation/native';
 import {TouchableWithoutFeedback} from 'react-native-gesture-handler';
+import Header from '../components/common/Header';
 
 const ReportView = () => {
   const [err, setError] = useState('');
@@ -232,6 +233,10 @@ const ReportView = () => {
   return (
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#fff" />
+      <Header
+        title={t('reportview.title', 'Duyệt đơn nghỉ')}
+        onBack={() => navigation.goBack()}
+      />
       <Loader visible={isLoading} />
       {err ? <Text style={styles.title}>{err}</Text> : ''}
       <SwipeListView
@@ -404,7 +409,6 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-    padding: 10,
     backgroundColor: '#fff',
   },
 

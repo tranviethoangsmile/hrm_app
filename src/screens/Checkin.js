@@ -141,6 +141,7 @@ const Checkin = () => {
         navigate.goBack();
       } else {
         showMessage('pta', 'warning', 1000);
+        navigate.goBack();
       }
     } catch (error) {
       showMessage('err', 'error', 1000);

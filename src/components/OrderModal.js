@@ -9,12 +9,25 @@ import {
   Dimensions,
   TouchableOpacity,
   Button,
+  TouchableWithoutFeedback,
 } from 'react-native';
 import {API, BASE_URL, ORDER_URL, PORT, V1, VERSION} from '../utils/constans';
 import axios from 'axios';
 import moment from 'moment';
 import ModalMessage from './ModalMessage';
-const OrderModal = ({visible, onClose, orders, getUserOrders, t}) => {
+import Icon from 'react-native-vector-icons/FontAwesome';
+import {COLORS} from '../config/theme';
+
+const OrderModal = ({
+  visible,
+  onClose,
+  orders,
+  getUserOrders,
+  t,
+  textColor,
+  titleColor,
+  subColor,
+}) => {
   const today = moment();
   const closeModal = () => {
     onClose();
@@ -46,54 +59,235 @@ const OrderModal = ({visible, onClose, orders, getUserOrders, t}) => {
     }
   };
 
+  const DEFAULT_TEXT_COLOR = (COLORS && COLORS.text) || '#222';
+  const DEFAULT_TITLE_COLOR = (COLORS && COLORS.primary) || '#3498db';
+  const DEFAULT_SUB_COLOR = (COLORS && COLORS.textSecondary) || '#b2bec3';
+  const TEXT_COLOR = textColor || DEFAULT_TEXT_COLOR;
+  const TITLE_COLOR = titleColor || DEFAULT_TITLE_COLOR;
+  const SUB_COLOR = subColor || DEFAULT_SUB_COLOR;
+  const HEADER_BG = '#fff';
+  const {height} = Dimensions.get('window');
+  const modalHeight = height * 0.8;
+
+  const styles = StyleSheet.create({
+    backdrop: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      backgroundColor: 'rgba(0, 0, 0, 0.3)',
+    },
+    modalContent: {
+      width: '95%',
+      height: height * 0.8,
+      backgroundColor: '#fff',
+      borderRadius: 10,
+      padding: 10,
+    },
+    header: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: 10,
+    },
+    closeBtn: {
+      padding: 5,
+    },
+    modalTitle: {
+      fontSize: 20,
+      color: TITLE_COLOR,
+      fontWeight: 'bold',
+      letterSpacing: 0.5,
+      textAlign: 'center',
+    },
+    separator: {
+      height: 1,
+      backgroundColor: '#ddd',
+      marginVertical: 10,
+    },
+    orderRowHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: 18,
+      paddingTop: 10,
+      paddingBottom: 2,
+    },
+    headerText: {
+      color: TITLE_COLOR,
+      fontSize: 16,
+      fontWeight: 'bold',
+      flex: 1,
+      textAlign: 'left',
+      minWidth: 120,
+    },
+    body: {
+      flex: 1,
+    },
+    bodyContent: {
+      padding: 10,
+    },
+    card: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: '#fff',
+      borderRadius: 8,
+      paddingVertical: 14,
+      paddingHorizontal: 18,
+      marginBottom: 12,
+      elevation: 2,
+      shadowColor: '#000',
+      shadowOffset: {width: 0, height: 1},
+      shadowOpacity: 0.07,
+      shadowRadius: 4,
+    },
+    cardPast: {
+      backgroundColor: '#f3f3f3',
+    },
+    cardInfo: {
+      flex: 1,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+    },
+    cardDateRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      flex: 1,
+      minWidth: 120,
+    },
+    cardDate: {
+      fontSize: 16,
+      color: TEXT_COLOR,
+      fontWeight: '600',
+      marginLeft: 4,
+    },
+    cardShiftRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      flex: 1,
+      minWidth: 120,
+      justifyContent: 'flex-end',
+    },
+    cardShift: {
+      fontSize: 16,
+      color: TEXT_COLOR,
+      marginLeft: 4,
+    },
+    trashBtn: {
+      padding: 5,
+      marginLeft: 10,
+    },
+    trashBtnDisabled: {
+      opacity: 0.5,
+    },
+    emptyBox: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    emptyText: {
+      color: SUB_COLOR,
+      fontSize: 16,
+      fontStyle: 'italic',
+      marginTop: 2,
+    },
+  });
+
   return (
     <Modal
       transparent
       visible={visible}
-      animationType="slide"
+      animationType="fade"
       onRequestClose={closeModal}>
-      <View style={styles.modalContainer}>
-        <View style={styles.modalContent}>
-          {/* Header của Modal */}
-          <View style={styles.header}>
-            <View style={styles.titleContainer}>
-              <Text style={styles.modalTitle}>{t('orLi')}</Text>
+      <TouchableWithoutFeedback onPress={closeModal}>
+        <View style={styles.backdrop}>
+          <TouchableWithoutFeedback>
+            <View style={styles.modalContent}>
+              {/* Header */}
+              <View style={styles.header}>
+                <TouchableOpacity onPress={closeModal} style={styles.closeBtn}>
+                  <Icon name="close" size={22} color="red" />
+                </TouchableOpacity>
+                <Text style={styles.modalTitle}>{t('orLi')}</Text>
+                <View style={{width: 38}} />
+              </View>
+              <View style={styles.separator}></View>
+              <ScrollView
+                style={styles.body}
+                contentContainerStyle={styles.bodyContent}>
+                {orders.length === 0 && (
+                  <View style={styles.emptyBox}>
+                    <Icon
+                      name="cutlery"
+                      size={48}
+                      color={SUB_COLOR}
+                      style={{marginBottom: 12}}
+                    />
+                    <Text style={styles.emptyText}>{t('noOrder')}</Text>
+                  </View>
+                )}
+                {orders.map((order, index) => {
+                  const isPast = moment(order.date, 'YYYY/MM/DD').isBefore(
+                    today,
+                    'day',
+                  );
+                  const isDay = order.dayOrNight === 'dd';
+                  return (
+                    <View
+                      key={index}
+                      style={[styles.card, isPast && styles.cardPast]}>
+                      <View style={styles.cardInfo}>
+                        <View style={styles.cardDateRow}>
+                          <Icon
+                            name="calendar"
+                            size={18}
+                            color={isPast ? SUB_COLOR : TITLE_COLOR}
+                            style={{marginRight: 7}}
+                          />
+                          <Text style={styles.cardDate}>{order.date}</Text>
+                          {isPast && (
+                            <Icon
+                              name="clock-o"
+                              size={16}
+                              color={SUB_COLOR}
+                              style={{marginLeft: 6}}
+                            />
+                          )}
+                        </View>
+                        <View style={styles.cardShiftRow}>
+                          <Icon
+                            name={isDay ? 'sun-o' : 'moon-o'}
+                            size={16}
+                            color={isDay ? '#f1c40f' : '#8e44ad'}
+                            style={{marginRight: 6}}
+                          />
+                          <Text style={styles.cardShift}>
+                            {t(order.dayOrNight)}
+                          </Text>
+                        </View>
+                      </View>
+                      <TouchableOpacity
+                        style={[
+                          styles.trashBtn,
+                          isPast && styles.trashBtnDisabled,
+                        ]}
+                        onPress={() => handleCancelOrder(order.id)}
+                        disabled={isPast}
+                        activeOpacity={0.7}>
+                        <Icon
+                          name="trash"
+                          size={20}
+                          color={isPast ? SUB_COLOR : '#e74c3c'}
+                        />
+                      </TouchableOpacity>
+                    </View>
+                  );
+                })}
+              </ScrollView>
             </View>
-            <TouchableOpacity onPress={closeModal}>
-              <Text style={styles.closeButton}>✕</Text>
-            </TouchableOpacity>
-          </View>
-          <View style={styles.separator}></View>
-          <View style={styles.orderRow}>
-            <Text style={styles.headerText}>{t('D')}</Text>
-            <Text style={styles.headerText}>{t('ws')}</Text>
-            <Text style={styles.headerText}></Text>
-          </View>
-          <ScrollView style={styles.body}>
-            {
-              (orders.sort((a, b) => new Date(a.date) - new Date(b.date)),
-              orders.map((order, index) => (
-                <View key={index} style={styles.orderRow}>
-                  <Text style={styles.orderInfoText}>{order.date}</Text>
-                  <Text style={styles.orderInfoText}>
-                    {t(order.dayOrNight)}
-                  </Text>
-                  <Button
-                    title={t('c')}
-                    onPress={() => handleCancelOrder(order.id)}
-                    disabled={moment(order.date, 'YYYY/MM/DD').isBefore(today)}
-                    color={
-                      moment(order.date, 'YYYY/MM/DD').isBefore(today)
-                        ? '#95a5a6'
-                        : '#e74c3c'
-                    }
-                  />
-                </View>
-              )))
-            }
-          </ScrollView>
+          </TouchableWithoutFeedback>
         </View>
-      </View>
+      </TouchableWithoutFeedback>
       <ModalMessage
         isVisible={isMessageModalVisible}
         onClose={() => setMessageModalVisible(false)}
@@ -105,72 +299,5 @@ const OrderModal = ({visible, onClose, orders, getUserOrders, t}) => {
     </Modal>
   );
 };
-
-const {height} = Dimensions.get('window');
-const modalHeight = height * 0.8;
-
-const styles = StyleSheet.create({
-  modalContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.3)',
-  },
-  modalContent: {
-    width: '95%',
-    height: modalHeight,
-    backgroundColor: '#fff',
-    borderRadius: 10,
-    padding: 10,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 10,
-  },
-  titleContainer: {
-    flex: 1,
-    alignItems: 'center',
-  },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#3498db',
-  },
-  closeButton: {
-    fontSize: 30,
-    fontWeight: 'bold',
-    color: '#e74c3c',
-  },
-  separator: {
-    height: 1,
-    backgroundColor: '#ddd',
-    marginVertical: 10,
-  },
-  body: {
-    flex: 1,
-  },
-  orderRow: {
-    marginBottom: 10,
-    paddingBottom: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#ddd',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  orderInfoText: {
-    color: '#2c3e50',
-    fontSize: 16,
-    marginBottom: 5,
-  },
-  headerText: {
-    color: '#3498db',
-    fontSize: 16,
-    marginBottom: 5,
-    fontWeight: 'bold',
-  },
-});
 
 export default OrderModal;

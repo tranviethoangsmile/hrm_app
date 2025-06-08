@@ -18,11 +18,16 @@ import {
   CompletedOrdersTab,
 } from '../components/uniformtabs';
 import {useTranslation} from 'react-i18next';
+import Header from '../components/common/Header';
+import {useNavigation} from '@react-navigation/native';
+import {COLORS, SIZES, FONTS, SHADOWS} from '../config/theme';
+
 const Uniform = ({route}) => {
   const {t} = useTranslation();
   const {USER_INFOR} = route.params;
   const isDarkMode = useColorScheme() === 'dark';
   const [selectedTab, setSelectedTab] = useState(0);
+  const navigation = useNavigation();
 
   const renderContent = ({USER_INFOR}) => {
     switch (selectedTab) {
@@ -39,7 +44,11 @@ const Uniform = ({route}) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle={isDarkMode ? 'dark-content' : 'light-content'} />
+      <StatusBar barStyle="dark-content" backgroundColor="#fff" />
+      <Header
+        title={t('uniform.title', 'Đồng phục')}
+        onBack={() => navigation.goBack()}
+      />
       <View style={styles.topNav}>
         <TouchableOpacity
           style={selectedTab === 0 ? styles.selectedTab : styles.tab}
@@ -91,46 +100,43 @@ const Uniform = ({route}) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fdfdfd',
+    backgroundColor: COLORS.background,
   },
   topNav: {
     width: '100%',
     height: 50,
-    backgroundColor: '#fff',
+    backgroundColor: COLORS.white,
     flexDirection: 'row',
     justifyContent: 'space-around',
     alignItems: 'center',
     borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
-    shadowColor: '#000',
-    shadowOffset: {width: 0, height: 2},
-    shadowOpacity: 0.2,
-    shadowRadius: 5,
-    elevation: 3,
+    borderBottomColor: COLORS.borderColor,
+    ...SHADOWS.light,
   },
   tab: {
     justifyContent: 'center',
     alignItems: 'center',
     paddingVertical: 5,
     paddingHorizontal: 10,
-    borderRadius: 10,
+    borderRadius: SIZES.radius,
   },
   selectedTab: {
     justifyContent: 'center',
     alignItems: 'center',
     paddingVertical: 8,
     paddingHorizontal: 16,
-    borderRadius: 10,
-    backgroundColor: '#e6f7ff',
+    borderRadius: SIZES.radius,
+    backgroundColor: COLORS.lightGray1,
+    ...SHADOWS.light,
   },
   tabText: {
-    fontSize: 12,
-    color: '#7a7a7a',
+    ...FONTS.body5,
+    color: COLORS.textSecondary,
     fontWeight: '500',
     marginTop: 4,
   },
   selectedText: {
-    color: THEME_COLOR,
+    color: COLORS.primary,
     fontWeight: '600',
   },
 });

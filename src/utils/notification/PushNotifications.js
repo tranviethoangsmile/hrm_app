@@ -3,7 +3,13 @@ import messaging from '@react-native-firebase/messaging';
 import DeviceInfo from 'react-native-device-info';
 import {Platform} from 'react-native';
 import axios from 'axios';
-import PushNotification, {Importance} from 'react-native-push-notification';
+// Chỉ import PushNotification nếu là Android
+let PushNotification, Importance;
+if (Platform.OS === 'android') {
+  const push = require('react-native-push-notification');
+  PushNotification = push.default;
+  Importance = push.Importance;
+}
 import {API, BASE_URL, V1, VERSION, CREATE, FCM_TOKEN, PORT} from '../constans';
 import {decrypt} from '../../services';
 export async function requestUserPermission(USER_INFOR) {
@@ -45,16 +51,18 @@ const getFcmToken = async USER_INFOR => {
   }
 };
 // Tạo channel cho Android
-PushNotification.createChannel(
-  {
-    channelId: 'default-channel-id', // ID cho channel, khớp với channelId trong localNotification
-    channelName: 'Default Channel', // Tên channel
-    channelDescription: 'A default channel for general notifications', // Mô tả
-    importance: 4, // Độ ưu tiên cho thông báo
-    vibrate: true,
-  },
-  created => console.log(`createChannel returned '${created}'`), // Xác nhận tạo channel
-);
+if (Platform.OS === 'android' && PushNotification) {
+  PushNotification.createChannel(
+    {
+      channelId: 'default-channel-id',
+      channelName: 'Default Channel',
+      channelDescription: 'A default channel for general notifications',
+      importance: 4,
+      vibrate: true,
+    },
+    created => console.log(`createChannel returned '${created}'`),
+  );
+}
 // Hàm để xử lý các sự kiện thông báo
 export const NotificationServices = async () => {
   // Xử lý khi người dùng mở ứng dụng từ thông báo
@@ -87,8 +95,12 @@ export const NotificationServices = async () => {
     try {
       const encryptedMessage = remoteMessage?.notification.body;
       const key = remoteMessage?.data.key;
-
-      if (encryptedMessage && key) {
+      if (
+        encryptedMessage &&
+        key &&
+        Platform.OS === 'android' &&
+        PushNotification
+      ) {
         const decryptedMessage = decrypt(encryptedMessage, key);
         PushNotification.localNotification({
           channelId: 'default-channel-id',
@@ -96,7 +108,7 @@ export const NotificationServices = async () => {
           message: decryptedMessage,
           playSound: true,
           soundName: 'default',
-          importance: Importance.LOW,
+          importance: Importance ? Importance.LOW : 2,
           priority: 'low',
         });
       }

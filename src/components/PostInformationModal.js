@@ -9,9 +9,10 @@ import {
   Image,
   Alert,
   Keyboard,
+  Platform,
 } from 'react-native';
 import CheckBox from '@react-native-community/checkbox';
-import VideoPlayer from 'react-native-video-player';
+import Video from 'react-native-video';
 import {launchImageLibrary} from 'react-native-image-picker';
 import Loader from './Loader';
 import moment from 'moment';
@@ -177,13 +178,14 @@ const PostInformationModal = ({visible, onClose, t, USER_IF, refresh}) => {
           {mediaUri && (
             <View style={styles.mediaContainer}>
               {isVideo ? (
-                <VideoPlayer
-                  autoplay={false}
-                  video={{uri: mediaUri}}
-                  defaultMuted
-                  videoWidth={300}
-                  videoHeight={200}
-                  thumbnail={require('../assets/images/thumbnail.jpg')}
+                <Video
+                  source={{uri: mediaUri}}
+                  style={{width: '100%', height: 200, borderRadius: 10}}
+                  controls={true}
+                  paused={true}
+                  resizeMode="cover"
+                  poster={require('../assets/images/thumbnail.jpg')}
+                  posterResizeMode="cover"
                 />
               ) : (
                 <Image source={{uri: mediaUri}} style={styles.selectedImage} />

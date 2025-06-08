@@ -52,6 +52,18 @@ import {Loader} from '../components';
 import {encrypt, decrypt} from '../services';
 import {ModalMessage} from '../components';
 import defaultAvatar from '../assets/images/avatar.jpg';
+import {COLORS, SIZES, FONTS, SHADOWS} from '../config/theme';
+import LinkPreview from 'react-native-link-preview';
+import IconFA from 'react-native-vector-icons/FontAwesome';
+import {useNavigation} from '@react-navigation/native';
+
+const extractFirstUrl = text => {
+  const urlRegex =
+    /(https?:\/\/[\w\-._~:/?#[\]@!$&'()*+,;=%]+)|(www\.[\w\-._~:/?#[\]@!$&'()*+,;=%]+)/gi;
+  const match = text.match(urlRegex);
+  return match ? match[0] : null;
+};
+
 const ChatScreen = ({route}) => {
   const textInputRef = React.useRef(null);
   const {conversationId, friendName, friendAvatar} = route.params;
@@ -71,6 +83,7 @@ const ChatScreen = ({route}) => {
   const [messageType, setMessageType] = useState('success');
   const [duration, setDuration] = useState(1000);
   const [isMessageModalVisible, setMessageModalVisible] = useState(false);
+  const navigation = useNavigation();
   const showMessage = (msg, type, dur) => {
     setMessageModalVisible(true);
     setMessageModal(msg);
@@ -380,20 +393,130 @@ const ChatScreen = ({route}) => {
   };
 
   const Message = ({item, isUser, isLastFromSender}) => {
-    const renderMessageContent = () => {
-      if (item.is_unsend) {
-        return <Text style={styles.unsendMessageText}>{t('un_send')}</Text>;
+    const [linkPreview, setLinkPreview] = React.useState(null);
+    React.useEffect(() => {
+      if (item.message_type === 'TEXT') {
+        const text =
+          item.translatedMessage || decrypt(item.message, conversationId);
+        const url = extractFirstUrl(text);
+        if (url) {
+          LinkPreview.getPreview(url)
+            .then(data => {
+              setLinkPreview({
+                title: data.title || url,
+                description: data.description || '',
+                image:
+                  data.images && data.images.length > 0 ? data.images[0] : null,
+                url: data.url || url,
+              });
+            })
+            .catch(() => setLinkPreview(null));
+        } else {
+          setLinkPreview(null);
+        }
+      } else {
+        setLinkPreview(null);
       }
+    }, [item]);
 
-      switch (item.message_type) {
-        case 'IMAGE':
-          return (
+    if (item.message_type === 'IMAGE') {
+      return (
+        <View
+          style={{
+            alignItems: isUser ? 'flex-end' : 'flex-start',
+            marginVertical: 4,
+          }}>
+          <TouchableOpacity
+            onLongPress={() => handleLongPress(item)}
+            activeOpacity={0.95}>
             <Image
               source={{uri: item.message}}
               style={styles.imageStyle}
               resizeMode="cover"
             />
-          );
+          </TouchableOpacity>
+          {!isUser && isLastFromSender && (
+            <Image
+              source={
+                item?.user.avatar ? {uri: item?.user.avatar} : defaultAvatar
+              }
+              style={styles.senderAvatar}
+            />
+          )}
+          {showOptions && selectedMessageId === item.id && (
+            <View style={styles.optionsContainer}>
+              {isUser ? (
+                <>
+                  <TouchableOpacity
+                    onPress={() => {
+                      Alert.alert(
+                        t('dl.mess'),
+                        '',
+                        [
+                          {
+                            text: t('dl'),
+                            onPress: () => handleDeleteMessage(item.id),
+                          },
+                          {
+                            text: t('c'),
+                            onPress: () => handleOutsidePress(),
+                            style: 'cancel',
+                          },
+                        ],
+                        {cancelable: true},
+                      );
+                    }}
+                    style={styles.optionButton}>
+                    <Text style={styles.optionText}>{t('dl')}</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={() => {
+                      Alert.alert(
+                        t('un.send.noti'),
+                        '',
+                        [
+                          {
+                            text: t('back'),
+                            onPress: () => handleUnsendMessage(item.id),
+                          },
+                          {
+                            text: t('c'),
+                            onPress: () => handleOutsidePress(),
+                            style: 'cancel',
+                          },
+                        ],
+                        {cancelable: true},
+                      );
+                    }}
+                    style={styles.optionButton}>
+                    <Text style={styles.optionText}>{t('back')}</Text>
+                  </TouchableOpacity>
+                </>
+              ) : (
+                <>
+                  <TouchableOpacity
+                    onPress={() => handleCopy(item.id)}
+                    style={styles.optionButton}>
+                    <Text style={styles.optionText}>{t('copy')}</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={() => handleTranslateMessage(item.id)}
+                    style={styles.optionButton}>
+                    <Text style={styles.optionText}>{t('tranS')}</Text>
+                  </TouchableOpacity>
+                </>
+              )}
+            </View>
+          )}
+        </View>
+      );
+    }
+
+    const renderMessageContent = () => {
+      if (item.is_unsend) {
+        return <Text style={styles.unsendMessageText}>{t('un_send')}</Text>;
+      }
+      switch (item.message_type) {
         case 'VIDEO':
           return (
             <Video
@@ -405,15 +528,52 @@ const ChatScreen = ({route}) => {
           );
         case 'TEXT':
         default:
+          const text =
+            item.translatedMessage || decrypt(item.message, conversationId);
           return (
-            <Text
-              style={[
-                styles.messageText,
-                isUser ? styles.userMessageText : styles.otherMessageText,
-                item.translatedMessage ? styles.translatedMessageText : null,
-              ]}>
-              {item.translatedMessage || decrypt(item.message, conversationId)}
-            </Text>
+            <>
+              <Text
+                style={[
+                  styles.messageText,
+                  isUser ? styles.userMessageText : styles.otherMessageText,
+                  item.translatedMessage ? styles.translatedMessageText : null,
+                ]}>
+                {text}
+              </Text>
+              {linkPreview && (
+                <TouchableOpacity
+                  style={styles.linkPreviewBox}
+                  onPress={() => {
+                    if (linkPreview.url) {
+                      try {
+                        require('react-native').Linking.openURL(
+                          linkPreview.url,
+                        );
+                      } catch (e) {}
+                    }
+                  }}>
+                  {linkPreview.image && (
+                    <Image
+                      source={{uri: linkPreview.image}}
+                      style={styles.linkPreviewImg}
+                    />
+                  )}
+                  <View style={{flex: 1, marginLeft: 10}}>
+                    <Text style={styles.linkPreviewTitle} numberOfLines={2}>
+                      {linkPreview.title}
+                    </Text>
+                    {linkPreview.description ? (
+                      <Text style={styles.linkPreviewDesc} numberOfLines={2}>
+                        {linkPreview.description}
+                      </Text>
+                    ) : null}
+                    <Text style={styles.linkPreviewUrl} numberOfLines={1}>
+                      {linkPreview.url}
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+              )}
+            </>
           );
       }
     };
@@ -431,8 +591,6 @@ const ChatScreen = ({route}) => {
           onLongPress={() => handleLongPress(item)}>
           {renderMessageContent()}
         </TouchableOpacity>
-
-        {/* Chỉ hiển thị avatar nếu là tin nhắn cuối cùng từ người gửi */}
         {!isUser && isLastFromSender && (
           <Image
             source={
@@ -441,7 +599,6 @@ const ChatScreen = ({route}) => {
             style={styles.senderAvatar}
           />
         )}
-
         {showOptions && selectedMessageId === item.id && (
           <View style={styles.optionsContainer}>
             {isUser ? (
@@ -468,7 +625,6 @@ const ChatScreen = ({route}) => {
                   style={styles.optionButton}>
                   <Text style={styles.optionText}>{t('dl')}</Text>
                 </TouchableOpacity>
-
                 <TouchableOpacity
                   onPress={() => {
                     Alert.alert(
@@ -515,8 +671,8 @@ const ChatScreen = ({route}) => {
   const renderItem = ({item, index}) => {
     const isUser = item.user_id === USER_INFOR.id;
     const isLastFromSender =
-      index === messages.length - 1 || // Nếu là tin nhắn cuối cùng trong danh sách
-      messages[index + 1]?.user_id !== item.user_id; // Nếu tin nhắn tiếp theo không cùng người gửi
+      index === messages.length - 1 ||
+      messages[index + 1]?.user_id !== item.user_id;
 
     return (
       <Message
@@ -534,30 +690,38 @@ const ChatScreen = ({route}) => {
       <StatusBar barStyle="dark-content" backgroundColor="#fff" />
       <TouchableWithoutFeedback onPress={handleOutsidePress}>
         <SafeAreaView style={styles.container}>
-          <View style={styles.header}>
+          <View style={styles.headerCompact}>
+            <TouchableOpacity
+              style={styles.headerBackBtn}
+              onPress={() => navigation.goBack()}>
+              <IconFA name="arrow-left" size={20} color={COLORS.text} />
+            </TouchableOpacity>
             <Image
               source={friendAvatar ? {uri: friendAvatar} : defaultAvatar}
-              style={styles.avatar}
+              style={styles.headerAvatarSmall}
             />
-            <View style={styles.nameContainer}>
-              <Text style={styles.headerText}>{friendName}</Text>
+            <View style={styles.nameContainerCompact}>
+              <Text style={styles.headerNameCompact} numberOfLines={1}>
+                {friendName}
+              </Text>
               <View style={styles.encryptedMessageContainer}>
                 <Text style={styles.encryptedMessageText}>
                   {t(`encryptedMessage`)}
                 </Text>
                 <Icon
                   name="lock-closed-sharp"
-                  size={15}
+                  size={13}
                   style={styles.lockIcon}
+                  color={COLORS.placeholder}
                 />
               </View>
             </View>
-            <View style={styles.callButtonsContainer}>
-              <TouchableOpacity style={styles.callButton}>
-                <Icon name="call" color={THEME_COLOR} size={28} />
+            <View style={styles.headerActionsCompact}>
+              <TouchableOpacity style={styles.headerActionBtnCompact}>
+                <Icon name="call" color={COLORS.primary} size={18} />
               </TouchableOpacity>
-              <TouchableOpacity style={styles.callButton}>
-                <Icon name="videocam" color={THEME_COLOR} size={28} />
+              <TouchableOpacity style={styles.headerActionBtnCompact}>
+                <Icon name="videocam" color={COLORS.primary} size={18} />
               </TouchableOpacity>
             </View>
           </View>
@@ -635,31 +799,33 @@ const ChatScreen = ({route}) => {
 const styles = StyleSheet.create({
   userMessageContainer: {
     alignSelf: 'flex-end',
-    backgroundColor: '#D0E6F4',
-    borderRadius: 20,
+    backgroundColor: COLORS.primary,
+    borderRadius: SIZES.radius * 2,
     marginVertical: 4,
     padding: 12,
     maxWidth: '75%',
     marginRight: 10,
     position: 'relative',
+    ...SHADOWS.light,
   },
   otherMessageContainer: {
     alignSelf: 'flex-start',
-    backgroundColor: '#E6F9E6',
-    borderRadius: 20,
+    backgroundColor: COLORS.lightGray1,
+    borderRadius: SIZES.radius * 2,
     marginVertical: 4,
     padding: 12,
     maxWidth: '75%',
     marginLeft: 10,
     position: 'relative',
+    ...SHADOWS.light,
   },
   senderAvatar: {
     width: 18,
     height: 18,
     borderRadius: 9,
     position: 'absolute',
-    bottom: -12, // Đặt vị trí dưới bubble
-    left: -12, // Đặt vị trí bên trái bubble
+    bottom: -12,
+    left: -12,
     backgroundColor: '#FFF',
     borderWidth: 1,
     borderColor: '#D1D1D1',
@@ -667,6 +833,7 @@ const styles = StyleSheet.create({
   messageText: {
     fontSize: 16,
     lineHeight: 22,
+    color: COLORS.text,
   },
   translatedMessageText: {
     fontStyle: 'italic',
@@ -678,22 +845,22 @@ const styles = StyleSheet.create({
   },
   messageContainer: {
     padding: 5,
-    marginBottom: 5, // Adds space to prevent overlapping with the next message
+    marginBottom: 5,
   },
   unsendMessageContainer: {
     opacity: 0.7,
   },
   unsendMessageText: {
-    color: '#A9A9A9', // Gray color for unsent messages
-    fontStyle: 'italic', // Optional: Makes the text italic for emphasis
+    color: '#A9A9A9',
+    fontStyle: 'italic',
   },
   optionsContainer: {
     backgroundColor: '#FFF',
     borderRadius: 10,
     elevation: 2,
     flexDirection: 'row',
-    padding: 5, // Ensures options fit better within the message
-    marginTop: 5, // Space between message text and options
+    padding: 5,
+    marginTop: 5,
     justifyContent: 'space-around',
   },
   options: {
@@ -708,61 +875,63 @@ const styles = StyleSheet.create({
   },
   encryptedMessageContainer: {
     flexDirection: 'row',
-    alignItems: 'center', // Căn giữa icon và văn bản
+    alignItems: 'center',
   },
-  header: {
-    height: 60,
-    backgroundColor: '#003366',
+  headerCompact: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    justifyContent: 'space-between',
-    elevation: 4,
+    backgroundColor: COLORS.white,
+    paddingHorizontal: SIZES.base,
+    height: 48,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.borderColor,
+    zIndex: 10,
+  },
+  headerBackBtn: {
+    padding: 4,
+    marginRight: 6,
+  },
+  headerAvatarSmall: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: COLORS.lightGray2,
+    borderWidth: 1,
+    borderColor: COLORS.lightGray2,
+    marginRight: 8,
+  },
+  nameContainerCompact: {
+    flex: 1,
+    justifyContent: 'center',
+  },
+  headerNameCompact: {
+    ...FONTS.body3,
+    color: COLORS.text,
+    fontWeight: 'bold',
+    textAlign: 'left',
+    maxWidth: 140,
+  },
+  headerActionsCompact: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginLeft: 4,
+  },
+  headerActionBtnCompact: {
+    padding: 4,
+    marginLeft: 2,
+    borderRadius: 16,
   },
   imageStyle: {
-    width: 200, // Adjust the size as needed
-    height: 200,
-    borderRadius: 1,
+    width: 180,
+    height: 180,
+    borderRadius: 10,
+    alignSelf: 'center',
+    marginVertical: 2,
   },
-  // Video message style
   videoStyle: {
     width: 250,
     height: 150,
     borderRadius: 10,
-  },
-  avatar: {
-    width: 45,
-    height: 45,
-    borderRadius: 22.5,
-    backgroundColor: '#FFF',
-    marginRight: 12,
-    borderWidth: 1,
-    borderColor: '#D1D1D1',
-  },
-  nameContainer: {
-    flex: 1,
-    justifyContent: 'center',
-  },
-  headerText: {
-    fontSize: 20,
-    color: '#FFF',
-    fontWeight: '600',
-  },
-  encryptedMessageText: {
-    fontSize: 14,
-    color: '#B0B0B0', // Thay đổi màu chữ cho mã hóa
-    marginRight: 1, // Khoảng cách giữa văn bản và icon
-  },
-  lockIcon: {
-    marginLeft: 1, // Thêm khoảng cách cho icon
-    color: '#B0B0B0', // Thay đổi màu sắc cho icon nếu cần
-  },
-  callButtonsContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  callButton: {
-    marginLeft: 10,
   },
   inputContainer: {
     flexDirection: 'row',
@@ -797,35 +966,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 10,
   },
-  userMessageContainer: {
-    alignSelf: 'flex-end',
-    backgroundColor: '#D0E6F4',
-    borderRadius: 20,
-    marginVertical: 4,
-    padding: 12,
-    maxWidth: '75%',
-    marginRight: 10,
-    position: 'relative',
-    elevation: 1,
-  },
-  otherMessageContainer: {
-    alignSelf: 'flex-start',
-    backgroundColor: '#E6F9E6',
-    borderRadius: 20,
-    marginVertical: 4,
-    padding: 12,
-    maxWidth: '75%',
-    marginLeft: 10,
-    position: 'relative',
-    elevation: 1,
-  },
   userMessageText: {
-    fontSize: 16,
-    color: '#003366',
+    color: COLORS.white,
   },
   otherMessageText: {
-    fontSize: 16,
-    color: '#004d00',
+    color: COLORS.text,
   },
   notMessageContainer: {
     flex: 1,
@@ -842,6 +987,38 @@ const styles = StyleSheet.create({
     backgroundColor: 'white',
     zIndex: 1000,
     elevation: 4,
+  },
+  linkPreviewBox: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    backgroundColor: COLORS.white,
+    borderRadius: SIZES.radius,
+    padding: 10,
+    marginTop: 10,
+    marginBottom: 4,
+    ...SHADOWS.light,
+  },
+  linkPreviewImg: {
+    width: 60,
+    height: 60,
+    borderRadius: 8,
+    backgroundColor: COLORS.lightGray2,
+  },
+  linkPreviewTitle: {
+    ...FONTS.body3,
+    color: COLORS.text,
+    fontWeight: 'bold',
+    marginBottom: 2,
+  },
+  linkPreviewDesc: {
+    ...FONTS.body5,
+    color: COLORS.textSecondary,
+    marginBottom: 2,
+  },
+  linkPreviewUrl: {
+    color: COLORS.primary,
+    fontSize: 12,
+    textDecorationLine: 'underline',
   },
 });
 

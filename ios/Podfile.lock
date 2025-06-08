@@ -1087,10 +1087,14 @@ PODS:
     - React-Core
   - react-native-safe-area-context (4.8.2):
     - React-Core
-  - react-native-video (5.2.1):
+  - react-native-video (6.14.1):
+    - glog
+    - RCT-Folly (= 2022.05.16.00)
     - React-Core
-    - react-native-video/Video (= 5.2.1)
-  - react-native-video/Video (5.2.1):
+    - react-native-video/Video (= 6.14.1)
+  - react-native-video/Video (6.14.1):
+    - glog
+    - RCT-Folly (= 2022.05.16.00)
     - React-Core
   - React-nativeconfig (0.73.2)
   - React-NativeModulesApple (0.73.2):
@@ -1621,7 +1625,7 @@ SPEC CHECKSUMS:
   react-native-document-picker: 3599b238843369026201d2ef466df53f77ae0452
   react-native-image-picker: 994a97b28e7f2c2197e21801569bb19f6e494e38
   react-native-safe-area-context: 0ee144a6170530ccc37a0fd9388e28d06f516a89
-  react-native-video: c26780b224543c62d5e1b2a7244a5cd1b50e8253
+  react-native-video: afc7de6a492dd0a2cb667ab9d0606bbbebdc4a34
   React-nativeconfig: d753fbbc8cecc8ae413d615599ac378bbf6999bb
   React-NativeModulesApple: 964f4eeab1b4325e8b6a799cf4444c3fd4eb0a9c
   React-perflogger: 29efe63b7ef5fbaaa50ef6eaa92482f98a24b97e
@@ -1659,4 +1663,4 @@ SPEC CHECKSUMS:
 
 PODFILE CHECKSUM: 09b482d28865cb8080916bf17d8cd0509ef819f5
 
-COCOAPODS: 1.15.2
+COCOAPODS: 1.16.2

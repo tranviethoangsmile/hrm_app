@@ -1,7 +1,7 @@
-// export const BASE_URL = 'http://18.236.164.13';
-// export const PORT = ':80';
-export const BASE_URL = 'http://192.168.0.100';
-export const PORT = ':4000';
+export const BASE_URL = 'http://54.200.248.63';
+export const PORT = ':80';
+// export const BASE_URL = 'http://192.168.0.100';
+// export const PORT = ':4000';
 export const API = '/api';
 export const VERSION = '/version';
 export const V1 = '/v1';
@@ -55,3 +55,4 @@ export const CREATE_GROUP = '/creategroup';
 export const SAFETY_REPORT = '/safetyreport';
 export const GET_ALL_BY_USER_ID = '/getbyuserid';
 export const GET_ALL_BY_DEPARTMENT_ID = '/getbydepartmentid';
+export const DAY_OFFS = '/dayoffs';

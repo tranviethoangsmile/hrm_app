@@ -55,7 +55,11 @@ const MainNavigator = () => {
           component={Report}
           options={{headerShown: false}}
         />
-        <Stack.Screen name="Leave" component={Leave} />
+        <Stack.Screen
+          name="Leave"
+          component={Leave}
+          options={{headerShown: false}}
+        />
         <Stack.Screen
           name="Upload"
           component={Upload}
@@ -99,12 +103,12 @@ const MainNavigator = () => {
         <Stack.Screen
           name="Setting"
           component={Setting}
-          options={{headerShown: true}}
+          options={{headerShown: false}}
         />
         <Stack.Screen
           name="Notifications"
           component={Notifications}
-          options={{headerShown: true}}
+          options={{headerShown: false}}
         />
         <Stack.Screen
           name="Important"
@@ -119,9 +123,9 @@ const MainNavigator = () => {
         <Stack.Screen
           name="PlanProduction"
           component={PlanProduction}
-          options={{headerShown: true}}
+          options={{headerShown: false}}
         />
-        <Stack.Screen name="Ai" component={Ai} options={{headerShown: true}} />
+        <Stack.Screen name="Ai" component={Ai} options={{headerShown: false}} />
         <Stack.Screen
           name="Message"
           component={Message}

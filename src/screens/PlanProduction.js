@@ -29,6 +29,8 @@ import {useTranslation} from 'react-i18next';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {useNavigation} from '@react-navigation/native';
 import {EditPlanProduction} from '../components';
+import Header from '../components/common/Header';
+
 const PlanProduction = () => {
   const {t} = useTranslation();
   const navigation = useNavigation();
@@ -113,11 +115,12 @@ const PlanProduction = () => {
   };
 
   return (
-    <SafeAreaView style={{flex: 1, backgroundColor: BG_COLOR}}>
+    <View style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#fff" />
-      <View style={styles.header}>
-        <Text style={styles.headerText}>{t('planPro')}</Text>
-      </View>
+      <Header
+        title={t('plan.title', 'Kế hoạch sản xuất')}
+        onBack={() => navigation.goBack()}
+      />
       <ScrollView contentContainerStyle={styles.scrollView}>
         {Object.keys(groupedData).map((date, index) => (
           <View key={index} style={styles.card}>
@@ -187,7 +190,7 @@ const PlanProduction = () => {
         onClose={() => setIsEditPlanProduction(false)}
         reCall={get_plan_production}
       />
-    </SafeAreaView>
+    </View>
   );
 };
 
@@ -275,6 +278,10 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: TEXT_COLOR,
     marginBottom: 6,
+  },
+  container: {
+    flex: 1,
+    backgroundColor: BG_COLOR,
   },
 });
 

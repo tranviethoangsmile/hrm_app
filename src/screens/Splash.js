@@ -4,6 +4,7 @@ import React, {useEffect} from 'react';
 import {useNavigation} from '@react-navigation/native';
 import {useSelector} from 'react-redux';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+
 const Splash = () => {
   const getLanguage = async () => {
     return await AsyncStorage.getItem('Language');
@@ -38,7 +39,7 @@ const Splash = () => {
       <View style={{height: 5}} />
       <ActivityIndicator size="large" color="#fff" />
       <View style={styles.versionTextView}>
-        <Text style={styles.text}>version 1.0.9</Text>
+        <Text style={styles.text}>version 1.1.0</Text>
       </View>
     </View>
   );

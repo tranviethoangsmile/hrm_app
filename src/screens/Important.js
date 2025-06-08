@@ -31,6 +31,9 @@ import {
 } from '../utils/constans';
 import {TEXT_COLOR} from '../utils/Colors';
 import {ModalMessage} from '../components';
+import Header from '../components/common/Header';
+import {useNavigation} from '@react-navigation/native';
+
 const Important = ({route}) => {
   const {t} = useTranslation();
   const {USER_INFOR} = route.params;
@@ -38,6 +41,7 @@ const Important = ({route}) => {
   const [loading, setLoading] = useState(true);
   const [modalVisible, setModalVisible] = useState(false);
   const [newReport, setNewReport] = useState({title: '', content: ''});
+  const [isEdit, setIsEdit] = useState(false);
   const [longPressedItem, setLongPressedItem] = useState(null);
   const [isMessageModalVisible, setMessageModalVisible] = useState(false);
   const [messageModal, setMessageModal] = useState('');
@@ -45,6 +49,7 @@ const Important = ({route}) => {
   const [duration, setDuration] = useState(1000);
   const [idReportEdit, setIdReportEdit] = useState('');
   const today = moment();
+  const navigation = useNavigation();
 
   const showMessage = (msg, type, dur) => {
     setMessageModalVisible(true);
@@ -123,11 +128,14 @@ const Important = ({route}) => {
         });
         setNewReport({title: '', content: ''});
         setIdReportEdit('');
+        setIsEdit(false);
       }
     } catch (error) {
       showMessage('unSuccess', 'error', 1000);
+      setIsEdit(false);
     } finally {
       setLoading(false);
+      setIsEdit(false);
     }
   };
 
@@ -168,6 +176,7 @@ const Important = ({route}) => {
     setNewReport({title: item.title, content: item.content});
     setIdReportEdit(item.id);
     setModalVisible(true);
+    setIsEdit(true);
   };
 
   const handleLongPress = item => {
@@ -244,7 +253,10 @@ const Important = ({route}) => {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#fff" />
-      <Text style={styles.header}>{t('safetyReport')}</Text>
+      <Header
+        title={t('important.title', 'Báo cáo quan trọng')}
+        onBack={() => navigation.goBack()}
+      />
       <FlatList
         data={data}
         keyExtractor={item => item.id?.toString()}
@@ -274,7 +286,7 @@ const Important = ({route}) => {
         </TouchableWithoutFeedback>
         <View style={styles.modalContent}>
           <Text style={styles.modalTitle}>
-            {newReport.title ? t('editReport') : t('safetyReport')}
+            {newReport.title && isEdit ? t('editReport') : t('safetyReport')}
           </Text>
           <TextInput
             style={styles.input}
@@ -301,7 +313,7 @@ const Important = ({route}) => {
               onPress={handleCancelBtn}>
               <Text style={styles.buttonText}>{t('c')}</Text>
             </TouchableOpacity>
-            {newReport.title ? (
+            {newReport.title && isEdit ? (
               <TouchableOpacity
                 style={[styles.button, styles.editButton]}
                 onPress={handleSaveAfterEditReport}>
@@ -428,6 +440,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 10,
     textAlign: 'center',
+    color: TEXT_COLOR,
   },
   input: {
     borderBottomWidth: 1,
@@ -437,6 +450,7 @@ const styles = StyleSheet.create({
     marginBottom: 15,
     fontSize: 16,
     width: '100%',
+    color: TEXT_COLOR,
   },
   textArea: {
     height: 100,

@@ -10,18 +10,24 @@ import {
   TouchableOpacity,
   StatusBar,
   Alert,
+  Dimensions,
 } from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import {useSelector} from 'react-redux';
-import {THEME_COLOR_2, BG_COLOR} from '../../utils/Colors';
+import {
+  THEME_COLOR,
+  THEME_COLOR_2,
+  BG_COLOR,
+  TEXT_COLOR,
+} from '../../utils/Colors';
 import Control from '../Control';
 import Notifications from '../Notifications';
 import {useTranslation} from 'react-i18next';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import i18next from '../../../services/i18next';
-import VideoPlayer from 'react-native-video-player';
-import ImageViewer from 'react-native-image-zoom-viewer'; // Import ImageViewer
+import Video from 'react-native-video';
+import ImageViewer from 'react-native-image-zoom-viewer';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import PopupEvent from '../PopupEvent';
 import {
@@ -40,7 +46,11 @@ import {
 import Loader from '../Loader';
 import HappyModal from '../HappyModal';
 import moment from 'moment';
-const HomeTab = () => {
+import LinkPreview from 'react-native-link-preview';
+
+const {width} = Dimensions.get('window');
+
+const HomeTab = ({onScrollList}) => {
   const navigation = useNavigation();
   const {t} = useTranslation();
   const [visibleControl, setVisibleControl] = useState(false);
@@ -141,50 +151,155 @@ const HomeTab = () => {
     }
   };
 
-  const renderPost = ({item}) => (
-    <View style={styles.card}>
-      <View style={styles.headerPost}>
-        <Image style={styles.avatar} source={{uri: item.user.avatar}} />
-        <View style={styles.nameAndDayContainer}>
-          <Text style={styles.nameText}>{item.user.name}</Text>
-          <Text style={styles.dateText}>{item.date}</Text>
+  // Hàm nhận diện link trong text
+  function extractFirstUrl(text) {
+    const urlRegex =
+      /(https?:\/\/[\w\-._~:/?#[\]@!$&'()*+,;=%]+)|(www\.[\w\-._~:/?#[\]@!$&'()*+,;=%]+)/gi;
+    const match = text.match(urlRegex);
+    return match ? match[0] : null;
+  }
+
+  const PostItem = ({item, t, handleGoToEventScreen}) => {
+    const [linkPreview, setLinkPreview] = React.useState(null);
+    React.useEffect(() => {
+      const url = extractFirstUrl(item.content);
+      if (url) {
+        LinkPreview.getPreview(url)
+          .then(data => {
+            setLinkPreview({
+              title: data.title || url,
+              description: data.description || '',
+              image:
+                data.images && data.images.length > 0 ? data.images[0] : null,
+              url: data.url || url,
+            });
+          })
+          .catch(e => {
+            setLinkPreview(null);
+          });
+      } else {
+        setLinkPreview(null);
+      }
+    }, [item.content]);
+
+    const viewCount = Math.floor(Math.random() * 5000) + 100;
+    const formattedViewCount =
+      viewCount > 1000
+        ? `${(viewCount / 1000).toFixed(1)}K`
+        : viewCount.toString();
+    const handleLike = () => console.log('Liked post:', item.id);
+    const handleComment = () => console.log('Comment on post:', item.id);
+    const handleShare = () => console.log('Share post:', item.id);
+
+    return (
+      <View style={styles.postItemContainer}>
+        <View style={styles.postHeader}>
+          <Image style={styles.avatar} source={{uri: item.user.avatar}} />
+          <View style={styles.nameAndDayContainer}>
+            <Text style={styles.nameText}>{item.user.name}</Text>
+            <Text style={styles.dateText}>
+              {moment(item.date).format('DD/MM/YYYY HH:mm')}
+            </Text>
+          </View>
         </View>
+        {item.title && <Text style={styles.postTitleText}>{item.title}</Text>}
+        <Text style={styles.postContent} numberOfLines={3} ellipsizeMode="tail">
+          {item.content}
+        </Text>
+        {linkPreview && (
+          <TouchableOpacity
+            style={styles.linkPreviewBox}
+            onPress={() => {
+              if (linkPreview.url) {
+                try {
+                  require('react-native').Linking.openURL(linkPreview.url);
+                } catch (e) {}
+              }
+            }}>
+            {linkPreview.image && (
+              <Image
+                source={{uri: linkPreview.image}}
+                style={styles.linkPreviewImg}
+              />
+            )}
+            <View style={{flex: 1, marginLeft: 10}}>
+              <Text style={styles.linkPreviewTitle} numberOfLines={2}>
+                {linkPreview.title}
+              </Text>
+              {linkPreview.description ? (
+                <Text style={styles.linkPreviewDesc} numberOfLines={2}>
+                  {linkPreview.description}
+                </Text>
+              ) : null}
+              <Text style={styles.linkPreviewUrl} numberOfLines={1}>
+                {linkPreview.url}
+              </Text>
+            </View>
+          </TouchableOpacity>
+        )}
+        {item.content.length > 100 && (
+          <TouchableOpacity
+            onPress={() =>
+              Alert.alert(item.title || t('Detail'), item.content)
+            }>
+            <Text style={styles.moreText}>{t('more')}</Text>
+          </TouchableOpacity>
+        )}
+        {item.media &&
+          (item.is_video ? (
+            <Video
+              source={{uri: item.media}}
+              style={[
+                styles.mediaPlayer,
+                {width: width - 30, height: (width - 30) * (9 / 16)},
+              ]}
+              controls={true}
+              paused={true}
+              resizeMode="cover"
+              poster={require('../../assets/images/thumbnail.jpg')}
+              posterResizeMode="cover"
+            />
+          ) : (
+            <TouchableOpacity
+              onPress={() => {
+                /* Handle image press, maybe open in viewer */
+              }}>
+              <Image source={{uri: item.media}} style={styles.mediaImage} />
+            </TouchableOpacity>
+          ))}
+        <View style={styles.postMetaContainer}>
+          <View style={styles.postActionsGroup}>
+            <TouchableOpacity onPress={handleLike} style={styles.actionButton}>
+              <Icon name="heart-o" size={18} color="#555" />
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={handleComment}
+              style={styles.actionButton}>
+              <Icon name="comment-o" size={18} color="#555" />
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={handleShare}
+              style={styles.actionButtonLast}>
+              <Icon name="share-square-o" size={18} color="#555" />
+            </TouchableOpacity>
+          </View>
+          <View style={styles.viewCountContainer}>
+            <Icon name="eye" size={14} color="#777" style={styles.metaIcon} />
+            <Text style={styles.metaText}>
+              {formattedViewCount} {t('views')}
+            </Text>
+          </View>
+        </View>
+        {item.is_event ? (
+          <TouchableOpacity
+            style={styles.eventButton}
+            onPress={handleGoToEventScreen}>
+            <Text style={styles.eventButtonText}>{t('confirm.c')}</Text>
+          </TouchableOpacity>
+        ) : null}
       </View>
-      <View style={styles.separator}></View>
-      <Text style={styles.titleText}>{item.title}</Text>
-      <Text style={styles.content} numberOfLines={3} ellipsizeMode="tail">
-        {item.content}
-      </Text>
-      {item.content.length > 100 && (
-        <TouchableOpacity onPress={() => alert(item.content)}>
-          <Text style={styles.moreText}>{t('more')}</Text>
-        </TouchableOpacity>
-      )}
-      {item.is_video ? (
-        <VideoPlayer
-          autoplay={false}
-          video={{uri: item.media}}
-          defaultMuted={true}
-          videoWidth={300}
-          videoHeight={200}
-          thumbnail={require('../../assets/images/thumbnail.jpg')}
-        />
-      ) : (
-        <TouchableOpacity>
-          <Image source={{uri: item.media}} style={styles.media} />
-        </TouchableOpacity>
-      )}
-      {item.is_event ? (
-        <TouchableOpacity
-          style={styles.safetyBtn}
-          onPress={handleGoToEventScreen}>
-          <Text style={styles.buttonText}>{t('confirm.c')}</Text>
-        </TouchableOpacity>
-      ) : (
-        ''
-      )}
-    </View>
-  );
+    );
+  };
 
   const handleControl = () => {
     setVisibleControl(!visibleControl);
@@ -207,11 +322,13 @@ const HomeTab = () => {
     handle_get_notification();
     fetchData();
   }, []);
+
   useEffect(() => {
     if (userInfo) {
       checkBirthDay();
     }
   }, [userInfo]);
+
   const checkBirthDay = () => {
     try {
       const userBirthday = moment(userInfo.dob).format('MM-DD');
@@ -228,59 +345,73 @@ const HomeTab = () => {
     }
   };
 
+  const renderItemSeparator = () => <View style={styles.itemSeparator} />;
+
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#fff" />
+      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
       <Loader visible={isLoading} />
-      <View style={styles.titleView}>
-        <View style={styles.titleTextView}>
-          <Text style={styles.title}>{t('info')}</Text>
+      <View style={styles.telegramHeader}>
+        <View style={styles.headerLeft}>
+          <TouchableOpacity
+            onPress={handleControl}
+            style={styles.headerIconContainer}>
+            <Icon name="bars" size={22} color="#555" />
+          </TouchableOpacity>
         </View>
-        <View style={styles.notificationBellContainer}>
+        <View style={styles.headerTitleContainer}>
+          <Text style={styles.headerTitle}>{t('info')}</Text>
+        </View>
+        <View style={styles.headerRight}>
           <TouchableOpacity
             onPress={() => {
-              navigation.navigate('Notifications'); //go to Notificaition
-            }}>
-            <Icon name="bell" size={25} color="white" />
+              navigation.navigate('Notifications');
+            }}
+            style={styles.headerIconContainer}>
+            <Icon name="bell" size={22} color="#555" />
             {notificationCount > 0 && (
               <View style={styles.notificationBadge}>
                 <Text style={styles.notificationText}>{notificationCount}</Text>
               </View>
             )}
           </TouchableOpacity>
-        </View>
-        <View style={styles.titleAvatarView}>
           <TouchableOpacity
             onPress={() => {
               navigation.navigate('Profile');
-            }}>
+            }}
+            style={styles.headerIconContainer}>
             <Image
               source={
                 userInfo.avatar
                   ? {uri: userInfo.avatar}
                   : require('../../assets/images/avatar.jpg')
               }
-              style={[styles.avatar, {marginRight: 0}]}
+              style={styles.headerAvatar}
             />
-          </TouchableOpacity>
-        </View>
-        <View style={styles.titleBarsView}>
-          <TouchableOpacity onPress={handleControl}>
-            <Icon name="bars" size={40} color="white" />
           </TouchableOpacity>
         </View>
       </View>
       <Control visible={visibleControl} t={t} onClose={onClose} />
       <Notifications visible={is_notification} t={t} onClose={onClose} />
-      <View style={styles.postContainer}>
+      <View style={styles.feedContainer}>
         {err ? <Text style={styles.errorText}>{err}</Text> : null}
         <FlatList
           data={posts}
-          renderItem={renderPost}
+          renderItem={({item}) => (
+            <PostItem
+              item={item}
+              t={t}
+              handleGoToEventScreen={handleGoToEventScreen}
+            />
+          )}
           keyExtractor={item => item.id.toString()}
+          ItemSeparatorComponent={renderItemSeparator}
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
           }
+          contentContainerStyle={{paddingBottom: 10}}
+          onScroll={onScrollList}
+          scrollEventThrottle={16}
         />
       </View>
       <PopupEvent
@@ -298,86 +429,79 @@ const HomeTab = () => {
 };
 
 const styles = StyleSheet.create({
-  background: {
-    flex: 1,
-    resizeMode: 'cover',
-    justifyContent: 'center',
-  },
   container: {
     flex: 1,
-    backgroundColor: BG_COLOR,
+    backgroundColor: '#FFFFFF',
   },
-  buttonText: {
-    color: 'white',
-    fontSize: 18,
-    fontWeight: 'bold',
+  telegramHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    backgroundColor: '#FFFFFF',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E0E0E0',
+    height: 56,
   },
-  safetyBtn: {
-    backgroundColor: '#ff6347', // Tomato color
-    paddingVertical: 15,
-    paddingHorizontal: 30,
-    borderRadius: 10,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 8,
-    },
-    shadowOpacity: 0.44,
-    shadowRadius: 10.32,
-    elevation: 16,
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  headerTitleContainer: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: '#000000',
+  },
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  headerIconContainer: {
+    padding: 8,
+  },
+  headerAvatar: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+  },
+  notificationBadge: {
+    position: 'absolute',
+    right: 5,
+    top: 5,
+    backgroundColor: 'red',
+    borderRadius: 9,
+    width: 18,
+    height: 18,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  titleBarsView: {
-    flex: 0.1,
-    marginLeft: 10,
-  },
-  titleView: {
-    width: '100%',
-    backgroundColor: THEME_COLOR_2,
-    paddingVertical: 5,
-    paddingHorizontal: 10,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  titleTextView: {
-    flex: 1,
-  },
-  titleAvatarView: {
-    flex: 0.2,
-    alignItems: 'flex-end',
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: '700',
+  notificationText: {
     color: 'white',
+    fontSize: 10,
+    fontWeight: 'bold',
   },
-  postContainer: {
+  feedContainer: {
     flex: 1,
-    paddingHorizontal: 10,
-    paddingTop: 10,
   },
   errorText: {
     color: 'red',
     textAlign: 'center',
-    marginBottom: 10,
+    marginVertical: 10,
   },
-  card: {
-    marginVertical: 4,
-    padding: 5,
-    backgroundColor: 'white',
-    borderRadius: 8,
-    shadowColor: '#000',
-    shadowOffset: {width: 0, height: 4},
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 3,
+  postItemContainer: {
+    paddingHorizontal: 15,
+    paddingVertical: 12,
+    backgroundColor: '#FFFFFF',
   },
-  headerPost: {
+  postHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 10,
+    marginBottom: 8,
   },
   avatar: {
     width: 40,
@@ -387,61 +511,136 @@ const styles = StyleSheet.create({
   },
   nameAndDayContainer: {
     flex: 1,
+    justifyContent: 'center',
   },
   nameText: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '600',
-    color: '#333',
+    color: '#222',
   },
   dateText: {
-    fontSize: 8,
-    color: '#999',
+    fontSize: 12,
+    color: '#777',
+    marginTop: 2,
   },
-  separator: {
-    height: 1,
-    backgroundColor: '#ddd',
-    marginVertical: 5,
-  },
-  titleText: {
-    fontSize: 16,
-    fontWeight: '700',
+  postTitleText: {
+    fontSize: 17,
+    fontWeight: 'bold',
     color: '#333',
-    marginBottom: 5,
+    marginBottom: 6,
   },
-  content: {
+  postContent: {
+    fontSize: 15,
     color: '#333',
-    marginBottom: 10,
+    marginBottom: 8,
+    lineHeight: 22,
   },
   moreText: {
-    color: 'blue',
+    color: THEME_COLOR,
+    fontWeight: '500',
     marginTop: 5,
+    paddingBottom: 5,
   },
-  media: {
+  mediaImage: {
     width: '100%',
-    height: 200,
-    borderRadius: 8,
-    marginVertical: 5,
+    height: 220,
+    borderRadius: 6,
+    marginTop: 8,
   },
-  notificationBellContainer: {
-    flex: 0.2,
-    alignItems: 'center',
-    justifyContent: 'center',
+  mediaPlayer: {
+    borderRadius: 6,
+    marginTop: 8,
+    backgroundColor: '#000',
   },
-  notificationBadge: {
-    position: 'absolute',
-    right: -6,
-    top: -6,
-    backgroundColor: 'red',
-    borderRadius: 10,
-    width: 20,
-    height: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
+  eventButton: {
+    backgroundColor: THEME_COLOR,
+    paddingVertical: 10,
+    paddingHorizontal: 18,
+    borderRadius: 20,
+    marginTop: 12,
+    alignSelf: 'flex-start',
   },
-  notificationText: {
+  eventButtonText: {
     color: 'white',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  itemSeparator: {
+    height: 1,
+    backgroundColor: '#F0F0F0', // Lighter color for separator
+  },
+  postMetaContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 10,
+    paddingHorizontal: 0,
+  },
+  postActionsGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  actionButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginRight: 18,
+    paddingVertical: 5,
+  },
+  actionButtonLast: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 5,
+  },
+  actionText: {
+    marginLeft: 4,
+    fontSize: 13,
+    color: '#555',
+  },
+  viewCountContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  metaIcon: {
+    marginRight: 4,
+  },
+  metaText: {
     fontSize: 12,
+    color: '#777',
+  },
+  linkPreviewBox: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    backgroundColor: '#181a20',
+    borderRadius: 10,
+    padding: 10,
+    marginTop: 10,
+    marginBottom: 4,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 1},
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+  },
+  linkPreviewImg: {
+    width: 60,
+    height: 60,
+    borderRadius: 8,
+    backgroundColor: '#222',
+  },
+  linkPreviewTitle: {
+    color: '#fff',
     fontWeight: 'bold',
+    fontSize: 15,
+    marginBottom: 2,
+  },
+  linkPreviewDesc: {
+    color: '#aaa',
+    fontSize: 13,
+    marginBottom: 2,
+  },
+  linkPreviewUrl: {
+    color: THEME_COLOR_2,
+    fontSize: 12,
+    textDecorationLine: 'underline',
   },
 });
 

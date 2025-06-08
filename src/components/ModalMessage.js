@@ -8,6 +8,7 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import {TEXT_COLOR} from '../utils/Colors';
+import {NativeModules} from 'react-native';
 const {height} = Dimensions.get('window');
 const topPosition = height * 0.1;
 const ModalMessage = ({isVisible, onClose, message, type, t, duration}) => {
@@ -21,6 +22,47 @@ const ModalMessage = ({isVisible, onClose, message, type, t, duration}) => {
         return styles.errorModalContent;
       default:
         return styles.defaultModalContent;
+    }
+  };
+
+  const getIcon = () => {
+    switch (type) {
+      case 'success':
+        return (
+          <Icon
+            name="checkmark-circle"
+            size={36}
+            color="#2ecc40"
+            style={{marginBottom: 6}}
+          />
+        );
+      case 'warning':
+        return (
+          <Icon
+            name="alert-circle"
+            size={36}
+            color="#f1c40f"
+            style={{marginBottom: 6}}
+          />
+        );
+      case 'error':
+        return (
+          <Icon
+            name="close-circle"
+            size={36}
+            color="#e74c3c"
+            style={{marginBottom: 6}}
+          />
+        );
+      default:
+        return (
+          <Icon
+            name="information-circle"
+            size={36}
+            color="#3498db"
+            style={{marginBottom: 6}}
+          />
+        );
     }
   };
 
@@ -38,10 +80,11 @@ const ModalMessage = ({isVisible, onClose, message, type, t, duration}) => {
 
   return (
     <View style={styles.nonBlockingContainer}>
-      <View style={getModalStyles()}>
+      <View style={[getModalStyles(), styles.shadowBox]}>
+        {getIcon()}
         <Text style={styles.modalMessage}>{t(message)}</Text>
         <TouchableOpacity style={styles.closeButton} onPress={onClose}>
-          <Icon name={'close'} size={30} color={TEXT_COLOR} />
+          <Icon name={'close'} size={28} color={'#888'} />
         </TouchableOpacity>
       </View>
     </View>
@@ -58,55 +101,62 @@ const styles = StyleSheet.create({
   },
   successModalContent: {
     width: '90%',
-    padding: 15,
-    backgroundColor: '#01c727',
-    borderRadius: 10,
+    padding: 18,
+    backgroundColor: '#eafaf1',
+    borderRadius: 16,
     alignItems: 'center',
     marginBottom: 20,
     position: 'relative',
   },
   warningModalContent: {
     width: '90%',
-    padding: 15,
-    backgroundColor: '#f89802',
-    borderRadius: 10,
+    padding: 18,
+    backgroundColor: '#fffbe6',
+    borderRadius: 16,
     alignItems: 'center',
     marginBottom: 20,
     position: 'relative',
   },
   errorModalContent: {
     width: '90%',
-    padding: 15,
-    backgroundColor: '#f83b2f',
-    borderRadius: 10,
+    padding: 18,
+    backgroundColor: '#fdecea',
+    borderRadius: 16,
     alignItems: 'center',
     marginBottom: 20,
     position: 'relative',
   },
   defaultModalContent: {
     width: '90%',
-    padding: 15,
-    backgroundColor: '#fff',
-    borderRadius: 10,
+    padding: 18,
+    backgroundColor: '#f4f8fb',
+    borderRadius: 16,
     alignItems: 'center',
     marginBottom: 20,
     position: 'relative',
   },
   modalMessage: {
-    fontSize: 16,
+    fontSize: 17,
     textAlign: 'center',
-    marginBottom: 10,
-    color: '#1A1A1A',
-    fontWeight: 'bold',
+    marginBottom: 6,
+    color: '#222',
+    fontWeight: '600',
+    letterSpacing: 0.1,
   },
   closeButton: {
     position: 'absolute',
     top: 10,
     right: 10,
+    padding: 4,
+    borderRadius: 16,
+    backgroundColor: '#f0f0f0',
   },
-  closeButtonText: {
-    color: '#4CAF50',
-    fontSize: 18,
+  shadowBox: {
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 4,
   },
 });
 

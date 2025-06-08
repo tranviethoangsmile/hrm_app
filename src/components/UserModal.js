@@ -13,7 +13,7 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import defaultAvatar from '../assets/images/avatar.jpg';
-import {BG_COLOR, TEXT_COLOR, THEME_COLOR} from '../utils/Colors';
+import {COLORS, SIZES, FONTS, SHADOWS} from '../config/theme';
 import ModalMessage from './ModalMessage';
 
 const UserModal = ({isVisible, onClose, users, onSelectUser, t}) => {
@@ -53,7 +53,8 @@ const UserModal = ({isVisible, onClose, users, onSelectUser, t}) => {
   const renderUserItem = ({item}) => (
     <TouchableOpacity
       style={styles.userItem}
-      onPress={() => toggleUserSelection(item)}>
+      onPress={() => toggleUserSelection(item)}
+      activeOpacity={0.85}>
       <View style={styles.avatarContainer}>
         <Image
           source={item.avatar ? {uri: item.avatar} : defaultAvatar}
@@ -66,7 +67,7 @@ const UserModal = ({isVisible, onClose, users, onSelectUser, t}) => {
       </View>
       <View style={styles.checkbox}>
         {selectedUsers.some(selected => selected.id === item.id) && (
-          <Icon name="check-circle" size={24} color={THEME_COLOR} />
+          <Icon name="check-circle" size={22} color={COLORS.primary} />
         )}
       </View>
     </TouchableOpacity>
@@ -86,55 +87,61 @@ const UserModal = ({isVisible, onClose, users, onSelectUser, t}) => {
   return (
     <Modal
       transparent={true}
-      animationType="slide"
+      animationType="fade"
       visible={isVisible}
       onRequestClose={onClose}>
       <KeyboardAvoidingView
         style={styles.modalOverlay}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <View style={styles.modalContent}>
+          {/* Header */}
+          <View style={styles.header}>
+            <TouchableOpacity onPress={onClose} style={styles.headerBackBtn}>
+              <Icon name="arrow-left" size={22} color={COLORS.text} />
+            </TouchableOpacity>
+            <Text style={styles.headerTitle}>{t('newGroup')}</Text>
+            <Text style={styles.headerSelectedCount}>{`${t('selected')}: ${
+              selectedUsers.length
+            }`}</Text>
+          </View>
+
+          {/* Group name input */}
+          {selectedUsers.length > 1 && (
+            <View style={styles.groupNameContainer}>
+              <TextInput
+                style={styles.groupNameInput}
+                placeholder={t('groupNameMake')}
+                placeholderTextColor={COLORS.placeholder}
+                value={groupName}
+                onChangeText={text => setGroupName(text)}
+              />
+            </View>
+          )}
+
+          {/* Search bar */}
+          <View style={styles.searchBarWrap}>
+            <Icon
+              name="search"
+              size={18}
+              color={COLORS.placeholder}
+              style={styles.searchIcon}
+            />
+            <TextInput
+              style={styles.searchInput}
+              placeholder={t('searchFriend')}
+              placeholderTextColor={COLORS.placeholder}
+              value={searchText}
+              onChangeText={handleSearch}
+            />
+          </View>
+
+          {/* User list */}
           <FlatList
             data={filteredUsers}
             keyExtractor={item => item.id.toString()}
             renderItem={renderUserItem}
             contentContainerStyle={styles.flatListContent}
             keyboardShouldPersistTaps="handled"
-            ListHeaderComponent={
-              <>
-                {/* Header */}
-                <View style={styles.header}>
-                  <TouchableOpacity onPress={onClose}>
-                    <Icon name="arrow-left" size={24} color="#fff" />
-                  </TouchableOpacity>
-                  <Text style={styles.headerTitle}>{t('newGroup')}</Text>
-                  <Text style={styles.headerSelectedCount}>
-                    {`${t('selected')}: ${selectedUsers.length}`}
-                  </Text>
-                </View>
-
-                {/* Nhập tên nhóm */}
-                {selectedUsers.length > 1 && (
-                  <View style={styles.groupNameContainer}>
-                    <TextInput
-                      style={styles.groupNameInput}
-                      placeholder={t('groupNameMake')}
-                      placeholderTextColor="#999"
-                      value={groupName}
-                      onChangeText={text => setGroupName(text)}
-                    />
-                  </View>
-                )}
-
-                {/* Ô tìm kiếm */}
-                <TextInput
-                  style={styles.searchInput}
-                  placeholder={t('searchFriend')}
-                  placeholderTextColor="#999"
-                  value={searchText}
-                  onChangeText={handleSearch}
-                />
-              </>
-            }
             ListFooterComponent={
               <View style={styles.selectedUserList}>
                 {selectedUsers.map(user => (
@@ -149,12 +156,13 @@ const UserModal = ({isVisible, onClose, users, onSelectUser, t}) => {
             }
           />
 
-          {/* Nút tạo nhóm */}
+          {/* Create group button */}
           {selectedUsers.length > 0 && (
             <TouchableOpacity
               style={styles.createGroupButton}
-              onPress={handleCreateGroup}>
-              <Icon name="arrow-right" size={20} color="#fff" />
+              onPress={handleCreateGroup}
+              activeOpacity={0.85}>
+              <Icon name="arrow-right" size={22} color={COLORS.white} />
             </TouchableOpacity>
           )}
 
@@ -175,115 +183,159 @@ const UserModal = ({isVisible, onClose, users, onSelectUser, t}) => {
 const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    backgroundColor: 'rgba(0,0,0,0.25)',
     justifyContent: 'center',
     alignItems: 'center',
   },
   modalContent: {
-    flex: 1,
-    width: '90%',
+    width: '92%',
     maxHeight: '90%',
-    backgroundColor: '#1e1e1e',
-    borderRadius: 15,
-    paddingVertical: 20,
-    paddingHorizontal: 15,
-    elevation: 10,
-  },
-  flatListContent: {
-    paddingBottom: 20,
+    backgroundColor: COLORS.white,
+    borderRadius: SIZES.radius * 2,
+    paddingVertical: 18,
+    paddingHorizontal: 0,
+    ...SHADOWS.medium,
+    alignSelf: 'center',
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingBottom: 15,
+    paddingHorizontal: SIZES.base * 2,
+    paddingBottom: 10,
     borderBottomWidth: 1,
-    borderBottomColor: '#444',
+    borderBottomColor: COLORS.borderColor,
+    marginBottom: 8,
+  },
+  headerBackBtn: {
+    padding: 6,
+    marginRight: 4,
   },
   headerTitle: {
-    fontSize: 20,
-    color: '#fff',
+    ...FONTS.h3,
+    color: COLORS.text,
     fontWeight: 'bold',
+    flex: 1,
+    textAlign: 'center',
   },
   headerSelectedCount: {
-    fontSize: 14,
-    color: '#888',
+    ...FONTS.body4,
+    color: COLORS.textSecondary,
+    marginLeft: 8,
+    minWidth: 60,
+    textAlign: 'right',
   },
   groupNameContainer: {
-    marginVertical: 10,
+    paddingHorizontal: SIZES.base * 2,
+    marginBottom: 8,
   },
   groupNameInput: {
-    borderBottomWidth: 1,
-    borderBottomColor: '#555',
-    color: '#fff',
-    paddingBottom: 5,
-    fontSize: 16,
+    height: 40,
+    borderRadius: SIZES.radius,
+    backgroundColor: COLORS.lightGray1,
+    paddingHorizontal: SIZES.inputPaddingHorizontal,
+    color: COLORS.text,
+    ...FONTS.body3,
+    borderWidth: 1,
+    borderColor: COLORS.borderColor,
+  },
+  searchBarWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.lightGray1,
+    borderRadius: SIZES.radius,
+    marginHorizontal: SIZES.base * 2,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: COLORS.borderColor,
+    height: 40,
+    paddingHorizontal: 12,
+  },
+  searchIcon: {
+    marginRight: 8,
   },
   searchInput: {
-    height: 40,
-    borderColor: '#444',
-    borderWidth: 1,
-    borderRadius: 20,
-    paddingHorizontal: 15,
-    color: '#fff',
-    backgroundColor: '#333',
-    marginVertical: 10,
+    flex: 1,
     fontSize: 16,
+    color: COLORS.text,
+    paddingVertical: 0,
+    backgroundColor: 'transparent',
+  },
+  flatListContent: {
+    paddingBottom: 16,
+    paddingHorizontal: SIZES.base * 2,
   },
   userItem: {
     flexDirection: 'row',
     alignItems: 'center',
+    backgroundColor: COLORS.white,
+    borderRadius: SIZES.radius,
     paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#555',
+    paddingHorizontal: 8,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: COLORS.lightGray2,
+    ...SHADOWS.light,
   },
   avatarContainer: {
-    marginRight: 15,
+    marginRight: 14,
   },
   avatar: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: COLORS.lightGray2,
   },
   userInfo: {
     flex: 1,
+    justifyContent: 'center',
   },
   userName: {
-    fontSize: 16,
-    color: '#fff',
+    ...FONTS.body3,
+    color: COLORS.text,
+    fontWeight: 'bold',
   },
   userSubInfo: {
-    fontSize: 12,
-    color: '#aaa',
+    ...FONTS.body5,
+    color: COLORS.textSecondary,
+    marginTop: 2,
   },
   checkbox: {
-    paddingRight: 15,
+    paddingLeft: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   selectedUserList: {
     flexDirection: 'row',
-    marginVertical: 10,
+    flexWrap: 'wrap',
+    marginTop: 8,
+    marginBottom: 8,
+    minHeight: 24,
   },
   selectedUserItem: {
-    marginHorizontal: 5,
+    marginRight: 6,
+    marginBottom: 6,
   },
   selectedUserAvatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: '#444',
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    borderWidth: 2,
+    borderColor: COLORS.primary,
+    backgroundColor: COLORS.lightGray2,
   },
   createGroupButton: {
     position: 'absolute',
-    bottom: 20,
-    right: 20,
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: THEME_COLOR,
+    right: 24,
+    bottom: 24,
+    backgroundColor: COLORS.primary,
+    width: 52,
+    height: 52,
+    borderRadius: 26,
     justifyContent: 'center',
     alignItems: 'center',
-    elevation: 5,
+    ...SHADOWS.medium,
+    zIndex: 10,
   },
 });
 

@@ -36,6 +36,7 @@ import {
   THEME_COLOR,
   THEME_COLOR_2,
 } from '../utils/Colors';
+import Header from '../components/common/Header';
 
 const Salary = () => {
   const showAlert = message => {
@@ -122,9 +123,10 @@ const Salary = () => {
   return (
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#fff" />
-      <View style={styles.logoView}>
-        <Image source={require('../assets/images/logo_metal.png')} />
-      </View>
+      <Header
+        title={t('salary.title', 'Lương')}
+        onBack={() => navigation.goBack()}
+      />
       <ScrollView contentContainerStyle={styles.scrollContainer}>
         <View style={styles.payrollHeaderView}>
           <View style={styles.infoViewContainer}>
