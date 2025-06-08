@@ -615,6 +615,27 @@ const styles = StyleSheet.create({
     marginBottom: SIZES.padding * 1.2,
     padding: SIZES.padding * 0.8,
   },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: SIZES.padding / 1.5,
+    paddingVertical: SIZES.base * 1.5,
+    backgroundColor: COLORS.primary,
+    height: SIZES.headerHeight,
+    ...SHADOWS.light,
+  },
+  headerButton: {
+    padding: SIZES.base,
+    minWidth: SIZES.h1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerTitle: {
+    ...FONTS.h3,
+    color: COLORS.white,
+    fontWeight: 'bold',
+  },
   cardTitle: {
     ...FONTS.h4,
     color: COLORS.text,

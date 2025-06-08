@@ -297,6 +297,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: BG_COLOR,
+    padding: 10,
   },
   cardProfile: {
     backgroundColor: THEME_COLOR_2,

@@ -7,6 +7,7 @@ import {
   Platform,
   Dimensions,
   StatusBar,
+  SafeAreaView,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import {COLORS, SIZES, FONTS} from '../../config/theme';
@@ -18,32 +19,36 @@ const Header = ({title, onBack, right, backgroundColor, textColor}) => {
   const statusBarHeight =
     Platform.OS === 'android' ? StatusBar.currentHeight || 0 : 0;
   return (
-    <View
-      style={[
-        styles.header,
-        {
-          backgroundColor: backgroundColor || COLORS.primary,
-          width: SCREEN_WIDTH,
-          paddingTop: Platform.OS === 'android' ? statusBarHeight : 0,
-        },
-      ]}>
+    <SafeAreaView style={{backgroundColor: backgroundColor || COLORS.primary}}>
       <StatusBar
         backgroundColor={backgroundColor || COLORS.primary}
         barStyle="light-content"
       />
-      <TouchableOpacity onPress={onBack} style={styles.headerButton}>
-        <Icon name="arrow-left" size={24} color={textColor || COLORS.white} />
-      </TouchableOpacity>
-      <View style={styles.titleContainer}>
-        <Text
-          style={[styles.headerTitle, {color: textColor || COLORS.white}]}
-          numberOfLines={1}
-          ellipsizeMode="tail">
-          {title}
-        </Text>
+      <View
+        style={[
+          styles.header,
+          {
+            backgroundColor: backgroundColor || COLORS.primary,
+            width: '100%',
+            paddingTop: Platform.OS === 'android' ? statusBarHeight : 0,
+          },
+        ]}>
+        <TouchableOpacity
+          onPress={onBack}
+          style={styles.headerButtonAbsoluteLeft}>
+          <Icon name="arrow-left" size={24} color={textColor || COLORS.white} />
+        </TouchableOpacity>
+        <View style={styles.titleContainerAbsolute} pointerEvents="none">
+          <Text
+            style={[styles.headerTitle, {color: textColor || COLORS.white}]}
+            numberOfLines={1}
+            ellipsizeMode="tail">
+            {title}
+          </Text>
+        </View>
+        <View style={styles.headerButtonAbsoluteRight}>{right}</View>
       </View>
-      <View style={styles.headerButton}>{right}</View>
-    </View>
+    </SafeAreaView>
   );
 };
 
@@ -51,7 +56,7 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    justifyContent: 'center',
     paddingBottom: 0,
     paddingHorizontal: 8,
     height: 48,
@@ -59,18 +64,38 @@ const styles = StyleSheet.create({
     maxHeight: 52,
     width: '100%',
     backgroundColor: COLORS.primary,
-    // Không border dưới, không shadow
+    position: 'relative',
   },
-  headerButton: {
+  headerButtonAbsoluteLeft: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
     width: 44,
-    height: 44,
+    height: 48,
     alignItems: 'center',
     justifyContent: 'center',
+    zIndex: 2,
   },
-  titleContainer: {
+  headerButtonAbsoluteRight: {
+    position: 'absolute',
+    right: 0,
+    top: 0,
+    width: 44,
+    height: 48,
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 2,
+  },
+  titleContainerAbsolute: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: 0,
+    bottom: 0,
+    zIndex: 1,
   },
   headerTitle: {
     ...FONTS.h3,
