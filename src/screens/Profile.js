@@ -159,13 +159,16 @@ const Profile = () => {
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#fff" />
+      <StatusBar barStyle="light-content" backgroundColor={THEME_COLOR} />
       <Header
-        title={t('profile.title', 'Hồ sơ')}
+        title={t('profile.title', 'Profile')}
         onBack={() => navigation.goBack()}
+        backgroundColor={THEME_COLOR}
+        textColor="#FFFFFF"
       />
-      {/* Card Thông tin cá nhân */}
-      <View style={styles.cardProfile}>
+
+      {/* Compact Profile Header */}
+      <View style={styles.profileHeader}>
         <View style={styles.avatarSection}>
           <TouchableOpacity
             onPress={handleUploadAvatar}
@@ -179,101 +182,108 @@ const Profile = () => {
               style={styles.avatar}
             />
             <View style={styles.avatarEditBtn}>
-              <Icon name="camera" size={16} color="#fff" />
+              <Icon name="camera" size={12} color="#fff" />
             </View>
           </TouchableOpacity>
-          <View style={styles.infoSection}>
-            <Text style={styles.nameText}>{userInfo.name || '---'}</Text>
-            <Text style={styles.infoText}>
-              <Icon name="id-badge" size={14} color={THEME_COLOR_2} />{' '}
-              {userInfo.employee_id || '---'}
-            </Text>
-            <Text style={styles.infoText}>
-              <Icon name="user" size={14} color={THEME_COLOR_2} />{' '}
-              {userInfo.role || '---'} - {userInfo.position || '---'}
-            </Text>
-            <Text style={styles.infoText}>
-              <Icon name="envelope" size={14} color={THEME_COLOR_2} />{' '}
-              {userInfo.email || '---'}
-            </Text>
+        </View>
+
+        <View style={styles.userInfo}>
+          <Text style={styles.userName}>{userInfo.name || '---'}</Text>
+          <Text style={styles.userRole}>
+            {userInfo.employee_id} • {userInfo.position}
+          </Text>
+        </View>
+
+        <TouchableOpacity
+          onPress={() => navigation.navigate('Salary')}
+          style={styles.salaryBtn}>
+          <Icon name="wallet-outline" size={20} color={THEME_COLOR_2} />
+        </TouchableOpacity>
+      </View>
+
+      {/* Compact Summary Bar */}
+      <View style={styles.summaryBar}>
+        <TouchableOpacity
+          style={styles.monthPicker}
+          onPress={() => setIsModalVisible(!isModalVisible)}>
+          <Text style={styles.monthText}>
+            {year}/{month}
+          </Text>
+          <Icon name="chevron-down" size={16} color={THEME_COLOR} />
+        </TouchableOpacity>
+
+        <View style={styles.quickStats}>
+          <View style={styles.statBox}>
+            <Text style={styles.statNumber}>{totalWorkTime}</Text>
+            <Text style={styles.statLabel}>Hours</Text>
+          </View>
+          <View style={styles.statBox}>
+            <Text style={styles.statNumber}>{totalOverTime}</Text>
+            <Text style={styles.statLabel}>OT</Text>
+          </View>
+          <View style={styles.statBox}>
+            <Text style={styles.statNumber}>{totalWorkTimeWeekend}</Text>
+            <Text style={styles.statLabel}>Weekend</Text>
           </View>
         </View>
       </View>
-      {/* Card Tổng hợp công tháng */}
-      <View style={styles.cardSummary}>
-        <View style={styles.summaryHeader}>
-          <Icon
-            name="calendar"
-            size={18}
-            color={THEME_COLOR}
-            style={{marginRight: 8}}
-          />
-          <Text style={styles.summaryTitle}>{t('summary')}</Text>
-        </View>
-        <View style={styles.summaryRow}>
-          <Text style={styles.summaryLabel}>{t('m')}</Text>
-          <Text style={styles.summaryLabel}>{t('wt')}</Text>
-          <Text style={styles.summaryLabel}>{t('ot')}</Text>
-          <Text style={styles.summaryLabel}>{t('wend')}</Text>
-        </View>
-        <TouchableOpacity
-          style={styles.summaryDataRow}
-          onPress={() => setIsModalVisible(!isModalVisible)}>
-          <Text style={styles.summaryValue}>
-            {year}/{month}
+
+      {/* Main Check-in History */}
+      <View style={styles.historyContainer}>
+        <View style={styles.historyHeader}>
+          <Text style={styles.historyTitle}>
+            {t('c-i-h', 'Check-in History')}
           </Text>
-          <Text style={styles.summaryValue}>{totalWorkTime}</Text>
-          <Text style={styles.summaryValue}>{totalOverTime}</Text>
-          <Text style={styles.summaryValue}>{totalWorkTimeWeekend}</Text>
-        </TouchableOpacity>
-      </View>
-      {/* Card Bảng chấm công từng ngày */}
-      <View style={styles.cardCheckin}>
-        <View style={styles.checkinHeaderRow}>
-          <Icon
-            name="clock-o"
-            size={18}
-            color={THEME_COLOR}
-            style={{marginRight: 8}}
-          />
-          <Text style={styles.checkinTitle}>{t('c-i-h')}</Text>
-          <TouchableOpacity
-            onPress={() => navigation.navigate('Salary')}
-            style={styles.salaryBtn}>
-            <Icon name="money" color={THEME_COLOR_2} size={20} />
-            <Text style={styles.salaryBtnText}>{t('payroll.s')}</Text>
-            <Icon name="chevron-right" color={THEME_COLOR_2} size={16} />
-          </TouchableOpacity>
+          <Icon name="time-outline" size={20} color={THEME_COLOR} />
         </View>
-        <View style={styles.checkinTableHeader}>
-          <Text style={styles.checkinHeaderText}>{t('D')}</Text>
-          <Text style={styles.checkinHeaderText}>{t('I')}</Text>
-          <Text style={styles.checkinHeaderText}>{t('O')}</Text>
-          <Text style={styles.checkinHeaderText}>{t('wt')}</Text>
-          <Text style={styles.checkinHeaderText}>{t('S')}</Text>
-          <Text style={styles.checkinHeaderText}>{t('ot')}</Text>
+
+        <View style={styles.tableHeader}>
+          <Text style={styles.headerCell}>{t('D', 'Date')}</Text>
+          <Text style={styles.headerCell}>{t('I', 'In')}</Text>
+          <Text style={styles.headerCell}>{t('O', 'Out')}</Text>
+          <Text style={styles.headerCell}>{t('wt', 'Hours')}</Text>
+          <Text style={styles.headerCell}>{t('S', 'Status')}</Text>
         </View>
-        {err ? <Text style={styles.errorText}>{t(err)}</Text> : null}
+
+        {err ? (
+          <View style={styles.messageContainer}>
+            <Icon name="alert-circle-outline" size={24} color="#FF6B6B" />
+            <Text style={styles.errorText}>{t(err)}</Text>
+          </View>
+        ) : null}
+
         {isLoading ? (
-          <ActivityIndicator
-            size="large"
-            color={THEME_COLOR}
-            style={{marginVertical: 20}}
-          />
+          <View style={styles.messageContainer}>
+            <ActivityIndicator size="large" color={THEME_COLOR} />
+            <Text style={styles.loadingText}>Loading...</Text>
+          </View>
         ) : userCheckin.length === 0 ? (
-          <Text style={styles.emptyText}>{t('not.data')}</Text>
+          <View style={styles.messageContainer}>
+            <Icon name="calendar-outline" size={48} color="#E0E0E0" />
+            <Text style={styles.emptyText}>
+              {t('not.data', 'No data available')}
+            </Text>
+          </View>
         ) : (
           <FlatList
             data={userCheckin}
             renderItem={renderCheckin}
             keyExtractor={item => item.id.toString()}
             refreshControl={
-              <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={onRefresh}
+                colors={[THEME_COLOR]}
+                tintColor={THEME_COLOR}
+              />
             }
             showsVerticalScrollIndicator={false}
+            style={styles.historyList}
+            contentContainerStyle={styles.listContent}
           />
         )}
       </View>
+
       <SelectDate
         visible={isModalVisible}
         onClose={() => setIsModalVisible(!isModalVisible)}
@@ -296,190 +306,212 @@ const Profile = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: BG_COLOR,
-    padding: 10,
+    backgroundColor: '#f8f9fa',
   },
-  cardProfile: {
-    backgroundColor: THEME_COLOR_2,
-    borderRadius: 18,
-    padding: 18,
-    marginBottom: 18,
+  profileHeader: {
     flexDirection: 'row',
     alignItems: 'center',
+    backgroundColor: THEME_COLOR_2,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    marginHorizontal: 12,
+    marginTop: 12,
+    borderRadius: 12,
     shadowColor: '#000',
     shadowOffset: {width: 0, height: 2},
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 4,
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   avatarSection: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
+    marginRight: 12,
   },
   avatarWrapper: {
-    marginRight: 18,
+    width: 50,
+    height: 50,
+    borderRadius: 25,
     position: 'relative',
   },
   avatar: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+    width: 50,
+    height: 50,
+    borderRadius: 25,
     borderWidth: 2,
     borderColor: '#fff',
   },
   avatarEditBtn: {
     position: 'absolute',
-    bottom: 4,
-    right: 4,
+    bottom: -2,
+    right: -2,
     backgroundColor: THEME_COLOR,
-    borderRadius: 16,
-    padding: 4,
-    borderWidth: 2,
+    borderRadius: 10,
+    padding: 2,
+    borderWidth: 1,
     borderColor: '#fff',
     zIndex: 2,
   },
-  infoSection: {
+  userInfo: {
     flex: 1,
-    justifyContent: 'center',
   },
-  nameText: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: '#fff',
-    marginBottom: 4,
-  },
-  infoText: {
-    fontSize: 15,
-    color: '#f0f0f0',
-    marginBottom: 2,
-  },
-  cardSummary: {
-    backgroundColor: '#fff',
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 18,
-    shadowColor: '#000',
-    shadowOffset: {width: 0, height: 2},
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  summaryHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  summaryTitle: {
+  userName: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: THEME_COLOR,
-  },
-  summaryRow: {
-    flexDirection: 'row',
-    marginBottom: 4,
-  },
-  summaryLabel: {
-    flex: 1,
-    textAlign: 'center',
-    color: '#888',
-    fontWeight: '600',
-    fontSize: 15,
-  },
-  summaryDataRow: {
-    flexDirection: 'row',
-    backgroundColor: THEME_COLOR_2,
-    borderRadius: 10,
-    paddingVertical: 8,
-    paddingHorizontal: 4,
-    marginTop: 2,
-  },
-  summaryValue: {
-    flex: 1,
-    textAlign: 'center',
     color: '#fff',
-    fontWeight: 'bold',
-    fontSize: 16,
+    marginBottom: 2,
   },
-  cardCheckin: {
-    backgroundColor: '#fff',
-    borderRadius: 16,
-    padding: 12,
-    marginBottom: 18,
-    shadowColor: '#000',
-    shadowOffset: {width: 0, height: 2},
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 2,
-  },
-  checkinHeaderRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8,
-    justifyContent: 'space-between',
-  },
-  checkinTitle: {
-    fontSize: 17,
-    fontWeight: 'bold',
-    color: THEME_COLOR,
-    flex: 1,
+  userRole: {
+    fontSize: 13,
+    color: 'rgba(255,255,255,0.8)',
   },
   salaryBtn: {
+    padding: 8,
+    borderRadius: 8,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+  },
+  summaryBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    marginHorizontal: 12,
+    marginTop: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 12,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 1},
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  monthPicker: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#f4f6fa',
-    borderRadius: 16,
     paddingHorizontal: 10,
-    paddingVertical: 4,
-    marginLeft: 8,
-  },
-  salaryBtnText: {
-    color: THEME_COLOR_2,
-    fontWeight: 'bold',
-    marginHorizontal: 4,
-    fontSize: 15,
-  },
-  checkinTableHeader: {
-    flexDirection: 'row',
     paddingVertical: 6,
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
-    marginBottom: 2,
+    borderRadius: 8,
+    marginRight: 12,
   },
-  checkinHeaderText: {
+  monthText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: THEME_COLOR,
+    marginRight: 4,
+  },
+  quickStats: {
+    flexDirection: 'row',
+    flex: 1,
+    justifyContent: 'space-around',
+  },
+  statBox: {
+    alignItems: 'center',
+  },
+  statNumber: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: THEME_COLOR,
+  },
+  statLabel: {
+    fontSize: 11,
+    color: '#888',
+    marginTop: 2,
+  },
+  historyContainer: {
+    flex: 1,
+    backgroundColor: '#fff',
+    marginHorizontal: 12,
+    marginTop: 8,
+    marginBottom: 12,
+    borderRadius: 12,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  historyHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
+  },
+  historyTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: THEME_COLOR,
+  },
+  tableHeader: {
+    flexDirection: 'row',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    backgroundColor: '#f8f9fa',
+    borderBottomWidth: 1,
+    borderBottomColor: '#e9ecef',
+  },
+  headerCell: {
     flex: 1,
     textAlign: 'center',
-    fontWeight: 'bold',
-    fontSize: 15,
-    color: '#888',
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#6c757d',
+  },
+  messageContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 40,
+  },
+  errorText: {
+    color: '#FF6B6B',
+    marginLeft: 8,
+    fontSize: 14,
+  },
+  loadingText: {
+    color: THEME_COLOR,
+    marginLeft: 8,
+    fontSize: 14,
+  },
+  emptyText: {
+    color: '#aaa',
+    fontSize: 14,
+    marginLeft: 8,
+  },
+  historyList: {
+    flex: 1,
+  },
+  listContent: {
+    paddingBottom: 16,
   },
   checkinRow: {
     flexDirection: 'row',
-    paddingVertical: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f2f2f2',
     alignItems: 'center',
-    borderRadius: 8,
-    marginBottom: 2,
-    backgroundColor: '#fff',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f8f9fa',
   },
   cellText: {
     flex: 1,
     textAlign: 'center',
-    fontSize: 15,
-    color: '#555',
-    fontWeight: '500',
+    fontSize: 13,
+    color: '#495057',
   },
-  errorText: {
-    color: 'red',
-    textAlign: 'center',
-    marginBottom: 10,
+  statusCell: {
+    flex: 1,
+    alignItems: 'center',
   },
-  emptyText: {
-    color: '#aaa',
-    fontSize: 16,
-    textAlign: 'center',
-    marginVertical: 30,
+  statusBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  statusText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#fff',
   },
 });
 
