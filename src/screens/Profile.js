@@ -92,6 +92,11 @@ const Profile = () => {
     setIsModalUpAvataVisible(!isModalUpAvataVisible);
   };
 
+  const handleUploadSuccess = () => {
+    get_user_info();
+    setIsModalUpAvataVisible(false);
+  };
+
   useEffect(() => {
     if (today) {
       get_checkin_of_user();
@@ -500,8 +505,11 @@ const Profile = () => {
 
       <UploadAvatar
         visible={isModalUpAvataVisible}
-        onClose={() => setIsModalUpAvataVisible(false)}
-        onSuccess={get_user_info}
+        closeModal={() => setIsModalUpAvataVisible(false)}
+        t={t}
+        user_id={user_id}
+        avatar_url={userInfo.avatar}
+        onSuccess={handleUploadSuccess}
       />
     </View>
   );

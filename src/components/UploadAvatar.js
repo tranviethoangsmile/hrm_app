@@ -6,7 +6,7 @@ import {
   TouchableOpacity,
   Image,
   StyleSheet,
-  Alert,
+  Platform,
 } from 'react-native';
 import DocumentPicker from 'react-native-document-picker';
 import axios from 'axios';
@@ -22,12 +22,32 @@ import {
 import Loader from './Loader';
 import RNFS from 'react-native-fs';
 import {launchImageLibrary} from 'react-native-image-picker';
+import ModalMessage from './ModalMessage';
 
-const UploadAvatar = ({visible, closeModal, t, user_id, avatar_url}) => {
+const UploadAvatar = ({
+  visible,
+  closeModal,
+  t,
+  user_id,
+  avatar_url,
+  onSuccess,
+}) => {
   const [imageUri, setImageUri] = useState(null);
   const [imageName, setImageName] = useState('');
   const [isloading, setIsloading] = useState(false);
   const [updateDisabled, setUpdateDisabled] = useState(true);
+  const [messageModal, setMessageModal] = useState('');
+  const [messageType, setMessageType] = useState('success');
+  const [duration, setDuration] = useState(1000);
+  const [isMessageModalVisible, setMessageModalVisible] = useState(false);
+
+  const showMessage = (msg, type, dur) => {
+    setMessageModalVisible(true);
+    setMessageModal(msg);
+    setMessageType(type);
+    setDuration(dur);
+  };
+
   const getRealPathFromURI = async uri => {
     if (Platform.OS === 'android') {
       const fileStat = await RNFS.stat(uri);
@@ -35,6 +55,7 @@ const UploadAvatar = ({visible, closeModal, t, user_id, avatar_url}) => {
     }
     return uri;
   };
+
   const handleImagePicker = () => {
     const options = {
       mediaType: 'image',
@@ -61,13 +82,9 @@ const UploadAvatar = ({visible, closeModal, t, user_id, avatar_url}) => {
     setUpdateDisabled(!imageUri);
   }, [imageUri]);
 
-  const showAlert = mess => {
-    Alert.alert('Notification!! ', mess);
-  };
-
   const handleUploadImage = async () => {
     try {
-      setIsloading(!isloading);
+      setIsloading(true);
       const formData = new FormData();
       formData.append('avatar', {
         uri: imageUri,
@@ -86,18 +103,21 @@ const UploadAvatar = ({visible, closeModal, t, user_id, avatar_url}) => {
       );
       if (response?.data?.success) {
         setIsloading(false);
-        showAlert(t('success'));
-        closeModal();
+        showMessage(t('success'), 'success', 1000);
+        if (onSuccess) {
+          onSuccess();
+        }
+        setTimeout(() => {
+          setMessageModalVisible(false);
+          closeModal();
+        }, 1000);
       } else {
-        showAlert(t('unSuccess'));
         setIsloading(false);
-        closeModal();
+        showMessage(t('unSuccess'), 'error', 1000);
       }
     } catch (error) {
       setIsloading(false);
-      showAlert(t('unSuccess'));
-    } finally {
-      setIsloading(false);
+      showMessage(t('unSuccess'), 'error', 1000);
     }
   };
 
@@ -139,6 +159,13 @@ const UploadAvatar = ({visible, closeModal, t, user_id, avatar_url}) => {
           </View>
         </View>
         <Loader visible={isloading} />
+        <ModalMessage
+          visible={isMessageModalVisible}
+          message={messageModal}
+          type={messageType}
+          duration={duration}
+          onClose={() => setMessageModalVisible(false)}
+        />
       </View>
     </Modal>
   );
@@ -147,15 +174,16 @@ const UploadAvatar = ({visible, closeModal, t, user_id, avatar_url}) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
   modalContent: {
-    width: '90%',
-    backgroundColor: '#fff',
+    backgroundColor: 'white',
     borderRadius: 10,
     padding: 20,
+    width: '80%',
+    maxWidth: 400,
   },
   header: {
     flexDirection: 'row',
@@ -164,37 +192,34 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   modalTitle: {
-    fontSize: 24,
+    fontSize: 18,
     fontWeight: 'bold',
-    color: '#333',
   },
   closeButton: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#999',
+    fontSize: 20,
+    color: '#666',
   },
   body: {
     alignItems: 'center',
   },
   avatar: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
+    width: 150,
+    height: 150,
+    borderRadius: 75,
     marginBottom: 20,
   },
   updateButton: {
-    backgroundColor: '#3498db',
+    backgroundColor: '#007AFF',
     paddingHorizontal: 20,
     paddingVertical: 10,
     borderRadius: 5,
   },
   disabledButton: {
-    backgroundColor: 'gray',
+    backgroundColor: '#ccc',
   },
   updateButtonText: {
+    color: 'white',
     fontSize: 16,
-    fontWeight: 'bold',
-    color: '#fff',
   },
 });
 
