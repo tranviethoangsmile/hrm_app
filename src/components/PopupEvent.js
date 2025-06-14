@@ -8,15 +8,12 @@ import {
   Image,
   TouchableOpacity,
   ScrollView,
+  Dimensions,
 } from 'react-native';
-import Icon from 'react-native-vector-icons/FontAwesome';
-import {
-  BG_COLOR,
-  TEXT_COLOR,
-  THEME_COLOR,
-  THEME_COLOR_2,
-} from '../utils/Colors';
-import {TouchableWithoutFeedback} from 'react-native-gesture-handler';
+import Icon from 'react-native-vector-icons/Ionicons';
+import LinearGradient from 'react-native-linear-gradient';
+
+const {width} = Dimensions.get('window');
 
 const PopupEvent = ({visible, event, onClose, t, navigation}) => {
   return (
@@ -25,54 +22,77 @@ const PopupEvent = ({visible, event, onClose, t, navigation}) => {
       transparent
       animationType="fade"
       onRequestClose={onClose}>
-      <View style={styles.container}>
-        <View style={styles.modalView}>
-          <View style={styles.modalHeader}>
-            <Text style={styles.modalHeaderText}>{t('event')}</Text>
+      <View style={styles.overlay}>
+        <View style={styles.modalContainer}>
+          {/* Header */}
+          <View style={styles.header}>
+            <View style={styles.headerLeft}>
+              <View style={styles.iconContainer}>
+                <Icon name="calendar" size={18} color="#667eea" />
+              </View>
+              <Text style={styles.headerTitle}>{t('event')}</Text>
+            </View>
+            <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+              <Icon name="close" size={20} color="#64748b" />
+            </TouchableOpacity>
           </View>
-          <Image source={{uri: event.media}} style={styles.modalImage} />
-          <TouchableWithoutFeedback
-            onPress={() => {
-              onClose();
-            }}>
-            <View style={styles.modalBody}>
-              <ScrollView>
-                <Text style={styles.modalTitle}>{event.name}</Text>
-                <View style={styles.descriptionContainer}>
-                  <Text style={styles.modalDescription}>
-                    {event.description}
-                  </Text>
-                </View>
-                <Text style={styles.modalText}>
+
+          {/* Event Image */}
+          <View style={styles.imageContainer}>
+            <Image source={{uri: event.media}} style={styles.eventImage} />
+          </View>
+
+          {/* Content */}
+          <ScrollView
+            style={styles.content}
+            showsVerticalScrollIndicator={false}>
+            <Text style={styles.eventTitle}>{event.name}</Text>
+            <Text style={styles.eventDescription}>{event.description}</Text>
+
+            <View style={styles.detailsContainer}>
+              <View style={styles.detailRow}>
+                <Icon name="play" size={14} color="#64748b" />
+                <Text style={styles.detailText}>
                   {t('d.start')}: {event.date_start}
                 </Text>
-                <Text style={styles.modalText}>
+              </View>
+              <View style={styles.detailRow}>
+                <Icon name="stop" size={14} color="#64748b" />
+                <Text style={styles.detailText}>
                   {t('d.end')}: {event.date_end}
                 </Text>
-                <Text style={styles.modalText}>
+              </View>
+              <View style={styles.detailRow}>
+                <Icon name="business" size={14} color="#64748b" />
+                <Text style={styles.detailText}>
                   {t('position')}: {event.position}
                 </Text>
-              </ScrollView>
+              </View>
             </View>
-          </TouchableWithoutFeedback>
-          <View style={styles.confirmBtn}>
-            <View style={[styles.confirmBtnRemove]}>
-              <TouchableOpacity
-                onPress={() => {
-                  onClose();
-                }}>
-                <Icon name="remove" size={40} color={THEME_COLOR} />
-              </TouchableOpacity>
-            </View>
-            <View style={[styles.confirmBtnRemove]}>
-              <TouchableOpacity
-                onPress={() => {
-                  onClose();
-                  navigation.navigate('Event');
-                }}>
-                <Icon name="arrow-right" size={40} color={THEME_COLOR} />
-              </TouchableOpacity>
-            </View>
+          </ScrollView>
+
+          {/* Actions */}
+          <View style={styles.actions}>
+            <TouchableOpacity
+              style={styles.laterButton}
+              onPress={onClose}
+              activeOpacity={0.7}>
+              <Text style={styles.laterText}>Later</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.viewButton}
+              onPress={() => {
+                onClose();
+                navigation.navigate('Event');
+              }}
+              activeOpacity={0.7}>
+              <LinearGradient
+                colors={['#667eea', '#764ba2']}
+                style={styles.viewButtonGradient}>
+                <Text style={styles.viewText}>View Details</Text>
+              </LinearGradient>
+            </TouchableOpacity>
           </View>
         </View>
       </View>
@@ -81,72 +101,135 @@ const PopupEvent = ({visible, event, onClose, t, navigation}) => {
 };
 
 const styles = StyleSheet.create({
-  container: {
+  overlay: {
     flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+    paddingHorizontal: 30,
   },
-  confirmBtn: {
+  modalContainer: {
     width: '100%',
-    height: 40,
-    paddingRight: 10,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginHorizontal: 5,
+    maxWidth: 340,
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 10},
+    shadowOpacity: 0.2,
+    shadowRadius: 20,
+    elevation: 15,
   },
-  modalView: {
-    width: '95%',
-    marginHorizontal: 10,
-    backgroundColor: BG_COLOR,
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 20,
+    paddingBottom: 16,
+  },
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  iconContainer: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#f1f5f9',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#1e293b',
+  },
+  closeButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#f8fafc',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  imageContainer: {
+    marginHorizontal: 20,
+    borderRadius: 12,
+    overflow: 'hidden',
+  },
+  eventImage: {
+    width: '100%',
+    height: 160,
+    resizeMode: 'cover',
+  },
+  content: {
+    padding: 20,
+    paddingTop: 16,
+    maxHeight: 200,
+  },
+  eventTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#1e293b',
+    marginBottom: 8,
+    lineHeight: 26,
+  },
+  eventDescription: {
+    fontSize: 15,
+    color: '#64748b',
+    lineHeight: 22,
+    marginBottom: 20,
+  },
+  detailsContainer: {
+    marginBottom: 10,
+  },
+  detailRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  detailText: {
+    fontSize: 14,
+    color: '#64748b',
+    marginLeft: 10,
+    fontWeight: '500',
+  },
+  actions: {
+    flexDirection: 'row',
+    padding: 20,
+    paddingTop: 12,
+    gap: 12,
+  },
+  laterButton: {
+    flex: 1,
+    paddingVertical: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 10,
+    backgroundColor: '#f8fafc',
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+  },
+  laterText: {
+    fontSize: 15,
+    color: '#64748b',
+    fontWeight: '600',
+  },
+  viewButton: {
+    flex: 1,
     borderRadius: 10,
     overflow: 'hidden',
   },
-  modalHeader: {
-    padding: 10,
-    flexDirection: 'row',
-    justifyContent: 'center',
+  viewButtonGradient: {
+    paddingVertical: 12,
     alignItems: 'center',
-    backgroundColor: THEME_COLOR_2,
-    borderTopLeftRadius: 10,
-    borderTopRightRadius: 10,
+    justifyContent: 'center',
   },
-  modalImage: {
-    width: '100%',
-    height: 200,
-  },
-  modalBody: {
-    padding: 10,
-  },
-  modalTitle: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    marginBottom: 10,
-    color: THEME_COLOR,
-  },
-  modalText: {
-    fontSize: 16,
-    marginBottom: 5,
-    color: TEXT_COLOR,
-  },
-  modalHeaderText: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: 'white',
-    width: '90%',
-    textAlign: 'center',
-  },
-  descriptionContainer: {
-    backgroundColor: THEME_COLOR_2,
-    borderRadius: 5,
-    padding: 10,
-    marginBottom: 10,
-  },
-  modalDescription: {
-    fontSize: 20,
-    color: 'white',
-    fontWeight: '400',
+  viewText: {
+    fontSize: 15,
+    color: '#fff',
+    fontWeight: '600',
   },
 });
 

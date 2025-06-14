@@ -73,7 +73,7 @@ const ConfirmDayOrNight = ({visible, closeModal, checkin, time, t}) => {
         showMessage('checkin.success', 'success', 500);
         setTimeout(() => {
           closeModal();
-          navigate.goBack();
+          navigate.navigate('Main');
         }, 500); // Đóng modal sau 3 giây
       }
     } catch (error) {

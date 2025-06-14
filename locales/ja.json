@@ -264,5 +264,9 @@
   "noOrder": "まだ注文がありません",
   "today": "今日",
   "upcoming": "今後",
-  "past": "過去"
+  "past": "過去",
+  "leave": "休暇",
+  "weekend": "週末",
+  "night_shift": "夜勤",
+  "day_shift": "日勤"
 }

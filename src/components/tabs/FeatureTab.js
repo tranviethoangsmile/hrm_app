@@ -7,6 +7,7 @@ import {
   ScrollView,
   StatusBar,
   TouchableOpacity,
+  Platform,
 } from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -109,12 +110,29 @@ const FeatureTab = ({onScrollList}) => {
     </TouchableOpacity>
   );
 
+  const handleScroll = event => {
+    const offsetY = event.nativeEvent.contentOffset.y;
+    const isScrollingDown = offsetY > 0;
+
+    if (Platform.OS === 'ios') {
+      // For iOS, we need to handle the scroll event differently
+      if (isScrollingDown) {
+        onScrollList({nativeEvent: {contentOffset: {y: offsetY}}});
+      } else {
+        onScrollList({nativeEvent: {contentOffset: {y: 0}}});
+      }
+    } else {
+      // For Android, use the original scroll event
+      onScrollList(event);
+    }
+  };
+
   return (
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
       <Text style={styles.title}>{t('Fea')}</Text>
       <ScrollView
-        onScroll={onScrollList}
+        onScroll={handleScroll}
         scrollEventThrottle={16}
         contentContainerStyle={styles.scrollViewContent}>
         {featuresData.map((feature, index) =>
@@ -147,8 +165,14 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     paddingVertical: 18,
     paddingHorizontal: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#ECECEC',
+    marginHorizontal: 16,
+    marginBottom: 8,
+    borderRadius: 12,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
   },
   featureIcon: {
     marginRight: 15,
@@ -158,7 +182,9 @@ const styles = StyleSheet.create({
     fontSize: 17,
     color: TEXT_COLOR,
   },
-  chevronIcon: {},
+  chevronIcon: {
+    opacity: 0.5,
+  },
 });
 
 export default FeatureTab;

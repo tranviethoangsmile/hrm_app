@@ -16,6 +16,7 @@ import {
   ScrollView,
   StatusBar,
   FlatList,
+  ActivityIndicator,
 } from 'react-native';
 import {
   API,
@@ -41,6 +42,8 @@ import axios from 'axios';
 import Loader from '../components/Loader';
 import ModalMessage from '../components/ModalMessage';
 import Header from '../components/common/Header';
+import LinearGradient from 'react-native-linear-gradient';
+import {format} from 'date-fns';
 
 // Modern UI components and theme
 import {COLORS, SIZES, FONTS, SHADOWS} from '../config/theme';
@@ -110,6 +113,8 @@ const Daily = () => {
   const [tempPercent, setTempPercent] = useState(0);
   const [isShowSendBtn, setIsShowSendBtn] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showReview, setShowReview] = useState(false);
+  const [content, setContent] = useState('');
 
   const handleSendDailyReport = async () => {
     try {
@@ -186,6 +191,29 @@ const Daily = () => {
   const handleCancel = () => {
     navigation.goBack();
   };
+
+  const handleSubmit = () => {
+    if (!content.trim()) {
+      Alert.alert(t('error'), t('please_enter_content'));
+      return;
+    }
+    setShowReview(true);
+  };
+
+  const handleConfirm = async () => {
+    setLoader(true);
+    try {
+      await handleSendDailyReport();
+      setShowReview(false);
+      Alert.alert(t('success'), t('daily_report_sent'));
+      navigation.goBack();
+    } catch (error) {
+      Alert.alert(t('error'), error.message);
+    } finally {
+      setLoader(false);
+    }
+  };
+
   useEffect(() => {
     const checkLanguage = async () => {
       const lang = await getLanguage();
@@ -195,6 +223,70 @@ const Daily = () => {
     };
     checkLanguage();
   }, []);
+
+  const formatDate = () => {
+    const today = new Date();
+    const day = String(today.getDate()).padStart(2, '0');
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const year = today.getFullYear();
+    return `${day}/${month}/${year}`;
+  };
+
+  const renderReviewModal = () => (
+    <Modal
+      visible={showReview}
+      transparent
+      animationType="slide"
+      onRequestClose={() => setShowReview(false)}>
+      <View style={styles.modalOverlay}>
+        <View style={styles.modalContent}>
+          <LinearGradient
+            colors={['#667eea', '#764ba2']}
+            start={{x: 0, y: 0}}
+            end={{x: 1, y: 1}}
+            style={styles.modalHeader}>
+            <Text style={styles.modalTitle}>{t('review_daily')}</Text>
+            <TouchableOpacity
+              onPress={() => setShowReview(false)}
+              style={styles.closeButton}>
+              <Icon name="close" size={24} color="#fff" />
+            </TouchableOpacity>
+          </LinearGradient>
+
+          <ScrollView style={styles.reviewContent}>
+            <View style={styles.reviewSection}>
+              <Text style={styles.reviewLabel}>{t('date')}</Text>
+              <Text style={styles.reviewValue}>{formatDate()}</Text>
+            </View>
+
+            <View style={styles.reviewSection}>
+              <Text style={styles.reviewLabel}>{t('content')}</Text>
+              <Text style={styles.reviewValue}>{content}</Text>
+            </View>
+
+            <View style={styles.reviewButtonContainer}>
+              <TouchableOpacity
+                style={[styles.reviewButton, styles.cancelButton]}
+                onPress={() => setShowReview(false)}>
+                <Text
+                  style={[styles.reviewButtonText, styles.cancelButtonText]}>
+                  {t('cancel')}
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.reviewButton, styles.confirmButton]}
+                onPress={handleConfirm}>
+                <Text
+                  style={[styles.reviewButtonText, styles.confirmButtonText]}>
+                  {t('confirm')}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </ScrollView>
+        </View>
+      </View>
+    </Modal>
+  );
 
   return (
     <KeyboardAvoidingView
@@ -595,6 +687,7 @@ const Daily = () => {
         t={t}
         duration={1500}
       />
+      {renderReviewModal()}
     </KeyboardAvoidingView>
   );
 };
@@ -701,95 +794,76 @@ const styles = StyleSheet.create({
 
   modalOverlay: {
     flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.6)',
   },
-  modalCardModern: {
-    width: SIZES.width * 0.92,
-    maxHeight: SIZES.height * 0.85,
-    borderRadius: SIZES.radiusLg || 16,
-    backgroundColor: COLORS.white,
-    ...SHADOWS.medium,
-    padding: SIZES.padding,
+  modalContent: {
+    width: '90%',
+    maxHeight: '80%',
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    overflow: 'hidden',
   },
-  modalHeaderModern: {
+  modalHeader: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: SIZES.padding,
-    paddingTop: SIZES.padding,
-    paddingBottom: SIZES.base,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.borderColor,
-    backgroundColor: COLORS.background,
+    justifyContent: 'space-between',
+    padding: 16,
   },
-  modalTitleModern: {
-    ...FONTS.h2,
-    color: COLORS.primary,
-    fontWeight: '700',
-  },
-  closeButtonModern: {
-    padding: SIZES.base,
-    borderRadius: 20,
-    backgroundColor: COLORS.lightGray3,
-  },
-  modalSectionTitleModern: {
-    ...FONTS.h5,
-    color: COLORS.primary,
+  modalTitle: {
+    fontSize: 18,
     fontWeight: '600',
-    marginTop: SIZES.base,
-    marginBottom: SIZES.base,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.lightGray2,
+    color: '#fff',
   },
-  summaryListModern: {
-    marginVertical: SIZES.base,
+  closeButton: {
+    padding: 4,
   },
-  summaryItemModern: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: SIZES.base,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.lightGray3,
+  reviewContent: {
+    padding: 16,
   },
-  summaryLabelModern: {
-    ...FONTS.body4,
-    color: COLORS.textSecondary,
+  reviewSection: {
+    marginBottom: 16,
   },
-  summaryValueModern: {
-    ...FONTS.body3,
-    color: COLORS.text,
+  reviewLabel: {
+    fontSize: 14,
+    color: '#1a1a1a',
+    marginBottom: 4,
     fontWeight: '500',
   },
-  modalButtonContainerModern: {
+  reviewValue: {
+    fontSize: 16,
+    color: '#333',
+    lineHeight: 22,
+  },
+  reviewButtonContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: SIZES.padding,
-    borderTopWidth: 1,
-    borderTopColor: COLORS.borderColor,
-    paddingTop: SIZES.base,
+    marginTop: 24,
   },
-  modalButtonModern: {
+  reviewButton: {
     flex: 1,
-    marginHorizontal: SIZES.base * 0.5,
+    padding: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+    marginHorizontal: 8,
   },
-  inputFieldModalModern: {
-    marginBottom: SIZES.padding,
+  cancelButton: {
+    backgroundColor: '#f1f1f1',
   },
-  modalInputTextStyleModern: {},
-  shiftSelectorContainerModern: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    marginBottom: SIZES.padding,
+  confirmButton: {
+    backgroundColor: '#667eea',
   },
-  shiftButton: {
-    flex: 1,
-    marginHorizontal: SIZES.base / 2,
+  reviewButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
   },
-  shiftButtonText: {},
-  shiftButtonTextActive: {},
+  cancelButtonText: {
+    color: '#666',
+  },
+  confirmButtonText: {
+    color: '#fff',
+  },
 });
 
 export default Daily;

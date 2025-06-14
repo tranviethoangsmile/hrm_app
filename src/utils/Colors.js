@@ -1,5 +1,9 @@
-export const THEME_COLOR = '#FF6969';
-export const THEME_COLOR_2 = '#257abe';
-export const BG_COLOR = '#F8F4E1';
-export const TEXT_COLOR = '#141E46';
-export const BG = '#365486';
+export const THEME_COLOR = '#007AFF';
+export const THEME_COLOR_2 = '#5856D6';
+export const TEXT_COLOR = '#1A1A1A';
+export const BACKGROUND_COLOR = '#FFFFFF';
+export const GRAY_COLOR = '#8E8E93';
+export const LIGHT_GRAY = '#F2F2F7';
+export const ERROR_COLOR = '#FF3B30';
+export const SUCCESS_COLOR = '#34C759';
+export const WARNING_COLOR = '#FF9500';

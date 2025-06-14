@@ -23,6 +23,8 @@ import {useTranslation} from 'react-i18next';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import CheckBox from '@react-native-community/checkbox';
 import {useNavigation} from '@react-navigation/native';
+import LinearGradient from 'react-native-linear-gradient';
+import Icon from 'react-native-vector-icons/Ionicons';
 import {
   BG_COLOR,
   TEXT_COLOR,
@@ -233,253 +235,410 @@ const Event = () => {
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#fff" />
-      <Header
-        title={t('event.title', 'Sự kiện')}
-        onBack={() => navigation.goBack()}
+      <StatusBar
+        barStyle="light-content"
+        backgroundColor="transparent"
+        translucent
       />
-      <KeyboardAvoidingView
-        oardVerticalOffset={Platform.OS === 'ios' ? 100 : 0}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.container}>
-        <Card containerStyle={styles.card}>
-          <View style={styles.infoViewContainer}>
-            <TouchableOpacity style={styles.avatarContainer}>
-              <Image
-                source={
-                  userInfo.avatar
-                    ? {uri: userInfo.avatar}
-                    : require('../assets/images/avatar.jpg')
-                }
-                style={styles.avatar}
-              />
-            </TouchableOpacity>
-            <View style={styles.infoContainer}>
-              <Text style={styles.name}>{userInfo.name}</Text>
-              <Text style={styles.label}>{userInfo.email}</Text>
-              <Text style={styles.label}>
-                {userInfo.employee_id} - {userInfo.role} - {userInfo.position}
-              </Text>
-            </View>
-          </View>
-        </Card>
-        {isSafetyCheckEvent ? (
-          <Card containerStyle={styles.card}>
-            <ScrollView>
-              <Text style={styles.eventName}>{eventName}</Text>
-              <View style={styles.descriptionContainer}>
-                <Text style={styles.eventDescription}>{eventDescription}</Text>
-              </View>
 
-              <View style={styles.section}>
-                <Text style={styles.sectionTitle}>{t('safety.c')}</Text>
-                <View style={styles.checkboxContainer}>
-                  <CheckBox
-                    tintColors={{true: THEME_COLOR, false: 'black'}}
-                    value={is_safety}
-                    onValueChange={handleCheckboxSafety}
-                    style={styles.checkbox}
-                  />
-                  <Text style={styles.checkboxLabel}>{t('is_safety')}</Text>
-                </View>
-                {!is_safety && (
-                  <View style={styles.feedbackContainer}>
-                    <Text style={styles.label}>{t('s.help')}</Text>
-                    <TextInput
-                      style={styles.input}
-                      placeholder={t('feedback')}
-                      placeholderTextColor={THEME_COLOR_2}
-                      multiline
-                      numberOfLines={5}
-                      onChangeText={txt => setFeedback(txt)}
-                    />
+      {/* Modern Header */}
+      <LinearGradient
+        colors={['#667eea', '#764ba2']}
+        start={{x: 0, y: 0}}
+        end={{x: 1, y: 1}}
+        style={styles.headerGradient}>
+        <View style={styles.headerContent}>
+          <TouchableOpacity
+            onPress={() => navigation.goBack()}
+            style={styles.backButton}>
+            <Icon name="arrow-back" size={24} color="#fff" />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>{t('event.title', 'Event')}</Text>
+          <View style={styles.headerSpacer} />
+        </View>
+      </LinearGradient>
+
+      <ScrollView
+        style={styles.scrollContainer}
+        showsVerticalScrollIndicator={false}>
+        {/* User Info Card */}
+        <View style={styles.userCard}>
+          <LinearGradient
+            colors={['#f8fafc', '#e2e8f0']}
+            style={styles.userCardGradient}>
+            <View style={styles.userInfo}>
+              <View style={styles.avatarContainer}>
+                <Image
+                  source={
+                    userInfo.avatar
+                      ? {uri: userInfo.avatar}
+                      : require('../assets/images/avatar.jpg')
+                  }
+                  style={styles.avatar}
+                />
+              </View>
+              <View style={styles.userDetails}>
+                <Text style={styles.userName}>{userInfo.name}</Text>
+                <Text style={styles.userEmail}>{userInfo.email}</Text>
+                <Text style={styles.userRole}>
+                  {userInfo.employee_id} • {userInfo.position}
+                </Text>
+              </View>
+            </View>
+          </LinearGradient>
+        </View>
+
+        {/* Event Content */}
+        <View style={styles.eventCard}>
+          <LinearGradient
+            colors={['#667eea', '#764ba2']}
+            style={styles.eventHeaderGradient}>
+            <Icon name="calendar" size={24} color="#fff" />
+            <Text style={styles.eventName}>{eventName}</Text>
+          </LinearGradient>
+
+          <View style={styles.eventContent}>
+            <View style={styles.descriptionContainer}>
+              <Text style={styles.eventDescription}>{eventDescription}</Text>
+            </View>
+
+            {isSafetyCheckEvent ? (
+              <View style={styles.formContainer}>
+                {/* Safety Check Section */}
+                <View style={styles.section}>
+                  <View style={styles.sectionHeader}>
+                    <Icon name="shield-checkmark" size={20} color="#667eea" />
+                    <Text style={styles.sectionTitle}>{t('safety.c')}</Text>
                   </View>
-                )}
-              </View>
-              <View style={styles.section}>
-                <Text style={styles.sectionTitle}>{t('at_home')}</Text>
-                <View style={styles.checkboxContainer}>
-                  <CheckBox
-                    tintColors={{true: THEME_COLOR, false: 'black'}}
-                    value={is_at_home}
-                    onValueChange={() => setIs_at_home(!is_at_home)}
-                    style={styles.checkbox}
-                  />
-                  <Text style={styles.checkboxLabel}>{t('y')}</Text>
+                  <TouchableOpacity
+                    style={styles.checkboxRow}
+                    activeOpacity={0.7}>
+                    <CheckBox
+                      tintColors={{true: '#667eea', false: '#94a3b8'}}
+                      value={is_safety}
+                      onValueChange={handleCheckboxSafety}
+                      style={styles.checkbox}
+                    />
+                    <Text style={styles.checkboxLabel}>{t('is_safety')}</Text>
+                  </TouchableOpacity>
+
+                  {!is_safety && (
+                    <View style={styles.feedbackContainer}>
+                      <Text style={styles.inputLabel}>{t('s.help')}</Text>
+                      <TextInput
+                        style={styles.textInput}
+                        placeholder={t('feedback')}
+                        placeholderTextColor="#94a3b8"
+                        multiline
+                        numberOfLines={4}
+                        onChangeText={txt => setFeedback(txt)}
+                        textAlignVertical="top"
+                      />
+                    </View>
+                  )}
                 </View>
-              </View>
-              <View style={styles.section}>
-                <Text style={styles.sectionTitle}>{t('can_work')}</Text>
-                <View style={styles.checkboxContainer}>
-                  <CheckBox
-                    tintColors={{true: THEME_COLOR, false: 'black'}}
-                    value={is_can_work}
-                    onValueChange={() => setIs_can_work(!is_can_work)}
-                    style={styles.checkbox}
-                  />
-                  <Text style={styles.checkboxLabel}>{t('y')}</Text>
+
+                {/* At Home Section */}
+                <View style={styles.section}>
+                  <View style={styles.sectionHeader}>
+                    <Icon name="home" size={20} color="#667eea" />
+                    <Text style={styles.sectionTitle}>{t('at_home')}</Text>
+                  </View>
+                  <TouchableOpacity
+                    style={styles.checkboxRow}
+                    activeOpacity={0.7}>
+                    <CheckBox
+                      tintColors={{true: '#667eea', false: '#94a3b8'}}
+                      value={is_at_home}
+                      onValueChange={() => setIs_at_home(!is_at_home)}
+                      style={styles.checkbox}
+                    />
+                    <Text style={styles.checkboxLabel}>{t('y')}</Text>
+                  </TouchableOpacity>
                 </View>
-              </View>
-              <View style={styles.buttonContainer}>
+
+                {/* Can Work Section */}
+                <View style={styles.section}>
+                  <View style={styles.sectionHeader}>
+                    <Icon name="briefcase" size={20} color="#667eea" />
+                    <Text style={styles.sectionTitle}>{t('can_work')}</Text>
+                  </View>
+                  <TouchableOpacity
+                    style={styles.checkboxRow}
+                    activeOpacity={0.7}>
+                    <CheckBox
+                      tintColors={{true: '#667eea', false: '#94a3b8'}}
+                      value={is_can_work}
+                      onValueChange={() => setIs_can_work(!is_can_work)}
+                      style={styles.checkbox}
+                    />
+                    <Text style={styles.checkboxLabel}>{t('y')}</Text>
+                  </TouchableOpacity>
+                </View>
+
+                {/* Submit Button */}
                 <TouchableOpacity
                   onPress={handleSafetyConfirm}
-                  style={styles.button}>
-                  <Text style={styles.buttonText}>{t('confirm.c')}</Text>
+                  style={styles.submitButton}
+                  activeOpacity={0.8}>
+                  <LinearGradient
+                    colors={['#4FACFE', '#00F2FE']}
+                    style={styles.submitButtonGradient}>
+                    <Icon name="checkmark-circle" size={20} color="#fff" />
+                    <Text style={styles.submitButtonText}>
+                      {t('confirm.c')}
+                    </Text>
+                  </LinearGradient>
                 </TouchableOpacity>
               </View>
-            </ScrollView>
-          </Card>
-        ) : (
-          <Card containerStyle={styles.card}>
-            <Text style={styles.eventName}>{eventName}</Text>
-            <Text style={styles.eventDescription}>{eventDescription}</Text>
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>{t('isConfirm')}</Text>
-              <View style={styles.checkboxContainer}>
-                <CheckBox
-                  tintColors={{true: THEME_COLOR, false: 'black'}}
-                  value={is_confirm}
-                  onValueChange={() => {
-                    setIsconfirm(!is_confirm);
-                  }}
-                  style={styles.checkbox}
-                />
-                <Text style={styles.checkboxLabel}>{t('y')}</Text>
+            ) : (
+              <View style={styles.formContainer}>
+                {/* Event Confirmation */}
+                <View style={styles.section}>
+                  <View style={styles.sectionHeader}>
+                    <Icon name="checkmark-circle" size={20} color="#667eea" />
+                    <Text style={styles.sectionTitle}>{t('isConfirm')}</Text>
+                  </View>
+                  <TouchableOpacity
+                    style={styles.checkboxRow}
+                    activeOpacity={0.7}>
+                    <CheckBox
+                      tintColors={{true: '#667eea', false: '#94a3b8'}}
+                      value={is_confirm}
+                      onValueChange={() => setIsconfirm(!is_confirm)}
+                      style={styles.checkbox}
+                    />
+                    <Text style={styles.checkboxLabel}>{t('y')}</Text>
+                  </TouchableOpacity>
+                </View>
+
+                {/* Submit Button */}
+                <TouchableOpacity
+                  onPress={handleConfirmEventCheck}
+                  style={styles.submitButton}
+                  activeOpacity={0.8}>
+                  <LinearGradient
+                    colors={['#4FACFE', '#00F2FE']}
+                    style={styles.submitButtonGradient}>
+                    <Icon name="checkmark-circle" size={20} color="#fff" />
+                    <Text style={styles.submitButtonText}>
+                      {t('confirm.c')}
+                    </Text>
+                  </LinearGradient>
+                </TouchableOpacity>
               </View>
-            </View>
-            <View style={styles.buttonContainer}>
-              <TouchableOpacity
-                onPress={handleConfirmEventCheck}
-                style={styles.button}>
-                <Text style={styles.buttonText}>{t('confirm.c')}</Text>
-              </TouchableOpacity>
-            </View>
-          </Card>
-        )}
-      </KeyboardAvoidingView>
+            )}
+          </View>
+        </View>
+      </ScrollView>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  button: {
-    backgroundColor: THEME_COLOR,
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderRadius: 8,
-    marginVertical: 10,
-    width: '80%',
-    alignSelf: 'center',
-    elevation: 2,
-  },
-  descriptionContainer: {
-    backgroundColor: THEME_COLOR_2,
-    borderRadius: 5,
-    padding: 10,
-    marginBottom: 10,
-  },
-  buttonText: {
-    color: 'white',
-    textAlign: 'center',
-    fontWeight: 'bold',
-    fontSize: 20,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 1,
-      height: 8,
-    },
-    shadowOpacity: 0.44,
-    shadowRadius: 5,
-  },
   container: {
     flex: 1,
-    backgroundColor: '#fff',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: '#f8fafc',
   },
-  card: {
-    width: '100%',
-    borderRadius: 15,
-    backgroundColor: BG_COLOR,
-    justifyContent: 'center',
+  headerGradient: {
+    paddingTop: StatusBar.currentHeight || 44,
+    paddingBottom: 20,
   },
-  infoViewContainer: {
+  headerContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 15,
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingTop: 10,
+  },
+  backButton: {
+    padding: 8,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+  },
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#fff',
+    letterSpacing: 0.5,
+  },
+  headerSpacer: {
+    width: 40,
+  },
+  scrollContainer: {
+    flex: 1,
+    marginTop: -10,
+  },
+  userCard: {
+    marginHorizontal: 20,
+    marginTop: 10,
+    marginBottom: 20,
+    borderRadius: 16,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 4},
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 6,
+    backgroundColor: '#fff',
+  },
+  userCardGradient: {
+    borderRadius: 16,
+    padding: 20,
+  },
+  userInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   avatarContainer: {
-    marginRight: 10,
+    marginRight: 16,
   },
   avatar: {
-    width: 70,
-    height: 70,
+    width: 60,
+    height: 60,
     borderRadius: 30,
+    borderWidth: 3,
+    borderColor: '#e2e8f0',
   },
-  infoContainer: {
+  userDetails: {
     flex: 1,
   },
-  name: {
-    fontSize: 22,
-    fontWeight: '600',
-    color: TEXT_COLOR,
-  },
-  label: {
-    fontSize: 16,
-    color: '#888',
-    marginTop: 5,
-  },
-  section: {
-    // marginBottom: 15,
-  },
-  sectionTitle: {
+  userName: {
     fontSize: 18,
-    fontWeight: 'bold',
-    color: TEXT_COLOR,
-    marginBottom: 8,
+    fontWeight: '700',
+    color: '#1e293b',
+    marginBottom: 4,
   },
-  checkboxContainer: {
+  userEmail: {
+    fontSize: 14,
+    color: '#64748b',
+    marginBottom: 2,
+  },
+  userRole: {
+    fontSize: 13,
+    color: '#94a3b8',
+    fontWeight: '500',
+  },
+  eventCard: {
+    marginHorizontal: 20,
+    marginBottom: 20,
+    borderRadius: 16,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 6},
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 8,
+    backgroundColor: '#fff',
+  },
+  eventHeaderGradient: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 5,
-  },
-  checkbox: {
-    marginHorizontal: 10,
-  },
-  checkboxLabel: {
-    fontSize: 16,
-    color: '#555',
-  },
-  feedbackContainer: {
-    marginTop: 10,
-  },
-  input: {
-    width: '100%',
-    borderColor: '#ddd',
-    borderWidth: 1,
-    borderRadius: 5,
-    padding: 10,
-    marginTop: 5,
-    fontSize: 16,
-    color: TEXT_COLOR,
-    backgroundColor: '#f9f9f9',
-  },
-  buttonContainer: {
-    marginTop: 10,
-    alignItems: 'center',
+    padding: 20,
+    paddingVertical: 16,
   },
   eventName: {
-    fontSize: 23,
-    fontWeight: 'bold',
-    color: THEME_COLOR,
-    marginBottom: 5,
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#fff',
+    marginLeft: 12,
+    letterSpacing: 0.3,
+  },
+  eventContent: {
+    padding: 20,
+  },
+  descriptionContainer: {
+    backgroundColor: '#f1f5f9',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 24,
   },
   eventDescription: {
-    fontSize: 18,
-    color: 'white',
-    marginBottom: 15,
-    padding: 2,
-    fontWeight: '400',
+    fontSize: 15,
+    color: '#475569',
+    lineHeight: 22,
+    fontWeight: '500',
+  },
+  formContainer: {
+    gap: 20,
+  },
+  section: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1e293b',
+    marginLeft: 10,
+  },
+  checkboxRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 4,
+  },
+  checkbox: {
+    marginRight: 12,
+    transform: [{scale: 1.1}],
+  },
+  checkboxLabel: {
+    fontSize: 15,
+    color: '#475569',
+    fontWeight: '500',
+  },
+  feedbackContainer: {
+    marginTop: 16,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#e2e8f0',
+  },
+  inputLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#374151',
+    marginBottom: 8,
+  },
+  textInput: {
+    borderWidth: 1,
+    borderColor: '#d1d5db',
+    borderRadius: 8,
+    padding: 12,
+    fontSize: 15,
+    color: '#374151',
+    backgroundColor: '#f9fafb',
+    textAlignVertical: 'top',
+    minHeight: 80,
+  },
+  submitButton: {
+    marginTop: 24,
+    borderRadius: 12,
+    overflow: 'hidden',
+    shadowColor: '#4FACFE',
+    shadowOffset: {width: 0, height: 4},
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+  submitButtonGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+  },
+  submitButtonText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#fff',
+    marginLeft: 8,
+    letterSpacing: 0.3,
   },
 });
 

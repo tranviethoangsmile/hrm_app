@@ -19,6 +19,7 @@ import {
   StatusBar,
   ActivityIndicator,
   FlatList,
+  Image,
 } from 'react-native';
 import DropDownPicker from 'react-native-dropdown-picker';
 import i18next from '../../services/i18next';
@@ -29,6 +30,7 @@ import DatePicker from 'react-native-date-picker';
 import moment from 'moment';
 import LinearGradient from 'react-native-linear-gradient';
 import Icon from 'react-native-vector-icons/FontAwesome';
+import IconIon from 'react-native-vector-icons/Ionicons';
 import {
   API,
   BASE_URL,
@@ -283,6 +285,72 @@ const Leave = () => {
     getValueRequestLeave();
     setRefreshing(false);
   };
+
+  const EmployeeCard = () => (
+    <View style={styles.employeeCardContainer}>
+      <LinearGradient
+        colors={['#667eea', '#764ba2']}
+        start={{x: 0, y: 0}}
+        end={{x: 1, y: 1}}
+        style={styles.employeeCardGradient}>
+        {/* Card Header */}
+        <View style={styles.employeeCardHeader}>
+          <Text style={styles.companyNameText}>DAIHATSU METAL</Text>
+          <TouchableOpacity
+            onPress={() => navigation.navigate('Profile')}
+            style={styles.profileBtn}>
+            <IconIon
+              name="person-outline"
+              size={16}
+              color="rgba(255,255,255,0.9)"
+            />
+          </TouchableOpacity>
+        </View>
+
+        {/* Employee Info */}
+        <View style={styles.employeeCardInfo}>
+          <TouchableOpacity
+            onPress={() => navigation.navigate('Profile')}
+            style={styles.employeeAvatarContainer}>
+            <Image
+              source={
+                authData?.data?.data?.avatar
+                  ? {uri: authData.data.data.avatar}
+                  : require('../assets/images/avatar.jpg')
+              }
+              style={styles.employeeCardAvatar}
+            />
+          </TouchableOpacity>
+
+          <View style={styles.employeeCardDetails}>
+            <Text style={styles.employeeCardName}>
+              {authData?.data?.data?.name || '---'}
+            </Text>
+            <Text style={styles.employeeCardPosition}>
+              {authData?.data?.data?.position || 'Employee'}
+            </Text>
+            <View style={styles.employeeContactRow}>
+              <IconIon
+                name="mail-outline"
+                size={11}
+                color="rgba(255,255,255,0.8)"
+              />
+              <Text style={styles.employeeCardEmail} numberOfLines={1}>
+                {authData?.data?.data?.email || 'email@company.com'}
+              </Text>
+            </View>
+          </View>
+
+          <View style={styles.employeeCardIdSection}>
+            <Text style={styles.employeeIdLabelText}>ID</Text>
+            <Text style={styles.employeeCardIdText}>
+              {authData?.data?.data?.employee_id || '---'}
+            </Text>
+          </View>
+        </View>
+      </LinearGradient>
+    </View>
+  );
   return (
     <KeyboardAvoidingView
       keyboardVerticalOffset={100}
@@ -298,6 +366,7 @@ const Leave = () => {
       <FlatList
         data={leaveRequested}
         keyExtractor={item => item.id?.toString()}
+        ListHeaderComponent={<EmployeeCard />}
         renderItem={({item, index}) => (
           <>
             <View style={styles.leaveFeedBlockModern}>
@@ -1068,6 +1137,108 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 15,
     marginLeft: 10,
+  },
+  // Employee Card Styles
+  employeeCardContainer: {
+    marginHorizontal: 15,
+    marginTop: 15,
+    marginBottom: 10,
+    borderRadius: 16,
+    backgroundColor: '#667eea',
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 8},
+    shadowOpacity: 0.25,
+    shadowRadius: 16,
+    elevation: 12,
+  },
+  employeeCardGradient: {
+    borderRadius: 16,
+    padding: 16,
+    minHeight: 110,
+  },
+  employeeCardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  companyNameText: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: 'rgba(255,255,255,0.9)',
+    letterSpacing: 1.2,
+  },
+  profileBtn: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  employeeCardInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  employeeAvatarContainer: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    marginRight: 14,
+  },
+  employeeCardAvatar: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    borderWidth: 2.5,
+    borderColor: 'rgba(255,255,255,0.3)',
+  },
+  employeeCardDetails: {
+    flex: 1,
+  },
+  employeeCardName: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: '#fff',
+    marginBottom: 2,
+    letterSpacing: 0.3,
+  },
+  employeeCardPosition: {
+    fontSize: 12,
+    color: 'rgba(255,255,255,0.85)',
+    fontWeight: '600',
+    marginBottom: 3,
+  },
+  employeeContactRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  employeeCardEmail: {
+    fontSize: 10,
+    color: 'rgba(255,255,255,0.8)',
+    fontWeight: '500',
+    marginLeft: 4,
+    flex: 1,
+  },
+  employeeCardIdSection: {
+    alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    borderRadius: 10,
+    minWidth: 50,
+  },
+  employeeIdLabelText: {
+    fontSize: 9,
+    color: 'rgba(255,255,255,0.7)',
+    fontWeight: '600',
+    marginBottom: 1,
+  },
+  employeeCardIdText: {
+    fontSize: 12,
+    color: '#fff',
+    fontWeight: '800',
+    letterSpacing: 0.5,
   },
 });
 

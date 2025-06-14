@@ -1,112 +1,117 @@
-// SelectDate.js
 import React, {useState} from 'react';
 import {
   Modal,
   View,
-  StyleSheet,
-  Button,
   TouchableOpacity,
   Text,
+  ScrollView,
+  StyleSheet,
 } from 'react-native';
-import DropDownPicker from 'react-native-dropdown-picker';
 import moment from 'moment';
-import {
-  BG_COLOR,
-  TEXT_COLOR,
-  THEME_COLOR,
-  THEME_COLOR_2,
-} from '../utils/Colors';
-import Icon from 'react-native-vector-icons/FontAwesome';
-import {useTranslation} from 'react-i18next';
-import i18next from 'i18next';
+import LinearGradient from 'react-native-linear-gradient';
 
 const SelectDate = ({visible, onClose, setSelectedDate, getCheckin}) => {
-  const {t} = useTranslation();
-  const now = moment();
-  const currentYear = now.year();
-  const [month, setMonth] = useState(now.month() + 1); // 1-12
-  const [year, setYear] = useState(currentYear);
-  const [openMonth, setOpenMonth] = useState(false);
-  const [openYear, setOpenYear] = useState(false);
-  // Tạo danh sách tháng và năm
-  const monthItems = Array.from({length: 12}, (_, i) => ({
-    label: t('month') + ' ' + (i + 1),
-    value: i + 1,
-  }));
-  const yearItems = Array.from({length: 8}, (_, i) => ({
-    label: (2020 + i).toString(),
-    value: 2020 + i,
-  }));
+  const [selectedMonth, setSelectedMonth] = useState(moment().month());
+  const [selectedYear, setSelectedYear] = useState(moment().year());
+
+  const months = moment.months();
+  const years = Array.from({length: 10}, (_, i) => moment().year() - 5 + i);
+
+  const handleMonthSelect = month => {
+    setSelectedMonth(month);
+  };
+
+  const handleYearSelect = year => {
+    setSelectedYear(year);
+  };
+
   const handleConfirm = () => {
-    const date = moment(`${year}-${month}-01`, 'YYYY-MM-DD').toDate();
+    const date = moment()
+      .year(selectedYear)
+      .month(selectedMonth)
+      .startOf('month')
+      .format('YYYY-MM-DD');
+
     setSelectedDate(date);
     getCheckin();
     onClose();
   };
+
   return (
     <Modal
-      animationType="fade"
-      transparent={true}
       visible={visible}
+      transparent
+      animationType="slide"
       onRequestClose={onClose}>
-      <View style={styles.modalOverlay}>
-        <View style={styles.modalCard}>
-          <View style={styles.modalHeader}>
-            <Icon
-              name="calendar"
-              size={22}
-              color={THEME_COLOR}
-              style={{marginRight: 8}}
-            />
-            <Text style={styles.modalTitle}>{t('select.month.year')}</Text>
+      <View style={styles.modalContainer}>
+        <View style={styles.modalContent}>
+          <View style={styles.header}>
+            <Text style={styles.headerTitle}>Select Month and Year</Text>
             <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-              <Icon name="close" size={22} color={THEME_COLOR_2} />
+              <Text style={styles.closeButtonText}>✕</Text>
             </TouchableOpacity>
           </View>
-          <View
-            style={{
-              flexDirection: 'row',
-              width: '100%',
-              justifyContent: 'space-between',
-              marginVertical: 16,
-            }}>
-            <View style={{flex: 1, marginRight: 8}}>
-              <DropDownPicker
-                open={openMonth}
-                setOpen={setOpenMonth}
-                value={month}
-                items={monthItems}
-                setValue={setMonth}
-                setItems={() => {}}
-                placeholder={t('month')}
-                style={{borderRadius: 12, minHeight: 44}}
-                dropDownContainerStyle={{borderRadius: 12}}
-                listMode="SCROLLVIEW"
-                zIndex={2}
-                zIndexInverse={1}
-                onOpen={() => setOpenYear(false)}
-              />
-            </View>
-            <View style={{flex: 1, marginLeft: 8}}>
-              <DropDownPicker
-                open={openYear}
-                setOpen={setOpenYear}
-                value={year}
-                items={yearItems}
-                setValue={setYear}
-                setItems={() => {}}
-                placeholder={t('year')}
-                style={{borderRadius: 12, minHeight: 44}}
-                dropDownContainerStyle={{borderRadius: 12}}
-                listMode="SCROLLVIEW"
-                zIndex={1}
-                zIndexInverse={2}
-                onOpen={() => setOpenMonth(false)}
-              />
-            </View>
+
+          <View style={styles.sectionContainer}>
+            <Text style={styles.sectionTitle}>Month</Text>
+            <ScrollView style={styles.gridContainer}>
+              <View style={styles.grid}>
+                {months.map((month, index) => (
+                  <TouchableOpacity
+                    key={month}
+                    style={[
+                      styles.gridItem,
+                      selectedMonth === index && styles.selectedItem,
+                    ]}
+                    onPress={() => handleMonthSelect(index)}>
+                    <Text
+                      style={[
+                        styles.gridItemText,
+                        selectedMonth === index && styles.selectedItemText,
+                      ]}>
+                      {month}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </ScrollView>
           </View>
-          <TouchableOpacity style={styles.confirmBtn} onPress={handleConfirm}>
-            <Text style={styles.confirmBtnText}>{t('confirm')}</Text>
+
+          <View style={styles.sectionContainer}>
+            <Text style={styles.sectionTitle}>Year</Text>
+            <ScrollView style={styles.gridContainer}>
+              <View style={styles.grid}>
+                {years.map(year => (
+                  <TouchableOpacity
+                    key={year}
+                    style={[
+                      styles.gridItem,
+                      selectedYear === year && styles.selectedItem,
+                    ]}
+                    onPress={() => handleYearSelect(year)}>
+                    <Text
+                      style={[
+                        styles.gridItemText,
+                        selectedYear === year && styles.selectedItemText,
+                      ]}>
+                      {year}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </ScrollView>
+          </View>
+
+          <TouchableOpacity
+            style={styles.confirmButton}
+            onPress={handleConfirm}>
+            <LinearGradient
+              colors={['#4FACFE', '#00F2FE']}
+              start={{x: 0, y: 0}}
+              end={{x: 1, y: 1}}
+              style={styles.gradient}>
+              <Text style={styles.confirmButtonText}>Confirm</Text>
+            </LinearGradient>
           </TouchableOpacity>
         </View>
       </View>
@@ -115,57 +120,86 @@ const SelectDate = ({visible, onClose, setSelectedDate, getCheckin}) => {
 };
 
 const styles = StyleSheet.create({
-  modalOverlay: {
+  modalContainer: {
     flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.25)',
   },
-  modalCard: {
-    width: 320,
-    borderRadius: 20,
+  modalContent: {
     backgroundColor: '#fff',
-    padding: 20,
-    shadowColor: '#000',
-    shadowOffset: {width: 0, height: 4},
-    shadowOpacity: 0.15,
-    shadowRadius: 16,
-    elevation: 8,
-    alignItems: 'center',
+    borderRadius: 20,
+    width: '90%',
+    maxHeight: '80%',
+    padding: 12,
   },
-  modalHeader: {
+  header: {
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
-    width: '100%',
-    marginBottom: 12,
+    alignItems: 'center',
+    marginBottom: 20,
   },
-  modalTitle: {
-    flex: 1,
+  headerTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
-    color: THEME_COLOR,
-    textAlign: 'center',
+    fontWeight: '700',
+    color: '#1a202c',
   },
   closeButton: {
-    padding: 6,
-    borderRadius: 20,
-    backgroundColor: '#f4f6fa',
+    padding: 8,
   },
-  confirmBtn: {
-    marginTop: 18,
-    backgroundColor: THEME_COLOR,
-    borderRadius: 12,
-    paddingVertical: 10,
-    paddingHorizontal: 32,
-    alignItems: 'center',
-    width: '100%',
+  closeButtonText: {
+    fontSize: 20,
+    color: '#64748b',
   },
-  confirmBtnText: {
-    color: '#fff',
-    fontWeight: 'bold',
+  sectionContainer: {
+    marginBottom: 20,
+  },
+  sectionTitle: {
     fontSize: 16,
-    letterSpacing: 0.5,
+    fontWeight: '600',
+    color: '#64748b',
+    marginBottom: 12,
+  },
+  gridContainer: {
+    maxHeight: 150,
+  },
+  grid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+  },
+  gridItem: {
+    width: '30%',
+    padding: 12,
+    marginBottom: 12,
+    borderRadius: 12,
+    backgroundColor: '#f8fafc',
+    alignItems: 'center',
+  },
+  selectedItem: {
+    backgroundColor: '#4FACFE',
+  },
+  gridItemText: {
+    fontSize: 14,
+    color: '#64748b',
+    fontWeight: '500',
+  },
+  selectedItemText: {
+    color: '#fff',
+  },
+  confirmButton: {
+    marginTop: 12,
+    borderRadius: 12,
+    overflow: 'hidden',
+  },
+  gradient: {
+    padding: 16,
+    alignItems: 'center',
+  },
+  confirmButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '700',
   },
 });
 

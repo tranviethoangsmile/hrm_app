@@ -29,6 +29,8 @@ import i18next from '../../../services/i18next';
 import Video from 'react-native-video';
 import ImageViewer from 'react-native-image-zoom-viewer';
 import Icon from 'react-native-vector-icons/FontAwesome';
+import LinearGradient from 'react-native-linear-gradient';
+import IconIon from 'react-native-vector-icons/Ionicons';
 import PopupEvent from '../PopupEvent';
 import {
   BASE_URL,
@@ -42,6 +44,7 @@ import {
   NOTIFICATION,
   SEARCH_BY_ID,
   GET_EVENTS_WITH_POSITION,
+  UPDATE,
 } from '../../utils/constans';
 import Loader from '../Loader';
 import HappyModal from '../HappyModal';
@@ -107,14 +110,15 @@ const HomeTab = ({onScrollList}) => {
       setIsLoading(true);
       const userInforString = await AsyncStorage.getItem('userInfor');
       const userInfor = JSON.parse(userInforString);
+
       const field = {
         position: userInfor?.position,
         is_public: true,
       };
-      const informations = await axios.post(
-        `${BASE_URL}${PORT}${API}${VERSION}${V1}${INFORMATION}${GET_ALL_BY_FIELD}`,
-        {field},
-      );
+
+      const url = `${BASE_URL}${PORT}${API}${VERSION}${V1}${INFORMATION}${GET_ALL_BY_FIELD}`;
+      const informations = await axios.post(url, {field});
+
       if (informations?.data?.success) {
         setIsLoading(false);
         setError('');
@@ -151,6 +155,25 @@ const HomeTab = ({onScrollList}) => {
     }
   };
 
+  const handle_notification_click = async notification => {
+    try {
+      const field = {
+        id: notification.id,
+        user_id: userInfo?.id,
+        is_read: true,
+      };
+      const updateNotification = await axios.post(
+        `${BASE_URL}${PORT}${API}${VERSION}${V1}${NOTIFICATION}${UPDATE}`,
+        {field},
+      );
+      if (updateNotification?.data?.success) {
+        handle_get_notification();
+      }
+    } catch (error) {
+      showAlert(error?.message || 'networkError');
+    }
+  };
+
   // Hàm nhận diện link trong text
   function extractFirstUrl(text) {
     const urlRegex =
@@ -161,6 +184,8 @@ const HomeTab = ({onScrollList}) => {
 
   const PostItem = ({item, t, handleGoToEventScreen}) => {
     const [linkPreview, setLinkPreview] = React.useState(null);
+    const isAdmin = item.user.role === 'ADMIN';
+
     React.useEffect(() => {
       const url = extractFirstUrl(item.content);
       if (url) {
@@ -192,111 +217,131 @@ const HomeTab = ({onScrollList}) => {
     const handleShare = () => console.log('Share post:', item.id);
 
     return (
-      <View style={styles.postItemContainer}>
-        <View style={styles.postHeader}>
-          <Image style={styles.avatar} source={{uri: item.user.avatar}} />
-          <View style={styles.nameAndDayContainer}>
-            <Text style={styles.nameText}>{item.user.name}</Text>
-            <Text style={styles.dateText}>
-              {moment(item.date).format('DD/MM/YYYY HH:mm')}
-            </Text>
-          </View>
-        </View>
-        {item.title && <Text style={styles.postTitleText}>{item.title}</Text>}
-        <Text style={styles.postContent} numberOfLines={3} ellipsizeMode="tail">
-          {item.content}
-        </Text>
-        {linkPreview && (
-          <TouchableOpacity
-            style={styles.linkPreviewBox}
-            onPress={() => {
-              if (linkPreview.url) {
-                try {
-                  require('react-native').Linking.openURL(linkPreview.url);
-                } catch (e) {}
-              }
-            }}>
-            {linkPreview.image && (
-              <Image
-                source={{uri: linkPreview.image}}
-                style={styles.linkPreviewImg}
-              />
-            )}
-            <View style={{flex: 1, marginLeft: 10}}>
-              <Text style={styles.linkPreviewTitle} numberOfLines={2}>
-                {linkPreview.title}
-              </Text>
-              {linkPreview.description ? (
-                <Text style={styles.linkPreviewDesc} numberOfLines={2}>
-                  {linkPreview.description}
-                </Text>
-              ) : null}
-              <Text style={styles.linkPreviewUrl} numberOfLines={1}>
-                {linkPreview.url}
+      <View
+        style={[
+          styles.postItemContainer,
+          isAdmin && styles.adminPostContainer,
+        ]}>
+        <LinearGradient
+          colors={isAdmin ? ['#fff', '#fff5f5'] : ['#fff', '#fff']}
+          style={styles.postContent}>
+          <View style={styles.postHeader}>
+            <Image style={styles.avatar} source={{uri: item.user.avatar}} />
+            <View style={styles.nameAndDayContainer}>
+              <View style={{flexDirection: 'row', alignItems: 'center'}}>
+                <Text style={styles.nameText}>{item.user.name}</Text>
+                {isAdmin && (
+                  <View style={styles.adminBadge}>
+                    <Text style={styles.adminBadgeText}>Admin</Text>
+                  </View>
+                )}
+              </View>
+              <Text style={styles.dateText}>
+                {moment(item.date).format('DD/MM/YYYY HH:mm')}
               </Text>
             </View>
-          </TouchableOpacity>
-        )}
-        {item.content.length > 100 && (
-          <TouchableOpacity
-            onPress={() =>
-              Alert.alert(item.title || t('Detail'), item.content)
-            }>
-            <Text style={styles.moreText}>{t('more')}</Text>
-          </TouchableOpacity>
-        )}
-        {item.media &&
-          (item.is_video ? (
-            <Video
-              source={{uri: item.media}}
-              style={[
-                styles.mediaPlayer,
-                {width: width - 30, height: (width - 30) * (9 / 16)},
-              ]}
-              controls={true}
-              paused={true}
-              resizeMode="cover"
-              poster={require('../../assets/images/thumbnail.jpg')}
-              posterResizeMode="cover"
-            />
-          ) : (
+          </View>
+          {item.title && <Text style={styles.postTitleText}>{item.title}</Text>}
+          <Text
+            style={styles.postContent}
+            numberOfLines={3}
+            ellipsizeMode="tail">
+            {item.content}
+          </Text>
+          {linkPreview && (
             <TouchableOpacity
+              style={styles.linkPreviewBox}
               onPress={() => {
-                /* Handle image press, maybe open in viewer */
+                if (linkPreview.url) {
+                  try {
+                    require('react-native').Linking.openURL(linkPreview.url);
+                  } catch (e) {}
+                }
               }}>
-              <Image source={{uri: item.media}} style={styles.mediaImage} />
+              {linkPreview.image && (
+                <Image
+                  source={{uri: linkPreview.image}}
+                  style={styles.linkPreviewImg}
+                />
+              )}
+              <View style={{flex: 1, marginLeft: 10}}>
+                <Text style={styles.linkPreviewTitle} numberOfLines={2}>
+                  {linkPreview.title}
+                </Text>
+                {linkPreview.description ? (
+                  <Text style={styles.linkPreviewDesc} numberOfLines={2}>
+                    {linkPreview.description}
+                  </Text>
+                ) : null}
+                <Text style={styles.linkPreviewUrl} numberOfLines={1}>
+                  {linkPreview.url}
+                </Text>
+              </View>
             </TouchableOpacity>
-          ))}
-        <View style={styles.postMetaContainer}>
-          <View style={styles.postActionsGroup}>
-            <TouchableOpacity onPress={handleLike} style={styles.actionButton}>
-              <Icon name="heart-o" size={18} color="#555" />
-            </TouchableOpacity>
+          )}
+          {item.content.length > 100 && (
             <TouchableOpacity
-              onPress={handleComment}
-              style={styles.actionButton}>
-              <Icon name="comment-o" size={18} color="#555" />
+              onPress={() =>
+                Alert.alert(item.title || t('Detail'), item.content)
+              }>
+              <Text style={styles.moreText}>{t('more')}</Text>
             </TouchableOpacity>
+          )}
+          {item.media &&
+            (item.is_video ? (
+              <Video
+                source={{uri: item.media}}
+                style={[
+                  styles.mediaPlayer,
+                  {width: width - 30, height: (width - 30) * (9 / 16)},
+                ]}
+                controls={true}
+                paused={true}
+                resizeMode="cover"
+                poster={require('../../assets/images/thumbnail.jpg')}
+                posterResizeMode="cover"
+              />
+            ) : (
+              <TouchableOpacity
+                onPress={() => {
+                  /* Handle image press, maybe open in viewer */
+                }}>
+                <Image source={{uri: item.media}} style={styles.mediaImage} />
+              </TouchableOpacity>
+            ))}
+          <View style={styles.postMetaContainer}>
+            <View style={styles.postActionsGroup}>
+              <TouchableOpacity
+                onPress={handleLike}
+                style={styles.actionButton}>
+                <Icon name="heart-o" size={18} color="#555" />
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={handleComment}
+                style={styles.actionButton}>
+                <Icon name="comment-o" size={18} color="#555" />
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={handleShare}
+                style={styles.actionButtonLast}>
+                <Icon name="share-square-o" size={18} color="#555" />
+              </TouchableOpacity>
+            </View>
+            <View style={styles.viewCountContainer}>
+              <Icon name="eye" size={14} color="#777" style={styles.metaIcon} />
+              <Text style={styles.metaText}>
+                {formattedViewCount} {t('views')}
+              </Text>
+            </View>
+          </View>
+          {item.is_event ? (
             <TouchableOpacity
-              onPress={handleShare}
-              style={styles.actionButtonLast}>
-              <Icon name="share-square-o" size={18} color="#555" />
+              style={styles.eventButton}
+              onPress={handleGoToEventScreen}>
+              <Text style={styles.eventButtonText}>{t('confirm.c')}</Text>
             </TouchableOpacity>
-          </View>
-          <View style={styles.viewCountContainer}>
-            <Icon name="eye" size={14} color="#777" style={styles.metaIcon} />
-            <Text style={styles.metaText}>
-              {formattedViewCount} {t('views')}
-            </Text>
-          </View>
-        </View>
-        {item.is_event ? (
-          <TouchableOpacity
-            style={styles.eventButton}
-            onPress={handleGoToEventScreen}>
-            <Text style={styles.eventButtonText}>{t('confirm.c')}</Text>
-          </TouchableOpacity>
-        ) : null}
+          ) : null}
+        </LinearGradient>
       </View>
     );
   };
@@ -316,9 +361,10 @@ const HomeTab = ({onScrollList}) => {
       if (lang != null) {
         i18next.changeLanguage(lang);
       }
-      get_all_information();
-      get_event_detail();
+      await get_all_information();
+      await get_event_detail();
     };
+
     handle_get_notification();
     fetchData();
   }, []);
@@ -392,7 +438,12 @@ const HomeTab = ({onScrollList}) => {
         </View>
       </View>
       <Control visible={visibleControl} t={t} onClose={onClose} />
-      <Notifications visible={is_notification} t={t} onClose={onClose} />
+      <Notifications
+        visible={is_notification}
+        t={t}
+        onClose={onClose}
+        onNotificationClick={handle_notification_click}
+      />
       <View style={styles.feedContainer}>
         {err ? <Text style={styles.errorText}>{err}</Text> : null}
         <FlatList
@@ -412,6 +463,11 @@ const HomeTab = ({onScrollList}) => {
           contentContainerStyle={{paddingBottom: 10}}
           onScroll={onScrollList}
           scrollEventThrottle={16}
+          ListEmptyComponent={() => (
+            <View style={{padding: 20, alignItems: 'center'}}>
+              <Text style={{color: '#666'}}>{t('no.data')}</Text>
+            </View>
+          )}
         />
       </View>
       <PopupEvent
@@ -641,6 +697,31 @@ const styles = StyleSheet.create({
     color: THEME_COLOR_2,
     fontSize: 12,
     textDecorationLine: 'underline',
+  },
+  adminPostContainer: {
+    borderWidth: 1,
+    borderColor: '#ff6b6b',
+    borderRadius: 12,
+    shadowColor: '#ff6b6b',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  adminBadge: {
+    backgroundColor: '#ff6b6b',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 12,
+    marginLeft: 8,
+  },
+  adminBadgeText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: 'bold',
   },
 });
 

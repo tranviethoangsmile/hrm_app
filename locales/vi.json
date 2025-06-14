@@ -263,5 +263,9 @@
   "noOrder": "Bạn chưa đặt suất ăn nào",
   "today": "Hôm nay",
   "upcoming": "Sắp tới",
-  "past": "Đã qua"
+  "past": "Đã qua",
+  "leave": "Nghỉ phép",
+  "weekend": "Cuối tuần",
+  "night_shift": "Ca đêm",
+  "day_shift": "Ca ngày"
 }

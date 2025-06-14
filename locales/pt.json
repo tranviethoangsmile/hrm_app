@@ -262,5 +262,9 @@
   "noOrder": "Ainda não há pedidos",
   "today": "Hoje",
   "upcoming": "Próximos",
-  "past": "Passados"
+  "past": "Passados",
+  "leave": "Licença",
+  "weekend": "Final de semana",
+  "night_shift": "Turno da noite",
+  "day_shift": "Turno do dia"
 }

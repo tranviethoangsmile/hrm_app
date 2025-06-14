@@ -18,6 +18,7 @@ import {useSelector} from 'react-redux';
 import HomeTab from '../components/tabs/HomeTab';
 import FeatureTab from '../components/tabs/FeatureTab';
 import {useNavigation} from '@react-navigation/native';
+import LinearGradient from 'react-native-linear-gradient';
 
 const Main = () => {
   const isDarkMode = useColorScheme() === 'dark';
@@ -26,12 +27,12 @@ const Main = () => {
   const [selectedTab, setSelectedTab] = useState(0);
 
   const lastScrollY = useRef(0);
-  const bottomNavHeight = 65; // Adjusted height
+  const bottomNavHeight = 75; // Simple clean height
   const bottomNavTranslateY = useRef(new Animated.Value(0)).current;
   const [isBottomNavVisible, setIsBottomNavVisible] = useState(true);
 
   const handleScroll = event => {
-    if (!event) return; // Guard clause
+    if (!event) return;
     const currentScrollY = event.nativeEvent.contentOffset.y;
     const scrollDirection =
       currentScrollY > lastScrollY.current ? 'down' : 'up';
@@ -40,7 +41,7 @@ const Main = () => {
       if (!isBottomNavVisible) {
         Animated.timing(bottomNavTranslateY, {
           toValue: 0,
-          duration: 200, // Slightly faster animation
+          duration: 300,
           useNativeDriver: true,
         }).start();
         setIsBottomNavVisible(true);
@@ -49,30 +50,53 @@ const Main = () => {
       if (scrollDirection === 'down' && isBottomNavVisible) {
         Animated.timing(bottomNavTranslateY, {
           toValue: bottomNavHeight,
-          duration: 200,
+          duration: 300,
           useNativeDriver: true,
         }).start();
         setIsBottomNavVisible(false);
       } else if (scrollDirection === 'up' && !isBottomNavVisible) {
         Animated.timing(bottomNavTranslateY, {
           toValue: 0,
-          duration: 200,
+          duration: 300,
           useNativeDriver: true,
         }).start();
         setIsBottomNavVisible(true);
       }
     }
-    lastScrollY.current = Math.max(0, currentScrollY); // Ensure lastScrollY is not negative
+    lastScrollY.current = Math.max(0, currentScrollY);
   };
+
+  const TabButton = ({selected, onPress, iconName, iconFilled, label}) => (
+    <TouchableOpacity
+      style={styles.tabItem}
+      onPress={onPress}
+      activeOpacity={0.7}>
+      {selected ? (
+        <LinearGradient
+          colors={['#667eea', '#764ba2']}
+          style={styles.selectedTabGradient}>
+          <Icon name={iconFilled || iconName} size={24} color="#fff" />
+        </LinearGradient>
+      ) : (
+        <View style={styles.unselectedTab}>
+          <Icon name={iconName} size={24} color="#94a3b8" />
+        </View>
+      )}
+    </TouchableOpacity>
+  );
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
+      <StatusBar
+        barStyle={isDarkMode ? 'light-content' : 'dark-content'}
+        backgroundColor="#f8fafc"
+      />
       {selectedTab === 0 ? (
         <HomeTab onScrollList={handleScroll} />
       ) : (
         <FeatureTab onScrollList={handleScroll} />
       )}
+
       <Animated.View
         style={[
           styles.bottomNav,
@@ -80,37 +104,36 @@ const Main = () => {
             transform: [{translateY: bottomNavTranslateY}],
           },
         ]}>
-        <TouchableOpacity
-          style={styles.tabItem}
-          onPress={() => {
-            setSelectedTab(0);
-          }}>
-          <Icon
-            name={selectedTab === 0 ? 'home' : 'home-outline'}
-            size={28}
-            color={selectedTab === 0 ? THEME_COLOR_2 : '#888888'}
+        <LinearGradient
+          colors={['rgba(255,255,255,0.95)', 'rgba(255,255,255,1)']}
+          style={styles.bottomNavGradient}>
+          <TabButton
+            selected={selectedTab === 0}
+            onPress={() => setSelectedTab(0)}
+            iconName="home-outline"
+            iconFilled="home"
+            label="Home"
           />
-        </TouchableOpacity>
 
-        <TouchableOpacity
-          style={styles.tabItem}
-          onPress={() => {
-            navigation.navigate('Checkin');
-          }}>
-          <Icon name={'finger-print-outline'} size={28} color={'#888888'} />
-        </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.centerTabItem}
+            onPress={() => navigation.navigate('Checkin')}
+            activeOpacity={0.8}>
+            <LinearGradient
+              colors={['#4FACFE', '#00F2FE']}
+              style={styles.centerTabGradient}>
+              <Icon name="finger-print" size={26} color="#fff" />
+            </LinearGradient>
+          </TouchableOpacity>
 
-        <TouchableOpacity
-          style={styles.tabItem}
-          onPress={() => {
-            setSelectedTab(1);
-          }}>
-          <Icon
-            name={selectedTab === 1 ? 'apps' : 'apps-outline'}
-            size={28}
-            color={selectedTab === 1 ? THEME_COLOR_2 : '#888888'}
+          <TabButton
+            selected={selectedTab === 1}
+            onPress={() => setSelectedTab(1)}
+            iconName="apps-outline"
+            iconFilled="apps"
+            label="Features"
           />
-        </TouchableOpacity>
+        </LinearGradient>
       </Animated.View>
     </SafeAreaView>
   );
@@ -119,34 +142,70 @@ const Main = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#f8fafc',
   },
   bottomNav: {
     position: 'absolute',
-    width: '100%',
-    height: 65, // Adjusted height to match bottomNavHeight
-    backgroundColor: '#FFFFFF', // Changed to white
     bottom: 0,
-    flexDirection: 'row',
-    justifyContent: 'space-around', // Changed to space-around for even spacing
-    alignItems: 'center', // Align items to center for vertical alignment of icon+text
-    borderTopWidth: 1, // Add a subtle top border
-    borderTopColor: '#E0E0E0', // Light gray border color
+    left: 0,
+    right: 0,
+    height: 75,
+    backgroundColor: '#fff',
+    borderTopWidth: 1,
+    borderTopColor: '#f1f5f9',
     shadowColor: '#000',
     shadowOffset: {width: 0, height: -2},
-    shadowOpacity: 0.05, // Softer shadow
-    shadowRadius: 3.84,
-    elevation: 3, // Elevation for Android shadow
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+  bottomNavGradient: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-around',
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+    paddingTop: 10,
   },
   tabItem: {
-    flex: 1, // Each tab takes equal width
+    alignItems: 'center',
+    flex: 1,
+  },
+  selectedTabGradient: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 8, // Padding for touchable area and spacing
+    backgroundColor: '#667eea',
   },
-  tabLabel: {
-    fontSize: 11, // Smaller font size for labels
-    marginTop: 4, // Space between icon and label
+  unselectedTab: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'transparent',
+  },
+  centerTabItem: {
+    alignItems: 'center',
+    flex: 1,
+    marginTop: -15,
+  },
+  centerTabGradient: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#4FACFE',
+    shadowOffset: {width: 0, height: 3},
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 6,
+    borderWidth: 3,
+    borderColor: '#fff',
   },
 });
 
