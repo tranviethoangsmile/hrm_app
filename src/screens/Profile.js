@@ -412,7 +412,7 @@ const Profile = () => {
                 style={styles.statGradient}>
                 <Icon name="time-outline" size={20} color="#fff" />
                 <Text style={styles.statNumber}>{totalWorkTime}</Text>
-                <Text style={styles.statLabel}>Hours</Text>
+                <Text style={styles.statLabel}>{t('wt', 'Hours')}</Text>
               </LinearGradient>
             </View>
 
@@ -422,7 +422,7 @@ const Profile = () => {
                 style={styles.statGradient}>
                 <Icon name="flash-outline" size={20} color="#fff" />
                 <Text style={styles.statNumber}>{totalOverTime}</Text>
-                <Text style={styles.statLabel}>OT</Text>
+                <Text style={styles.statLabel}>{t('ot', 'OT')}</Text>
               </LinearGradient>
             </View>
 
@@ -432,7 +432,7 @@ const Profile = () => {
                 style={styles.statGradient}>
                 <Icon name="calendar-number-outline" size={20} color="#fff" />
                 <Text style={styles.statNumber}>{totalWorkTimeWeekend}</Text>
-                <Text style={styles.statLabel}>Weekend</Text>
+                <Text style={styles.statLabel}>{t('wend', 'Weekend')}</Text>
               </LinearGradient>
             </View>
           </View>

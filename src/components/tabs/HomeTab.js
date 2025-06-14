@@ -11,6 +11,7 @@ import {
   StatusBar,
   Alert,
   Dimensions,
+  ScrollView,
 } from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import {useSelector} from 'react-redux';
@@ -27,10 +28,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import i18next from '../../../services/i18next';
 import Video from 'react-native-video';
-import ImageViewer from 'react-native-image-zoom-viewer';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import LinearGradient from 'react-native-linear-gradient';
-import IconIon from 'react-native-vector-icons/Ionicons';
 import PopupEvent from '../PopupEvent';
 import {
   BASE_URL,
@@ -45,12 +44,13 @@ import {
   SEARCH_BY_ID,
   GET_EVENTS_WITH_POSITION,
   UPDATE,
+  GET_EVENT_WITH_POSITION,
 } from '../../utils/constans';
 import Loader from '../Loader';
 import HappyModal from '../HappyModal';
 import moment from 'moment';
 import LinkPreview from 'react-native-link-preview';
-
+import ModalMessage from '../ModalMessage';
 const {width} = Dimensions.get('window');
 
 const HomeTab = ({onScrollList}) => {
@@ -69,9 +69,11 @@ const HomeTab = ({onScrollList}) => {
   const [isLoading, setIsLoading] = useState(false);
   const [event, setEvent] = useState({});
   const today = moment().format('MM-DD');
-  const showAlert = message => {
-    Alert.alert(t('noti'), t(message));
-  };
+  const [showAllPosts, setShowAllPosts] = useState(false);
+  const [messageModal, setMessageModal] = useState('');
+  const [messageType, setMessageType] = useState('success');
+  const [duration, setDuration] = useState(1000);
+  const [isMessageModalVisible, setMessageModalVisible] = useState(false);
 
   const onClose = () => {
     setVisibleControl(false);
@@ -79,12 +81,35 @@ const HomeTab = ({onScrollList}) => {
     setIsVisiblePopup(false);
     setIsVisibleHappy(false);
   };
-
+  const showMessage = (msg, type, dur) => {
+    setMessageModalVisible(true);
+    setMessageModal(msg);
+    setMessageType(type);
+    setDuration(dur);
+  };
   const getLanguage = async () => {
     return await AsyncStorage.getItem('Language');
   };
-  const handleGoToEventScreen = () => {
-    navigation.navigate('Event');
+
+  const handleGoToEventScreen = async () => {
+    try {
+      setIsLoading(true);
+      const url = `${BASE_URL}${PORT}${API}${VERSION}${V1}${EVENTS}${GET_EVENT_WITH_POSITION}`;
+      const events = await axios.post(url, {
+        position: userInfo.position,
+      });
+      if (events?.data?.success) {
+        setIsLoading(false);
+        navigation.navigate('Event');
+      } else {
+        setIsLoading(false);
+        showMessage('not.event', 'warning', 500);
+      }
+    } catch (error) {
+      showMessage(error?.message || 'networkError', 'error', 500);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const get_event_detail = async () => {
@@ -101,7 +126,7 @@ const HomeTab = ({onScrollList}) => {
         }, 3000);
       }
     } catch (error) {
-      showAlert('not.event');
+      showMessage('not.event', 'warning', 500);
     }
   };
 
@@ -151,7 +176,7 @@ const HomeTab = ({onScrollList}) => {
         setNotificationCount(notifications?.data.data.length);
       }
     } catch (error) {
-      showAlert(error?.message || 'networkError');
+      showMessage(error?.message || 'networkError', 'error', 500);
     }
   };
 
@@ -170,7 +195,7 @@ const HomeTab = ({onScrollList}) => {
         handle_get_notification();
       }
     } catch (error) {
-      showAlert(error?.message || 'networkError');
+      showMessage(error?.message || 'networkError', 'error', 500);
     }
   };
 
@@ -237,7 +262,7 @@ const HomeTab = ({onScrollList}) => {
                 )}
               </View>
               <Text style={styles.dateText}>
-                {moment(item.date).format('DD/MM/YYYY HH:mm')}
+                {moment(item.date).format('DD/MM/YYYY')}
               </Text>
             </View>
           </View>
@@ -391,7 +416,30 @@ const HomeTab = ({onScrollList}) => {
     }
   };
 
-  const renderItemSeparator = () => <View style={styles.itemSeparator} />;
+  const renderPosts = () => {
+    const displayPosts = showAllPosts ? posts : posts.slice(0, 5);
+
+    return (
+      <>
+        {displayPosts.map((item, index) => (
+          <PostItem
+            key={item.id}
+            item={item}
+            t={t}
+            handleGoToEventScreen={handleGoToEventScreen}
+          />
+        ))}
+
+        {!showAllPosts && posts.length > 5 && (
+          <TouchableOpacity
+            style={styles.viewMoreButton}
+            onPress={() => setShowAllPosts(true)}>
+            <Text style={styles.viewMoreText}>{t('viewMore')}</Text>
+          </TouchableOpacity>
+        )}
+      </>
+    );
+  };
 
   return (
     <View style={styles.container}>
@@ -446,29 +494,15 @@ const HomeTab = ({onScrollList}) => {
       />
       <View style={styles.feedContainer}>
         {err ? <Text style={styles.errorText}>{err}</Text> : null}
-        <FlatList
-          data={posts}
-          renderItem={({item}) => (
-            <PostItem
-              item={item}
-              t={t}
-              handleGoToEventScreen={handleGoToEventScreen}
-            />
-          )}
-          keyExtractor={item => item.id.toString()}
-          ItemSeparatorComponent={renderItemSeparator}
+        <ScrollView
+          onScroll={onScrollList}
+          scrollEventThrottle={16}
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
           }
-          contentContainerStyle={{paddingBottom: 10}}
-          onScroll={onScrollList}
-          scrollEventThrottle={16}
-          ListEmptyComponent={() => (
-            <View style={{padding: 20, alignItems: 'center'}}>
-              <Text style={{color: '#666'}}>{t('no.data')}</Text>
-            </View>
-          )}
-        />
+          contentContainerStyle={{paddingBottom: 10}}>
+          {renderPosts()}
+        </ScrollView>
       </View>
       <PopupEvent
         visible={isVisiblePopup}
@@ -480,6 +514,14 @@ const HomeTab = ({onScrollList}) => {
         navigation={navigation}
       />
       <HappyModal onClose={onClose} visible={isVisibleHappy} />
+      <ModalMessage
+        isVisible={isMessageModalVisible}
+        onClose={() => setMessageModalVisible(false)}
+        message={messageModal}
+        type={messageType}
+        t={t}
+        duration={duration}
+      />
     </View>
   );
 };
@@ -722,6 +764,19 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 12,
     fontWeight: 'bold',
+  },
+  viewMoreButton: {
+    padding: 12,
+    backgroundColor: '#f0f0f0',
+    borderRadius: 8,
+    alignItems: 'center',
+    marginHorizontal: 16,
+    marginVertical: 8,
+  },
+  viewMoreText: {
+    color: '#007AFF',
+    fontSize: 16,
+    fontWeight: '500',
   },
 });
 

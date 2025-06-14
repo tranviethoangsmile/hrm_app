@@ -56,3 +56,4 @@ export const SAFETY_REPORT = '/safetyreport';
 export const GET_ALL_BY_USER_ID = '/getbyuserid';
 export const GET_ALL_BY_DEPARTMENT_ID = '/getbydepartmentid';
 export const DAY_OFFS = '/dayoffs';
+export const GET_EVENT_WITH_POSITION = '/getwithposition';

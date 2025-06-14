@@ -25,6 +25,7 @@ import CheckBox from '@react-native-community/checkbox';
 import {useNavigation} from '@react-navigation/native';
 import LinearGradient from 'react-native-linear-gradient';
 import Icon from 'react-native-vector-icons/Ionicons';
+import ModalMessage from '../components/ModalMessage';
 import {
   BG_COLOR,
   TEXT_COLOR,
@@ -46,15 +47,10 @@ import {
   SEARCH_EVENT_CHECKED,
   SEARCH_SAFETY_CHECKED,
 } from '../utils/constans';
-import Header from '../components/common/Header';
 
 const Event = () => {
   const getLanguage = async () => {
     return await AsyncStorage.getItem('Language');
-  };
-
-  const showAlert = message => {
-    Alert.alert(t('noti'), t(message));
   };
   const {t} = useTranslation();
   const navigation = useNavigation();
@@ -70,6 +66,16 @@ const Event = () => {
   const [eventDescription, setEventDescription] = useState('');
   const [is_confirm, setIsconfirm] = useState(false);
   const [isSafetyCheckEvent, setIsSafetyCheckEvent] = useState(true);
+  const [messageModal, setMessageModal] = useState('');
+  const [messageType, setMessageType] = useState('success');
+  const [duration, setDuration] = useState(1000);
+  const [isMessageModalVisible, setMessageModalVisible] = useState(false);
+  const showMessage = (msg, type, dur) => {
+    setMessageModalVisible(true);
+    setMessageModal(msg);
+    setMessageType(type);
+    setDuration(dur);
+  };
   const search_event_checked_of_user = async (event_id, user_id) => {
     try {
       const response = await axios.post(
@@ -80,13 +86,11 @@ const Event = () => {
         },
       );
       if (response?.data?.success) {
-        showAlert('is_checked');
+        showMessage('is_checked', 'warning', 1000);
         navigation.navigate('Main');
       }
     } catch (error) {
-      console.log(error.message);
-      // showAlert('contactAdmin');
-      // navigation.navigate('Main');
+      showMessage(error.message, 'error', 1000);
     }
   };
 
@@ -100,12 +104,11 @@ const Event = () => {
         },
       );
       if (response?.data?.success) {
-        showAlert('is_checked');
+        showMessage('is_checked', 'warning', 1000);
         navigation.navigate('Main');
       }
     } catch (error) {
-      console.log(error.message);
-      // showAlert('contactAdmin');
+      showMessage(error.message || 'contactAdmin', 'error', 1000);
       // navigation.navigate('Main');
     }
   };
@@ -120,12 +123,12 @@ const Event = () => {
         setEventName(res.data.data[0].name);
         setEventDescription(res.data.data[0].description);
       } else {
-        showAlert('not.event');
-        // navigation.navigate('Main');
+        showMessage('not.event', 'warning', 1000);
+        navigation.navigate('Main');
       }
     } catch (error) {
-      showAlert('not.event');
-      // navigation.navigate('Main');
+      showMessage(error.message || 'contactAdmin', 'warning', 1000);
+      navigation.navigate('Main');
     }
   };
   useEffect(() => {
@@ -147,8 +150,7 @@ const Event = () => {
       }
       setUserInfo(res.data.data);
     } catch (error) {
-      showAlert('contactAdmin');
-      // navigation.navigate('Main');
+      showMessage('contactAdmin', 'warning', 1000);
     }
   };
 
@@ -180,14 +182,12 @@ const Event = () => {
         },
       );
       if (!result?.data?.success) {
-        showAlert('unSuccess');
-        navigation.navigate('Main');
+        showMessage('unSuccess', 'warning', 1000);
       }
-      showAlert('success');
+      showMessage('success', 'warning', 1000);
       navigation.navigate('Main');
     } catch (error) {
-      showAlert(error.message);
-      // navigation.navigate('Main');
+      showMessage(error.message || 'contactAdmin', 'warning', 1000);
     }
   };
 
@@ -205,14 +205,12 @@ const Event = () => {
         },
       );
       if (!result?.data?.success) {
-        showAlert('unSuccess');
-        navigation.navigate('Main');
+        showMessage('unSuccess', 'warning', 1000);
       }
-      showAlert('success');
+      showMessage('success', 'success', 1000);
       navigation.navigate('Main');
     } catch (error) {
-      showAlert('unSuccess');
-      // navigation.navigate('Main');
+      showMessage('unSuccess', 'warning', 1000);
     }
   };
 
@@ -243,7 +241,7 @@ const Event = () => {
 
       {/* Modern Header */}
       <LinearGradient
-        colors={['#667eea', '#764ba2']}
+        colors={[THEME_COLOR, THEME_COLOR_2]}
         start={{x: 0, y: 0}}
         end={{x: 1, y: 1}}
         style={styles.headerGradient}>
@@ -253,7 +251,9 @@ const Event = () => {
             style={styles.backButton}>
             <Icon name="arrow-back" size={24} color="#fff" />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>{t('event.title', 'Event')}</Text>
+          <Text style={styles.headerTitle}>
+            {eventName || t('event.title', 'Event')}
+          </Text>
           <View style={styles.headerSpacer} />
         </View>
       </LinearGradient>
@@ -261,175 +261,129 @@ const Event = () => {
       <ScrollView
         style={styles.scrollContainer}
         showsVerticalScrollIndicator={false}>
-        {/* User Info Card */}
-        <View style={styles.userCard}>
-          <LinearGradient
-            colors={['#f8fafc', '#e2e8f0']}
-            style={styles.userCardGradient}>
-            <View style={styles.userInfo}>
-              <View style={styles.avatarContainer}>
-                <Image
-                  source={
-                    userInfo.avatar
-                      ? {uri: userInfo.avatar}
-                      : require('../assets/images/avatar.jpg')
-                  }
-                  style={styles.avatar}
-                />
-              </View>
-              <View style={styles.userDetails}>
-                <Text style={styles.userName}>{userInfo.name}</Text>
-                <Text style={styles.userEmail}>{userInfo.email}</Text>
-                <Text style={styles.userRole}>
-                  {userInfo.employee_id} • {userInfo.position}
-                </Text>
-              </View>
-            </View>
-          </LinearGradient>
-        </View>
-
         {/* Event Content */}
         <View style={styles.eventCard}>
-          <LinearGradient
-            colors={['#667eea', '#764ba2']}
-            style={styles.eventHeaderGradient}>
-            <Icon name="calendar" size={24} color="#fff" />
-            <Text style={styles.eventName}>{eventName}</Text>
-          </LinearGradient>
-
-          <View style={styles.eventContent}>
-            <View style={styles.descriptionContainer}>
-              <Text style={styles.eventDescription}>{eventDescription}</Text>
+          <Text style={styles.eventDescription}>{eventDescription}</Text>
+          {isSafetyCheckEvent ? (
+            <View style={styles.formContainer}>
+              <View style={styles.section}>
+                <View style={styles.sectionHeader}>
+                  <Icon name="shield-checkmark" size={20} color={THEME_COLOR} />
+                  <Text style={styles.sectionTitle}>{t('safety.c')}</Text>
+                </View>
+                <TouchableOpacity
+                  style={styles.checkboxRow}
+                  activeOpacity={0.7}>
+                  <CheckBox
+                    tintColors={{true: THEME_COLOR, false: '#94a3b8'}}
+                    value={is_safety}
+                    onValueChange={handleCheckboxSafety}
+                    style={styles.checkbox}
+                  />
+                  <Text style={styles.checkboxLabel}>{t('is_safety')}</Text>
+                </TouchableOpacity>
+                {!is_safety && (
+                  <View style={styles.feedbackContainer}>
+                    <Text style={styles.inputLabel}>{t('s.help')}</Text>
+                    <TextInput
+                      style={styles.textInput}
+                      placeholder={t('feedback')}
+                      placeholderTextColor="#94a3b8"
+                      multiline
+                      numberOfLines={4}
+                      onChangeText={txt => setFeedback(txt)}
+                      textAlignVertical="top"
+                    />
+                  </View>
+                )}
+              </View>
+              <View style={styles.section}>
+                <View style={styles.sectionHeader}>
+                  <Icon name="home" size={20} color={THEME_COLOR} />
+                  <Text style={styles.sectionTitle}>{t('at_home')}</Text>
+                </View>
+                <TouchableOpacity
+                  style={styles.checkboxRow}
+                  activeOpacity={0.7}>
+                  <CheckBox
+                    tintColors={{true: THEME_COLOR, false: '#94a3b8'}}
+                    value={is_at_home}
+                    onValueChange={() => setIs_at_home(!is_at_home)}
+                    style={styles.checkbox}
+                  />
+                  <Text style={styles.checkboxLabel}>{t('y')}</Text>
+                </TouchableOpacity>
+              </View>
+              <View style={styles.section}>
+                <View style={styles.sectionHeader}>
+                  <Icon name="briefcase" size={20} color={THEME_COLOR} />
+                  <Text style={styles.sectionTitle}>{t('can_work')}</Text>
+                </View>
+                <TouchableOpacity
+                  style={styles.checkboxRow}
+                  activeOpacity={0.7}>
+                  <CheckBox
+                    tintColors={{true: THEME_COLOR, false: '#94a3b8'}}
+                    value={is_can_work}
+                    onValueChange={() => setIs_can_work(!is_can_work)}
+                    style={styles.checkbox}
+                  />
+                  <Text style={styles.checkboxLabel}>{t('y')}</Text>
+                </TouchableOpacity>
+              </View>
+              <TouchableOpacity
+                onPress={handleSafetyConfirm}
+                style={styles.submitButton}
+                activeOpacity={0.8}>
+                <LinearGradient
+                  colors={[THEME_COLOR, THEME_COLOR_2]}
+                  style={styles.submitButtonGradient}>
+                  <Icon name="checkmark-circle" size={20} color="#fff" />
+                  <Text style={styles.submitButtonText}>{t('confirm.c')}</Text>
+                </LinearGradient>
+              </TouchableOpacity>
             </View>
-
-            {isSafetyCheckEvent ? (
-              <View style={styles.formContainer}>
-                {/* Safety Check Section */}
-                <View style={styles.section}>
-                  <View style={styles.sectionHeader}>
-                    <Icon name="shield-checkmark" size={20} color="#667eea" />
-                    <Text style={styles.sectionTitle}>{t('safety.c')}</Text>
-                  </View>
-                  <TouchableOpacity
-                    style={styles.checkboxRow}
-                    activeOpacity={0.7}>
-                    <CheckBox
-                      tintColors={{true: '#667eea', false: '#94a3b8'}}
-                      value={is_safety}
-                      onValueChange={handleCheckboxSafety}
-                      style={styles.checkbox}
-                    />
-                    <Text style={styles.checkboxLabel}>{t('is_safety')}</Text>
-                  </TouchableOpacity>
-
-                  {!is_safety && (
-                    <View style={styles.feedbackContainer}>
-                      <Text style={styles.inputLabel}>{t('s.help')}</Text>
-                      <TextInput
-                        style={styles.textInput}
-                        placeholder={t('feedback')}
-                        placeholderTextColor="#94a3b8"
-                        multiline
-                        numberOfLines={4}
-                        onChangeText={txt => setFeedback(txt)}
-                        textAlignVertical="top"
-                      />
-                    </View>
-                  )}
+          ) : (
+            <View style={styles.formContainer}>
+              <View style={styles.section}>
+                <View style={styles.sectionHeader}>
+                  <Icon name="checkmark-circle" size={20} color={THEME_COLOR} />
+                  <Text style={styles.sectionTitle}>{t('isConfirm')}</Text>
                 </View>
-
-                {/* At Home Section */}
-                <View style={styles.section}>
-                  <View style={styles.sectionHeader}>
-                    <Icon name="home" size={20} color="#667eea" />
-                    <Text style={styles.sectionTitle}>{t('at_home')}</Text>
-                  </View>
-                  <TouchableOpacity
-                    style={styles.checkboxRow}
-                    activeOpacity={0.7}>
-                    <CheckBox
-                      tintColors={{true: '#667eea', false: '#94a3b8'}}
-                      value={is_at_home}
-                      onValueChange={() => setIs_at_home(!is_at_home)}
-                      style={styles.checkbox}
-                    />
-                    <Text style={styles.checkboxLabel}>{t('y')}</Text>
-                  </TouchableOpacity>
-                </View>
-
-                {/* Can Work Section */}
-                <View style={styles.section}>
-                  <View style={styles.sectionHeader}>
-                    <Icon name="briefcase" size={20} color="#667eea" />
-                    <Text style={styles.sectionTitle}>{t('can_work')}</Text>
-                  </View>
-                  <TouchableOpacity
-                    style={styles.checkboxRow}
-                    activeOpacity={0.7}>
-                    <CheckBox
-                      tintColors={{true: '#667eea', false: '#94a3b8'}}
-                      value={is_can_work}
-                      onValueChange={() => setIs_can_work(!is_can_work)}
-                      style={styles.checkbox}
-                    />
-                    <Text style={styles.checkboxLabel}>{t('y')}</Text>
-                  </TouchableOpacity>
-                </View>
-
-                {/* Submit Button */}
                 <TouchableOpacity
-                  onPress={handleSafetyConfirm}
-                  style={styles.submitButton}
-                  activeOpacity={0.8}>
-                  <LinearGradient
-                    colors={['#4FACFE', '#00F2FE']}
-                    style={styles.submitButtonGradient}>
-                    <Icon name="checkmark-circle" size={20} color="#fff" />
-                    <Text style={styles.submitButtonText}>
-                      {t('confirm.c')}
-                    </Text>
-                  </LinearGradient>
+                  style={styles.checkboxRow}
+                  activeOpacity={0.7}>
+                  <CheckBox
+                    tintColors={{true: THEME_COLOR, false: '#94a3b8'}}
+                    value={is_confirm}
+                    onValueChange={() => setIsconfirm(!is_confirm)}
+                    style={styles.checkbox}
+                  />
+                  <Text style={styles.checkboxLabel}>{t('y')}</Text>
                 </TouchableOpacity>
               </View>
-            ) : (
-              <View style={styles.formContainer}>
-                {/* Event Confirmation */}
-                <View style={styles.section}>
-                  <View style={styles.sectionHeader}>
-                    <Icon name="checkmark-circle" size={20} color="#667eea" />
-                    <Text style={styles.sectionTitle}>{t('isConfirm')}</Text>
-                  </View>
-                  <TouchableOpacity
-                    style={styles.checkboxRow}
-                    activeOpacity={0.7}>
-                    <CheckBox
-                      tintColors={{true: '#667eea', false: '#94a3b8'}}
-                      value={is_confirm}
-                      onValueChange={() => setIsconfirm(!is_confirm)}
-                      style={styles.checkbox}
-                    />
-                    <Text style={styles.checkboxLabel}>{t('y')}</Text>
-                  </TouchableOpacity>
-                </View>
-
-                {/* Submit Button */}
-                <TouchableOpacity
-                  onPress={handleConfirmEventCheck}
-                  style={styles.submitButton}
-                  activeOpacity={0.8}>
-                  <LinearGradient
-                    colors={['#4FACFE', '#00F2FE']}
-                    style={styles.submitButtonGradient}>
-                    <Icon name="checkmark-circle" size={20} color="#fff" />
-                    <Text style={styles.submitButtonText}>
-                      {t('confirm.c')}
-                    </Text>
-                  </LinearGradient>
-                </TouchableOpacity>
-              </View>
-            )}
-          </View>
+              <TouchableOpacity
+                onPress={handleConfirmEventCheck}
+                style={styles.submitButton}
+                activeOpacity={0.8}>
+                <LinearGradient
+                  colors={[THEME_COLOR, THEME_COLOR_2]}
+                  style={styles.submitButtonGradient}>
+                  <Icon name="checkmark-circle" size={20} color="#fff" />
+                  <Text style={styles.submitButtonText}>{t('confirm.c')}</Text>
+                </LinearGradient>
+              </TouchableOpacity>
+            </View>
+          )}
         </View>
+        <ModalMessage
+          isVisible={isMessageModalVisible}
+          onClose={() => setMessageModalVisible(false)}
+          message={messageModal}
+          type={messageType}
+          t={t}
+          duration={duration}
+        />
       </ScrollView>
     </View>
   );
@@ -469,58 +423,10 @@ const styles = StyleSheet.create({
     flex: 1,
     marginTop: -10,
   },
-  userCard: {
-    marginHorizontal: 20,
-    marginTop: 10,
-    marginBottom: 20,
-    borderRadius: 16,
-    shadowColor: '#000',
-    shadowOffset: {width: 0, height: 4},
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 6,
-    backgroundColor: '#fff',
-  },
-  userCardGradient: {
-    borderRadius: 16,
-    padding: 20,
-  },
-  userInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  avatarContainer: {
-    marginRight: 16,
-  },
-  avatar: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    borderWidth: 3,
-    borderColor: '#e2e8f0',
-  },
-  userDetails: {
-    flex: 1,
-  },
-  userName: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#1e293b',
-    marginBottom: 4,
-  },
-  userEmail: {
-    fontSize: 14,
-    color: '#64748b',
-    marginBottom: 2,
-  },
-  userRole: {
-    fontSize: 13,
-    color: '#94a3b8',
-    fontWeight: '500',
-  },
   eventCard: {
     marginHorizontal: 20,
-    marginBottom: 20,
+    marginTop: 24,
+    marginBottom: 32,
     borderRadius: 16,
     overflow: 'hidden',
     shadowColor: '#000',
@@ -529,34 +435,14 @@ const styles = StyleSheet.create({
     shadowRadius: 12,
     elevation: 8,
     backgroundColor: '#fff',
-  },
-  eventHeaderGradient: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 20,
-    paddingVertical: 16,
-  },
-  eventName: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#fff',
-    marginLeft: 12,
-    letterSpacing: 0.3,
-  },
-  eventContent: {
-    padding: 20,
-  },
-  descriptionContainer: {
-    backgroundColor: '#f1f5f9',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 24,
+    padding: 24,
   },
   eventDescription: {
-    fontSize: 15,
+    fontSize: 16,
     color: '#475569',
     lineHeight: 22,
     fontWeight: '500',
+    marginBottom: 24,
   },
   formContainer: {
     gap: 20,
@@ -567,6 +453,7 @@ const styles = StyleSheet.create({
     padding: 16,
     borderWidth: 1,
     borderColor: '#e2e8f0',
+    marginBottom: 16,
   },
   sectionHeader: {
     flexDirection: 'row',
@@ -617,10 +504,10 @@ const styles = StyleSheet.create({
     minHeight: 80,
   },
   submitButton: {
-    marginTop: 24,
+    marginTop: 8,
     borderRadius: 12,
     overflow: 'hidden',
-    shadowColor: '#4FACFE',
+    shadowColor: THEME_COLOR,
     shadowOffset: {width: 0, height: 4},
     shadowOpacity: 0.3,
     shadowRadius: 8,

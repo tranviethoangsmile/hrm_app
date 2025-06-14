@@ -4,6 +4,7 @@ import {Provider} from 'react-redux';
 import MainNavigator from './src/navigation/MainNavigator';
 import MyStore from './src/redux/MyStore';
 import {NotificationServices} from './src/utils/notification/PushNotifications';
+import {requestUserPermission} from './src/utils/firebase';
 
 const App = () => {
   const requestStoragePermission = async () => {
@@ -30,6 +31,7 @@ const App = () => {
     if (Platform.OS === 'android') {
       requestStoragePermission();
     }
+    requestUserPermission();
   }, []);
   return (
     <Provider store={MyStore}>
