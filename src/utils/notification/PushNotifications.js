@@ -93,27 +93,37 @@ export const NotificationServices = async () => {
   // Xử lý khi nhận được thông báo khi ứng dụng đang chạy
   messaging().onMessage(remoteMessage => {
     try {
-      const encryptedMessage = remoteMessage?.notification.body;
-      const key = remoteMessage?.data.key;
-      if (
-        encryptedMessage &&
-        key &&
-        Platform.OS === 'android' &&
-        PushNotification
-      ) {
-        const decryptedMessage = decrypt(encryptedMessage, key);
-        PushNotification.localNotification({
-          channelId: 'default-channel-id',
-          title: remoteMessage.notification?.title,
-          message: decryptedMessage,
-          playSound: true,
-          soundName: 'default',
-          importance: Importance ? Importance.LOW : 2,
-          priority: 'low',
-        });
+      console.log('Received foreground message:', remoteMessage);
+      const encryptedMessage = remoteMessage?.notification?.body;
+      const key = remoteMessage?.data?.key;
+
+      if (Platform.OS === 'android' && PushNotification) {
+        if (encryptedMessage && key) {
+          const decryptedMessage = decrypt(encryptedMessage, key);
+          PushNotification.localNotification({
+            channelId: 'default-channel-id',
+            title: remoteMessage.notification?.title || 'Thông báo',
+            message: decryptedMessage,
+            playSound: true,
+            soundName: 'default',
+            importance: Importance ? Importance.HIGH : 4,
+            priority: 'high',
+          });
+        } else {
+          // Fallback for non-encrypted messages
+          PushNotification.localNotification({
+            channelId: 'default-channel-id',
+            title: remoteMessage.notification?.title || 'Thông báo',
+            message: remoteMessage.notification?.body || 'Có thông báo mới',
+            playSound: true,
+            soundName: 'default',
+            importance: Importance ? Importance.HIGH : 4,
+            priority: 'high',
+          });
+        }
       }
     } catch (error) {
-      console.error('Error while decrypting the message:', error);
+      console.error('Error while handling notification:', error);
     }
   });
 
@@ -144,28 +154,41 @@ export const NotificationServices = async () => {
         // }
       }
     });
-  // messaging().setBackgroundMessageHandler(async remoteMessage => {
-  //   try {
-  //     const encryptedMessage = remoteMessage?.notification?.body;
-  //     const key = remoteMessage?.data?.key;
 
-  //     if (encryptedMessage && key) {
-  //       const decryptedMessage = decrypt(encryptedMessage, key);
+  // Uncomment and update background message handler
+  messaging().setBackgroundMessageHandler(async remoteMessage => {
+    try {
+      console.log('Received background message:', remoteMessage);
+      const encryptedMessage = remoteMessage?.notification?.body;
+      const key = remoteMessage?.data?.key;
 
-  //       PushNotification.localNotification({
-  //         channelId: 'default-channel-id',
-  //         title: remoteMessage.notification?.title || 'Thông báo',
-  //         message: decryptedMessage,
-  //         playSound: true,
-  //         soundName: 'default',
-  //         importance: Importance.LOW,
-  //         priority: 'low',
-  //       });
-  //     } else {
-  //       console.warn('Dữ liệu thông báo không đầy đủ.');
-  //     }
-  //   } catch (error) {
-  //     console.error('Lỗi khi xử lý tin nhắn nền:', error);
-  //   }
-  // });
+      if (Platform.OS === 'android' && PushNotification) {
+        if (encryptedMessage && key) {
+          const decryptedMessage = decrypt(encryptedMessage, key);
+          PushNotification.localNotification({
+            channelId: 'default-channel-id',
+            title: remoteMessage.notification?.title || 'Thông báo',
+            message: decryptedMessage,
+            playSound: true,
+            soundName: 'default',
+            importance: Importance ? Importance.HIGH : 4,
+            priority: 'high',
+          });
+        } else {
+          // Fallback for non-encrypted messages
+          PushNotification.localNotification({
+            channelId: 'default-channel-id',
+            title: remoteMessage.notification?.title || 'Thông báo',
+            message: remoteMessage.notification?.body || 'Có thông báo mới',
+            playSound: true,
+            soundName: 'default',
+            importance: Importance ? Importance.HIGH : 4,
+            priority: 'high',
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Error while handling background message:', error);
+    }
+  });
 };

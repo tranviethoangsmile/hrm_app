@@ -3,8 +3,10 @@ import {PermissionsAndroid, Platform} from 'react-native';
 import {Provider} from 'react-redux';
 import MainNavigator from './src/navigation/MainNavigator';
 import MyStore from './src/redux/MyStore';
-import {NotificationServices} from './src/utils/notification/PushNotifications';
-import {requestUserPermission} from './src/utils/firebase';
+import {
+  NotificationServices,
+  requestUserPermission,
+} from './src/utils/notification/PushNotifications';
 
 const App = () => {
   const requestStoragePermission = async () => {
