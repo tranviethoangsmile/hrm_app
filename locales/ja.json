@@ -269,5 +269,18 @@
   "weekend": "週末",
   "night_shift": "夜勤",
   "day_shift": "日勤",
-  "viewMore": "もっと見る"
+  "viewMore": "もっと見る",
+  "cancel": "キャンセル",
+  "confirm_night_shift": "夜勤の確認",
+  "confirm_night_shift_in": "夜勤開始の確認",
+  "confirm_night_shift_out": "夜勤終了の確認",
+  "night_shift_in": "夜勤開始",
+  "night_shift_out": "夜勤終了",
+  "night_shift_confirm_message": "夜勤の開始または終了を確認してください",
+  "upload.title": "アップロード",
+  "enter.error.count": "エラー数を入力",
+  "enter.shutdown.time": "停止時間を入力",
+  "enter.operated.time": "稼働時間を入力",
+  "compare_shift": "シフト比較",
+  "total": "合計"
 }

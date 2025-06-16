@@ -17,6 +17,7 @@ import {
   Keyboard,
   Platform,
   StatusBar,
+  ActivityIndicator,
 } from 'react-native';
 import Video from 'react-native-video';
 import RNFS from 'react-native-fs';
@@ -56,6 +57,7 @@ import {COLORS, SIZES, FONTS, SHADOWS} from '../config/theme';
 import LinkPreview from 'react-native-link-preview';
 import IconFA from 'react-native-vector-icons/FontAwesome';
 import {useNavigation} from '@react-navigation/native';
+import moment from 'moment';
 
 const extractFirstUrl = text => {
   const urlRegex =
@@ -63,6 +65,32 @@ const extractFirstUrl = text => {
   const match = text.match(urlRegex);
   return match ? match[0] : null;
 };
+
+// Hàm chèn nhãn ngày vào danh sách tin nhắn
+function injectDateLabels(messages) {
+  if (!messages.length) return [];
+  let result = [];
+  let lastDate = null;
+  messages.forEach(msg => {
+    // Giả sử msg.createdAt là timestamp hoặc ISO string
+    const msgDate = moment(msg.created_at).startOf('day');
+    if (!lastDate || !msgDate.isSame(lastDate)) {
+      let label = '';
+      if (msgDate.isSame(moment(), 'day')) label = 'Hôm nay';
+      else if (msgDate.isSame(moment().subtract(1, 'day'), 'day'))
+        label = 'Hôm qua';
+      else label = msgDate.format('DD/MM/YYYY');
+      result.push({
+        type: 'date',
+        label,
+        id: `date-${msgDate.format('YYYYMMDD')}`,
+      });
+      lastDate = msgDate;
+    }
+    result.push({...msg, type: 'message'});
+  });
+  return result;
+}
 
 const ChatScreen = ({route}) => {
   const textInputRef = React.useRef(null);
@@ -84,6 +112,7 @@ const ChatScreen = ({route}) => {
   const [duration, setDuration] = useState(1000);
   const [isMessageModalVisible, setMessageModalVisible] = useState(false);
   const navigation = useNavigation();
+  const [uploadingMedia, setUploadingMedia] = useState(null);
   const showMessage = (msg, type, dur) => {
     setMessageModalVisible(true);
     setMessageModal(msg);
@@ -135,8 +164,12 @@ const ChatScreen = ({route}) => {
         console.log('Lỗi: ', response.errorCode);
       } else {
         const asset = response.assets[0];
+        setUploadingMedia({
+          uri: asset.uri,
+          percent: 0,
+          type: getMessageType(asset),
+        });
         try {
-          setIsloading(true);
           const realUri = await getRealPathFromURI(asset.uri);
           const form = new FormData();
           form.append('media', {
@@ -152,12 +185,17 @@ const ChatScreen = ({route}) => {
                 Accept: 'application/json',
                 'Content-Type': 'multipart/form-data',
               },
+              onUploadProgress: progressEvent => {
+                const percent = Math.round(
+                  (progressEvent.loaded * 100) / progressEvent.total,
+                );
+                setUploadingMedia(prev => (prev ? {...prev, percent} : null));
+              },
             },
           );
           if (!res?.data.success) {
             showMessage('image.send.error', 'error', 2000);
           }
-          showMessage('image.send.success', 'success', 1000);
           const newMessage = {
             conversation_id: conversationId,
             user_id: USER_INFOR.id,
@@ -168,7 +206,6 @@ const ChatScreen = ({route}) => {
           Keyboard.dismiss();
           setShowEmojiPicker(false);
         } catch (error) {
-          setIsloading(false);
           showMessage('image.send.error', 'error', 2000);
           if (error.response) {
             showMessage('networkError', 'error', 2000);
@@ -178,7 +215,7 @@ const ChatScreen = ({route}) => {
             showMessage('networkError', 'error', 2000);
           }
         } finally {
-          setIsloading(false);
+          setUploadingMedia(null);
         }
       }
     });
@@ -668,12 +705,11 @@ const ChatScreen = ({route}) => {
     );
   };
 
-  const renderItem = ({item, index}) => {
-    const isUser = item.user_id === USER_INFOR.id;
-    const isLastFromSender =
-      index === messages.length - 1 ||
-      messages[index + 1]?.user_id !== item.user_id;
+  // Khi render FlatList, dùng dữ liệu đã inject nhãn ngày
+  const messagesWithDateLabels = injectDateLabels(messages);
 
+  // Bọc Message bằng React.memo để tránh render lại không cần thiết
+  const MemoizedMessage = React.memo(({item, isUser, isLastFromSender}) => {
     return (
       <Message
         item={item}
@@ -681,7 +717,44 @@ const ChatScreen = ({route}) => {
         isLastFromSender={isLastFromSender}
       />
     );
-  };
+  });
+
+  // Tối ưu renderItem bằng useCallback
+  const renderItem = React.useCallback(
+    ({item, index}) => {
+      if (item.type === 'date') {
+        return (
+          <View style={{alignItems: 'center', marginVertical: 10}}>
+            <Text
+              style={{
+                backgroundColor: '#222',
+                color: '#fff',
+                paddingHorizontal: 16,
+                paddingVertical: 4,
+                borderRadius: 12,
+                fontWeight: 'bold',
+                fontSize: 13,
+                overflow: 'hidden',
+              }}>
+              {item.label}
+            </Text>
+          </View>
+        );
+      }
+      const isUser = item.user_id === USER_INFOR.id;
+      const isLastFromSender =
+        index === messages.length - 1 ||
+        messages[index + 1]?.user_id !== item.user_id;
+      return (
+        <MemoizedMessage
+          item={item}
+          isUser={isUser}
+          isLastFromSender={isLastFromSender}
+        />
+      );
+    },
+    [USER_INFOR.id, messages],
+  );
 
   return (
     <KeyboardAvoidingView
@@ -733,12 +806,43 @@ const ChatScreen = ({route}) => {
           ) : (
             <FlatList
               ref={flatListRef}
-              data={messages}
+              data={messagesWithDateLabels}
               renderItem={renderItem}
-              keyExtractor={item => item.id.toString()}
+              keyExtractor={item =>
+                item.type === 'date' ? item.id : `message-${item.id}`
+              }
               contentContainerStyle={styles.messagesList}
               contentInset={{bottom: 65}}
+              onEndReached={getAllMessage}
+              onEndReachedThreshold={0.1}
+              ListFooterComponent={
+                isLoading ? (
+                  <ActivityIndicator size="small" color="#888" />
+                ) : null
+              }
             />
+          )}
+
+          {uploadingMedia && (
+            <View style={styles.mediaContainer}>
+              {uploadingMedia.type === 'IMAGE' ? (
+                <Image
+                  source={{uri: uploadingMedia.uri}}
+                  style={styles.media}
+                />
+              ) : (
+                <Video
+                  source={{uri: uploadingMedia.uri}}
+                  style={styles.media}
+                />
+              )}
+              <View style={styles.loadingOverlay}>
+                <ActivityIndicator size="large" color="#fff" />
+                <Text style={styles.percentText}>
+                  {uploadingMedia.percent}%
+                </Text>
+              </View>
+            </View>
           )}
 
           <View style={styles.inputContainer}>
@@ -781,15 +885,16 @@ const ChatScreen = ({route}) => {
             </View>
           )}
 
-          {isLoading && <Loader t={t} />}
-          <ModalMessage
-            isVisible={isMessageModalVisible}
-            onClose={() => setMessageModalVisible(false)}
-            message={messageModal}
-            type={messageType}
-            t={t}
-            duration={duration}
-          />
+          {isMessageModalVisible && (
+            <ModalMessage
+              isVisible={isMessageModalVisible}
+              onClose={() => setMessageModalVisible(false)}
+              message={messageModal}
+              type={messageType}
+              t={t}
+              duration={duration}
+            />
+          )}
         </SafeAreaView>
       </TouchableWithoutFeedback>
     </KeyboardAvoidingView>
@@ -1019,6 +1124,31 @@ const styles = StyleSheet.create({
     color: COLORS.primary,
     fontSize: 12,
     textDecorationLine: 'underline',
+  },
+  mediaContainer: {
+    width: 150,
+    height: 150,
+    position: 'relative',
+    margin: 8,
+    alignSelf: 'flex-end',
+  },
+  media: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 12,
+  },
+  loadingOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.3)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 12,
+  },
+  percentText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 18,
+    marginTop: 8,
   },
 });
 

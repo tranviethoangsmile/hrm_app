@@ -218,34 +218,12 @@ const Checkin = () => {
       </LinearGradient>
 
       {/* Scanning Frame with Instructions */}
-      <View style={styles.scanningOverlay}>
-        <View style={styles.scanFrame}>
-          <View style={styles.cornerTopLeft} />
-          <View style={styles.cornerTopRight} />
-          <View style={styles.cornerBottomLeft} />
-          <View style={styles.cornerBottomRight} />
-        </View>
-
-        <Text style={styles.instructionText}>
-          {t('place_qr_inside_frame', 'Place QR code inside the frame')}
-        </Text>
-      </View>
-
       {/* Bottom Overlay with Status */}
       <LinearGradient
         colors={['transparent', 'rgba(0,0,0,0.8)']}
         style={styles.bottomOverlay}>
         {isScanned ? (
           <View style={styles.statusContainer}>
-            <LinearGradient
-              colors={['#11998e', '#38ef7d']}
-              style={styles.statusGradient}>
-              <Icon name="checkmark-circle" size={24} color="#fff" />
-              <Text style={styles.statusText}>
-                {t('qr_scanned', 'QR Code Scanned Successfully')}
-              </Text>
-            </LinearGradient>
-
             <TouchableOpacity
               style={styles.retryButton}
               onPress={handleRetryScan}

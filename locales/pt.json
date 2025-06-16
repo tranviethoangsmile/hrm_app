@@ -267,5 +267,18 @@
   "weekend": "Final de semana",
   "night_shift": "Turno da noite",
   "day_shift": "Turno do dia",
-  "viewMore": "Ver mais"
+  "viewMore": "Ver mais",
+  "cancel": "Cancelar",
+  "confirm_night_shift": "Confirmar Turno Noturno",
+  "confirm_night_shift_in": "Confirmar Entrada do Turno Noturno",
+  "confirm_night_shift_out": "Confirmar Saída do Turno Noturno",
+  "night_shift_in": "Entrada do Turno Noturno",
+  "night_shift_out": "Saída do Turno Noturno",
+  "night_shift_confirm_message": "Por favor, confirme se deseja entrar ou sair do turno noturno",
+  "upload.title": "Carregar",
+  "enter.error.count": "Digite o número de erros",
+  "enter.shutdown.time": "Digite o tempo de parada",
+  "enter.operated.time": "Digite o tempo operado",
+  "compare_shift": "Comparar turno",
+  "total": "Total"
 }

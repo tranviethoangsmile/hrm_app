@@ -269,5 +269,18 @@
   "weekend": "Weekend",
   "night_shift": "Night Shift",
   "day_shift": "Day Shift",
-  "viewMore": "View More"
+  "viewMore": "View More",
+  "cancel": "Cancel",
+  "confirm_night_shift": "Confirm Night Shift",
+  "confirm_night_shift_in": "Confirm Night Shift In",
+  "confirm_night_shift_out": "Confirm Night Shift Out",
+  "night_shift_in": "Night Shift In",
+  "night_shift_out": "Night Shift Out",
+  "night_shift_confirm_message": "Please confirm if you want to check in or check out of night shift",
+  "upload.title": "Upload",
+  "enter.error.count": "Enter error count",
+  "enter.shutdown.time": "Enter shutdown time",
+  "enter.operated.time": "Enter operated time",
+  "compare_shift": "Compare shift",
+  "total": "Total"
 }

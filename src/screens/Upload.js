@@ -44,6 +44,8 @@ import * as ImagePicker from 'react-native-image-picker';
 import moment from 'moment';
 import LinkPreview from 'react-native-link-preview';
 import ModalMessage from '../components/ModalMessage';
+import Header from '../components/common/Header';
+import {useNavigation} from '@react-navigation/native';
 
 const {width} = Dimensions.get('window');
 
@@ -291,6 +293,7 @@ const Upload = () => {
   const {t} = useTranslation();
   const authData = useSelector(state => state.auth);
   const USER_IF = authData?.data?.data;
+  const navigation = useNavigation();
   const [posts, setPosts] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -433,52 +436,63 @@ const Upload = () => {
   };
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0}
-      style={{flex: 1, backgroundColor: '#f5f6fa'}}>
-      <StatusBar barStyle="dark-content" backgroundColor="#f5f6fa" />
-      <FlatList
-        ListHeaderComponent={
-          <PostInput onPost={handlePost} loading={posting} />
-        }
-        data={posts}
-        keyExtractor={item => item.id?.toString()}
-        renderItem={({item, index}) => (
-          <>
-            <PostCard
-              item={item}
-              onDelete={handleDelete}
-              onEdit={() => {
-                /* TODO: handle edit */
-              }}
-              onPressLink={handlePressLink}
-              showMenu={true}
-            />
-            {index < posts.length - 1 && <View style={styles.feedSeparator} />}
-          </>
-        )}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-        }
-        contentContainerStyle={{paddingBottom: 40, paddingTop: 4}}
-        ListEmptyComponent={
-          isLoading ? (
-            <ActivityIndicator color={THEME_COLOR} />
-          ) : (
-            <Text
-              style={{
-                color: '#b0b3b8',
-                textAlign: 'center',
-                marginTop: 40,
-                fontSize: 15,
-              }}>
-              {t('no_posts', 'Chưa có bài đăng nào')}
-            </Text>
-          )
-        }
+    <View style={{flex: 1, backgroundColor: BG_COLOR}}>
+      <StatusBar barStyle="dark-content" backgroundColor="#fff" />
+      <Header
+        title={t('upload.title', 'Tải lên')}
+        onBack={() => {
+          if (typeof navigation !== 'undefined' && navigation.goBack)
+            navigation.goBack();
+        }}
       />
-    </KeyboardAvoidingView>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0}
+        style={{flex: 1, backgroundColor: '#f5f6fa'}}>
+        <FlatList
+          ListHeaderComponent={
+            <PostInput onPost={handlePost} loading={posting} />
+          }
+          data={posts}
+          keyExtractor={item => item.id?.toString()}
+          renderItem={({item, index}) => (
+            <>
+              <PostCard
+                item={item}
+                onDelete={handleDelete}
+                onEdit={() => {
+                  /* TODO: handle edit */
+                }}
+                onPressLink={handlePressLink}
+                showMenu={true}
+              />
+              {index < posts.length - 1 && (
+                <View style={styles.feedSeparator} />
+              )}
+            </>
+          )}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }
+          contentContainerStyle={{paddingBottom: 40, paddingTop: 4}}
+          ListEmptyComponent={
+            isLoading ? (
+              <ActivityIndicator color={THEME_COLOR} />
+            ) : (
+              <Text
+                style={{
+                  color: '#b0b3b8',
+                  textAlign: 'center',
+                  marginTop: 40,
+                  fontSize: 15,
+                }}>
+                {t('no_posts', 'Chưa có bài đăng nào')}
+              </Text>
+            )
+          }
+        />
+      </KeyboardAvoidingView>
+    </View>
   );
 };
 

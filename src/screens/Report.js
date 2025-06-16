@@ -6,6 +6,7 @@ import {
   Alert,
   StyleSheet,
   StatusBar,
+  Switch,
 } from 'react-native';
 import React, {useEffect, useState} from 'react';
 import axios from 'axios';
@@ -63,6 +64,8 @@ const Report = () => {
   const [productVal, setProductVal] = useState(null);
   const [shiftValue, setShiftValue] = useState('');
   const [productValue, setProductValue] = useState('');
+  const [compareShift, setCompareShift] = useState(false);
+  const [dailyReports, setDailyReports] = useState([]);
   const weekDaysTranslated = weekDays.map(d => t(d));
 
   const getLanguage = async () => {
@@ -124,32 +127,18 @@ const Report = () => {
       if (typeof productValue === 'string' && productValue !== '') {
         search_value.product = productValue;
       }
-      const dailyReports = await axios.post(
+      const res = await axios.post(
         `${BASE_URL}${PORT}${API}${VERSION}${V1}${DAILY_REPORT}${GET_ALL}`,
         search_value,
       );
-      if (dailyReports?.data?.success) {
-        const dataA = [0, 0, 0, 0, 0, 0, 0];
-        const dataB = [0, 0, 0, 0, 0, 0, 0];
-        for (const report of dailyReports?.data?.data) {
-          const dayOfWeek = moment(report.date).format('dddd');
-          const idx = weekDays.indexOf(dayOfWeek);
-          if (idx === -1) continue;
-          const shift = report.shift;
-          const quantity = parseFloat(report.quantity);
-          if (shift === 'A') dataA[idx] += quantity;
-          if (shift === 'B') dataB[idx] += quantity;
-        }
-        setDataA(dataA);
-        setDataB(dataB);
+      if (res?.data?.success) {
+        setDailyReports(res.data.data);
       } else {
-        setDataA([0, 0, 0, 0, 0, 0, 0]);
-        setDataB([0, 0, 0, 0, 0, 0, 0]);
-        throw new Error(dailyReports?.data?.message);
+        setDailyReports([]);
+        throw new Error(res?.data?.message);
       }
     } catch (error) {
-      setDataA([0, 0, 0, 0, 0, 0, 0]);
-      setDataB([0, 0, 0, 0, 0, 0, 0]);
+      setDailyReports([]);
       showAlert(error.message);
     } finally {
       setIsLoading(false);
@@ -186,6 +175,10 @@ const Report = () => {
     get_all_inventory_with_dapertment();
     get_all_daily_report_with_field();
     setValueListShift();
+    // Tắt switch so sánh ca khi chọn ca
+    if (shiftValue) {
+      setCompareShift(false);
+    }
     // eslint-disable-next-line
   }, [shiftValue, productValue]);
 
@@ -209,24 +202,109 @@ const Report = () => {
     },
   };
 
-  const lineData = {
-    labels: weekDaysTranslated,
-    datasets: [
+  // Tổng hợp dữ liệu cho biểu đồ
+  // Lấy danh sách ngày thực tế (unique, sort tăng dần)
+  const allDates = Array.from(new Set(dailyReports.map(r => r.date))).sort();
+  // Nếu muốn chỉ lấy 7 ngày gần nhất:
+  const maxDays = 7;
+  const dates = allDates.slice(-maxDays);
+
+  // Tổng sản lượng/ngày (tất cả ca, tất cả sản phẩm)
+  const totalByDate = dates.map(date => {
+    return dailyReports
+      .filter(r => r.date === date)
+      .reduce((sum, r) => sum + parseFloat(r.quantity), 0);
+  });
+
+  // Tổng sản lượng/ngày cho từng ca
+  const totalByDateShiftA = dates.map(date => {
+    return dailyReports
+      .filter(r => r.date === date && r.shift === 'A')
+      .reduce((sum, r) => sum + parseFloat(r.quantity), 0);
+  });
+  const totalByDateShiftB = dates.map(date => {
+    return dailyReports
+      .filter(r => r.date === date && r.shift === 'B')
+      .reduce((sum, r) => sum + parseFloat(r.quantity), 0);
+  });
+
+  // Nếu chọn ca: hiển thị sản lượng từng sản phẩm/ngày cho ca đó
+  let productLines = [];
+  if (shiftValue) {
+    // Lấy danh sách sản phẩm
+    const allProducts = Array.from(new Set(dailyReports.map(r => r.product)));
+    productLines = allProducts.map((prod, idx) => ({
+      data: dates.map(date => {
+        return dailyReports
+          .filter(r => r.date === date && r.product === prod)
+          .reduce((sum, r) => sum + parseFloat(r.quantity), 0);
+      }),
+      color: () => `hsl(${(idx * 60) % 360}, 70%, 50%)`,
+      strokeWidth: 3,
+      label: prod,
+    }));
+  }
+
+  // Nếu chọn sản phẩm: chỉ hiển thị sản lượng sản phẩm/ngày
+  let productLine = null;
+  if (productValue) {
+    productLine = {
+      data: dates.map(date => {
+        return dailyReports
+          .filter(r => r.date === date && r.product === productValue)
+          .reduce((sum, r) => sum + parseFloat(r.quantity), 0);
+      }),
+      color: () => '#8e44ad',
+      strokeWidth: 3,
+      label: productValue,
+    };
+  }
+
+  // Chuẩn bị dữ liệu cho LineChart
+  let lineData = {
+    labels: dates.map(d => moment(d).format('DD/MM')),
+    datasets: [],
+    legend: [],
+  };
+  if (shiftValue && productLines.length > 0) {
+    lineData.datasets = productLines.map((line, idx) => ({
+      ...line,
+      datasetIndex: idx,
+    }));
+    lineData.legend = productLines.map(l => l.label);
+  } else if (productValue && productLine) {
+    lineData.datasets = [{...productLine, datasetIndex: 0}];
+    lineData.legend = [productLine.label];
+  } else if (compareShift) {
+    lineData.datasets = [
       {
-        data: dataA,
-        color: (opacity = 1) => `rgba(52, 152, 219, ${opacity})`,
+        data: totalByDateShiftA,
+        color: () => '#3498db',
         strokeWidth: 3,
         label: 'Ca A',
+        datasetIndex: 0,
       },
       {
-        data: dataB,
-        color: (opacity = 1) => `rgba(231, 76, 60, ${opacity})`,
+        data: totalByDateShiftB,
+        color: () => '#e74c3c',
         strokeWidth: 3,
         label: 'Ca B',
+        datasetIndex: 1,
       },
-    ],
-    legend: ['Ca A', 'Ca B'],
-  };
+    ];
+    lineData.legend = ['Ca A', 'Ca B'];
+  } else {
+    lineData.datasets = [
+      {
+        data: totalByDate,
+        color: () => '#27ae60',
+        strokeWidth: 3,
+        label: t('total', 'Tổng'),
+        datasetIndex: 0,
+      },
+    ];
+    lineData.legend = [t('total', 'Tổng')];
+  }
 
   return (
     <View style={styles.container}>
@@ -314,9 +392,27 @@ const Report = () => {
               )}
             />
           </View>
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              marginBottom: 8,
+            }}>
+            <Switch
+              value={compareShift}
+              onValueChange={setCompareShift}
+              disabled={!!shiftValue || !!productValue}
+              trackColor={{false: '#767577', true: '#27ae60'}}
+              thumbColor={compareShift ? '#fff' : '#f4f3f4'}
+              ios_backgroundColor="#3e3e3e"
+            />
+            <Text style={{marginLeft: 8, color: '#333'}}>
+              {t('compare_shift', 'So sánh ca')}
+            </Text>
+          </View>
         </View>
         <View style={styles.chartBody}>
-          {dataA.some(x => x > 0) || dataB.some(x => x > 0) ? (
+          {lineData.datasets.length > 0 ? (
             <LineChart
               data={lineData}
               width={width}
@@ -335,6 +431,27 @@ const Report = () => {
               withShadow={false}
               withInnerLines
               withOuterLines
+              renderDotContent={({x, y, index, indexData, datasetIndex}) => {
+                const dataset = lineData.datasets[datasetIndex];
+                return (
+                  <View
+                    key={`dot-${dataset?.datasetIndex || 0}-${index}`}
+                    style={{
+                      position: 'absolute',
+                      top: y + 12,
+                      left: x - 12,
+                      backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                      padding: 1,
+                      borderRadius: 2,
+                      borderWidth: 1,
+                      borderColor: '#ddd',
+                    }}>
+                    <Text style={{fontSize: 8, color: '#333'}}>
+                      {Math.round(indexData)}
+                    </Text>
+                  </View>
+                );
+              }}
             />
           ) : (
             <Text style={styles.emptyText}>{t('no_data')}</Text>
@@ -346,35 +463,28 @@ const Report = () => {
               justifyContent: 'center',
               marginTop: 10,
             }}>
-            <View
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                marginRight: 16,
-              }}>
+            {lineData.datasets.map((dataset, index) => (
               <View
+                key={index}
                 style={{
-                  width: 16,
-                  height: 4,
-                  backgroundColor: '#3498db',
-                  marginRight: 6,
-                  borderRadius: 2,
-                }}
-              />
-              <Text style={{color: '#3498db', fontWeight: 'bold'}}>Ca A</Text>
-            </View>
-            <View style={{flexDirection: 'row', alignItems: 'center'}}>
-              <View
-                style={{
-                  width: 16,
-                  height: 4,
-                  backgroundColor: '#e74c3c',
-                  marginRight: 6,
-                  borderRadius: 2,
-                }}
-              />
-              <Text style={{color: '#e74c3c', fontWeight: 'bold'}}>Ca B</Text>
-            </View>
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  marginRight: 16,
+                }}>
+                <View
+                  style={{
+                    width: 16,
+                    height: 4,
+                    backgroundColor: dataset.color(),
+                    marginRight: 6,
+                    borderRadius: 2,
+                  }}
+                />
+                <Text style={{color: '#3498db', fontWeight: 'bold'}}>
+                  {lineData.legend[index]}
+                </Text>
+              </View>
+            ))}
           </View>
         </View>
       </View>

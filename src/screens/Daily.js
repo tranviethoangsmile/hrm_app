@@ -38,6 +38,7 @@ import {useTranslation} from 'react-i18next';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import i18next from '../../services/i18next';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import IconFA from 'react-native-vector-icons/FontAwesome5';
 import axios from 'axios';
 import Loader from '../components/Loader';
 import ModalMessage from '../components/ModalMessage';
@@ -332,68 +333,124 @@ const Daily = () => {
 
           <Card style={styles.card}>
             <Text style={styles.cardTitle}>{t('production.details')}</Text>
-            <Input
-              label={t('quantity')}
-              keyboardType="number-pad"
-              value={quatity === 0 || quatity === '0' ? '' : quatity.toString()}
-              onChangeText={txt => setQuatity(txt)}
-              placeholder={t('enter.quantity')}
-              containerStyle={styles.inputField}
-            />
-            <Input
-              label={t('l.speed')}
-              keyboardType="number-pad"
-              value={
-                fisrtProduct === 0 || fisrtProduct === '0'
-                  ? ''
-                  : fisrtProduct.toString()
-              }
-              onChangeText={txt => setFisrtProduct(txt)}
-              placeholder={t('enter.l.speed')}
-              containerStyle={styles.inputField}
-            />
-            <Input
-              label={t('h.speed')}
-              keyboardType="number-pad"
-              value={
-                temperature === 0 || temperature === '0'
-                  ? ''
-                  : temperature.toString()
-              }
-              onChangeText={txt => setTemperature(txt)}
-              placeholder={t('enter.h.speed')}
-              containerStyle={styles.inputField}
-            />
-            <Input
-              label={t('err')}
-              keyboardType="number-pad"
-              value={error === 0 || error === '0' ? '' : error.toString()}
-              onChangeText={txt => setError(txt)}
-              placeholder={t('enter.error.count')}
-              containerStyle={styles.inputField}
-            />
-            <Input
-              label={t('shutdown_time')}
-              keyboardType="number-pad"
-              value={
-                shutdown_time === 0 || shutdown_time === '0'
-                  ? ''
-                  : shutdown_time.toString()
-              }
-              onChangeText={txt => setShutdown_time(txt)}
-              placeholder={t('enter.shutdown.time')}
-              containerStyle={styles.inputField}
-            />
-            <Input
-              label={t('operated_time')}
-              keyboardType="number-pad"
-              value={
-                timeWork === 0 || timeWork === '0' ? '' : timeWork.toString()
-              }
-              onChangeText={txt => setTimeWork(txt)}
-              placeholder={t('enter.operated.time')}
-              containerStyle={styles.inputField}
-            />
+            <View style={styles.inputGridRow}>
+              <View style={styles.inputGridCol}>
+                <Input
+                  label={
+                    <>
+                      <IconFA name="hashtag" size={14} color={COLORS.primary} />{' '}
+                      {t('quantity')}
+                    </>
+                  }
+                  keyboardType="number-pad"
+                  value={
+                    quatity === 0 || quatity === '0' ? '' : quatity.toString()
+                  }
+                  onChangeText={txt => setQuatity(txt)}
+                  placeholder={t('enter.quantity')}
+                  containerStyle={styles.inputField}
+                />
+                <Input
+                  label={
+                    <>
+                      <IconFA
+                        name="tachometer-alt"
+                        size={14}
+                        color={COLORS.primary}
+                      />{' '}
+                      {t('l.speed')}
+                    </>
+                  }
+                  keyboardType="number-pad"
+                  value={
+                    fisrtProduct === 0 || fisrtProduct === '0'
+                      ? ''
+                      : fisrtProduct.toString()
+                  }
+                  onChangeText={txt => setFisrtProduct(txt)}
+                  placeholder={t('enter.l.speed')}
+                  containerStyle={styles.inputField}
+                />
+                <Input
+                  label={
+                    <>
+                      <IconFA
+                        name="thermometer-half"
+                        size={14}
+                        color={COLORS.primary}
+                      />{' '}
+                      {t('h.speed')}
+                    </>
+                  }
+                  keyboardType="number-pad"
+                  value={
+                    temperature === 0 || temperature === '0'
+                      ? ''
+                      : temperature.toString()
+                  }
+                  onChangeText={txt => setTemperature(txt)}
+                  placeholder={t('enter.h.speed')}
+                  containerStyle={styles.inputField}
+                />
+              </View>
+              <View style={styles.inputGridCol}>
+                <Input
+                  label={
+                    <>
+                      <IconFA
+                        name="exclamation-triangle"
+                        size={14}
+                        color={COLORS.primary}
+                      />{' '}
+                      {t('err')}
+                    </>
+                  }
+                  keyboardType="number-pad"
+                  value={error === 0 || error === '0' ? '' : error.toString()}
+                  onChangeText={txt => setError(txt)}
+                  placeholder={t('enter.error.count')}
+                  containerStyle={styles.inputField}
+                />
+                <Input
+                  label={
+                    <>
+                      <IconFA
+                        name="power-off"
+                        size={14}
+                        color={COLORS.primary}
+                      />{' '}
+                      {t('shutdown_time')}
+                    </>
+                  }
+                  keyboardType="number-pad"
+                  value={
+                    shutdown_time === 0 || shutdown_time === '0'
+                      ? ''
+                      : shutdown_time.toString()
+                  }
+                  onChangeText={txt => setShutdown_time(txt)}
+                  placeholder={t('enter.shutdown.time')}
+                  containerStyle={styles.inputField}
+                />
+                <Input
+                  label={
+                    <>
+                      <IconFA name="clock" size={14} color={COLORS.primary} />{' '}
+                      {t('operated_time')}
+                    </>
+                  }
+                  keyboardType="number-pad"
+                  value={
+                    timeWork === 0 || timeWork === '0'
+                      ? ''
+                      : timeWork.toString()
+                  }
+                  onChangeText={txt => setTimeWork(txt)}
+                  placeholder={t('enter.operated.time')}
+                  containerStyle={styles.inputField}
+                />
+              </View>
+            </View>
           </Card>
 
           {isShowSendBtn && (
@@ -475,17 +532,22 @@ const Daily = () => {
                 flex: 1,
                 justifyContent: 'center',
                 alignItems: 'center',
-                backgroundColor: 'rgba(0,0,0,0.5)',
+                backgroundColor: 'rgba(0,0,0,0.35)',
               }}>
               <View
                 style={{
-                  width: 300,
-                  minHeight: 320,
+                  width: 330,
+                  minHeight: 340,
                   backgroundColor: '#fff',
-                  borderRadius: 16,
+                  borderRadius: 18,
                   padding: 20,
                   alignItems: 'stretch',
                   justifyContent: 'flex-start',
+                  shadowColor: '#000',
+                  shadowOffset: {width: 0, height: 4},
+                  shadowOpacity: 0.18,
+                  shadowRadius: 8,
+                  elevation: 8,
                 }}>
                 {/* Header */}
                 <View
@@ -493,19 +555,20 @@ const Daily = () => {
                     flexDirection: 'row',
                     justifyContent: 'space-between',
                     alignItems: 'center',
-                    marginBottom: 12,
+                    marginBottom: 16,
                   }}>
                   <Text
                     style={{
                       fontSize: 20,
                       fontWeight: 'bold',
-                      color: '#1976D2',
+                      color: COLORS.primary,
+                      letterSpacing: 0.2,
                     }}>
                     {t('confirm.report.submission')}
                   </Text>
                   <TouchableOpacity
                     onPress={() => setShowModalSendReport(false)}>
-                    <Text style={{color: 'red', fontSize: 24}}>X</Text>
+                    <Icon name="close" size={24} color={COLORS.primary} />
                   </TouchableOpacity>
                 </View>
                 {/* Shift selector */}
@@ -513,24 +576,31 @@ const Daily = () => {
                   style={{
                     flexDirection: 'row',
                     justifyContent: 'space-around',
-                    marginBottom: 12,
+                    marginBottom: 16,
                   }}>
                   <TouchableOpacity
                     style={{
                       flex: 1,
                       marginHorizontal: 8,
-                      paddingVertical: 10,
-                      borderRadius: 8,
-                      backgroundColor: shift === 'A' ? '#1976D2' : '#fff',
-                      borderWidth: 1,
-                      borderColor: '#1976D2',
+                      paddingVertical: 12,
+                      borderRadius: 24,
+                      backgroundColor:
+                        shift === 'A' ? COLORS.primary : '#f4f6fb',
+                      borderWidth: 1.5,
+                      borderColor: COLORS.primary,
                       alignItems: 'center',
+                      shadowColor:
+                        shift === 'A' ? COLORS.primary : 'transparent',
+                      shadowOpacity: shift === 'A' ? 0.15 : 0,
+                      elevation: shift === 'A' ? 2 : 0,
                     }}
                     onPress={() => setShift('A')}>
                     <Text
                       style={{
-                        color: shift === 'A' ? '#fff' : '#1976D2',
+                        color: shift === 'A' ? '#fff' : COLORS.primary,
                         fontWeight: 'bold',
+                        fontSize: 16,
+                        letterSpacing: 1,
                       }}>
                       {t('shiftA', 'A')}
                     </Text>
@@ -539,25 +609,38 @@ const Daily = () => {
                     style={{
                       flex: 1,
                       marginHorizontal: 8,
-                      paddingVertical: 10,
-                      borderRadius: 8,
-                      backgroundColor: shift === 'B' ? '#1976D2' : '#fff',
-                      borderWidth: 1,
-                      borderColor: '#1976D2',
+                      paddingVertical: 12,
+                      borderRadius: 24,
+                      backgroundColor:
+                        shift === 'B' ? COLORS.primary : '#f4f6fb',
+                      borderWidth: 1.5,
+                      borderColor: COLORS.primary,
                       alignItems: 'center',
+                      shadowColor:
+                        shift === 'B' ? COLORS.primary : 'transparent',
+                      shadowOpacity: shift === 'B' ? 0.15 : 0,
+                      elevation: shift === 'B' ? 2 : 0,
                     }}
                     onPress={() => setShift('B')}>
                     <Text
                       style={{
-                        color: shift === 'B' ? '#fff' : '#1976D2',
+                        color: shift === 'B' ? '#fff' : COLORS.primary,
                         fontWeight: 'bold',
+                        fontSize: 16,
+                        letterSpacing: 1,
                       }}>
                       {t('shiftB', 'B')}
                     </Text>
                   </TouchableOpacity>
                 </View>
                 {/* Operator history */}
-                <Text style={{fontWeight: 'bold', marginBottom: 4}}>
+                <Text
+                  style={{
+                    fontWeight: 'bold',
+                    marginBottom: 6,
+                    color: COLORS.text,
+                    fontSize: 15,
+                  }}>
                   {t('operator_history')}
                 </Text>
                 <TextInput
@@ -567,110 +650,95 @@ const Daily = () => {
                   multiline
                   numberOfLines={3}
                   style={{
-                    borderWidth: 1,
-                    borderColor: '#ccc',
-                    borderRadius: 8,
-                    padding: 10,
-                    minHeight: 50,
-                    marginBottom: 12,
-                    backgroundColor: '#fafafa',
-                    color: COLORS.text || '#222',
+                    borderWidth: 1.2,
+                    borderColor: COLORS.primary,
+                    borderRadius: 10,
+                    padding: 12,
+                    minHeight: 54,
+                    marginBottom: 14,
+                    backgroundColor: '#f7fafd',
+                    color: COLORS.text,
+                    fontSize: 15,
                   }}
                   placeholderTextColor={COLORS.placeholder || '#888'}
                 />
                 {/* Summary */}
-                <Text style={{fontWeight: 'bold', marginBottom: 4}}>
+                <Text
+                  style={{
+                    fontWeight: 'bold',
+                    marginBottom: 6,
+                    color: COLORS.text,
+                    fontSize: 15,
+                  }}>
                   {t('summary')}
                 </Text>
                 <View
                   style={{
                     marginBottom: 12,
                     borderWidth: 1,
-                    borderColor: '#eee',
-                    borderRadius: 8,
-                    padding: 8,
-                    backgroundColor: '#f9f9f9',
+                    borderColor: '#e3e6ee',
+                    borderRadius: 10,
+                    padding: 10,
+                    backgroundColor: '#f9fafd',
                   }}>
-                  <Text>
+                  <Text style={{color: COLORS.textSecondary, fontSize: 14}}>
                     {t('product')}:{' '}
                     <Text style={{color: COLORS.primary, fontWeight: 'bold'}}>
                       {t(productName, productName)}
                     </Text>
                   </Text>
-                  <Text>
+                  <Text style={{color: COLORS.textSecondary, fontSize: 14}}>
                     {t('quantity')}:{' '}
                     <Text style={{color: COLORS.primary, fontWeight: 'bold'}}>
                       {quantity}
                     </Text>
                   </Text>
-                  <Text>
+                  <Text style={{color: COLORS.textSecondary, fontSize: 14}}>
                     {t('shift')}:{' '}
                     <Text style={{color: COLORS.primary, fontWeight: 'bold'}}>
                       {t('shift' + shift, shift)}
                     </Text>
                   </Text>
-                  <Text>
+                  <Text style={{color: COLORS.textSecondary, fontSize: 14}}>
                     {t('operated_time')}:{' '}
                     <Text style={{color: COLORS.primary, fontWeight: 'bold'}}>
                       {timeWork}
                     </Text>
                   </Text>
-                  <Text>
+                  <Text style={{color: COLORS.textSecondary, fontSize: 14}}>
                     {t('cycle')}:{' '}
                     <Text style={{color: COLORS.primary, fontWeight: 'bold'}}>
                       {productValue}
                     </Text>
                   </Text>
-                  <Text>
+                  <Text style={{color: COLORS.textSecondary, fontSize: 14}}>
                     {t('shutdown_time')}:{' '}
                     <Text style={{color: COLORS.primary, fontWeight: 'bold'}}>
                       {shutdown_time}
                     </Text>
                   </Text>
-                  <Text>
+                  <Text style={{color: COLORS.textSecondary, fontSize: 14}}>
                     {t('date')}:{' '}
                     <Text style={{color: COLORS.primary, fontWeight: 'bold'}}>
                       {moment(today).format('YYYY-MM-DD')}
                     </Text>
                   </Text>
                 </View>
-                {/* Buttons */}
-                <View
+                {/* Nút gửi báo cáo */}
+                <TouchableOpacity
                   style={{
-                    flexDirection: 'row',
-                    justifyContent: 'space-between',
-                  }}>
-                  <TouchableOpacity
-                    style={{
-                      flex: 1,
-                      marginRight: 8,
-                      paddingVertical: 12,
-                      borderRadius: 8,
-                      backgroundColor: '#fff',
-                      borderWidth: 1,
-                      borderColor: '#1976D2',
-                      alignItems: 'center',
-                    }}
-                    onPress={() => setShowModalSendReport(false)}>
-                    <Text style={{color: '#1976D2', fontWeight: 'bold'}}>
-                      {t('cancel')}
-                    </Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={{
-                      flex: 1,
-                      marginLeft: 8,
-                      paddingVertical: 12,
-                      borderRadius: 8,
-                      backgroundColor: '#1976D2',
-                      alignItems: 'center',
-                    }}
-                    onPress={handleSendDailyReport}>
-                    <Text style={{color: '#fff', fontWeight: 'bold'}}>
-                      {t('send')}
-                    </Text>
-                  </TouchableOpacity>
-                </View>
+                    backgroundColor: COLORS.primary,
+                    borderRadius: 10,
+                    paddingVertical: 12,
+                    alignItems: 'center',
+                    marginTop: 8,
+                  }}
+                  onPress={handleSendDailyReport}>
+                  <Text
+                    style={{color: '#fff', fontWeight: 'bold', fontSize: 16}}>
+                    {t('Send')}
+                  </Text>
+                </TouchableOpacity>
               </View>
             </View>
           </Modal>
@@ -863,6 +931,14 @@ const styles = StyleSheet.create({
   },
   confirmButtonText: {
     color: '#fff',
+  },
+  inputGridRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  inputGridCol: {
+    flex: 1,
   },
 });
 
