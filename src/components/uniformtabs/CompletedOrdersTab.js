@@ -1,5 +1,13 @@
-import {View, Text, FlatList, TouchableOpacity, StyleSheet} from 'react-native';
-import React, {useEffect, useState} from 'react';
+import {
+  View,
+  Text,
+  FlatList,
+  TouchableOpacity,
+  StyleSheet,
+  Animated,
+  RefreshControl,
+} from 'react-native';
+import React, {useEffect, useState, useCallback} from 'react';
 import {
   BASE_URL,
   API,
@@ -13,7 +21,8 @@ import {
 import ModalMessage from '../ModalMessage';
 import axios from 'axios';
 import {useTranslation} from 'react-i18next';
-import Icon from 'react-native-vector-icons/Ionicons';
+import Icon from 'react-native-vector-icons/MaterialIcons';
+import {COLORS, SIZES, FONTS, SHADOWS, LAYOUT} from '../../config/theme';
 
 const CompletedOrdersTab = ({USER_INFOR}) => {
   const {t} = useTranslation();
@@ -21,12 +30,15 @@ const CompletedOrdersTab = ({USER_INFOR}) => {
   const [message, setMessage] = useState('');
   const [messageType, setMessageType] = useState('success');
   const [uniformOrders, setUniformOrders] = useState([]);
-  const showMessage = (msg, type) => {
+  const [refreshing, setRefreshing] = useState(false);
+
+  const showMessage = useCallback((msg, type) => {
     setMessage(msg);
     setMessageType(type);
     setMessageModalVisible(true);
-  };
-  const handle_get_all_uniform_order_of_user = async () => {
+  }, []);
+
+  const handle_get_all_uniform_order_of_user = useCallback(async () => {
     try {
       const URL = `${BASE_URL}${PORT}${API}${VERSION}${V1}${UNIFORM_ORDER}${SEARCH}${WITH_USER_ID}`;
       const response = await axios.post(URL, {
@@ -42,31 +54,43 @@ const CompletedOrdersTab = ({USER_INFOR}) => {
     } catch (error) {
       showMessage('err', 'error');
     }
-  };
+  }, [USER_INFOR.id, showMessage]);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await handle_get_all_uniform_order_of_user();
+    setRefreshing(false);
+  }, [handle_get_all_uniform_order_of_user]);
 
   useEffect(() => {
     handle_get_all_uniform_order_of_user();
-  }, []);
+  }, [handle_get_all_uniform_order_of_user]);
 
   const renderItem = ({item}) => (
-    <View style={styles.orderContainer}>
+    <Animated.View style={styles.orderContainer}>
       <View style={styles.orderContent}>
         <Text style={styles.uniformType}>{t(`${item.uniform_type}`)}</Text>
         <Text style={styles.details}>
-          {t('si.ze')}: {item.uniform_size}
+          {t('si.ze')}:{' '}
+          <Text style={styles.detailsValue}>{item.uniform_size}</Text>
         </Text>
         <Text style={styles.details}>
-          {t('quantity')}: {item.quantity}
+          {t('quantity')}:{' '}
+          <Text style={styles.detailsValue}>{item.quantity}</Text>
         </Text>
         <Text style={styles.status}>
-          {t(`status`)}: {t(`${item.order_status}`)}
+          {t(`status`)}:{' '}
+          <Text style={styles.statusValue}>{t(`${item.order_status}`)}</Text>
         </Text>
         <Text style={styles.deliveryDate}>
-          {t(`delivery`)}: {item.delivery_date}
+          {t(`delivery`)}:{' '}
+          <Text style={styles.deliveryDateValue}>{item.delivery_date}</Text>
         </Text>
       </View>
-      <Icon name="checkmark-circle" size={35} color="#4CAF50" />
-    </View>
+      <View style={styles.checkmarkContainer}>
+        <Icon name="check-circle" size={32} color={COLORS.success} />
+      </View>
+    </Animated.View>
   );
 
   return (
@@ -76,16 +100,22 @@ const CompletedOrdersTab = ({USER_INFOR}) => {
           data={uniformOrders}
           renderItem={renderItem}
           keyExtractor={item => item.id}
+          contentContainerStyle={styles.list}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }
         />
       ) : (
-        <Text style={styles.noDataText}>{t('not.data')}</Text>
+        <View style={styles.emptyContainer}>
+          <Icon name="check-circle-outline" size={64} color={COLORS.gray400} />
+          <Text style={styles.noDataText}>{t('not.data')}</Text>
+        </View>
       )}
       <ModalMessage
-        isVisible={isMessageModalVisible}
-        onClose={() => setMessageModalVisible(false)}
-        message={message}
+        visible={isMessageModalVisible}
+        message={t(message)}
         type={messageType}
-        t={t}
+        onClose={() => setMessageModalVisible(false)}
       />
     </View>
   );
@@ -94,53 +124,71 @@ const CompletedOrdersTab = ({USER_INFOR}) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 16,
-    backgroundColor: '#f9f9f9', // Nền sáng và hiện đại
+    backgroundColor: COLORS.background,
+  },
+  list: {
+    padding: SIZES.padding,
   },
   orderContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#fff', // Nền của đơn hàng
-    padding: 16,
-    borderRadius: 10,
-    marginBottom: 12,
-    shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowRadius: 5,
-    elevation: 2,
-    borderWidth: 1,
-    borderColor: '#E0E0E0', // Viền nhẹ để tăng độ nổi bật
+    backgroundColor: COLORS.white,
+    padding: SIZES.padding,
+    borderRadius: SIZES.radius,
+    marginBottom: SIZES.base,
+    ...SHADOWS.medium,
   },
   orderContent: {
     flex: 1,
   },
   uniformType: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 4,
-    color: '#2b2b2b',
+    ...FONTS.h3,
+    color: COLORS.text,
+    marginBottom: SIZES.base / 2,
   },
   details: {
-    fontSize: 16,
-    color: '#555',
+    ...FONTS.body4,
+    color: COLORS.textSecondary,
+    marginBottom: SIZES.base / 2,
+  },
+  detailsValue: {
+    ...FONTS.h4,
+    color: COLORS.text,
   },
   status: {
-    fontSize: 14,
-    color: '#777',
-    marginBottom: 4,
+    ...FONTS.body4,
+    color: COLORS.textSecondary,
+    marginBottom: SIZES.base / 2,
+  },
+  statusValue: {
+    ...FONTS.h4,
+    color: COLORS.success,
   },
   deliveryDate: {
-    fontSize: 14,
-    color: '#777',
-    marginBottom: 8,
-    fontStyle: 'italic', // Kiểu chữ nghiêng để nhấn mạnh
+    ...FONTS.body4,
+    color: COLORS.textSecondary,
+  },
+  deliveryDateValue: {
+    ...FONTS.h4,
+    color: COLORS.text,
+    fontStyle: 'italic',
+  },
+  checkmarkContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: COLORS.success + '20',
+    ...LAYOUT.center,
+  },
+  emptyContainer: {
+    flex: 1,
+    ...LAYOUT.center,
   },
   noDataText: {
-    fontSize: 18,
-    color: '#888',
-    textAlign: 'center',
-    marginTop: 20,
+    ...FONTS.body3,
+    color: COLORS.textSecondary,
+    marginTop: SIZES.base,
   },
 });
 

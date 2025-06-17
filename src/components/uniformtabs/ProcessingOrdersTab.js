@@ -5,8 +5,9 @@ import {
   TouchableOpacity,
   StyleSheet,
   Animated,
+  RefreshControl,
 } from 'react-native';
-import React, {useEffect, useState, useRef} from 'react';
+import React, {useEffect, useState, useRef, useCallback} from 'react';
 import {
   BASE_URL,
   API,
@@ -22,7 +23,8 @@ import ModalMessage from '../ModalMessage';
 import axios from 'axios';
 import {useTranslation} from 'react-i18next';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import {TEXT_COLOR} from '../../utils/Colors';
+import {COLORS, SIZES, FONTS, SHADOWS, LAYOUT} from '../../config/theme';
+
 const ProcessingOrdersTab = ({USER_INFOR}) => {
   const {t} = useTranslation();
   const animatedValue = useRef(new Animated.Value(0)).current;
@@ -31,13 +33,16 @@ const ProcessingOrdersTab = ({USER_INFOR}) => {
   const [messageType, setMessageType] = useState('success');
   const [duration, setDuration] = useState(1000);
   const [uniformOrders, setUniformOrders] = useState([]);
-  const showMessage = (msg, type, dur) => {
+  const [refreshing, setRefreshing] = useState(false);
+
+  const showMessage = useCallback((msg, type, dur) => {
     setMessage(msg);
     setMessageType(type);
     setDuration(dur);
     setMessageModalVisible(true);
-  };
-  const handle_get_all_uniform_order_of_user = async () => {
+  }, []);
+
+  const handle_get_all_uniform_order_of_user = useCallback(async () => {
     try {
       const URL = `${BASE_URL}${PORT}${API}${VERSION}${V1}${UNIFORM_ORDER}${SEARCH}${WITH_USER_ID}`;
       const response = await axios.post(URL, {
@@ -53,7 +58,7 @@ const ProcessingOrdersTab = ({USER_INFOR}) => {
     } catch (error) {
       showMessage('err', 'error');
     }
-  };
+  }, [USER_INFOR.id, showMessage]);
 
   const handle_delete_order = async orderId => {
     try {
@@ -67,12 +72,18 @@ const ProcessingOrdersTab = ({USER_INFOR}) => {
           orders.filter(order => order.id !== orderId),
         );
       } else {
-        showMessage('succunSuccessess', 'warning', 1500);
+        showMessage('unSuccess', 'warning', 1500);
       }
     } catch (error) {
       showMessage('err', 'error', 2000);
     }
   };
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await handle_get_all_uniform_order_of_user();
+    setRefreshing(false);
+  }, [handle_get_all_uniform_order_of_user]);
 
   useEffect(() => {
     const blink = () => {
@@ -81,34 +92,39 @@ const ProcessingOrdersTab = ({USER_INFOR}) => {
         Animated.sequence([
           Animated.timing(animatedValue, {
             toValue: 1,
-            duration: 500, // Thời gian để tăng cường độ sáng
+            duration: 500,
             useNativeDriver: true,
           }),
           Animated.timing(animatedValue, {
             toValue: 0,
-            duration: 500, // Thời gian để giảm cường độ sáng
+            duration: 500,
             useNativeDriver: true,
           }),
         ]),
       ).start();
     };
-    handle_get_all_uniform_order_of_user();
 
+    handle_get_all_uniform_order_of_user();
     blink();
 
-    // return () => animatedValue.stop();
-  }, [animatedValue]);
+    return () => {
+      animatedValue.stopAnimation();
+    };
+  }, [animatedValue, handle_get_all_uniform_order_of_user]);
+
   const opacity = animatedValue;
 
   const renderItem = ({item}) => (
-    <View style={styles.orderContainer}>
+    <Animated.View style={styles.orderContainer}>
       <View style={styles.orderContent}>
         <Text style={styles.uniformType}>{t(`${item.uniform_type}`)}</Text>
         <Text style={styles.details}>
-          {t('si.ze')}: {item.uniform_size}
+          {t('si.ze')}:{' '}
+          <Text style={styles.detailsValue}>{item.uniform_size}</Text>
         </Text>
         <Text style={styles.details}>
-          {t('quantity')}: {item.quantity}
+          {t('quantity')}:{' '}
+          <Text style={styles.detailsValue}>{item.quantity}</Text>
         </Text>
         <View style={styles.statusContainer}>
           <Text style={styles.statusLabel}>{t('status')}:</Text>
@@ -121,9 +137,9 @@ const ProcessingOrdersTab = ({USER_INFOR}) => {
       <TouchableOpacity
         style={styles.deleteButton}
         onPress={() => handle_delete_order(item.id)}>
-        <Icon name="delete" size={25} color="#ff5252" />
+        <Icon name="delete" size={24} color={COLORS.danger} />
       </TouchableOpacity>
-    </View>
+    </Animated.View>
   );
 
   return (
@@ -133,17 +149,23 @@ const ProcessingOrdersTab = ({USER_INFOR}) => {
           data={uniformOrders}
           renderItem={renderItem}
           keyExtractor={item => item.id}
+          contentContainerStyle={styles.list}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }
         />
       ) : (
-        <Text style={styles.noDataText}>{t('not.data')}</Text>
+        <View style={styles.emptyContainer}>
+          <Icon name="inbox" size={64} color={COLORS.gray400} />
+          <Text style={styles.noDataText}>{t('not.data')}</Text>
+        </View>
       )}
       <ModalMessage
-        isVisible={isMessageModalVisible}
-        onClose={() => setMessageModalVisible(false)}
-        message={message}
+        visible={isMessageModalVisible}
+        message={t(message)}
         type={messageType}
         duration={duration}
-        t={t}
+        onClose={() => setMessageModalVisible(false)}
       />
     </View>
   );
@@ -152,68 +174,67 @@ const ProcessingOrdersTab = ({USER_INFOR}) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 16,
-    backgroundColor: '#f9f9f9', // Thay đổi màu nền cho hiện đại hơn
+    backgroundColor: COLORS.background,
   },
-  header: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 16,
-    color: '#333',
-  },
-  statusContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  statusLabel: {
-    fontSize: 14,
-    color: '#777',
-    lineHeight: 20, // Đặt lineHeight cho phù hợp với nội dung
-  },
-  status: {
-    fontSize: 14,
-    color: '#ff5252',
-    marginLeft: 5, // Khoảng cách giữa label và nội dung trạng thái
-    lineHeight: 20, // Đặt lineHeight cho phù hợp với nội dung
+  list: {
+    padding: SIZES.padding,
   },
   orderContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#fff', // Nền của đơn hàng
-    padding: 16,
-    borderRadius: 10,
-    marginBottom: 12,
-    shadowColor: '#ddd',
-    shadowOpacity: 0.1,
-    shadowRadius: 5,
-    elevation: 2,
-    borderWidth: 1,
-    borderColor: '#E0E0E0', // Viền nhẹ để tăng độ nổi bật
+    backgroundColor: COLORS.white,
+    padding: SIZES.padding,
+    borderRadius: SIZES.radius,
+    marginBottom: SIZES.base,
+    ...SHADOWS.medium,
   },
   orderContent: {
     flex: 1,
   },
   uniformType: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 4,
-    color: '#2b2b2b', // Màu chữ đậm hơn
+    ...FONTS.h3,
+    color: COLORS.text,
+    marginBottom: SIZES.base / 2,
   },
   details: {
-    fontSize: 16,
-    color: '#4a4a4a',
+    ...FONTS.body4,
+    color: COLORS.textSecondary,
+    marginBottom: SIZES.base / 2,
+  },
+  detailsValue: {
+    ...FONTS.h4,
+    color: COLORS.text,
+  },
+  statusContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: SIZES.base / 2,
+  },
+  statusLabel: {
+    ...FONTS.body4,
+    color: COLORS.textSecondary,
+  },
+  status: {
+    ...FONTS.h4,
+    color: COLORS.warning,
+    marginLeft: SIZES.base / 2,
   },
   deleteButton: {
-    padding: 8, // Giảm kích thước nút
-    justifyContent: 'center',
-    alignItems: 'center',
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: COLORS.danger + '20',
+    ...LAYOUT.center,
+  },
+  emptyContainer: {
+    flex: 1,
+    ...LAYOUT.center,
   },
   noDataText: {
-    fontSize: 18,
-    color: '#888',
-    textAlign: 'center',
-    marginTop: 20,
+    ...FONTS.body3,
+    color: COLORS.textSecondary,
+    marginTop: SIZES.base,
   },
 });
 

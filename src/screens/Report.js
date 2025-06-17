@@ -53,8 +53,6 @@ const Report = () => {
   const authData = useSelector(state => state.auth);
   const navigation = useNavigation();
   const [dataInventory, setDataInventory] = useState([]);
-  const [dataA, setDataA] = useState([0, 0, 0, 0, 0, 0, 0]);
-  const [dataB, setDataB] = useState([0, 0, 0, 0, 0, 0, 0]);
   const [isLoading, setIsLoading] = useState(false);
   const [shiftValueList, setShiftValueList] = useState([]);
   const [productValueList, setProductValueList] = useState([]);
@@ -66,7 +64,6 @@ const Report = () => {
   const [productValue, setProductValue] = useState('');
   const [compareShift, setCompareShift] = useState(false);
   const [dailyReports, setDailyReports] = useState([]);
-  const weekDaysTranslated = weekDays.map(d => t(d));
 
   const getLanguage = async () => {
     return await AsyncStorage.getItem('Language');
@@ -492,8 +489,6 @@ const Report = () => {
   );
 };
 
-const width = Dimensions.get('screen').width;
-const height = Dimensions.get('screen').height;
 const styles = StyleSheet.create({
   container: {
     flex: 1,

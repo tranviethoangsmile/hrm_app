@@ -1,5 +1,6 @@
 export const COLORS = {
   primary: '#007bff', // Example primary color
+  primaryLight: '#e3f2fd',
   secondary: '#6c757d', // Example secondary color
   success: '#28a745',
   danger: '#dc3545',
@@ -17,6 +18,8 @@ export const COLORS = {
   icon: '#555555',
   lightGray1: '#f5f5f5',
   lightGray2: '#eeeeee',
+  gray400: '#ced4da',
+  gray800: '#343a40',
   transparent: 'transparent',
   // Add more colors as needed
 };
@@ -138,6 +141,39 @@ export const SHADOWS = {
   },
 };
 
-const appTheme = {COLORS, SIZES, FONTS, SHADOWS};
+export const LAYOUT = {
+  center: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  row: {
+    flexDirection: 'row',
+  },
+  rowCenter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  rowBetween: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  rowAround: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+  },
+  column: {
+    flexDirection: 'column',
+  },
+  columnCenter: {
+    flexDirection: 'column',
+    alignItems: 'center',
+  },
+  columnBetween: {
+    flexDirection: 'column',
+    justifyContent: 'space-between',
+  },
+};
+
+const appTheme = {COLORS, SIZES, FONTS, SHADOWS, LAYOUT};
 
 export default appTheme;

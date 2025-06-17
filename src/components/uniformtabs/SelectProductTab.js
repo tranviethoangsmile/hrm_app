@@ -8,10 +8,11 @@ import {
   TextInput,
   TouchableOpacity,
   Modal,
+  Animated,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import ModalMessage from '../ModalMessage';
-import {THEME_COLOR, TEXT_COLOR} from '../../utils/Colors';
+import {COLORS, SIZES, FONTS, SHADOWS, LAYOUT} from '../../config/theme';
 import moment from 'moment';
 import CheckBox from '@react-native-community/checkbox';
 import {
@@ -27,6 +28,7 @@ import {useTranslation} from 'react-i18next';
 import axios from 'axios';
 
 import {uniformProducts} from '../../utils/uniform/uniform';
+
 const SelectProductTab = ({USER_INFOR}) => {
   const {t} = useTranslation();
   const [selectedSize, setSelectedSize] = useState({});
@@ -39,12 +41,14 @@ const SelectProductTab = ({USER_INFOR}) => {
   const [duration, setDuration] = useState(1000);
   const [isChecked, setIsChecked] = useState(false);
   const [notes, setNotes] = useState('');
+
   const showMessage = (msg, type, dur) => {
     setMessage(msg);
     setMessageType(type);
     setDuration(dur);
     setMessageModalVisible(true);
   };
+
   const handleAddToCart = itemId => {
     const uniform_size = selectedSize[itemId];
     const quantity = qty[itemId] || 1;
@@ -55,9 +59,11 @@ const SelectProductTab = ({USER_INFOR}) => {
       setMessageModalVisible(true);
       return;
     }
+
     const existingItemIndex = cart.findIndex(
       item => item.itemId === itemId && item.uniform_size === uniform_size,
     );
+
     if (existingItemIndex >= 0) {
       setCart(
         cart.map((item, index) =>
@@ -79,6 +85,7 @@ const SelectProductTab = ({USER_INFOR}) => {
     const items = cart.map(({itemId, ...rest}) => rest);
     return items;
   };
+
   const handleCheckout = async () => {
     try {
       const date = moment().format('YYYY-MM-DD');
@@ -116,11 +123,8 @@ const SelectProductTab = ({USER_INFOR}) => {
     const product = uniformProducts.find(p => p.id === item.itemId);
 
     return (
-      <View style={styles.cartItem}>
-        {/* Product Image */}
+      <Animated.View style={styles.cartItem}>
         <Image source={product.image} style={styles.cartImage} />
-
-        {/* Product Details */}
         <View style={styles.cartDetails}>
           <Text style={styles.cartName}>{t(item.uniform_type)}</Text>
           <View style={styles.cartInfo}>
@@ -134,14 +138,12 @@ const SelectProductTab = ({USER_INFOR}) => {
             </Text>
           </View>
         </View>
-
-        {/* Delete Button */}
         <TouchableOpacity
           style={styles.deleteButton}
           onPress={() => handleRemoveFromCart(item.itemId)}>
-          <Icon name={'trash-outline'} size={20} color={'white'} />
+          <Icon name={'trash-outline'} size={20} color={COLORS.white} />
         </TouchableOpacity>
-      </View>
+      </Animated.View>
     );
   };
 
@@ -154,7 +156,7 @@ const SelectProductTab = ({USER_INFOR}) => {
         <Text style={styles.label}>{t('choose_size')}:</Text>
         <View style={styles.sizePicker}>
           {item.sizes.map(size => (
-            <Text
+            <TouchableOpacity
               key={size}
               style={[
                 styles.sizeOption,
@@ -163,8 +165,14 @@ const SelectProductTab = ({USER_INFOR}) => {
               onPress={() =>
                 setSelectedSize({...selectedSize, [item.id]: size})
               }>
-              {size}
-            </Text>
+              <Text
+                style={[
+                  styles.sizeText,
+                  selectedSize[item.id] === size && styles.selectedSizeText,
+                ]}>
+                {size}
+              </Text>
+            </TouchableOpacity>
           ))}
         </View>
 
@@ -176,7 +184,7 @@ const SelectProductTab = ({USER_INFOR}) => {
           onChangeText={value =>
             setQuantity({...qty, [item.id]: parseInt(value) || 1})
           }
-          placeholderTextColor={TEXT_COLOR}
+          placeholderTextColor={COLORS.placeholder}
         />
 
         <TouchableOpacity
@@ -194,6 +202,7 @@ const SelectProductTab = ({USER_INFOR}) => {
         data={uniformProducts}
         renderItem={renderItem}
         keyExtractor={item => item.id}
+        contentContainerStyle={styles.list}
       />
 
       <TouchableOpacity
@@ -204,14 +213,13 @@ const SelectProductTab = ({USER_INFOR}) => {
         </Text>
       </TouchableOpacity>
 
-      {/* Modal hiển thị giỏ hàng */}
       <Modal visible={isModalVisible} transparent={true} animationType="slide">
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
             <TouchableOpacity
               style={styles.closeIcon}
               onPress={() => setModalVisible(false)}>
-              <Icon name="close" size={24} color="#000" />
+              <Icon name="close" size={24} color={COLORS.dark} />
             </TouchableOpacity>
             <Text style={styles.modalTitle}>{t('cart')}</Text>
 
@@ -220,14 +228,15 @@ const SelectProductTab = ({USER_INFOR}) => {
               renderItem={renderCartItem}
               keyExtractor={(item, index) => index.toString()}
               style={styles.cartList}
-              ListEmptyComponent={<Text>{t('cart_empty')}</Text>}
+              ListEmptyComponent={
+                <Text style={styles.emptyCartText}>{t('cart_empty')}</Text>
+              }
             />
 
-            {/* Checkbox */}
             {cart.length > 0 && (
               <View style={styles.checkboxContainer}>
                 <CheckBox
-                  tintColors={{true: 'red', false: 'black'}}
+                  tintColors={{true: COLORS.primary, false: COLORS.dark}}
                   value={isChecked}
                   onValueChange={newValue => setIsChecked(newValue)}
                 />
@@ -235,18 +244,17 @@ const SelectProductTab = ({USER_INFOR}) => {
               </View>
             )}
 
-            {/* TextInput for Note (conditionally rendered) */}
             {isChecked && (
               <TextInput
                 style={styles.noteInput}
                 placeholder={t('enter_note')}
                 value={notes}
                 onChangeText={text => setNotes(text)}
-                placeholderTextColor={TEXT_COLOR}
+                placeholderTextColor={COLORS.placeholder}
+                multiline
               />
             )}
 
-            {/* Nút Mua Hàng */}
             {cart.length > 0 && (
               <TouchableOpacity
                 style={styles.checkoutButton}
@@ -257,215 +265,222 @@ const SelectProductTab = ({USER_INFOR}) => {
           </View>
         </View>
       </Modal>
+
       <ModalMessage
-        isVisible={isMessageModalVisible}
-        onClose={() => setMessageModalVisible(false)}
-        message={message}
+        visible={isMessageModalVisible}
+        message={t(message)}
         type={messageType}
-        t={t}
         duration={duration}
+        onClose={() => setMessageModalVisible(false)}
       />
     </View>
   );
 };
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 10,
-    backgroundColor: '#fff',
+    backgroundColor: COLORS.background,
+  },
+  list: {
+    padding: SIZES.padding,
   },
   itemContainer: {
-    flexDirection: 'row',
-    padding: 12,
-    backgroundColor: '#f8f8f8',
-    marginBottom: 5,
-    borderRadius: 8,
+    backgroundColor: COLORS.white,
+    borderRadius: SIZES.radius,
+    marginBottom: SIZES.base * 2,
+    ...SHADOWS.medium,
+    overflow: 'hidden',
   },
   image: {
-    width: 150,
-    height: 100,
-    borderRadius: 8,
-    marginRight: 12,
+    width: '100%',
+    height: 200,
+    resizeMode: 'cover',
   },
   detailsContainer: {
-    flex: 1,
-    justifyContent: 'center',
+    padding: SIZES.padding,
   },
   name: {
-    fontSize: 18,
-    fontWeight: '500',
-    color: TEXT_COLOR,
+    ...FONTS.h2,
+    color: COLORS.text,
+    marginBottom: SIZES.base,
   },
   label: {
-    fontSize: 16,
-    marginBottom: 4,
-    color: TEXT_COLOR,
+    ...FONTS.body4,
+    color: COLORS.textSecondary,
+    marginBottom: SIZES.base / 2,
   },
   sizePicker: {
     flexDirection: 'row',
-    marginBottom: 10,
+    flexWrap: 'wrap',
+    marginBottom: SIZES.base,
   },
   sizeOption: {
-    padding: 8,
-    marginRight: 8,
-    backgroundColor: '#ddd',
-    borderRadius: 4,
-    color: TEXT_COLOR,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: COLORS.borderColor,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: SIZES.base,
+    marginBottom: SIZES.base,
   },
   selectedSize: {
-    backgroundColor: '#4CAF50',
-    color: 'white',
+    backgroundColor: COLORS.primary,
+    borderColor: COLORS.primary,
+  },
+  sizeText: {
+    ...FONTS.body4,
+    color: COLORS.text,
+  },
+  selectedSizeText: {
+    color: COLORS.white,
   },
   quantityInput: {
-    width: 60,
-    padding: 8,
+    height: SIZES.inputHeight,
     borderWidth: 1,
-    borderColor: '#ccc',
-    marginBottom: 12,
-    textAlign: 'center',
-    color: TEXT_COLOR,
+    borderColor: COLORS.borderColor,
+    borderRadius: SIZES.radius,
+    paddingHorizontal: SIZES.inputPaddingHorizontal,
+    marginBottom: SIZES.base,
+    color: COLORS.text,
+    ...FONTS.body4,
   },
   addButton: {
-    backgroundColor: THEME_COLOR,
-    padding: 10,
-    borderRadius: 8,
+    backgroundColor: COLORS.primary,
+    height: SIZES.inputHeight,
+    borderRadius: SIZES.radius,
+    justifyContent: 'center',
     alignItems: 'center',
   },
   addButtonText: {
-    color: '#fff',
-    fontSize: 16,
+    color: COLORS.white,
+    ...FONTS.h4,
   },
   cartButton: {
     position: 'absolute',
-    bottom: 20,
-    left: 20,
-    backgroundColor: '#4CAF50',
-    padding: 15,
-    borderRadius: 30,
+    bottom: SIZES.padding,
+    right: SIZES.padding,
+    backgroundColor: COLORS.primary,
+    paddingHorizontal: SIZES.padding,
+    paddingVertical: SIZES.base,
+    borderRadius: SIZES.radius,
+    ...SHADOWS.medium,
   },
   cartButtonText: {
-    color: '#fff',
-    fontSize: 18,
+    color: COLORS.white,
+    ...FONTS.h4,
   },
   modalContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
   },
   modalContent: {
-    width: '90%',
-    backgroundColor: '#fff',
-    padding: 20,
-    borderRadius: 10,
+    backgroundColor: COLORS.white,
+    borderTopLeftRadius: SIZES.radius * 2,
+    borderTopRightRadius: SIZES.radius * 2,
+    paddingHorizontal: SIZES.padding,
+    paddingBottom: SIZES.padding,
+    maxHeight: '80%',
   },
   closeIcon: {
     alignSelf: 'flex-end',
+    padding: SIZES.base,
+    marginTop: SIZES.base,
   },
   modalTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 20,
-    color: TEXT_COLOR,
+    ...FONTS.h2,
+    color: COLORS.text,
+    marginBottom: SIZES.padding,
+    textAlign: 'center',
+  },
+  cartList: {
+    marginBottom: SIZES.padding,
   },
   cartItem: {
     flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FFF',
-    padding: 10,
-    marginVertical: 8,
-    marginHorizontal: 16,
-    borderRadius: 8,
-    shadowColor: '#000',
-    shadowOffset: {width: 0, height: 2},
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    backgroundColor: COLORS.white,
+    borderRadius: SIZES.radius,
+    marginBottom: SIZES.base,
+    padding: SIZES.base,
+    ...SHADOWS.light,
   },
   cartImage: {
-    width: 50,
-    height: 50,
-    borderRadius: 6,
-    marginRight: 12,
+    width: 60,
+    height: 60,
+    borderRadius: SIZES.radius,
   },
   cartDetails: {
     flex: 1,
-    justifyContent: 'space-between',
+    marginLeft: SIZES.base,
   },
   cartName: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: TEXT_COLOR,
-    marginBottom: 4,
+    ...FONTS.h4,
+    color: COLORS.text,
+    marginBottom: SIZES.base / 2,
   },
   cartInfo: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
   },
   cartText: {
-    fontSize: 14,
-    color: TEXT_COLOR,
-    marginRight: 4,
+    ...FONTS.body4,
+    color: COLORS.textSecondary,
   },
   cartTextBold: {
-    fontWeight: 'bold',
-    color: TEXT_COLOR,
+    ...FONTS.h4,
+    color: COLORS.text,
   },
   deleteButton: {
-    padding: 6,
-    borderRadius: 4,
-    backgroundColor: '#FF4D4D',
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: COLORS.danger,
     justifyContent: 'center',
     alignItems: 'center',
-    marginLeft: 12,
-  },
-  deleteButtonText: {
-    color: '#FFF',
-    fontSize: 12,
-    fontWeight: '600',
-  },
-
-  cartList: {
-    maxHeight: 300,
-  },
-  checkoutButton: {
-    backgroundColor: '#FF5722',
-    padding: 15,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginTop: 20,
+    marginLeft: SIZES.base,
   },
   checkboxContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 15,
-    borderColor: TEXT_COLOR,
+    marginBottom: SIZES.base,
   },
   checkboxLabel: {
-    fontSize: 16,
-    marginLeft: 8,
-    color: TEXT_COLOR,
+    ...FONTS.body4,
+    color: COLORS.text,
+    marginLeft: SIZES.base,
   },
   noteInput: {
-    height: 40,
-    borderColor: '#ccc',
+    height: SIZES.inputHeight * 2,
     borderWidth: 1,
-    borderRadius: 5,
-    marginTop: 15,
-    paddingHorizontal: 10,
-    color: TEXT_COLOR,
+    borderColor: COLORS.borderColor,
+    borderRadius: SIZES.radius,
+    paddingHorizontal: SIZES.inputPaddingHorizontal,
+    marginBottom: SIZES.padding,
+    color: COLORS.text,
+    ...FONTS.body4,
+    textAlignVertical: 'top',
   },
   checkoutButton: {
-    backgroundColor: '#4CAF50',
-    paddingVertical: 12,
-    borderRadius: 5,
-    marginTop: 20,
+    backgroundColor: COLORS.primary,
+    height: SIZES.inputHeight,
+    borderRadius: SIZES.radius,
+    justifyContent: 'center',
     alignItems: 'center',
+    marginTop: SIZES.base,
   },
   checkoutButtonText: {
-    color: '#fff',
-    fontSize: 18,
+    color: COLORS.white,
+    ...FONTS.h4,
+  },
+  emptyCartText: {
+    ...FONTS.body3,
+    color: COLORS.textSecondary,
+    textAlign: 'center',
+    marginTop: SIZES.padding,
   },
 });
+
 export default SelectProductTab;
