@@ -24,6 +24,7 @@ import {
   Message,
   ChatScreen,
   Uniform,
+  OvertimeConfirm,
 } from '../screens';
 const Stack = createStackNavigator();
 const MainNavigator = () => {
@@ -134,6 +135,11 @@ const MainNavigator = () => {
         <Stack.Screen
           name="ChatScreen"
           component={ChatScreen}
+          options={{headerShown: false}}
+        />
+        <Stack.Screen
+          name="OvertimeConfirm"
+          component={OvertimeConfirm}
           options={{headerShown: false}}
         />
       </Stack.Navigator>

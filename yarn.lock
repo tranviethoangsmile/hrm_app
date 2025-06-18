@@ -2013,6 +2013,11 @@
   dependencies:
     invariant "^2.2.4"
 
+"@react-native-community/slider@^4.5.7":
+  version "4.5.7"
+  resolved "https://registry.npmjs.org/@react-native-community/slider/-/slider-4.5.7.tgz"
+  integrity sha512-WMDDZjNF2Bd8M8TrSqKf5xhM9ikdfCHtSPur64Ow3bB/OVrKufUQZ59NmYdNZNeGPvcHHTsafuYTY8zfZfbchQ==
+
 "@react-native-firebase/app@^19.0.0", "@react-native-firebase/app@19.0.0":
   version "19.0.0"
   resolved "https://registry.npmjs.org/@react-native-firebase/app/-/app-19.0.0.tgz"
@@ -7569,10 +7574,10 @@ react-native-vector-icons@^10.0.3, react-native-vector-icons@>7.0.0:
     prop-types "^15.7.2"
     yargs "^16.1.1"
 
-react-native-video@^6.14.1:
-  version "6.14.1"
-  resolved "https://registry.npmjs.org/react-native-video/-/react-native-video-6.14.1.tgz"
-  integrity sha512-nTPHqg+GKu6UV6Hr5Ph48Hn2jod963bHCt0wWtlK9jv9lE1FDGyDdX0Jl15lky8v7VhNdqjqb9DX0EUhMontWg==
+react-native-video@^6.15.0:
+  version "6.15.0"
+  resolved "https://registry.npmjs.org/react-native-video/-/react-native-video-6.15.0.tgz"
+  integrity sha512-zgaNCMA50uS5hvgySmX1GhB0gJUke1iYhBGcXtIYhvYVtUb9Wp7enrazABb3D5xZOer5kpRraS9V79UpedxBGg==
 
 react-native-windows@*, "react-native-windows@^0.61.0 || ^0.62.0 || ^0.63.0 || ^0.64.0 || ^0.65.0 || ^0.66.0 || ^0.67.0 || ^0.68.0 || ^0.69.0 || ^0.70.0 || ^0.71.0 || ^0.72.0 || ^0.73.0", react-native-windows@>=0.62, react-native-windows@>=0.63.x:
   version "0.73.22"

@@ -87,6 +87,11 @@ const FeatureTab = ({onScrollList}) => {
       labelKey: 'Dai',
       action: () => navigation.navigate('Daily'),
     },
+    {
+      iconName: 'time-outline',
+      labelKey: 'Overtime',
+      action: () => navigation.navigate('OvertimeConfirm'),
+    },
   ];
 
   const renderFeatureButton = (feature, index) => (

@@ -282,5 +282,18 @@
   "enter.shutdown.time": "Enter shutdown time",
   "enter.operated.time": "Enter operated time",
   "compare_shift": "Compare shift",
-  "total": "Total"
+  "total": "Total",
+  "Overtime": "Overtime",
+  "Overtime Confirmation": "Overtime Confirmation",
+  "Start Time": "Start Time",
+  "End Time": "End Time",
+  "Enter your reason for overtime": "Enter your reason for overtime",
+  "Submit": "Submit",
+  "overtime_request": "Overtime Request",
+  "guide_title": "User Guide",
+  "guide_content": "You need to click the confirm button if you agree with your supervisor's overtime request. If you don't agree, you don't need to do anything.",
+  "uniform_guide": "Guide",
+  "uniform_guide_title": "Uniform Request Guide",
+  "uniform_guide_content": "1. Select the type of uniform you need\n2. Choose your size\n3. Enter the quantity\n4. Add items to cart\n5. Review your cart and submit request",
+  "uniform_guide_content": "1. Select the type of uniform you need\n2. Choose your size\n3. Enter the quantity\n4. Add items to cart\n5. Review your cart and submit request\n\nNote: Each employee can only request uniforms once every 6 months."
 }

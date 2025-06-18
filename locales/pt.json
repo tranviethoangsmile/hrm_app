@@ -280,5 +280,9 @@
   "enter.shutdown.time": "Digite o tempo de parada",
   "enter.operated.time": "Digite o tempo operado",
   "compare_shift": "Comparar turno",
-  "total": "Total"
+  "total": "Total",
+  "uniform_guide": "Guia",
+  "uniform_guide_title": "Guia de Solicitação de Uniforme",
+  "uniform_guide_content": "1. Selecione o tipo de uniforme necessário\n2. Escolha seu tamanho\n3. Digite a quantidade\n4. Adicione ao carrinho\n5. Revise seu carrinho e envie o pedido",
+  "uniform_guide_content": "1. Selecione o tipo de uniforme necessário\n2. Escolha seu tamanho\n3. Digite a quantidade\n4. Adicione ao carrinho\n5. Revise seu carrinho e envie o pedido"
 }

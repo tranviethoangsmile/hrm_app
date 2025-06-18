@@ -51,6 +51,7 @@ import HappyModal from '../HappyModal';
 import moment from 'moment';
 import LinkPreview from 'react-native-link-preview';
 import ModalMessage from '../ModalMessage';
+import MediaViewer from '../common/MediaViewer';
 const {width} = Dimensions.get('window');
 
 const HomeTab = ({onScrollList}) => {
@@ -74,6 +75,7 @@ const HomeTab = ({onScrollList}) => {
   const [messageType, setMessageType] = useState('success');
   const [duration, setDuration] = useState(1000);
   const [isMessageModalVisible, setMessageModalVisible] = useState(false);
+  const [selectedMedia, setSelectedMedia] = useState(null);
 
   const onClose = () => {
     setVisibleControl(false);
@@ -314,22 +316,45 @@ const HomeTab = ({onScrollList}) => {
           )}
           {item.media &&
             (item.is_video ? (
-              <Video
-                source={{uri: item.media}}
-                style={[
-                  styles.mediaPlayer,
-                  {width: width - 30, height: (width - 30) * (9 / 16)},
-                ]}
-                controls={true}
-                paused={true}
-                resizeMode="cover"
-                poster={require('../../assets/images/thumbnail.jpg')}
-                posterResizeMode="cover"
-              />
+              <TouchableOpacity
+                onPress={() => {
+                  setSelectedMedia({
+                    url: item.media,
+                    type: 'video',
+                    postInfo: {
+                      user: item.user,
+                      content: item.content,
+                      date: item.date,
+                      is_event: item.is_event,
+                    },
+                  });
+                }}>
+                <Video
+                  source={{uri: item.media}}
+                  style={[
+                    styles.mediaPlayer,
+                    {width: width - 30, height: (width - 30) * (9 / 16)},
+                  ]}
+                  controls={true}
+                  paused={true}
+                  resizeMode="cover"
+                  poster={require('../../assets/images/thumbnail.jpg')}
+                  posterResizeMode="cover"
+                />
+              </TouchableOpacity>
             ) : (
               <TouchableOpacity
                 onPress={() => {
-                  /* Handle image press, maybe open in viewer */
+                  setSelectedMedia({
+                    url: item.media,
+                    type: 'image',
+                    postInfo: {
+                      user: item.user,
+                      content: item.content,
+                      date: item.date,
+                      is_event: item.is_event,
+                    },
+                  });
                 }}>
                 <Image source={{uri: item.media}} style={styles.mediaImage} />
               </TouchableOpacity>
@@ -521,6 +546,14 @@ const HomeTab = ({onScrollList}) => {
         type={messageType}
         t={t}
         duration={duration}
+      />
+      <MediaViewer
+        visible={!!selectedMedia}
+        onClose={() => setSelectedMedia(null)}
+        mediaUrl={selectedMedia?.url}
+        mediaType={selectedMedia?.type}
+        postInfo={selectedMedia?.postInfo}
+        onEventConfirm={handleGoToEventScreen}
       />
     </View>
   );

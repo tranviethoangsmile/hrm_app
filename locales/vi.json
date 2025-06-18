@@ -284,5 +284,17 @@
   "enter.shutdown.time": "Nhập thời gian dừng máy",
   "enter.operated.time": "Nhập thời gian vận hành",
   "compare_shift": "So sánh ca",
-  "total": "Tổng"
+  "total": "Tổng",
+  "Overtime": "Làm thêm giờ",
+  "Overtime Confirmation": "Xác nhận làm thêm giờ",
+  "Start Time": "Thời gian bắt đầu",
+  "End Time": "Thời gian kết thúc",
+  "Enter your reason for overtime": "Nhập lý do làm thêm giờ",
+  "Submit": "Gửi yêu cầu",
+  "overtime_request": "Yêu cầu tăng ca",
+  "guide_title": "Hướng dẫn sử dụng",
+  "guide_content": "Bạn cần bấm vào nút xác nhận nếu bạn đồng ý với yêu cầu tăng ca của cấp trên. Nếu bạn không đồng ý, bạn có thể không cần làm gì.",
+  "uniform_guide": "Hướng dẫn",
+  "uniform_guide_title": "Hướng dẫn yêu cầu đồng phục",
+  "uniform_guide_content": "1. Chọn loại đồng phục bạn cần\n2. Chọn size của bạn\n3. Nhập số lượng\n4. Thêm vào giỏ hàng\n5. Kiểm tra giỏ hàng và gửi yêu cầu"
 }

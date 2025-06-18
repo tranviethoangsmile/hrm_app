@@ -22,6 +22,7 @@ import {
 } from '../components/uniformtabs';
 import {useTranslation} from 'react-i18next';
 import Header from '../components/common/Header';
+import GuideModal from '../components/common/GuideModal';
 import {useNavigation} from '@react-navigation/native';
 import {COLORS, SIZES, FONTS, SHADOWS, LAYOUT} from '../config/theme';
 
@@ -163,6 +164,7 @@ const Uniform = ({route}) => {
   const {USER_INFOR} = route.params;
   const isDarkMode = useColorScheme() === 'dark';
   const [selectedTab, setSelectedTab] = useState(0);
+  const [isGuideVisible, setIsGuideVisible] = useState(false);
   const navigation = useNavigation();
   const scrollX = useRef(new Animated.Value(0)).current;
   const fadeAnim = useRef(new Animated.Value(1)).current;
@@ -221,9 +223,7 @@ const Uniform = ({route}) => {
         right={
           <TouchableOpacity
             style={styles.helpButton}
-            onPress={() => {
-              /* Add help functionality */
-            }}>
+            onPress={() => setIsGuideVisible(true)}>
             <Icon name="help-outline" size={24} color={COLORS.white} />
           </TouchableOpacity>
         }
@@ -255,6 +255,13 @@ const Uniform = ({route}) => {
           ))}
         </View>
       </View>
+
+      <GuideModal
+        visible={isGuideVisible}
+        onClose={() => setIsGuideVisible(false)}
+        title={t('uniform_guide_title')}
+        content={t('uniform_guide_content')}
+      />
     </SafeAreaView>
   );
 };
