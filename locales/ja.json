@@ -285,5 +285,10 @@
   "total": "合計",
   "uniform_guide": "ガイド",
   "uniform_guide_title": "制服リクエストガイド",
-  "uniform_guide_content": "1. 必要な制服の種類を選択\n2. サイズを選択\n3. 数量を入力\n4. カートに追加\n5. カートを確認して申請を送信"
+  "uniform_guide_content": "1. 必要な制服の種類を選択\n2. サイズを選択\n3. 数量を入力\n4. カートに追加\n5. カートを確認して申請を送信",
+  "confirm_join": "参加を確認",
+  "success.confirm": "確認が成功しました",
+  "media.back": "戻る",
+  "media.posted_on": "投稿日時",
+  "un_approve": "却下"
 }

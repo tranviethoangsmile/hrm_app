@@ -8,7 +8,6 @@ import {
   FlatList,
   TouchableOpacity,
   RefreshControl,
-  Image,
 } from 'react-native';
 import {useSelector} from 'react-redux';
 import axios from 'axios';
@@ -58,10 +57,10 @@ const Notifications = ({navigation}) => {
     }
   }, [userInfo?.id]);
 
-  const onRefresh = useCallback(() => {
+  const onRefresh = () => {
     setRefreshing(true);
     getNotifications().then(() => setRefreshing(false));
-  }, [getNotifications]);
+  };
 
   useEffect(() => {
     getNotifications();
@@ -94,12 +93,9 @@ const Notifications = ({navigation}) => {
       );
       if (response.data.success) {
         setNotifications(prevNotifications =>
-          prevNotifications.map(item =>
-            item.id === notification.id ? {...item, is_readed: true} : item,
-          ),
+          prevNotifications.filter(item => item.id !== notification.id),
         );
       }
-      getNotifications();
     } catch (error) {
       console.log(error.message);
     }
@@ -112,9 +108,7 @@ const Notifications = ({navigation}) => {
     return (
       <TouchableOpacity
         style={[styles.notificationItem, isUnread && styles.unreadItem]}
-        onPress={() => {
-          handle_notification_click(item);
-        }}>
+        onPress={() => handle_notification_click(item)}>
         <LinearGradient
           colors={isUnread ? ['#fff', '#f0f9ff'] : ['#fff', '#fff']}
           style={styles.notificationContent}>

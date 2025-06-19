@@ -15,6 +15,8 @@ import Video from 'react-native-video';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import {THEME_COLOR} from '../../utils/Colors';
 import moment from 'moment';
+import ModalMessage from '../ModalMessage';
+import {useTranslation} from 'react-i18next';
 
 const {width, height} = Dimensions.get('window');
 
@@ -25,21 +27,28 @@ const MediaViewer = ({
   mediaType,
   postInfo,
   onEventConfirm,
-  showMessage,
 }) => {
+  const {t} = useTranslation();
   const [paused, setPaused] = useState(false);
   const [showControls, setShowControls] = useState(true);
+  const [isMessageVisible, setIsMessageVisible] = useState(false);
+  const [messageText, setMessageText] = useState('');
+  const [messageType, setMessageType] = useState('');
   const videoRef = useRef(null);
 
   const handleEventConfirm = async () => {
     try {
       await onEventConfirm();
-      showMessage('success.confirm', 'success', 500);
+      setMessageText('success.confirm');
+      setMessageType('success');
+      setIsMessageVisible(true);
       setTimeout(() => {
         onClose();
       }, 1000);
     } catch (error) {
-      showMessage(error?.message || 'networkError', 'error', 500);
+      setMessageText(error?.message || 'networkError');
+      setMessageType('error');
+      setIsMessageVisible(true);
     }
   };
 
@@ -51,6 +60,7 @@ const MediaViewer = ({
         <View style={styles.header}>
           <TouchableOpacity style={styles.closeButton} onPress={onClose}>
             <Icon name="arrow-left" size={20} color="#fff" />
+            <Text style={styles.backText}>{t('media.back')}</Text>
           </TouchableOpacity>
           <View style={styles.userInfo}>
             <Image
@@ -64,6 +74,7 @@ const MediaViewer = ({
             <View style={styles.userTextInfo}>
               <Text style={styles.userName}>{postInfo?.user?.name}</Text>
               <Text style={styles.postTime}>
+                {t('media.posted_on')}{' '}
                 {moment(postInfo?.date).format('DD/MM/YYYY')}
               </Text>
             </View>
@@ -108,10 +119,19 @@ const MediaViewer = ({
             <TouchableOpacity
               style={styles.eventButton}
               onPress={handleEventConfirm}>
-              <Text style={styles.eventButtonText}>Xác nhận tham gia</Text>
+              <Text style={styles.eventButtonText}>{t('confirm_join')}</Text>
             </TouchableOpacity>
           )}
         </View>
+
+        <ModalMessage
+          visible={isMessageVisible}
+          message={messageText}
+          type={messageType}
+          duration={1000}
+          onClose={() => setIsMessageVisible(false)}
+          containerStyle={styles.messageContainer}
+        />
       </SafeAreaView>
     </Modal>
   );
@@ -122,6 +142,13 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#000',
   },
+  messageContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 9999,
+  },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -131,16 +158,19 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
   },
   closeButton: {
-    width: 40,
-    height: 40,
-    justifyContent: 'center',
+    flexDirection: 'row',
     alignItems: 'center',
+    paddingRight: 15,
+  },
+  backText: {
+    color: '#fff',
+    marginLeft: 8,
+    fontSize: 16,
   },
   userInfo: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    marginLeft: 10,
   },
   avatar: {
     width: 40,
@@ -179,19 +209,18 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 14,
     lineHeight: 20,
-    marginBottom: 15,
   },
   eventButton: {
     backgroundColor: THEME_COLOR,
     paddingVertical: 12,
     paddingHorizontal: 20,
     borderRadius: 8,
-    alignSelf: 'flex-start',
-    marginTop: 10,
+    marginTop: 12,
+    alignItems: 'center',
   },
   eventButtonText: {
     color: '#fff',
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '600',
   },
 });

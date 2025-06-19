@@ -56,6 +56,7 @@ const Leave = () => {
   const {t} = useTranslation();
   const authData = useSelector(state => state.auth);
   const navigation = useNavigation();
+  const [activeTab, setActiveTab] = useState(0);
 
   const getLanguage = async () => {
     return await AsyncStorage.getItem('Language');
@@ -286,170 +287,224 @@ const Leave = () => {
     setRefreshing(false);
   };
 
-  const EmployeeCard = () => (
-    <View style={styles.employeeCardContainer}>
-      <LinearGradient
-        colors={['#667eea', '#764ba2']}
-        start={{x: 0, y: 0}}
-        end={{x: 1, y: 1}}
-        style={styles.employeeCardGradient}>
-        {/* Card Header */}
-        <View style={styles.employeeCardHeader}>
-          <Text style={styles.companyNameText}>DAIHATSU METAL</Text>
-          <TouchableOpacity
-            onPress={() => navigation.navigate('Profile')}
-            style={styles.profileBtn}>
-            <IconIon
-              name="person-outline"
-              size={16}
-              color="rgba(255,255,255,0.9)"
-            />
-          </TouchableOpacity>
-        </View>
+  const filterLeavesByStatus = () => {
+    switch (activeTab) {
+      case 0: // Pending
+        return leaveRequested.filter(
+          item => !item.is_approve && !item.feedback,
+        );
+      case 1: // Approved
+        return leaveRequested.filter(item => item.is_approve);
+      case 2: // Rejected
+        return leaveRequested.filter(item => !item.is_approve && item.feedback);
+      default:
+        return leaveRequested;
+    }
+  };
 
-        {/* Employee Info */}
-        <View style={styles.employeeCardInfo}>
-          <TouchableOpacity
-            onPress={() => navigation.navigate('Profile')}
-            style={styles.employeeAvatarContainer}>
-            <Image
-              source={
-                authData?.data?.data?.avatar
-                  ? {uri: authData.data.data.avatar}
-                  : require('../assets/images/avatar.jpg')
-              }
-              style={styles.employeeCardAvatar}
-            />
-          </TouchableOpacity>
+  const getPendingCount = () => {
+    return leaveRequested.filter(item => !item.is_approve && !item.feedback)
+      .length;
+  };
 
-          <View style={styles.employeeCardDetails}>
-            <Text style={styles.employeeCardName}>
-              {authData?.data?.data?.name || '---'}
-            </Text>
-            <Text style={styles.employeeCardPosition}>
-              {authData?.data?.data?.position || 'Employee'}
-            </Text>
-            <View style={styles.employeeContactRow}>
-              <IconIon
-                name="mail-outline"
-                size={11}
-                color="rgba(255,255,255,0.8)"
-              />
-              <Text style={styles.employeeCardEmail} numberOfLines={1}>
-                {authData?.data?.data?.email || 'email@company.com'}
-              </Text>
-            </View>
-          </View>
+  const getApprovedCount = () => {
+    return leaveRequested.filter(item => item.is_approve).length;
+  };
 
-          <View style={styles.employeeCardIdSection}>
-            <Text style={styles.employeeIdLabelText}>ID</Text>
-            <Text style={styles.employeeCardIdText}>
-              {authData?.data?.data?.employee_id || '---'}
-            </Text>
-          </View>
-        </View>
-      </LinearGradient>
-    </View>
+  const getRejectedCount = () => {
+    return leaveRequested.filter(item => !item.is_approve && item.feedback)
+      .length;
+  };
+
+  const TabButton = ({title, isActive, onPress, count}) => (
+    <TouchableOpacity
+      style={[styles.tabButton, isActive && styles.activeTabButton]}
+      onPress={onPress}>
+      <Text
+        style={[styles.tabButtonText, isActive && styles.activeTabButtonText]}>
+        {title}
+      </Text>
+      <View style={[styles.tabBadge, isActive && styles.activeTabBadge]}>
+        <Text
+          style={[styles.tabBadgeText, isActive && styles.activeTabBadgeText]}>
+          {count}
+        </Text>
+      </View>
+    </TouchableOpacity>
   );
+
+  const renderLeaveCard = ({item}) => {
+    const statusColor = item.is_approve
+      ? '#2ecc71'
+      : item.feedback
+      ? '#e74c3c'
+      : '#f39c12';
+    const statusText = item.is_approve
+      ? t('approved')
+      : item.feedback
+      ? t('rejected')
+      : t('awaiting');
+
+    return (
+      <View style={styles.leaveCard}>
+        <View style={styles.leaveCardHeader}>
+          <View style={styles.leaveCardDateContainer}>
+            <Icon name="calendar" size={16} color={THEME_COLOR_2} />
+            <Text style={styles.leaveCardDate}>
+              {moment(item.date_leave).format('DD/MM/YYYY')}
+            </Text>
+          </View>
+          <TouchableOpacity
+            style={styles.menuBtnModern}
+            onPress={() => setOpenMenuId(item.id)}>
+            <Icon name="ellipsis-h" size={18} color="#b0b3b8" />
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.leaveCardContent}>
+          <View style={styles.leaveTypeContainer}>
+            <Icon
+              name={item.is_paid ? 'money' : 'clock-o'}
+              size={14}
+              color={THEME_COLOR_2}
+            />
+            <Text style={styles.leaveTypeText}>
+              {item.is_paid ? t('off.p') : t('unPaid')}
+            </Text>
+          </View>
+
+          {item.reason && (
+            <View style={styles.leaveReasonContainer}>
+              <Icon name="file-text-o" size={14} color="#666" />
+              <Text style={styles.leaveReasonText}>{item.reason}</Text>
+            </View>
+          )}
+
+          <View
+            style={[
+              styles.leaveStatusContainer,
+              {backgroundColor: `${statusColor}15`},
+            ]}>
+            <View style={[styles.statusDot, {backgroundColor: statusColor}]} />
+            <Text style={[styles.leaveStatusText, {color: statusColor}]}>
+              {statusText}
+            </Text>
+          </View>
+
+          {item.feedback && (
+            <View style={styles.feedbackContainer}>
+              <Icon name="comment-o" size={14} color="#666" />
+              <Text style={styles.feedbackText}>{item.feedback}</Text>
+            </View>
+          )}
+        </View>
+
+        {openMenuId === item.id && (
+          <>
+            <TouchableOpacity
+              style={styles.menuOverlayModern}
+              activeOpacity={1}
+              onPressOut={() => setOpenMenuId(null)}
+            />
+            <View style={styles.menuModern}>
+              <TouchableOpacity
+                style={styles.menuItemModern}
+                onPress={() => {
+                  setOpenMenuId(null);
+                  openEditModal(item);
+                }}>
+                <Icon name="edit" size={16} color={THEME_COLOR_2} />
+                <Text style={styles.menuTextModern}>Sửa</Text>
+              </TouchableOpacity>
+              <View style={styles.menuDivider} />
+              <TouchableOpacity
+                style={styles.menuItemModern}
+                onPress={() => {
+                  setOpenMenuId(null);
+                  handleDeleteLeaveRequest(item.id);
+                }}>
+                <Icon name="trash" size={16} color="#e74c3c" />
+                <Text style={[styles.menuTextModern, {color: '#e74c3c'}]}>
+                  Xóa
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </>
+        )}
+      </View>
+    );
+  };
+
   return (
     <KeyboardAvoidingView
       keyboardVerticalOffset={100}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      style={{flex: 1, backgroundColor: '#f5f6fa'}}>
+      style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#f5f6fa" />
       <Header
         title={t('leave.title', 'Đơn nghỉ phép')}
         onBack={() => navigation.goBack()}
       />
       <Loader visible={isLoading} />
-      {err ? <Text style={styles.title}>{err}</Text> : ''}
+      {err ? <Text style={styles.errorText}>{err}</Text> : null}
+
+      <View style={styles.tabContainer}>
+        <TabButton
+          title={t('pending', 'Đang chờ')}
+          isActive={activeTab === 0}
+          onPress={() => setActiveTab(0)}
+          count={getPendingCount()}
+        />
+        <TabButton
+          title={t('approved', 'Đã duyệt')}
+          isActive={activeTab === 1}
+          onPress={() => setActiveTab(1)}
+          count={getApprovedCount()}
+        />
+        <TabButton
+          title={t('un_approve', 'Từ chối')}
+          isActive={activeTab === 2}
+          onPress={() => setActiveTab(2)}
+          count={getRejectedCount()}
+        />
+      </View>
+
       <FlatList
-        data={leaveRequested}
+        data={filterLeavesByStatus()}
         keyExtractor={item => item.id?.toString()}
-        ListHeaderComponent={<EmployeeCard />}
-        renderItem={({item, index}) => (
-          <>
-            <View style={styles.leaveFeedBlockModern}>
-              <TouchableOpacity
-                style={styles.menuBtnFlat}
-                onPress={() => {
-                  setOpenMenuId(item.id);
-                }}>
-                <Icon name="ellipsis-v" size={18} color="#b0b3b8" />
-              </TouchableOpacity>
-              <Text style={styles.leaveDateModern}>
-                {moment(item.date_leave).format('DD/MM/YYYY')}
-              </Text>
-              <Text style={styles.leaveTypeModern}>
-                {item.is_paid ? t('off.p') : t('unPaid')}
-              </Text>
-              {item.reason ? (
-                <Text style={styles.leaveReasonModern}>{item.reason}</Text>
-              ) : null}
-              <Text style={styles.leaveStatusModern}>
-                {item.is_approve ? t('approved') : t('awaiting')}
-              </Text>
-              {item.feedback ? (
-                <Text style={styles.leaveFeedbackModern}>{item.feedback}</Text>
-              ) : null}
-              {/* Custom menu overlay and menu view */}
-              {openMenuId === item.id && (
-                <>
-                  <TouchableOpacity
-                    style={styles.menuOverlayModern}
-                    activeOpacity={1}
-                    onPressOut={() => setOpenMenuId(null)}
-                  />
-                  <View style={styles.menuMenuModern}>
-                    <TouchableOpacity
-                      style={styles.menuItemModern}
-                      onPress={() => {
-                        setOpenMenuId(null);
-                        openEditModal(item);
-                      }}>
-                      <Icon name="edit" size={18} color={THEME_COLOR_2} />
-                      <Text style={styles.menuTextModern}>Sửa</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      style={styles.menuItemModern}
-                      onPress={() => {
-                        setOpenMenuId(null);
-                        handleDeleteLeaveRequest(item.id);
-                      }}>
-                      <Icon name="trash" size={18} color="#e74c3c" />
-                      <Text style={[styles.menuTextModern, {color: '#e74c3c'}]}>
-                        Xóa
-                      </Text>
-                    </TouchableOpacity>
-                  </View>
-                </>
-              )}
-            </View>
-            {index < leaveRequested.length - 1 && (
-              <View style={styles.leaveSeparatorModern} />
-            )}
-          </>
-        )}
+        renderItem={renderLeaveCard}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
-        contentContainerStyle={{paddingBottom: 40, paddingTop: 4}}
+        contentContainerStyle={styles.listContainer}
         ListEmptyComponent={
           isLoading ? (
-            <ActivityIndicator color={THEME_COLOR} />
+            <ActivityIndicator color={THEME_COLOR} style={styles.loader} />
           ) : (
-            <Text
-              style={{
-                color: '#b0b3b8',
-                textAlign: 'center',
-                marginTop: 40,
-                fontSize: 15,
-              }}>
-              {t('no_leaves', 'Chưa có đơn nghỉ nào')}
-            </Text>
+            <View style={styles.emptyContainer}>
+              <Icon name="calendar-o" size={48} color="#ddd" />
+              <Text style={styles.emptyText}>
+                {t('no_leaves', 'Chưa có đơn nghỉ nào')}
+              </Text>
+            </View>
           )
         }
       />
+
+      <TouchableOpacity
+        style={styles.fabButton}
+        onPress={() => {
+          setEditLeave(null);
+          setReason('');
+          setDayOff(moment().add(1, 'day').toDate());
+          setIs_paid(true);
+          setIs_half(false);
+          setLeaderValue('');
+          setModal(true);
+        }}>
+        <Icon name="plus" size={24} color="#fff" />
+      </TouchableOpacity>
+
       <Modal visible={modal} transparent animationType="fade">
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -584,19 +639,6 @@ const Leave = () => {
           </TouchableWithoutFeedback>
         </KeyboardAvoidingView>
       </Modal>
-      <TouchableOpacity
-        style={styles.leaveFabModern}
-        onPress={() => {
-          setEditLeave(null);
-          setReason('');
-          setDayOff(moment().add(1, 'day').toDate());
-          setIs_paid(true);
-          setIs_half(false);
-          setLeaderValue('');
-          setModal(true);
-        }}>
-        <Icon name="plus" size={22} color="#fff" />
-      </TouchableOpacity>
       <ModalMessage
         isVisible={modalMessage.visible}
         type={modalMessage.type}
@@ -610,372 +652,231 @@ const Leave = () => {
 };
 
 const styles = StyleSheet.create({
-  rowFront: {
-    flex: 1,
-    flexDirection: 'row',
-    backgroundColor: '#FFF',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    borderBottomWidth: 1,
-    borderBottomColor: '#ccc',
-    width: Dimensions.get('screen').width * 0.95,
-    height: Dimensions.get('screen').height * 0.05,
-  },
-  btnTitle: {
-    fontSize: 17,
-    color: 'white',
-    fontWeight: '600',
-  },
-  deleteBtn: {
-    width: '20%',
-    backgroundColor: 'red',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  editBtn: {
-    width: '20%',
-    backgroundColor: 'blue',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  rowBack: {
-    flex: 1,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-
-  title: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginBottom: 5,
-    color: TEXT_COLOR,
-  },
-  titleListLeaveRequest: {
-    flex: 1,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    maxHeight: Dimensions.get('screen').height * 0.05,
-    width: Dimensions.get('screen').width * 0.95,
-    backgroundColor: '#fff',
-  },
-  modalheader: {
-    position: 'absolute',
-    right: 40,
-    top: 90,
-  },
-  handleButtonShowModal: {
-    position: 'absolute',
-    backgroundColor: '#5e81ac',
-    width: Dimensions.get('screen').width * 0.3,
-    height: Dimensions.get('screen').height * 0.1,
-    borderWidth: 0.2,
-    borderRadius: 50,
-    bottom: 10,
-    right: 15,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  modalContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-  },
-  modalContent: {
-    backgroundColor: 'white',
-    borderRadius: 10,
-    padding: 20,
-    width: '80%',
-  },
-  btnSendRequest: {
-    width: Dimensions.get('screen').width * 0.5,
-    height: Dimensions.get('screen').height * 0.1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: Dimensions.get('screen').height * 0.01,
-    borderWidth: 0.1,
-    borderRadius: 8,
-    alignContent: 'center',
-    marginHorizontal: Dimensions.get('screen').width * 0.1,
-    zIndex: -1,
-  },
-  checkBoxViewContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-around',
-    borderBottomWidth: 0.5,
-    borderRadius: 8,
-    marginTop: 15,
-  },
-  checkBox: {
-    marginLeft: 20,
-  },
-  receiverSelectView: {
-    flex: 1,
-  },
-  receiverTextView: {
-    width: '20%',
-    marginLeft: 10,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  receiverViewContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderBottomWidth: 0.5,
-    borderRadius: 8,
-    marginTop: 15,
-    maxHeight: 300,
-  },
-  reasonInputView: {flex: 1},
   container: {
     flex: 1,
-    padding: 10,
-    backgroundColor: '#fff',
-    justifyContent: 'center',
-  },
-  reasonTextView: {
-    width: '20%',
-    marginLeft: 10,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  text: {
-    fontSize: 20,
-    color: TEXT_COLOR,
-    fontWeight: '500',
-  },
-  dayOffViewContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderBottomWidth: 0.5,
-    borderRadius: 8,
-  },
-  reasonViewContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderBottomWidth: 0.5,
-    borderRadius: 8,
-    marginTop: 15,
-  },
-  dayOffTextView: {
-    width: '20%',
-    marginLeft: 10,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  dayOffSelectView: {
-    flex: 1,
-  },
-  leaveFeedBlock: {
-    backgroundColor: '#fff',
-    borderRadius: 14,
-    padding: 16,
-    marginHorizontal: 12,
-    marginTop: 10,
-    marginBottom: 0,
-    shadowColor: '#000',
-    shadowOffset: {width: 0, height: 1},
-    shadowOpacity: 0.04,
-    shadowRadius: 4,
-    elevation: 1,
-  },
-  leaveSeparator: {
-    height: 1,
-    backgroundColor: '#e4e6eb',
-    marginHorizontal: 24,
-    borderRadius: 1,
-    marginVertical: 4,
-  },
-  leaveDate: {
-    fontSize: 15,
-    color: '#888',
-    marginRight: 8,
-  },
-  leaveStatus: {
-    fontSize: 14,
-    fontWeight: 'bold',
-  },
-  leaveType: {
-    fontSize: 15,
-    color: THEME_COLOR_2,
-    marginBottom: 2,
-    marginTop: 2,
-  },
-  leaveReason: {
-    fontSize: 15,
-    color: '#222',
-    marginBottom: 2,
-    marginTop: 2,
-  },
-  leaveFeedback: {
-    fontSize: 14,
-    color: '#e67e22',
-    marginTop: 2,
-  },
-  leaveModalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.18)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  leaveModalContent: {
-    backgroundColor: '#fff',
-    borderRadius: 18,
-    padding: 22,
-    width: '92%',
-    shadowColor: '#000',
-    shadowOffset: {width: 0, height: 2},
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    elevation: 4,
-    position: 'relative',
-  },
-  leaveModalContentSmall: {
-    backgroundColor: '#fff',
-    borderRadius: 16,
-    padding: 18,
-    width: 320,
-    alignItems: 'center',
-  },
-  leaveModalCloseBtn: {
-    position: 'absolute',
-    top: 12,
-    right: 12,
-    zIndex: 2,
-    padding: 4,
-    borderRadius: 16,
     backgroundColor: '#f5f6fa',
   },
-  leaveModalTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#222',
-    marginBottom: 18,
+  errorText: {
+    color: '#e74c3c',
     textAlign: 'center',
     marginTop: 8,
+    fontSize: 14,
   },
-  leaveModalFieldRow: {
+  tabContainer: {
     flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 14,
-  },
-  leaveModalLabel: {
-    fontSize: 15,
-    color: '#222',
-    minWidth: 70,
-    marginRight: 8,
-  },
-  leaveModalInput: {
-    flex: 1,
-    minHeight: 40,
-    backgroundColor: '#f5f6fa',
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#e4e6eb',
+    backgroundColor: '#fff',
     paddingHorizontal: 12,
-    fontSize: 15,
-    color: '#222',
-    marginRight: 8,
-  },
-  leaveModalCheckbox: {
-    marginHorizontal: 8,
-  },
-  leaveModalSendBtn: {
-    backgroundColor: THEME_COLOR,
-    borderRadius: 22,
     paddingVertical: 12,
-    paddingHorizontal: 32,
+    marginBottom: 12,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  tabButton: {
+    flex: 1,
+    flexDirection: 'row',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    marginHorizontal: 4,
     alignItems: 'center',
     justifyContent: 'center',
-    alignSelf: 'center',
-    marginTop: 10,
-    shadowColor: THEME_COLOR,
+    backgroundColor: '#f5f6fa',
+  },
+  activeTabButton: {
+    backgroundColor: THEME_COLOR,
+  },
+  tabButtonText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#666',
+  },
+  activeTabButtonText: {
+    color: '#fff',
+  },
+  tabBadge: {
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    marginLeft: 6,
+  },
+  activeTabBadge: {
+    backgroundColor: 'rgba(255,255,255,0.2)',
+  },
+  tabBadgeText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#666',
+  },
+  activeTabBadgeText: {
+    color: '#fff',
+  },
+  listContainer: {
+    paddingHorizontal: 16,
+    paddingBottom: 80,
+    paddingTop: 8,
+  },
+  leaveCard: {
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 12,
+    shadowColor: '#000',
     shadowOffset: {width: 0, height: 2},
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.05,
     shadowRadius: 8,
     elevation: 2,
   },
-  leaveModalSendBtnText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
+  leaveCardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
   },
-  leaveModalDateCloseBtn: {
-    marginTop: 12,
-    alignSelf: 'center',
+  leaveCardDateContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  leaveCardDate: {
+    fontSize: 14,
+    color: '#666',
+    marginLeft: 8,
+    fontWeight: '500',
+  },
+  menuBtnModern: {
     padding: 8,
-    borderRadius: 8,
+    borderRadius: 20,
     backgroundColor: '#f5f6fa',
   },
-  leaveFab: {
+  leaveCardContent: {
+    gap: 12,
+  },
+  leaveTypeContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  leaveTypeText: {
+    fontSize: 15,
+    color: THEME_COLOR_2,
+    fontWeight: '600',
+  },
+  leaveReasonContainer: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 8,
+    paddingTop: 4,
+  },
+  leaveReasonText: {
+    flex: 1,
+    fontSize: 14,
+    color: '#444',
+    lineHeight: 20,
+  },
+  leaveStatusContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    gap: 6,
+  },
+  statusDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+  leaveStatusText: {
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  feedbackContainer: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    backgroundColor: '#fff9ec',
+    padding: 12,
+    borderRadius: 12,
+    gap: 8,
+  },
+  feedbackText: {
+    flex: 1,
+    fontSize: 13,
+    color: '#666',
+    lineHeight: 18,
+  },
+  menuOverlayModern: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.15)',
+    borderRadius: 16,
+  },
+  menuModern: {
+    position: 'absolute',
+    top: 48,
+    right: 16,
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    paddingVertical: 6,
+    width: 140,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 4},
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 4,
+  },
+  menuItemModern: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    gap: 12,
+  },
+  menuDivider: {
+    height: 1,
+    backgroundColor: '#f5f6fa',
+    marginVertical: 4,
+  },
+  menuTextModern: {
+    fontSize: 14,
+    color: '#444',
+    fontWeight: '500',
+  },
+  emptyContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 40,
+    gap: 16,
+  },
+  emptyText: {
+    fontSize: 15,
+    color: '#999',
+    textAlign: 'center',
+  },
+  loader: {
+    marginTop: 40,
+  },
+  fabButton: {
     position: 'absolute',
     bottom: 24,
     right: 24,
-    backgroundColor: THEME_COLOR,
     width: 56,
     height: 56,
     borderRadius: 28,
+    backgroundColor: THEME_COLOR,
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: THEME_COLOR,
-    shadowOffset: {width: 0, height: 2},
-    shadowOpacity: 0.18,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  inputError: {
-    borderColor: '#e74c3c',
-    borderWidth: 2,
-  },
-  leaveFeedBlockModern: {
-    backgroundColor: '#fff',
-    borderRadius: 14,
-    padding: 16,
-    marginHorizontal: 0,
-    marginTop: 10,
-    marginBottom: 0,
-    shadowColor: 'transparent',
-    elevation: 0,
-  },
-  leaveSeparatorModern: {
-    height: 1,
-    backgroundColor: '#e4e6eb',
-    marginHorizontal: 0,
-    borderRadius: 1,
-    marginVertical: 4,
-  },
-  leaveDateModern: {
-    fontSize: 14,
-    color: '#b0b3b8',
-    marginBottom: 2,
-  },
-  leaveTypeModern: {
-    fontSize: 15,
-    color: THEME_COLOR_2,
-    marginBottom: 2,
-    marginTop: 2,
-    fontWeight: 'bold',
-  },
-  leaveReasonModern: {
-    fontSize: 15,
-    color: '#222',
-    marginBottom: 2,
-    marginTop: 2,
-  },
-  leaveStatusModern: {
-    fontSize: 13,
-    color: '#888',
-    marginBottom: 2,
-  },
-  leaveFeedbackModern: {
-    fontSize: 14,
-    color: '#e67e22',
-    marginTop: 2,
+    shadowOffset: {width: 0, height: 4},
+    shadowOpacity: 0.25,
+    shadowRadius: 12,
+    elevation: 6,
   },
   leaveModalOverlayModern: {
     flex: 1,
@@ -1076,169 +977,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.12,
     shadowRadius: 8,
     elevation: 2,
-  },
-  leaveFabModern: {
-    position: 'absolute',
-    bottom: 24,
-    right: 24,
-    backgroundColor: THEME_COLOR,
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: THEME_COLOR,
-    shadowOffset: {width: 0, height: 2},
-    shadowOpacity: 0.18,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  menuBtnFlat: {
-    position: 'absolute',
-    top: 10,
-    right: 10,
-    zIndex: 2,
-    padding: 4,
-    borderRadius: 16,
-    backgroundColor: 'transparent',
-  },
-  menuOverlayModern: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(0,0,0,0.12)',
-    zIndex: 100,
-  },
-  menuMenuModern: {
-    position: 'absolute',
-    top: 36,
-    right: 16,
-    backgroundColor: '#23272f',
-    borderRadius: 12,
-    paddingVertical: 8,
-    minWidth: 140,
-    shadowColor: '#000',
-    shadowOffset: {width: 0, height: 2},
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    elevation: 6,
-    zIndex: 101,
-  },
-  menuItemModern: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 18,
-    width: 140,
-  },
-  menuTextModern: {
-    color: '#fff',
-    fontSize: 15,
-    marginLeft: 10,
-  },
-  // Employee Card Styles
-  employeeCardContainer: {
-    marginHorizontal: 15,
-    marginTop: 15,
-    marginBottom: 10,
-    borderRadius: 16,
-    backgroundColor: '#667eea',
-    shadowColor: '#000',
-    shadowOffset: {width: 0, height: 8},
-    shadowOpacity: 0.25,
-    shadowRadius: 16,
-    elevation: 12,
-  },
-  employeeCardGradient: {
-    borderRadius: 16,
-    padding: 16,
-    minHeight: 110,
-  },
-  employeeCardHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  companyNameText: {
-    fontSize: 11,
-    fontWeight: '800',
-    color: 'rgba(255,255,255,0.9)',
-    letterSpacing: 1.2,
-  },
-  profileBtn: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  employeeCardInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  employeeAvatarContainer: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    marginRight: 14,
-  },
-  employeeCardAvatar: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    borderWidth: 2.5,
-    borderColor: 'rgba(255,255,255,0.3)',
-  },
-  employeeCardDetails: {
-    flex: 1,
-  },
-  employeeCardName: {
-    fontSize: 16,
-    fontWeight: '800',
-    color: '#fff',
-    marginBottom: 2,
-    letterSpacing: 0.3,
-  },
-  employeeCardPosition: {
-    fontSize: 12,
-    color: 'rgba(255,255,255,0.85)',
-    fontWeight: '600',
-    marginBottom: 3,
-  },
-  employeeContactRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  employeeCardEmail: {
-    fontSize: 10,
-    color: 'rgba(255,255,255,0.8)',
-    fontWeight: '500',
-    marginLeft: 4,
-    flex: 1,
-  },
-  employeeCardIdSection: {
-    alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.15)',
-    paddingVertical: 6,
-    paddingHorizontal: 10,
-    borderRadius: 10,
-    minWidth: 50,
-  },
-  employeeIdLabelText: {
-    fontSize: 9,
-    color: 'rgba(255,255,255,0.7)',
-    fontWeight: '600',
-    marginBottom: 1,
-  },
-  employeeCardIdText: {
-    fontSize: 12,
-    color: '#fff',
-    fontWeight: '800',
-    letterSpacing: 0.5,
   },
 });
 

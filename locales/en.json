@@ -295,5 +295,9 @@
   "uniform_guide": "Guide",
   "uniform_guide_title": "Uniform Request Guide",
   "uniform_guide_content": "1. Select the type of uniform you need\n2. Choose your size\n3. Enter the quantity\n4. Add items to cart\n5. Review your cart and submit request",
-  "uniform_guide_content": "1. Select the type of uniform you need\n2. Choose your size\n3. Enter the quantity\n4. Add items to cart\n5. Review your cart and submit request\n\nNote: Each employee can only request uniforms once every 6 months."
+  "uniform_guide_content": "1. Select the type of uniform you need\n2. Choose your size\n3. Enter the quantity\n4. Add items to cart\n5. Review your cart and submit request\n\nNote: Each employee can only request uniforms once every 6 months.",
+  "confirm_join": "Confirm participation",
+  "success.confirm": "Successfully confirmed",
+  "media.back": "Back",
+  "media.posted_on": "Posted on"
 }
