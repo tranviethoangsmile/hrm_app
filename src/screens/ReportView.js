@@ -168,7 +168,7 @@ function ReportView() {
               color="#666"
             />
             <Text style={styles.infoText}>
-              {item.is_paid ? t('off.p') : t('unPaid')}
+              {item.is_paid ? t('paid') : t('unpaid')}
             </Text>
           </View>
 

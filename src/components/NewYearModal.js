@@ -16,21 +16,10 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const {width, height} = Dimensions.get('window');
 
-const animations = [
-  require('../assets/json/hpbd_1.json'),
-  require('../assets/json/hpbd_2.json'),
-  require('../assets/json/hpbd_3.json'),
-  require('../assets/json/hpbd.json'),
-];
-
-const getRandomAnimation = () => {
-  const randomIndex = Math.floor(Math.random() * animations.length);
-  return animations[randomIndex];
-};
-
-const BirthdayLine = ({text, delay, style}) => {
+const NewYearLine = ({text, delay, style}) => {
   const opacity = useRef(new Animated.Value(0)).current;
   const translateY = useRef(new Animated.Value(20)).current;
+  const scale = useRef(new Animated.Value(0.8)).current;
 
   useEffect(() => {
     Animated.sequence([
@@ -47,9 +36,15 @@ const BirthdayLine = ({text, delay, style}) => {
           tension: 40,
           useNativeDriver: true,
         }),
+        Animated.spring(scale, {
+          toValue: 1,
+          friction: 8,
+          tension: 40,
+          useNativeDriver: true,
+        }),
       ]),
     ]).start();
-  }, []);
+  }, [delay, opacity, translateY, scale]);
 
   return (
     <Animated.Text
@@ -58,7 +53,7 @@ const BirthdayLine = ({text, delay, style}) => {
         style,
         {
           opacity,
-          transform: [{translateY}],
+          transform: [{translateY}, {scale}],
         },
       ]}>
       {text}
@@ -66,16 +61,14 @@ const BirthdayLine = ({text, delay, style}) => {
   );
 };
 
-const HappyModal = ({visible, onClose, userName}) => {
+const NewYearModal = ({visible, onClose, userName}) => {
   const {t} = useTranslation();
-  const [animation, setAnimation] = useState(getRandomAnimation());
   const [scale] = useState(new Animated.Value(0));
   const [opacity] = useState(new Animated.Value(0));
   const [hasShownToday, setHasShownToday] = useState(false);
 
   useEffect(() => {
     if (visible && !hasShownToday) {
-      setAnimation(getRandomAnimation());
       Animated.parallel([
         Animated.spring(scale, {
           toValue: 1,
@@ -90,18 +83,17 @@ const HappyModal = ({visible, onClose, userName}) => {
         }),
       ]).start();
 
-      // Mark as shown for today
       markAsShownToday();
     }
-  }, [visible, hasShownToday]);
+  }, [visible, hasShownToday, opacity, scale]);
 
   const markAsShownToday = async () => {
     try {
       const today = new Date().toISOString().split('T')[0];
-      await AsyncStorage.setItem('lastBirthdayShow', today);
+      await AsyncStorage.setItem('lastNewYearShow', today);
       setHasShownToday(true);
     } catch (error) {
-      console.error('Error saving birthday show date:', error);
+      console.error('Error saving new year show date:', error);
     }
   };
 
@@ -138,20 +130,40 @@ const HappyModal = ({visible, onClose, userName}) => {
               },
             ]}>
             <LottieView
-              source={animation}
+              source={require('../assets/json/fireworks2.json')}
               style={styles.animation}
               autoPlay
               loop
             />
-            <Text style={styles.birthdayText}>
-              {t('Happy Birthday')} {userName}! 🎉
+            <Text style={styles.newYearText}>
+              {t('Happy New Year')} {userName}! 🎊
             </Text>
             <View style={styles.wishesContainer}>
-              <BirthdayLine text={t('birthday_wish_line1')} delay={0} />
-              <BirthdayLine text={t('birthday_wish_line2')} delay={1000} />
-              <BirthdayLine text={t('birthday_wish_line3')} delay={2000} />
-              <BirthdayLine text={t('birthday_wish_line4')} delay={3000} />
-              <BirthdayLine text={t('birthday_wish_line5')} delay={4000} />
+              <NewYearLine
+                text={t('new_year_wish_line1')}
+                delay={0}
+                style={styles.goldText}
+              />
+              <NewYearLine
+                text={t('new_year_wish_line2')}
+                delay={1000}
+                style={styles.redText}
+              />
+              <NewYearLine
+                text={t('new_year_wish_line3')}
+                delay={2000}
+                style={styles.goldText}
+              />
+              <NewYearLine
+                text={t('new_year_wish_line4')}
+                delay={3000}
+                style={styles.redText}
+              />
+              <NewYearLine
+                text={t('new_year_wish_line5')}
+                delay={4000}
+                style={styles.goldText}
+              />
             </View>
           </Animated.View>
         </View>
@@ -192,12 +204,15 @@ const styles = StyleSheet.create({
     width: width * 0.7,
     height: width * 0.7,
   },
-  birthdayText: {
-    fontSize: 24,
+  newYearText: {
+    fontSize: 28,
     fontWeight: 'bold',
-    color: '#FF4B8C',
+    color: '#E4B528', // Màu vàng đậm
     marginTop: 20,
     textAlign: 'center',
+    textShadowColor: 'rgba(0, 0, 0, 0.2)',
+    textShadowOffset: {width: 1, height: 1},
+    textShadowRadius: 3,
   },
   wishesContainer: {
     marginTop: 20,
@@ -206,11 +221,18 @@ const styles = StyleSheet.create({
   },
   wishText: {
     fontSize: 16,
-    color: '#666',
     marginVertical: 5,
     textAlign: 'center',
     lineHeight: 22,
   },
+  goldText: {
+    color: '#E4B528', // Màu vàng đậm
+    fontWeight: '600',
+  },
+  redText: {
+    color: '#D4342E', // Màu đỏ truyền thống
+    fontWeight: '600',
+  },
 });
 
-export default HappyModal;
+export default NewYearModal;

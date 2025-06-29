@@ -32,6 +32,8 @@ const Notifications = ({navigation}) => {
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [activeTab, setActiveTab] = useState('all'); // 'all', 'system'
+  const [expandedId, setExpandedId] = useState(null); // Thêm state để track item đang mở rộng
   const authData = useSelector(state => state.auth);
   const userInfo = authData?.data?.data;
 
@@ -101,9 +103,60 @@ const Notifications = ({navigation}) => {
     }
   };
 
+  const filteredNotifications = useCallback(() => {
+    switch (activeTab) {
+      case 'system':
+        return notifications.filter(
+          item => item.type?.toUpperCase() === 'SYSTEM',
+        );
+      default:
+        return notifications;
+    }
+  }, [notifications, activeTab]);
+
+  const markAllAsRead = async () => {
+    try {
+      setLoading(true);
+      const unreadNotifications = notifications.filter(n => !n.is_readed);
+
+      const responses = await Promise.all(
+        unreadNotifications.map(notification =>
+          axios.put(
+            `${BASE_URL}${PORT}${API}${VERSION}${V1}${NOTIFICATION}${UPDATE}`,
+            {
+              id: notification.id,
+            },
+          ),
+        ),
+      );
+
+      const allSuccess = responses.every(response => response.data.success);
+      if (allSuccess) {
+        setNotifications(prevNotifications =>
+          prevNotifications.filter(
+            notification =>
+              !unreadNotifications.some(
+                unread => unread.id === notification.id,
+              ),
+          ),
+        );
+      }
+    } catch (error) {
+      console.error(t('notification_error_mark_read'), error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleExpand = id => {
+    setExpandedId(expandedId === id ? null : id);
+  };
+
   const renderNotifications = ({item}) => {
     const isUnread = !item.is_readed;
     const notificationColor = getNotificationColor(item.type);
+    const isExpanded = expandedId === item.id;
+    const isSystemNotification = item.type?.toUpperCase() === 'SYSTEM';
 
     return (
       <TouchableOpacity
@@ -111,7 +164,7 @@ const Notifications = ({navigation}) => {
         onPress={() => handle_notification_click(item)}>
         <LinearGradient
           colors={isUnread ? ['#fff', '#f0f9ff'] : ['#fff', '#fff']}
-          style={styles.notificationContent}>
+          style={styles.notificationGradient}>
           <View style={styles.notificationHeader}>
             <View style={styles.iconContainer}>
               <View
@@ -129,7 +182,9 @@ const Notifications = ({navigation}) => {
             </View>
             <View style={styles.textContainer}>
               <View style={styles.titleContainer}>
-                <Text style={styles.title} numberOfLines={2}>
+                <Text
+                  style={[styles.title, isExpanded && styles.expandedTitle]}
+                  numberOfLines={isExpanded ? undefined : 2}>
                   {item.title}
                 </Text>
                 <View
@@ -139,12 +194,30 @@ const Notifications = ({navigation}) => {
                   ]}
                 />
               </View>
-              <Text style={styles.message} numberOfLines={3}>
+              <Text
+                style={[styles.message, isExpanded && styles.expandedMessage]}
+                numberOfLines={isExpanded ? undefined : 3}>
                 {item.message}
               </Text>
-              <Text style={styles.time}>
-                {moment(item.created_at).format('DD/MM/YYYY HH:mm')}
-              </Text>
+              <View style={styles.footerContainer}>
+                <Text style={styles.time}>
+                  {moment(item.created_at).format('DD/MM/YYYY HH:mm')}
+                </Text>
+                {isSystemNotification && (
+                  <TouchableOpacity
+                    onPress={e => {
+                      e.stopPropagation(); // Ngăn không cho sự kiện click lan tỏa lên parent
+                      handleExpand(item.id);
+                    }}
+                    style={styles.expandButton}>
+                    <Icon
+                      name={isExpanded ? 'chevron-up' : 'chevron-down'}
+                      size={20}
+                      color="#94a3b8"
+                    />
+                  </TouchableOpacity>
+                )}
+              </View>
             </View>
           </View>
         </LinearGradient>
@@ -162,14 +235,44 @@ const Notifications = ({navigation}) => {
           <Icon name="arrow-back" size={24} color="#000" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>{t('noti')}</Text>
-        <View style={styles.rightPlaceholder} />
+        <TouchableOpacity
+          style={styles.markAllReadButton}
+          onPress={markAllAsRead}>
+          <Icon name="checkmark-done" size={24} color="#2196F3" />
+        </TouchableOpacity>
       </View>
+
+      <View style={styles.tabContainer}>
+        <TouchableOpacity
+          style={[styles.tab, activeTab === 'all' && styles.activeTab]}
+          onPress={() => setActiveTab('all')}>
+          <Text
+            style={[
+              styles.tabText,
+              activeTab === 'all' && styles.activeTabText,
+            ]}>
+            {t('notification_all')}
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.tab, activeTab === 'system' && styles.activeTab]}
+          onPress={() => setActiveTab('system')}>
+          <Text
+            style={[
+              styles.tabText,
+              activeTab === 'system' && styles.activeTabText,
+            ]}>
+            {t('notification_system')}
+          </Text>
+        </TouchableOpacity>
+      </View>
+
       <View style={styles.content}>
         {loading ? (
           <Loader />
         ) : (
           <FlatList
-            data={notifications}
+            data={filteredNotifications()}
             renderItem={renderNotifications}
             keyExtractor={item => item.id.toString()}
             contentContainerStyle={styles.notificationsList}
@@ -183,7 +286,7 @@ const Notifications = ({navigation}) => {
                   size={64}
                   color="#94a3b8"
                 />
-                <Text style={styles.emptyText}>{t('no.notifications')}</Text>
+                <Text style={styles.emptyText}>{t('notification_empty')}</Text>
               </View>
             )}
           />
@@ -309,6 +412,55 @@ const styles = StyleSheet.create({
     height: 8,
     borderRadius: 4,
     marginLeft: 8,
+  },
+  tabContainer: {
+    flexDirection: 'row',
+    backgroundColor: '#fff',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f1f5f9',
+  },
+  tab: {
+    flex: 1,
+    paddingVertical: 8,
+    alignItems: 'center',
+    borderRadius: 8,
+    marginHorizontal: 4,
+  },
+  activeTab: {
+    backgroundColor: '#e3f2fd',
+  },
+  tabText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#64748b',
+  },
+  activeTabText: {
+    color: '#2196F3',
+  },
+  markAllReadButton: {
+    padding: 8,
+  },
+  expandedTitle: {
+    marginBottom: 8,
+  },
+  expandedMessage: {
+    marginBottom: 8,
+  },
+  footerContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 4,
+  },
+  notificationGradient: {
+    borderRadius: 12,
+    overflow: 'hidden',
+    padding: 12,
+  },
+  expandButton: {
+    padding: 4,
   },
 });
 

@@ -119,7 +119,7 @@ const ProcessingOrdersTab = ({USER_INFOR}) => {
       <View style={styles.orderContent}>
         <Text style={styles.uniformType}>{t(`${item.uniform_type}`)}</Text>
         <Text style={styles.details}>
-          {t('si.ze')}:{' '}
+          {t('size')}:{' '}
           <Text style={styles.detailsValue}>{item.uniform_size}</Text>
         </Text>
         <Text style={styles.details}>

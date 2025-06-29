@@ -166,7 +166,7 @@ const Leave = () => {
       setModalMessage({
         visible: true,
         type: 'error',
-        message: 'Vui lòng nhập đầy đủ ngày nghỉ và lý do',
+        message: t('fill_required'),
       });
       return;
     }
@@ -197,7 +197,7 @@ const Leave = () => {
         setModalMessage({
           visible: true,
           type: 'success',
-          message: 'Gửi đơn thành công!',
+          message: t('send_request_success'),
         });
       } else {
         setIsLoading(false);
@@ -205,7 +205,7 @@ const Leave = () => {
         setModalMessage({
           visible: true,
           type: 'error',
-          message: 'Gửi đơn thất bại!',
+          message: t('send_request_failed'),
         });
       }
     } catch (error) {
@@ -271,7 +271,7 @@ const Leave = () => {
       ]}>
       <Text style={[styles.text]}>{item.date_leave}</Text>
       <Text style={[styles.text]}>
-        {item.is_paid ? t('off.p') : t('unPaid')}
+        {item.is_paid ? t('paid') : t('unpaid')}
       </Text>
       <Text style={[styles.text, {color: item.is_approve ? 'green' : 'red'}]}>
         {item.is_approve ? t('approved') : t('awaiting')}
@@ -369,7 +369,7 @@ const Leave = () => {
               color={THEME_COLOR_2}
             />
             <Text style={styles.leaveTypeText}>
-              {item.is_paid ? t('off.p') : t('unPaid')}
+              {item.is_paid ? t('paid') : t('unpaid')}
             </Text>
           </View>
 
@@ -414,7 +414,7 @@ const Leave = () => {
                   openEditModal(item);
                 }}>
                 <Icon name="edit" size={16} color={THEME_COLOR_2} />
-                <Text style={styles.menuTextModern}>Sửa</Text>
+                <Text style={styles.menuTextModern}>{t('edit')}</Text>
               </TouchableOpacity>
               <View style={styles.menuDivider} />
               <TouchableOpacity
@@ -425,7 +425,7 @@ const Leave = () => {
                 }}>
                 <Icon name="trash" size={16} color="#e74c3c" />
                 <Text style={[styles.menuTextModern, {color: '#e74c3c'}]}>
-                  Xóa
+                  {t('delete')}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -450,19 +450,19 @@ const Leave = () => {
 
       <View style={styles.tabContainer}>
         <TabButton
-          title={t('pending', 'Đang chờ')}
+          title={t('pending')}
           isActive={activeTab === 0}
           onPress={() => setActiveTab(0)}
           count={getPendingCount()}
         />
         <TabButton
-          title={t('approved', 'Đã duyệt')}
+          title={t('approved')}
           isActive={activeTab === 1}
           onPress={() => setActiveTab(1)}
           count={getApprovedCount()}
         />
         <TabButton
-          title={t('un_approve', 'Từ chối')}
+          title={t('rejected')}
           isActive={activeTab === 2}
           onPress={() => setActiveTab(2)}
           count={getRejectedCount()}
@@ -591,7 +591,7 @@ const Leave = () => {
                       color={is_paid ? THEME_COLOR_2 : '#b0b3b8'}
                     />
                     <Text style={styles.leaveCheckboxLabelModern}>
-                      {t('off.p')}
+                      {t('paid')}
                     </Text>
                   </TouchableOpacity>
                   <TouchableOpacity

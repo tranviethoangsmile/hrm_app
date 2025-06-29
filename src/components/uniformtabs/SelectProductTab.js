@@ -129,7 +129,7 @@ const SelectProductTab = ({USER_INFOR}) => {
           <Text style={styles.cartName}>{t(item.uniform_type)}</Text>
           <View style={styles.cartInfo}>
             <Text style={styles.cartText}>
-              {t('si.ze')}:{' '}
+              {t('size')}:{' '}
               <Text style={styles.cartTextBold}>{item.uniform_size}</Text>
             </Text>
             <Text style={styles.cartText}>
@@ -153,7 +153,7 @@ const SelectProductTab = ({USER_INFOR}) => {
       <View style={styles.detailsContainer}>
         <Text style={styles.name}>{t(item.type)}</Text>
 
-        <Text style={styles.label}>{t('choose_size')}:</Text>
+        <Text style={styles.label}>{t('size')}:</Text>
         <View style={styles.sizePicker}>
           {item.sizes.map(size => (
             <TouchableOpacity

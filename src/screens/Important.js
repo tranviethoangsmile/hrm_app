@@ -146,7 +146,7 @@ const Important = ({route}) => {
         style: 'cancel',
       },
       {
-        text: t('dl'),
+        text: t('delete'),
         onPress: async () => {
           try {
             const result = await axios.post(
@@ -234,7 +234,7 @@ const Important = ({route}) => {
           <TouchableOpacity
             style={[styles.button, styles.deleteButton]}
             onPress={() => handleOptionPress('delete')}>
-            <Text style={styles.buttonText}>{t('DELETE')}</Text>
+            <Text style={styles.buttonText}>{t('delete')}</Text>
           </TouchableOpacity>
         </View>
       )}

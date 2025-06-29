@@ -52,6 +52,9 @@ import moment from 'moment';
 import LinkPreview from 'react-native-link-preview';
 import ModalMessage from '../ModalMessage';
 import MediaViewer from '../common/MediaViewer';
+import BirthdayToast from '../BirthdayToast';
+import NewYearModal from '../NewYearModal';
+import NewYearToast from '../NewYearToast';
 const {width} = Dimensions.get('window');
 
 const HomeTab = ({onScrollList}) => {
@@ -60,6 +63,9 @@ const HomeTab = ({onScrollList}) => {
   const [visibleControl, setVisibleControl] = useState(false);
   const [isVisiblePopup, setIsVisiblePopup] = useState(false);
   const [isVisibleHappy, setIsVisibleHappy] = useState(false);
+  const [isVisibleNewYear, setIsVisibleNewYear] = useState(false);
+  const [showBirthdayToast, setShowBirthdayToast] = useState(false);
+  const [showNewYearToast, setShowNewYearToast] = useState(false);
   const authData = useSelector(state => state.auth);
   const [userInfo, setUserInfo] = useState(authData?.data.data);
   const [err, setError] = useState('');
@@ -82,6 +88,7 @@ const HomeTab = ({onScrollList}) => {
     setIsNotification(false);
     setIsVisiblePopup(false);
     setIsVisibleHappy(false);
+    setIsVisibleNewYear(false);
   };
   const showMessage = (msg, type, dur) => {
     setMessageModalVisible(true);
@@ -421,24 +428,70 @@ const HomeTab = ({onScrollList}) => {
 
   useEffect(() => {
     if (userInfo) {
-      checkBirthDay();
+      checkSpecialDays();
     }
   }, [userInfo]);
 
-  const checkBirthDay = () => {
+  const checkSpecialDays = async () => {
     try {
+      // Check Birthday
       const userBirthday = moment(userInfo.dob).format('MM-DD');
       if (today === userBirthday) {
-        setIsVisibleHappy(true);
-        setTimeout(() => {
-          setIsVisibleHappy(false);
-        }, 10000);
+        const lastBirthdayShow = await AsyncStorage.getItem('lastBirthdayShow');
+        const today = new Date().toISOString().split('T')[0];
+
+        if (lastBirthdayShow !== today) {
+          setIsVisibleHappy(true);
+          setTimeout(() => {
+            setIsVisibleHappy(false);
+            setShowBirthdayToast(true);
+          }, 10000);
+        } else {
+          setShowBirthdayToast(true);
+        }
       } else {
         setIsVisibleHappy(false);
+        setShowBirthdayToast(false);
+      }
+
+      // Check New Year
+      const isNewYear = moment().format('MM-DD') === '01-01';
+      if (isNewYear) {
+        const lastNewYearShow = await AsyncStorage.getItem('lastNewYearShow');
+        const today = new Date().toISOString().split('T')[0];
+
+        if (lastNewYearShow !== today) {
+          setIsVisibleNewYear(true);
+          setTimeout(() => {
+            setIsVisibleNewYear(false);
+            setShowNewYearToast(true);
+          }, 10000);
+        } else {
+          setShowNewYearToast(true);
+        }
+      } else {
+        setIsVisibleNewYear(false);
+        setShowNewYearToast(false);
       }
     } catch (error) {
       console.log(error.message);
     }
+  };
+
+  const handleShowBirthdayModal = () => {
+    setIsVisibleHappy(true);
+    setTimeout(() => {
+      setIsVisibleHappy(false);
+      setShowBirthdayToast(true);
+    }, 10000);
+  };
+
+  const handleShowNewYearModal = () => {
+    setIsVisibleNewYear(true);
+    setTimeout(() => {
+      setIsVisibleNewYear(false);
+      setShowNewYearToast(true);
+    }, 10000);
   };
 
   const renderPosts = () => {
@@ -538,7 +591,32 @@ const HomeTab = ({onScrollList}) => {
         t={t}
         navigation={navigation}
       />
-      <HappyModal onClose={onClose} visible={isVisibleHappy} />
+      <HappyModal
+        visible={isVisibleHappy}
+        onClose={() => {
+          setIsVisibleHappy(false);
+          setShowBirthdayToast(true);
+        }}
+        userName={userInfo?.full_name}
+      />
+      <NewYearModal
+        visible={isVisibleNewYear}
+        onClose={() => {
+          setIsVisibleNewYear(false);
+          setShowNewYearToast(true);
+        }}
+        userName={userInfo?.full_name}
+      />
+      <BirthdayToast
+        visible={showBirthdayToast}
+        onClose={() => setShowBirthdayToast(false)}
+        onShowModal={handleShowBirthdayModal}
+      />
+      <NewYearToast
+        visible={showNewYearToast}
+        onClose={() => setShowNewYearToast(false)}
+        onShowModal={handleShowNewYearModal}
+      />
       <ModalMessage
         isVisible={isMessageModalVisible}
         onClose={() => setMessageModalVisible(false)}
