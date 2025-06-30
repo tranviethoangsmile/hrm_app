@@ -36,7 +36,7 @@ const FeatureTab = ({onScrollList}) => {
     checkLanguage();
   }, []);
 
-  const featuresData = [
+  const allFeatures = [
     {
       iconName: 'clipboard-outline',
       labelKey: 'inventory',
@@ -51,6 +51,7 @@ const FeatureTab = ({onScrollList}) => {
       iconName: 'logo-octocat',
       labelKey: 'Ai',
       action: () => navigation.navigate('Ai'),
+      hideForRoles: ['STAFF'],
     },
     {
       iconName: 'shirt-outline',
@@ -74,13 +75,14 @@ const FeatureTab = ({onScrollList}) => {
     },
     {
       iconName: 'book-outline',
-      labelKey: 'planPro',
+      labelKey: 'plan.title',
       action: () => navigation.navigate('PlanProduction'),
     },
     {
       iconName: 'stats-chart-outline',
       labelKey: 'RpV',
       action: () => navigation.navigate('ReportView'),
+      hideForRoles: ['STAFF'],
     },
     {
       iconName: 'today-outline',
@@ -93,6 +95,12 @@ const FeatureTab = ({onScrollList}) => {
       action: () => navigation.navigate('OvertimeConfirm'),
     },
   ];
+
+  // Filter features based on user role
+  const featuresData = allFeatures.filter(feature => {
+    if (!feature.hideForRoles) return true;
+    return !feature.hideForRoles.includes(USER_INFOR?.role);
+  });
 
   const renderFeatureButton = (feature, index) => (
     <TouchableOpacity

@@ -17,7 +17,7 @@
   "Mess": "Mensagem",
   "Up": "Carregar",
   "Learn": "Aprendizado",
-  "RpV": "Visualização de relatórios",
+  "RpV": "Gerenciamento",
   "Dai": "Diário",
   "N": "Nome",
   "Em": "Email",
@@ -339,5 +339,28 @@
   "new_year_wish_line2": "Que o novo ano traga prosperidade e sucesso",
   "new_year_wish_line3": "Desejando saúde e felicidade para você e sua família",
   "new_year_wish_line4": "Obrigado por suas incríveis contribuições este ano",
-  "new_year_wish_line5": "Vamos criar novos sucessos juntos no próximo ano"
+  "new_year_wish_line5": "Vamos criar novos sucessos juntos no próximo ano",
+  "Overtime": "Solicitação de Hora Extra",
+  "show_more": "Mostrar mais",
+  "show_less": "Mostrar menos",
+  "overtime": {
+    "work_area": "Área de Trabalho",
+    "requester": "Solicitante",
+    "work_content": "Conteúdo do Trabalho",
+    "work_date": "Data do Trabalho",
+    "request_date": "Data da Solicitação",
+    "confirm": "Confirmar",
+    "reject": "Rejeitar",
+    "pending": "Pendente",
+    "approved": "Aprovado",
+    "title": "Solicitação de Hora Extra",
+    "guide_title": "Guia do Usuário",
+    "guide_content": "1. Visualizar lista de solicitações de hora extra\n2. Verificar informações detalhadas como:\n   - Área de trabalho\n   - Solicitante\n   - Conteúdo do trabalho\n   - Data do trabalho\n3. Para solicitações pendentes:\n   - Clique em 'Confirmar' para aprovar\n   - Clique em 'Rejeitar' para recusar\n4. Solicitações aprovadas mostrarão o status correspondente",
+    "confirm_success": "Solicitação de hora extra confirmada com sucesso",
+    "reject_success": "Solicitação de hora extra rejeitada com sucesso",
+    "missing_fields": "Faltam informações necessárias",
+    "are_you_sure": "Tem certeza que deseja confirmar esta solicitação de hora extra?\n\nEsta ação não pode ser desfeita.",
+    "confirm_title": "Confirmar Solicitação de Hora Extra"
+  },
+  "cancel": "Cancelar"
 }
