@@ -12,6 +12,8 @@ import {
   Alert,
   Dimensions,
   ScrollView,
+  Animated,
+  Platform,
 } from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import {useSelector} from 'react-redux';
@@ -29,6 +31,7 @@ import axios from 'axios';
 import i18next from '../../../services/i18next';
 import Video from 'react-native-video';
 import Icon from 'react-native-vector-icons/FontAwesome';
+import MaterialIcon from 'react-native-vector-icons/MaterialCommunityIcons';
 import LinearGradient from 'react-native-linear-gradient';
 import PopupEvent from '../PopupEvent';
 import {
@@ -82,6 +85,10 @@ const HomeTab = ({onScrollList}) => {
   const [duration, setDuration] = useState(1000);
   const [isMessageModalVisible, setMessageModalVisible] = useState(false);
   const [selectedMedia, setSelectedMedia] = useState(null);
+
+  // Animation values - keeping minimal for like button only
+  const fadeAnim = React.useRef(new Animated.Value(1)).current;
+  const slideAnim = React.useRef(new Animated.Value(0)).current;
 
   const onClose = () => {
     setVisibleControl(false);
@@ -216,9 +223,12 @@ const HomeTab = ({onScrollList}) => {
     return match ? match[0] : null;
   }
 
-  const PostItem = ({item, t, handleGoToEventScreen}) => {
+  const PostItem = ({item, t, handleGoToEventScreen, index}) => {
     const [linkPreview, setLinkPreview] = React.useState(null);
+    const [isLiked, setIsLiked] = React.useState(false);
     const isAdmin = item.user.role === 'ADMIN';
+
+    const scaleAnim = React.useRef(new Animated.Value(1)).current;
 
     React.useEffect(() => {
       const url = extractFirstUrl(item.content);
@@ -246,42 +256,72 @@ const HomeTab = ({onScrollList}) => {
       viewCount > 1000
         ? `${(viewCount / 1000).toFixed(1)}K`
         : viewCount.toString();
-    const handleLike = () => console.log('Liked post:', item.id);
+
+    const handleLike = () => {
+      setIsLiked(!isLiked);
+      Animated.sequence([
+        Animated.timing(scaleAnim, {
+          toValue: 1.05,
+          duration: 100,
+          useNativeDriver: true,
+        }),
+        Animated.timing(scaleAnim, {
+          toValue: 1,
+          duration: 100,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    };
+
     const handleComment = () => console.log('Comment on post:', item.id);
     const handleShare = () => console.log('Share post:', item.id);
 
     return (
-      <View
-        style={[
-          styles.postItemContainer,
-          isAdmin && styles.adminPostContainer,
-        ]}>
+      <View style={styles.postItemContainer}>
         <LinearGradient
-          colors={isAdmin ? ['#fff', '#fff5f5'] : ['#fff', '#fff']}
-          style={styles.postContent}>
+          colors={
+            isAdmin
+              ? ['#ffffff', '#fef7f7', '#ffffff']
+              : ['#ffffff', '#fbfcfd', '#ffffff']
+          }
+          start={{x: 0, y: 0}}
+          end={{x: 1, y: 1}}
+          style={[styles.postContent, isAdmin && styles.adminPostContent]}>
+          {/* Glass overlay for modern effect */}
+          <View style={styles.glassOverlay} />
+
           <View style={styles.postHeader}>
-            <Image style={styles.avatar} source={{uri: item.user.avatar}} />
+            <View style={styles.avatarContainer}>
+              <Image style={styles.avatar} source={{uri: item.user.avatar}} />
+              <View style={styles.onlineIndicator} />
+            </View>
             <View style={styles.nameAndDayContainer}>
-              <View style={{flexDirection: 'row', alignItems: 'center'}}>
+              <View style={styles.nameRow}>
                 <Text style={styles.nameText}>{item.user.name}</Text>
                 {isAdmin && (
-                  <View style={styles.adminBadge}>
+                  <LinearGradient
+                    colors={['#667eea', '#764ba2']}
+                    style={styles.adminBadge}>
+                    <MaterialIcon name="shield-crown" size={12} color="#fff" />
                     <Text style={styles.adminBadgeText}>Admin</Text>
-                  </View>
+                  </LinearGradient>
                 )}
               </View>
               <Text style={styles.dateText}>
-                {moment(item.date).format('DD/MM/YYYY')}
+                {moment(item.date).format('DD/MM/YYYY • HH:mm')}
               </Text>
             </View>
           </View>
+
           {item.title && <Text style={styles.postTitleText}>{item.title}</Text>}
+
           <Text
-            style={styles.postContent}
+            style={styles.postContentText}
             numberOfLines={3}
             ellipsizeMode="tail">
             {item.content}
           </Text>
+
           {linkPreview && (
             <TouchableOpacity
               style={styles.linkPreviewBox}
@@ -292,38 +332,50 @@ const HomeTab = ({onScrollList}) => {
                   } catch (e) {}
                 }
               }}>
-              {linkPreview.image && (
-                <Image
-                  source={{uri: linkPreview.image}}
-                  style={styles.linkPreviewImg}
-                />
-              )}
-              <View style={{flex: 1, marginLeft: 10}}>
-                <Text style={styles.linkPreviewTitle} numberOfLines={2}>
-                  {linkPreview.title}
-                </Text>
-                {linkPreview.description ? (
-                  <Text style={styles.linkPreviewDesc} numberOfLines={2}>
-                    {linkPreview.description}
+              <LinearGradient
+                colors={['#667eea', '#764ba2']}
+                style={styles.linkPreviewGradient}>
+                {linkPreview.image && (
+                  <Image
+                    source={{uri: linkPreview.image}}
+                    style={styles.linkPreviewImg}
+                  />
+                )}
+                <View style={styles.linkPreviewContent}>
+                  <Text style={styles.linkPreviewTitle} numberOfLines={2}>
+                    {linkPreview.title}
                   </Text>
-                ) : null}
-                <Text style={styles.linkPreviewUrl} numberOfLines={1}>
-                  {linkPreview.url}
-                </Text>
-              </View>
+                  {linkPreview.description ? (
+                    <Text style={styles.linkPreviewDesc} numberOfLines={2}>
+                      {linkPreview.description}
+                    </Text>
+                  ) : null}
+                  <Text style={styles.linkPreviewUrl} numberOfLines={1}>
+                    {linkPreview.url}
+                  </Text>
+                </View>
+              </LinearGradient>
             </TouchableOpacity>
           )}
+
           {item.content.length > 100 && (
             <TouchableOpacity
               onPress={() =>
                 Alert.alert(item.title || t('Detail'), item.content)
               }>
-              <Text style={styles.moreText}>{t('more')}</Text>
+              <LinearGradient
+                colors={['#667eea', '#764ba2']}
+                style={styles.moreButton}>
+                <Text style={styles.moreText}>{t('more')}</Text>
+                <MaterialIcon name="chevron-right" size={16} color="#fff" />
+              </LinearGradient>
             </TouchableOpacity>
           )}
+
           {item.media &&
             (item.is_video ? (
               <TouchableOpacity
+                style={styles.mediaContainer}
                 onPress={() => {
                   setSelectedMedia({
                     url: item.media,
@@ -338,19 +390,24 @@ const HomeTab = ({onScrollList}) => {
                 }}>
                 <Video
                   source={{uri: item.media}}
-                  style={[
-                    styles.mediaPlayer,
-                    {width: width - 30, height: (width - 30) * (9 / 16)},
-                  ]}
+                  style={styles.mediaPlayer}
                   controls={true}
                   paused={true}
                   resizeMode="cover"
                   poster={require('../../assets/images/thumbnail.jpg')}
                   posterResizeMode="cover"
                 />
+                <View style={styles.playIcon}>
+                  <MaterialIcon
+                    name="play-circle"
+                    size={60}
+                    color="rgba(255,255,255,0.9)"
+                  />
+                </View>
               </TouchableOpacity>
             ) : (
               <TouchableOpacity
+                style={styles.mediaContainer}
                 onPress={() => {
                   setSelectedMedia({
                     url: item.media,
@@ -366,38 +423,64 @@ const HomeTab = ({onScrollList}) => {
                 <Image source={{uri: item.media}} style={styles.mediaImage} />
               </TouchableOpacity>
             ))}
+
           <View style={styles.postMetaContainer}>
             <View style={styles.postActionsGroup}>
-              <TouchableOpacity
-                onPress={handleLike}
-                style={styles.actionButton}>
-                <Icon name="heart-o" size={18} color="#555" />
-              </TouchableOpacity>
+              <Animated.View style={{transform: [{scale: scaleAnim}]}}>
+                <TouchableOpacity
+                  onPress={handleLike}
+                  style={[styles.actionButton, isLiked && styles.likedButton]}>
+                  <MaterialIcon
+                    name={isLiked ? 'heart' : 'heart-outline'}
+                    size={20}
+                    color={isLiked ? '#ff6b6b' : '#94a3b8'}
+                  />
+                  <Text
+                    style={[styles.actionText, isLiked && styles.likedText]}>
+                    {isLiked ? 'Liked' : 'Like'}
+                  </Text>
+                </TouchableOpacity>
+              </Animated.View>
+
               <TouchableOpacity
                 onPress={handleComment}
                 style={styles.actionButton}>
-                <Icon name="comment-o" size={18} color="#555" />
+                <MaterialIcon
+                  name="comment-outline"
+                  size={20}
+                  color="#94a3b8"
+                />
+                <Text style={styles.actionText}>Comment</Text>
               </TouchableOpacity>
+
               <TouchableOpacity
                 onPress={handleShare}
-                style={styles.actionButtonLast}>
-                <Icon name="share-square-o" size={18} color="#555" />
+                style={styles.actionButton}>
+                <MaterialIcon name="share-outline" size={20} color="#94a3b8" />
+                <Text style={styles.actionText}>Share</Text>
               </TouchableOpacity>
             </View>
+
             <View style={styles.viewCountContainer}>
-              <Icon name="eye" size={14} color="#777" style={styles.metaIcon} />
+              <MaterialIcon name="eye" size={16} color="#94a3b8" />
               <Text style={styles.metaText}>
                 {formattedViewCount} {t('views')}
               </Text>
             </View>
           </View>
-          {item.is_event ? (
+
+          {item.is_event && (
             <TouchableOpacity
               style={styles.eventButton}
               onPress={handleGoToEventScreen}>
-              <Text style={styles.eventButtonText}>{t('confirm.c')}</Text>
+              <LinearGradient
+                colors={['#667eea', '#764ba2']}
+                style={styles.eventButtonGradient}>
+                <MaterialIcon name="calendar-check" size={18} color="#fff" />
+                <Text style={styles.eventButtonText}>{t('confirm.c')}</Text>
+              </LinearGradient>
             </TouchableOpacity>
-          ) : null}
+          )}
         </LinearGradient>
       </View>
     );
@@ -503,6 +586,7 @@ const HomeTab = ({onScrollList}) => {
           <PostItem
             key={item.id}
             item={item}
+            index={index}
             t={t}
             handleGoToEventScreen={handleGoToEventScreen}
           />
@@ -512,7 +596,13 @@ const HomeTab = ({onScrollList}) => {
           <TouchableOpacity
             style={styles.viewMoreButton}
             onPress={() => setShowAllPosts(true)}>
-            <Text style={styles.viewMoreText}>{t('viewMore')}</Text>
+            <LinearGradient
+              colors={['#667eea', '#764ba2']}
+              style={styles.viewMoreGradient}>
+              <MaterialIcon name="chevron-down" size={20} color="#fff" />
+              <Text style={styles.viewMoreText}>{t('viewMore')}</Text>
+              <MaterialIcon name="chevron-down" size={20} color="#fff" />
+            </LinearGradient>
           </TouchableOpacity>
         )}
       </>
@@ -521,48 +611,70 @@ const HomeTab = ({onScrollList}) => {
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+      <StatusBar
+        barStyle="light-content"
+        backgroundColor="transparent"
+        translucent
+      />
       <Loader visible={isLoading} />
-      <View style={styles.telegramHeader}>
-        <View style={styles.headerLeft}>
-          <TouchableOpacity
-            onPress={handleControl}
-            style={styles.headerIconContainer}>
-            <Icon name="bars" size={22} color="#555" />
-          </TouchableOpacity>
+
+      {/* Modern Header with Gradient */}
+      <LinearGradient
+        colors={['#667eea', '#764ba2']}
+        start={{x: 0, y: 0}}
+        end={{x: 1, y: 1}}
+        style={styles.headerGradient}>
+        <View style={styles.headerOverlay} />
+        <View style={styles.telegramHeader}>
+          <View style={styles.headerLeft}>
+            <TouchableOpacity
+              onPress={handleControl}
+              style={styles.headerIconContainer}>
+              <MaterialIcon name="menu" size={24} color="#ffffff" />
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.headerTitleContainer}>
+            <Text style={styles.headerTitle}>{t('info')}</Text>
+          </View>
+
+          <View style={styles.headerRight}>
+            <TouchableOpacity
+              onPress={() => {
+                navigation.navigate('Notifications');
+              }}
+              style={styles.headerIconContainer}>
+              <MaterialIcon name="bell" size={24} color="#ffffff" />
+              {notificationCount > 0 && (
+                <LinearGradient
+                  colors={['#ff6b6b', '#ff8e8e']}
+                  style={styles.notificationBadge}>
+                  <Text style={styles.notificationText}>
+                    {notificationCount}
+                  </Text>
+                </LinearGradient>
+              )}
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              onPress={() => {
+                navigation.navigate('Profile');
+              }}
+              style={styles.profileContainer}>
+              <Image
+                source={
+                  userInfo.avatar
+                    ? {uri: userInfo.avatar}
+                    : require('../../assets/images/avatar.jpg')
+                }
+                style={styles.headerAvatar}
+              />
+              <View style={styles.avatarRing} />
+            </TouchableOpacity>
+          </View>
         </View>
-        <View style={styles.headerTitleContainer}>
-          <Text style={styles.headerTitle}>{t('info')}</Text>
-        </View>
-        <View style={styles.headerRight}>
-          <TouchableOpacity
-            onPress={() => {
-              navigation.navigate('Notifications');
-            }}
-            style={styles.headerIconContainer}>
-            <Icon name="bell" size={22} color="#555" />
-            {notificationCount > 0 && (
-              <View style={styles.notificationBadge}>
-                <Text style={styles.notificationText}>{notificationCount}</Text>
-              </View>
-            )}
-          </TouchableOpacity>
-          <TouchableOpacity
-            onPress={() => {
-              navigation.navigate('Profile');
-            }}
-            style={styles.headerIconContainer}>
-            <Image
-              source={
-                userInfo.avatar
-                  ? {uri: userInfo.avatar}
-                  : require('../../assets/images/avatar.jpg')
-              }
-              style={styles.headerAvatar}
-            />
-          </TouchableOpacity>
-        </View>
-      </View>
+      </LinearGradient>
+
       <Control visible={visibleControl} t={t} onClose={onClose} />
       <Notifications
         visible={is_notification}
@@ -570,18 +682,26 @@ const HomeTab = ({onScrollList}) => {
         onClose={onClose}
         onNotificationClick={handle_notification_click}
       />
+
       <View style={styles.feedContainer}>
         {err ? <Text style={styles.errorText}>{err}</Text> : null}
         <ScrollView
           onScroll={onScrollList}
           scrollEventThrottle={16}
           refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              colors={['#667eea', '#764ba2']}
+              tintColor="#667eea"
+            />
           }
-          contentContainerStyle={{paddingBottom: 10}}>
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}>
           {renderPosts()}
         </ScrollView>
       </View>
+
       <PopupEvent
         visible={isVisiblePopup}
         event={event}
@@ -640,18 +760,31 @@ const HomeTab = ({onScrollList}) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#f8fafc',
+  },
+  headerGradient: {
+    paddingTop: Platform.OS === 'ios' ? 44 : 20,
+    shadowColor: '#667eea',
+    shadowOffset: {width: 0, height: 4},
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+  headerOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(255,255,255,0.05)',
   },
   telegramHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-    backgroundColor: '#FFFFFF',
-    borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
-    height: 56,
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    height: 64,
   },
   headerLeft: {
     flexDirection: 'row',
@@ -662,232 +795,351 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   headerTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: '#000000',
+    fontSize: 22,
+    fontWeight: '700',
+    color: '#ffffff',
+    textShadowColor: 'rgba(0,0,0,0.3)',
+    textShadowOffset: {width: 0, height: 1},
+    textShadowRadius: 3,
+  },
+  headerSubtitle: {
+    fontSize: 12,
+    color: 'rgba(255,255,255,0.8)',
+    marginTop: 2,
+    fontWeight: '500',
   },
   headerRight: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 12,
   },
   headerIconContainer: {
     padding: 8,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+  },
+  profileContainer: {
+    position: 'relative',
   },
   headerAvatar: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    borderWidth: 2,
+    borderColor: '#ffffff',
+  },
+  avatarRing: {
+    position: 'absolute',
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    borderWidth: 2,
+    borderColor: 'rgba(255,255,255,0.3)',
+    top: -4,
+    left: -4,
   },
   notificationBadge: {
     position: 'absolute',
-    right: 5,
-    top: 5,
-    backgroundColor: 'red',
-    borderRadius: 9,
-    width: 18,
-    height: 18,
+    right: 2,
+    top: 2,
+    borderRadius: 10,
+    minWidth: 20,
+    height: 20,
     justifyContent: 'center',
     alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#ffffff',
   },
   notificationText: {
     color: 'white',
-    fontSize: 10,
-    fontWeight: 'bold',
+    fontSize: 11,
+    fontWeight: '700',
+    paddingHorizontal: 4,
   },
   feedContainer: {
     flex: 1,
   },
+  scrollContent: {
+    paddingBottom: 100,
+    paddingTop: 16,
+  },
   errorText: {
-    color: 'red',
+    color: '#ff6b6b',
     textAlign: 'center',
-    marginVertical: 10,
+    marginVertical: 20,
+    fontSize: 16,
+    fontWeight: '500',
   },
   postItemContainer: {
-    paddingHorizontal: 15,
-    paddingVertical: 12,
-    backgroundColor: '#FFFFFF',
+    marginHorizontal: 16,
+    marginBottom: 8,
+  },
+  postContent: {
+    borderRadius: 20,
+    padding: 20,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 4},
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 6,
+    overflow: 'hidden',
+  },
+  adminPostContent: {
+    borderWidth: 3,
+    borderColor: '#667eea',
+    shadowColor: '#667eea',
+    shadowOpacity: 0.4,
+    shadowRadius: 16,
+    elevation: 10,
+  },
+  glassOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderRadius: 20,
   },
   postHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: 16,
+  },
+  avatarContainer: {
+    position: 'relative',
+    marginRight: 12,
   },
   avatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    marginRight: 10,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    borderWidth: 2,
+    borderColor: '#e2e8f0',
+  },
+  onlineIndicator: {
+    position: 'absolute',
+    bottom: 2,
+    right: 2,
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    backgroundColor: '#10b981',
+    borderWidth: 2,
+    borderColor: '#ffffff',
   },
   nameAndDayContainer: {
     flex: 1,
-    justifyContent: 'center',
+  },
+  nameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
   nameText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#222',
+    fontSize: 17,
+    fontWeight: '700',
+    color: '#1e293b',
   },
   dateText: {
-    fontSize: 12,
-    color: '#777',
-    marginTop: 2,
+    fontSize: 13,
+    color: '#64748b',
+    marginTop: 4,
+    fontWeight: '500',
+  },
+  adminBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    gap: 4,
+  },
+  adminBadgeText: {
+    color: '#ffffff',
+    fontSize: 11,
+    fontWeight: '700',
   },
   postTitleText: {
-    fontSize: 17,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 6,
+    fontSize: 19,
+    fontWeight: '700',
+    color: '#1e293b',
+    marginBottom: 12,
+    lineHeight: 26,
   },
-  postContent: {
-    fontSize: 15,
-    color: '#333',
-    marginBottom: 8,
-    lineHeight: 22,
+  postContentText: {
+    fontSize: 16,
+    color: '#374151',
+    marginBottom: 16,
+    lineHeight: 24,
+    fontWeight: '400',
+  },
+  moreButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    marginBottom: 12,
+    gap: 4,
   },
   moreText: {
-    color: THEME_COLOR,
-    fontWeight: '500',
-    marginTop: 5,
-    paddingBottom: 5,
+    color: '#ffffff',
+    fontWeight: '600',
+    fontSize: 13,
+  },
+  mediaContainer: {
+    position: 'relative',
+    borderRadius: 16,
+    overflow: 'hidden',
+    marginBottom: 16,
   },
   mediaImage: {
     width: '100%',
-    height: 220,
-    borderRadius: 6,
-    marginTop: 8,
+    height: 240,
+    resizeMode: 'cover',
   },
   mediaPlayer: {
-    borderRadius: 6,
-    marginTop: 8,
+    width: '100%',
+    height: 240,
     backgroundColor: '#000',
   },
-  eventButton: {
-    backgroundColor: THEME_COLOR,
-    paddingVertical: 10,
-    paddingHorizontal: 18,
-    borderRadius: 20,
-    marginTop: 12,
-    alignSelf: 'flex-start',
-  },
-  eventButtonText: {
-    color: 'white',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  itemSeparator: {
-    height: 1,
-    backgroundColor: '#F0F0F0', // Lighter color for separator
+  playIcon: {
+    position: 'absolute',
+    top: '50%',
+    left: '50%',
+    marginTop: -30,
+    marginLeft: -30,
   },
   postMetaContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginTop: 10,
-    paddingHorizontal: 0,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#e2e8f0',
   },
   postActionsGroup: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 24,
   },
   actionButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginRight: 18,
-    paddingVertical: 5,
+    gap: 6,
+    padding: 8,
+    borderRadius: 16,
+    backgroundColor: 'rgba(148, 163, 184, 0.1)',
   },
-  actionButtonLast: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 5,
+  likedButton: {
+    backgroundColor: 'rgba(255, 107, 107, 0.1)',
   },
   actionText: {
-    marginLeft: 4,
     fontSize: 13,
-    color: '#555',
+    color: '#64748b',
+    fontWeight: '600',
+  },
+  likedText: {
+    color: '#ff6b6b',
   },
   viewCountContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-  },
-  metaIcon: {
-    marginRight: 4,
+    gap: 6,
   },
   metaText: {
     fontSize: 12,
-    color: '#777',
+    color: '#94a3b8',
+    fontWeight: '500',
   },
   linkPreviewBox: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    backgroundColor: '#181a20',
-    borderRadius: 10,
-    padding: 10,
-    marginTop: 10,
-    marginBottom: 4,
+    borderRadius: 16,
+    overflow: 'hidden',
+    marginBottom: 16,
     shadowColor: '#000',
-    shadowOffset: {width: 0, height: 1},
-    shadowOpacity: 0.08,
-    shadowRadius: 4,
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  linkPreviewGradient: {
+    padding: 16,
+    flexDirection: 'row',
+    gap: 12,
   },
   linkPreviewImg: {
-    width: 60,
-    height: 60,
-    borderRadius: 8,
-    backgroundColor: '#222',
+    width: 64,
+    height: 64,
+    borderRadius: 12,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+  },
+  linkPreviewContent: {
+    flex: 1,
   },
   linkPreviewTitle: {
-    color: '#fff',
-    fontWeight: 'bold',
+    color: '#ffffff',
+    fontWeight: '700',
     fontSize: 15,
-    marginBottom: 2,
+    marginBottom: 4,
   },
   linkPreviewDesc: {
-    color: '#aaa',
+    color: 'rgba(255,255,255,0.8)',
     fontSize: 13,
-    marginBottom: 2,
+    marginBottom: 4,
+    lineHeight: 18,
   },
   linkPreviewUrl: {
-    color: THEME_COLOR_2,
-    fontSize: 12,
-    textDecorationLine: 'underline',
+    color: 'rgba(255,255,255,0.6)',
+    fontSize: 11,
+    fontWeight: '500',
   },
-  adminPostContainer: {
-    borderWidth: 1,
-    borderColor: '#ff6b6b',
-    borderRadius: 12,
-    shadowColor: '#ff6b6b',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
+  eventButton: {
+    marginTop: 16,
+    borderRadius: 16,
+    overflow: 'hidden',
+    shadowColor: '#667eea',
+    shadowOffset: {width: 0, height: 4},
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
   },
-  adminBadge: {
-    backgroundColor: '#ff6b6b',
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 12,
-    marginLeft: 8,
+  eventButtonGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 14,
+    paddingHorizontal: 24,
+    gap: 8,
   },
-  adminBadgeText: {
-    color: '#fff',
-    fontSize: 12,
-    fontWeight: 'bold',
+  eventButtonText: {
+    color: '#ffffff',
+    fontSize: 15,
+    fontWeight: '700',
   },
   viewMoreButton: {
-    padding: 12,
-    backgroundColor: '#f0f0f0',
-    borderRadius: 8,
-    alignItems: 'center',
     marginHorizontal: 16,
-    marginVertical: 8,
+    marginBottom: 16,
+    borderRadius: 16,
+    overflow: 'hidden',
+    shadowColor: '#667eea',
+    shadowOffset: {width: 0, height: 4},
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  viewMoreGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 16,
+    gap: 8,
   },
   viewMoreText: {
-    color: '#007AFF',
+    color: '#ffffff',
     fontSize: 16,
-    fontWeight: '500',
+    fontWeight: '600',
   },
 });
 

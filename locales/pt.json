@@ -362,5 +362,26 @@
     "are_you_sure": "Tem certeza que deseja confirmar esta solicitação de hora extra?\n\nEsta ação não pode ser desfeita.",
     "confirm_title": "Confirmar Solicitação de Hora Extra"
   },
-  "cancel": "Cancelar"
+  "cancel": "Cancelar",
+  "select.product.title": "Selecionar Produto",
+  "order.success": "Pedido realizado com sucesso!",
+  "order.fail": "Falha no pedido!",
+  "order.list.title": "Lista de Pedidos",
+  "order.empty.message": "Você ainda não fez nenhum pedido de refeição.",
+  "order.empty.subtitle": "Vamos fazer pedidos para os próximos dias!",
+  "order.section.title": "Lista de Pedidos",
+  "Monday": "Segunda-feira",
+  "Tuesday": "Terça-feira",
+  "Wednesday": "Quarta-feira",
+  "Thursday": "Quinta-feira",
+  "Friday": "Sexta-feira",
+  "Saturday": "Sábado",
+  "Sunday": "Domingo",
+  "monday": "Segunda-feira",
+  "tuesday": "Terça-feira",
+  "wednesday": "Quarta-feira",
+  "thursday": "Quinta-feira",
+  "friday": "Sexta-feira",
+  "saturday": "Sábado",
+  "sunday": "Domingo"
 }

@@ -8,14 +8,14 @@ import {
   ScrollView,
   Dimensions,
   TouchableOpacity,
-  Button,
   TouchableWithoutFeedback,
 } from 'react-native';
 import {API, BASE_URL, ORDER_URL, PORT, V1, VERSION} from '../utils/constans';
 import axios from 'axios';
 import moment from 'moment';
 import ModalMessage from './ModalMessage';
-import Icon from 'react-native-vector-icons/FontAwesome';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import LinearGradient from 'react-native-linear-gradient';
 import {COLORS} from '../config/theme';
 
 const OrderModal = ({
@@ -59,230 +59,355 @@ const OrderModal = ({
     }
   };
 
-  const DEFAULT_TEXT_COLOR = (COLORS && COLORS.text) || '#222';
-  const DEFAULT_TITLE_COLOR = (COLORS && COLORS.primary) || '#3498db';
-  const DEFAULT_SUB_COLOR = (COLORS && COLORS.textSecondary) || '#b2bec3';
-  const TEXT_COLOR = textColor || DEFAULT_TEXT_COLOR;
-  const TITLE_COLOR = titleColor || DEFAULT_TITLE_COLOR;
-  const SUB_COLOR = subColor || DEFAULT_SUB_COLOR;
-  const HEADER_BG = '#fff';
+  const getWeekdayKey = date => {
+    const dayNames = [
+      'sunday',
+      'monday',
+      'tuesday',
+      'wednesday',
+      'thursday',
+      'friday',
+      'saturday',
+    ];
+    const dayIndex = date.day(); // 0 = Sunday, 1 = Monday, etc.
+    return dayNames[dayIndex];
+  };
+
   const {height} = Dimensions.get('window');
-  const modalHeight = height * 0.8;
 
   const styles = StyleSheet.create({
     backdrop: {
       flex: 1,
       justifyContent: 'center',
       alignItems: 'center',
-      backgroundColor: 'rgba(0, 0, 0, 0.3)',
+      backgroundColor: 'rgba(0, 0, 0, 0.5)',
     },
     modalContent: {
-      width: '95%',
-      height: height * 0.8,
-      backgroundColor: '#fff',
-      borderRadius: 10,
-      padding: 10,
+      width: '92%',
+      height: height * 0.85,
+      backgroundColor: '#f8f9fa',
+      borderRadius: 25,
+      overflow: 'hidden',
+      shadowColor: '#000',
+      shadowOffset: {width: 0, height: 10},
+      shadowOpacity: 0.25,
+      shadowRadius: 20,
+      elevation: 10,
+    },
+    headerGradient: {
+      paddingVertical: 20,
+      paddingHorizontal: 20,
     },
     header: {
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
-      marginBottom: 10,
     },
     closeBtn: {
-      padding: 5,
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      backgroundColor: 'rgba(255,255,255,0.2)',
+      justifyContent: 'center',
+      alignItems: 'center',
     },
     modalTitle: {
-      fontSize: 20,
-      color: TITLE_COLOR,
+      fontSize: 22,
+      color: COLORS.white,
       fontWeight: 'bold',
       letterSpacing: 0.5,
       textAlign: 'center',
     },
-    separator: {
-      height: 1,
-      backgroundColor: '#ddd',
-      marginVertical: 10,
-    },
-    orderRowHeader: {
+    statsContainer: {
       flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      paddingHorizontal: 18,
-      paddingTop: 10,
-      paddingBottom: 2,
+      justifyContent: 'space-around',
+      marginTop: 15,
+      paddingHorizontal: 20,
     },
-    headerText: {
-      color: TITLE_COLOR,
-      fontSize: 16,
+    statCard: {
+      backgroundColor: 'rgba(255,255,255,0.15)',
+      borderRadius: 15,
+      padding: 15,
+      alignItems: 'center',
+      minWidth: 80,
+    },
+    statNumber: {
+      fontSize: 24,
       fontWeight: 'bold',
-      flex: 1,
-      textAlign: 'left',
-      minWidth: 120,
+      color: COLORS.white,
+    },
+    statLabel: {
+      fontSize: 12,
+      color: 'rgba(255,255,255,0.9)',
+      marginTop: 4,
     },
     body: {
       flex: 1,
+      backgroundColor: '#f8f9fa',
     },
     bodyContent: {
-      padding: 10,
+      padding: 20,
     },
-    card: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      backgroundColor: '#fff',
-      borderRadius: 8,
-      paddingVertical: 14,
-      paddingHorizontal: 18,
-      marginBottom: 12,
-      elevation: 2,
+    sectionTitle: {
+      fontSize: 18,
+      fontWeight: 'bold',
+      color: '#2c3e50',
+      marginBottom: 15,
+      marginLeft: 5,
+    },
+    orderCard: {
+      backgroundColor: COLORS.white,
+      borderRadius: 20,
+      marginBottom: 15,
+      overflow: 'hidden',
       shadowColor: '#000',
-      shadowOffset: {width: 0, height: 1},
-      shadowOpacity: 0.07,
-      shadowRadius: 4,
+      shadowOffset: {width: 0, height: 3},
+      shadowOpacity: 0.1,
+      shadowRadius: 6,
+      elevation: 4,
     },
-    cardPast: {
-      backgroundColor: '#f3f3f3',
+    orderCardHeader: {
+      padding: 16,
     },
-    cardInfo: {
-      flex: 1,
+    orderCardContent: {
       flexDirection: 'row',
-      alignItems: 'center',
       justifyContent: 'space-between',
-    },
-    cardDateRow: {
-      flexDirection: 'row',
       alignItems: 'center',
-      flex: 1,
-      minWidth: 120,
     },
-    cardDate: {
+    orderDateSection: {
+      flex: 1,
+    },
+    orderDate: {
       fontSize: 16,
-      color: TEXT_COLOR,
       fontWeight: '600',
-      marginLeft: 4,
+      color: '#2c3e50',
+      marginBottom: 4,
     },
-    cardShiftRow: {
+    orderDay: {
+      fontSize: 14,
+      color: '#7f8c8d',
+    },
+    orderShiftSection: {
       flexDirection: 'row',
       alignItems: 'center',
-      flex: 1,
-      minWidth: 120,
-      justifyContent: 'flex-end',
+      backgroundColor: '#ecf0f1',
+      paddingHorizontal: 12,
+      paddingVertical: 8,
+      borderRadius: 20,
     },
-    cardShift: {
-      fontSize: 16,
-      color: TEXT_COLOR,
-      marginLeft: 4,
+    orderShiftText: {
+      fontSize: 14,
+      fontWeight: '600',
+      color: '#2c3e50',
+      marginLeft: 6,
     },
-    trashBtn: {
-      padding: 5,
-      marginLeft: 10,
+    deleteButton: {
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      backgroundColor: '#fee',
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginLeft: 15,
     },
-    trashBtnDisabled: {
-      opacity: 0.5,
+    deleteButtonDisabled: {
+      backgroundColor: '#f8f9fa',
     },
-    emptyBox: {
+    pastOrderCard: {
+      opacity: 0.6,
+    },
+    emptyContainer: {
       flex: 1,
       justifyContent: 'center',
       alignItems: 'center',
+      paddingVertical: 60,
+    },
+    emptyIcon: {
+      width: 80,
+      height: 80,
+      borderRadius: 40,
+      backgroundColor: '#ecf0f1',
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginBottom: 20,
     },
     emptyText: {
-      color: SUB_COLOR,
-      fontSize: 16,
-      fontStyle: 'italic',
-      marginTop: 2,
+      fontSize: 18,
+      color: '#7f8c8d',
+      fontWeight: '500',
+      marginBottom: 8,
+    },
+    emptySubText: {
+      fontSize: 14,
+      color: '#bdc3c7',
+      textAlign: 'center',
+      lineHeight: 20,
+    },
+    pickedBadge: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: '#e8f5e8',
+      borderRadius: 15,
+      paddingHorizontal: 10,
+      paddingVertical: 6,
+      marginLeft: 10,
+    },
+    pickedText: {
+      fontSize: 12,
+      fontWeight: '600',
+      color: '#27ae60',
+      marginLeft: 4,
     },
   });
+
+  const totalOrders = orders.length;
+  const pickedOrders = orders.filter(order => order.isPicked).length;
 
   return (
     <Modal
       transparent
       visible={visible}
-      animationType="fade"
+      animationType="slide"
       onRequestClose={closeModal}>
       <TouchableWithoutFeedback onPress={closeModal}>
         <View style={styles.backdrop}>
           <TouchableWithoutFeedback>
             <View style={styles.modalContent}>
-              {/* Header */}
-              <View style={styles.header}>
-                <TouchableOpacity onPress={closeModal} style={styles.closeBtn}>
-                  <Icon name="close" size={22} color="red" />
-                </TouchableOpacity>
-                <Text style={styles.modalTitle}>{t('orLi')}</Text>
-                <View style={{width: 38}} />
-              </View>
-              <View style={styles.separator}></View>
+              {/* Header with Gradient */}
+              <LinearGradient
+                colors={['#1a237e', '#0d47a1']}
+                start={{x: 0, y: 0}}
+                end={{x: 1, y: 1}}
+                style={styles.headerGradient}>
+                <View style={styles.header}>
+                  <TouchableOpacity
+                    onPress={closeModal}
+                    style={styles.closeBtn}>
+                    <Icon name="close" size={20} color={COLORS.white} />
+                  </TouchableOpacity>
+                  <Text style={styles.modalTitle}>{t('order.list.title')}</Text>
+                  <View style={{width: 40}} />
+                </View>
+
+                {/* Stats Cards */}
+                <View style={styles.statsContainer}>
+                  <View style={styles.statCard}>
+                    <Text style={styles.statNumber}>{totalOrders}</Text>
+                    <Text style={styles.statLabel}>{t('ord')}</Text>
+                  </View>
+                  <View style={styles.statCard}>
+                    <Text style={styles.statNumber}>{pickedOrders}</Text>
+                    <Text style={styles.statLabel}>{t('pid')}</Text>
+                  </View>
+                </View>
+              </LinearGradient>
+
+              {/* Body */}
               <ScrollView
                 style={styles.body}
-                contentContainerStyle={styles.bodyContent}>
-                {orders.length === 0 && (
-                  <View style={styles.emptyBox}>
-                    <Icon
-                      name="cutlery"
-                      size={48}
-                      color={SUB_COLOR}
-                      style={{marginBottom: 12}}
-                    />
-                    <Text style={styles.emptyText}>{t('noOrder')}</Text>
-                  </View>
-                )}
-                {orders.map((order, index) => {
-                  const isPast = moment(order.date, 'YYYY/MM/DD').isBefore(
-                    today,
-                    'day',
-                  );
-                  const isDay = order.dayOrNight === 'dd';
-                  return (
-                    <View
-                      key={index}
-                      style={[styles.card, isPast && styles.cardPast]}>
-                      <View style={styles.cardInfo}>
-                        <View style={styles.cardDateRow}>
-                          <Icon
-                            name="calendar"
-                            size={18}
-                            color={isPast ? SUB_COLOR : TITLE_COLOR}
-                            style={{marginRight: 7}}
-                          />
-                          <Text style={styles.cardDate}>{order.date}</Text>
-                          {isPast && (
-                            <Icon
-                              name="clock-o"
-                              size={16}
-                              color={SUB_COLOR}
-                              style={{marginLeft: 6}}
-                            />
-                          )}
-                        </View>
-                        <View style={styles.cardShiftRow}>
-                          <Icon
-                            name={isDay ? 'sun-o' : 'moon-o'}
-                            size={16}
-                            color={isDay ? '#f1c40f' : '#8e44ad'}
-                            style={{marginRight: 6}}
-                          />
-                          <Text style={styles.cardShift}>
-                            {t(order.dayOrNight)}
-                          </Text>
-                        </View>
-                      </View>
-                      <TouchableOpacity
-                        style={[
-                          styles.trashBtn,
-                          isPast && styles.trashBtnDisabled,
-                        ]}
-                        onPress={() => handleCancelOrder(order.id)}
-                        disabled={isPast}
-                        activeOpacity={0.7}>
-                        <Icon
-                          name="trash"
-                          size={20}
-                          color={isPast ? SUB_COLOR : '#e74c3c'}
-                        />
-                      </TouchableOpacity>
+                contentContainerStyle={styles.bodyContent}
+                showsVerticalScrollIndicator={false}>
+                {orders.length === 0 ? (
+                  <View style={styles.emptyContainer}>
+                    <View style={styles.emptyIcon}>
+                      <Icon name="food-off" size={40} color="#bdc3c7" />
                     </View>
-                  );
-                })}
+                    <Text style={styles.emptyText}>
+                      {t('order.empty.message')}
+                    </Text>
+                    <Text style={styles.emptySubText}>
+                      {t('order.empty.subtitle')}
+                    </Text>
+                  </View>
+                ) : (
+                  <>
+                    <Text style={styles.sectionTitle}>
+                      {t('order.section.title')}
+                    </Text>
+                    {orders.map((order, index) => {
+                      const isPast = moment(order.date, 'YYYY-MM-DD').isBefore(
+                        today,
+                        'day',
+                      );
+                      const orderMoment = moment(order.date, 'YYYY-MM-DD');
+                      const isDay = order.dayOrNight === 'DAY';
+                      const canDelete = !isPast && !order.isPicked;
+
+                      return (
+                        <View
+                          key={index}
+                          style={[
+                            styles.orderCard,
+                            isPast && styles.pastOrderCard,
+                          ]}>
+                          <LinearGradient
+                            colors={
+                              isPast
+                                ? ['#ecf0f1', '#ecf0f1']
+                                : ['#ffffff', '#f8f9fa']
+                            }
+                            start={{x: 0, y: 0}}
+                            end={{x: 1, y: 1}}
+                            style={styles.orderCardHeader}>
+                            <View style={styles.orderCardContent}>
+                              <View style={styles.orderDateSection}>
+                                <Text style={styles.orderDate}>
+                                  {orderMoment.format('DD/MM/YYYY')}
+                                </Text>
+                                <Text style={styles.orderDay}>
+                                  {t(getWeekdayKey(orderMoment))}
+                                </Text>
+                              </View>
+
+                              <View style={styles.orderShiftSection}>
+                                <Icon
+                                  name={
+                                    isDay
+                                      ? 'white-balance-sunny'
+                                      : 'moon-waning-crescent'
+                                  }
+                                  size={16}
+                                  color={isDay ? '#f39c12' : '#8e44ad'}
+                                />
+                                <Text style={styles.orderShiftText}>
+                                  {isDay ? t('dd') : t('nn')}
+                                </Text>
+                              </View>
+
+                              {/* Show status badge if picked */}
+                              {order.isPicked && (
+                                <View style={styles.pickedBadge}>
+                                  <Icon
+                                    name="check-circle"
+                                    size={16}
+                                    color="#27ae60"
+                                  />
+                                  <Text style={styles.pickedText}>
+                                    {t('pid')}
+                                  </Text>
+                                </View>
+                              )}
+
+                              {/* Only show delete button if can delete */}
+                              {canDelete && (
+                                <TouchableOpacity
+                                  style={styles.deleteButton}
+                                  onPress={() => handleCancelOrder(order.id)}
+                                  activeOpacity={0.7}>
+                                  <Icon
+                                    name="delete"
+                                    size={18}
+                                    color="#e74c3c"
+                                  />
+                                </TouchableOpacity>
+                              )}
+                            </View>
+                          </LinearGradient>
+                        </View>
+                      );
+                    })}
+                  </>
+                )}
               </ScrollView>
             </View>
           </TouchableWithoutFeedback>

@@ -365,5 +365,26 @@
     "are_you_sure": "この残業申請を承認してもよろしいですか？\n\nこの操作は取り消すことができません。",
     "confirm": "承認"
   },
-  "Overtime": "残業申請"
+  "Overtime": "残業申請",
+  "select.product.title": "製品を選択",
+  "order.success": "注文が成功しました！",
+  "order.fail": "注文が失敗しました！",
+  "order.list.title": "注文リスト",
+  "order.empty.message": "まだ食事を注文していません。",
+  "order.empty.subtitle": "今後の日の食事を注文しましょう！",
+  "order.section.title": "注文済みリスト",
+  "Monday": "月曜日",
+  "Tuesday": "火曜日",
+  "Wednesday": "水曜日",
+  "Thursday": "木曜日",
+  "Friday": "金曜日",
+  "Saturday": "土曜日",
+  "Sunday": "日曜日",
+  "monday": "月曜日",
+  "tuesday": "火曜日",
+  "wednesday": "水曜日",
+  "thursday": "木曜日",
+  "friday": "金曜日",
+  "saturday": "土曜日",
+  "sunday": "日曜日"
 }

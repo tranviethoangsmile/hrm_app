@@ -367,5 +367,26 @@
     "are_you_sure": "Are you sure you want to confirm this overtime request?"
   },
   "show_more": "Show more",
-  "show_less": "Show less"
+  "show_less": "Show less",
+  "select.product.title": "Select Product",
+  "order.success": "Order successful!",
+  "order.fail": "Order failed!",
+  "order.list.title": "Order List",
+  "order.empty.message": "You haven't ordered any meals yet.",
+  "order.empty.subtitle": "Let's order meals for the upcoming days!",
+  "order.section.title": "Ordered List",
+  "Monday": "Monday",
+  "Tuesday": "Tuesday",
+  "Wednesday": "Wednesday",
+  "Thursday": "Thursday",
+  "Friday": "Friday",
+  "Saturday": "Saturday",
+  "Sunday": "Sunday",
+  "monday": "Monday",
+  "tuesday": "Tuesday",
+  "wednesday": "Wednesday",
+  "thursday": "Thursday",
+  "friday": "Friday",
+  "saturday": "Saturday",
+  "sunday": "Sunday"
 }

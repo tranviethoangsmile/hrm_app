@@ -13,11 +13,13 @@ import {
   Alert,
   StatusBar,
   SafeAreaView,
+  Platform,
 } from 'react-native';
 import {ModalMessage} from '../components';
 import {useSelector} from 'react-redux';
 import axios from 'axios';
 import moment from 'moment';
+import LinearGradient from 'react-native-linear-gradient';
 import {
   API,
   BASE_URL,
@@ -32,10 +34,10 @@ import OrderModal from '../components/OrderModal';
 import i18next from '../../services/i18next';
 import {useTranslation} from 'react-i18next';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import {THEME_COLOR} from '../utils/Colors';
 import Header from '../components/common/Header';
 import {useNavigation} from '@react-navigation/native';
-import {COLORS, SIZES, FONTS, SHADOWS} from '../config/theme';
+import {COLORS, FONTS, SHADOWS} from '../config/theme';
+
 const Order = () => {
   const {t} = useTranslation();
   const getLanguage = async () => {
@@ -55,6 +57,7 @@ const Order = () => {
   const [isMessageModalVisible, setMessageModalVisible] = useState(false);
   const [dayoffs, setDayOffs] = useState([]);
   const navigation = useNavigation();
+
   const showMessage = (msg, type, dur) => {
     setMessageModalVisible(true);
     setMessageModal(msg);
@@ -68,15 +71,14 @@ const Order = () => {
         `${BASE_URL}${PORT}${API}${VERSION}${V1}${DAY_OFFS}${GET_ALL}`,
       );
       if (res?.data?.success) {
-        const offs = res?.data?.data.map(item => {
-          return item.date;
-        });
+        const offs = res?.data?.data.map(item => item.date);
         setDayOffs(offs);
       }
     } catch (error) {
-      showMessage('networkError', 'error', 1000);
+      setDayOffs([]);
     }
   };
+
   const config = {
     headers: {
       'Content-Type': 'application/json',
@@ -100,61 +102,56 @@ const Order = () => {
             shift: item.dayOrNight,
           })),
         );
-        let pick = 0;
-        for (let i = 0; i < res?.data?.data.length; i++) {
-          if (res?.data?.data[i].isPicked === true) {
-            pick++;
-          }
-          setPicked(pick);
-        }
+        const pickedCount = res.data.data.filter(item => item.isPicked).length;
+        setPicked(pickedCount);
       }
     } catch (error) {
-      showMessage('networkError', 'error', 1000);
+      setOrdered([]);
+      setOrderedDates([]);
+      setPicked(0);
     }
   };
+
   const check_ordered = (date, check) => {
-    const isOrdered = orderedDates.some(
+    return orderedDates.some(
       order =>
         order.date === date.format('YYYY-MM-DD') && order.shift === check,
     );
-    return isOrdered;
   };
 
   const disable_ordered_btn = date => {
-    const is_disable = orderedDates.some(
-      order => order.date === date.format('YYYY-MM-DD'),
-    );
-    return is_disable;
+    return orderedDates.some(order => order.date === date.format('YYYY-MM-DD'));
   };
 
   useEffect(() => {
-    const checkLanguage = async () => {
+    const initializeData = async () => {
       const lang = await getLanguage();
       if (lang != null) {
         i18next.changeLanguage(lang);
       }
+
+      await get_all_day_off();
+      const today = moment();
+      setMonth(today.format('YYYY-MM'));
+
+      // Get next 30 days
+      const yearDays = Array.from({length: 30}, (_, index) => {
+        const date = today.clone().add(index, 'days');
+        return date;
+      });
+
+      setYearlyDates(yearDays);
+      getUserOrders();
     };
-    get_all_day_off();
-    const today = moment();
-    setMonth(today.format('YYYY-MM'));
-    const yearDays = Array.from({length: 30}, (_, index) =>
-      today.clone().add(index, 'days'),
-    );
-    setYearlyDates(yearDays);
-    getUserOrders();
-    checkLanguage();
+
+    initializeData();
   }, [isVisible]);
 
   const handleCheckBoxPress = async (date, check) => {
-    setSelectedMap(prevSelectedMap => ({
-      ...prevSelectedMap,
-      [date.format('YYYY-MM-DD')]: check,
-    }));
     const order = {
       user_id: authData.data.data.id,
       date: date.format('YYYY-MM-DD'),
       dayOrNight: check,
-      position: '',
     };
 
     try {
@@ -165,14 +162,17 @@ const Order = () => {
       );
 
       if (orderSuccess?.data?.success) {
-        showMessage('ordSuc', 'success', 1000);
+        showMessage('order.success', 'success', 2000);
+        setSelectedMap(prev => ({
+          ...prev,
+          [date.format('YYYY-MM-DD')]: check,
+        }));
         getUserOrders();
       } else {
-        getUserOrders();
-        showMessage('ordered', 'warning', 1000);
+        showMessage('order.fail', 'error', 2000);
       }
     } catch (error) {
-      showMessage('networkError', 'error', 1000);
+      showMessage('order.fail', 'error', 2000);
     }
   };
 
@@ -180,104 +180,148 @@ const Order = () => {
     setIsVisible(true);
   };
 
+  const isWeekendOrHoliday = date => {
+    const day = date.format('d');
+    return (
+      day === '0' || day === '6' || dayoffs.includes(date.format('YYYY-MM-DD'))
+    );
+  };
+
+  const getWeekdayKey = date => {
+    const dayNames = [
+      'sunday',
+      'monday',
+      'tuesday',
+      'wednesday',
+      'thursday',
+      'friday',
+      'saturday',
+    ];
+    const dayIndex = date.day(); // 0 = Sunday, 1 = Monday, etc.
+    return dayNames[dayIndex];
+  };
+
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor={COLORS.white} />
-      <Header
-        title={t('order.title', 'Đơn hàng')}
-        onBack={() => navigation.goBack()}
+      <StatusBar
+        barStyle="light-content"
+        backgroundColor="transparent"
+        translucent
       />
-      <ScrollView contentContainerStyle={styles.scrollViewContent}>
+      <View style={styles.headerContainer}>
+        <LinearGradient
+          colors={['#1a237e', '#0d47a1']}
+          start={{x: 0, y: 0}}
+          end={{x: 1, y: 1}}
+          style={styles.headerGradient}>
+          <Header
+            title={t('order.title')}
+            onBack={() => navigation.goBack()}
+            backgroundColor="transparent"
+          />
+        </LinearGradient>
+      </View>
+      <ScrollView
+        contentContainerStyle={styles.scrollViewContent}
+        showsVerticalScrollIndicator={false}>
         {yearlyDates.map((date, index) => {
-          const isDayOff =
-            date.format('dd') === 'Su' ||
-            date.format('dd') === 'Sa' ||
-            dayoffs.includes(date.format('YYYY-MM-DD'));
+          const isOffDay = isWeekendOrHoliday(date);
           return (
-            <View key={index} style={styles.dayContainer}>
-              <View
-                style={[
-                  styles.dayHeader,
-                  isDayOff ? styles.dayHeaderOff : null,
-                ]}>
-                <Text
-                  style={[
-                    styles.dayHeaderWeekText,
-                    isDayOff ? styles.dayHeaderTextOff : null,
-                  ]}>
-                  {t(date.format('dd'))}
-                </Text>
-                <Text
-                  style={[
-                    styles.dayHeaderText,
-                    isDayOff ? styles.dayHeaderTextOff : null,
-                  ]}>
-                  {date.format('DD/MM')}
-                </Text>
-              </View>
-              <View style={styles.checkBoxContainer}>
-                {isDayOff ? (
-                  <View style={styles.emptyCheckBox}></View>
-                ) : (
-                  ['DAY', 'NIGHT'].map(check => (
+            <View key={index} style={styles.dayCard}>
+              <LinearGradient
+                colors={
+                  isOffDay ? ['#e53935', '#d32f2f'] : ['#1e88e5', '#1565c0']
+                }
+                start={{x: 0, y: 0}}
+                end={{x: 1, y: 1}}
+                style={styles.dayHeader}>
+                <View style={styles.dayInfo}>
+                  <Text
+                    style={[styles.dayName, isOffDay && styles.weekendText]}>
+                    {t(getWeekdayKey(date))}
+                  </Text>
+                  <Text
+                    style={[styles.dayDate, isOffDay && styles.weekendText]}>
+                    {date.format('DD/MM')}
+                  </Text>
+                </View>
+              </LinearGradient>
+
+              {isOffDay ? (
+                <View style={styles.noMealContainer}>
+                  <Text style={styles.noMealText}>{t('no.meal.today')}</Text>
+                </View>
+              ) : (
+                <View style={styles.shiftContainer}>
+                  {['DAY', 'NIGHT'].map(shift => (
                     <TouchableOpacity
+                      key={shift}
                       disabled={disable_ordered_btn(date)}
-                      key={check}
                       style={[
-                        styles.checkBox,
-                        (selectedMap[date.format('YYYY-MM-DD')] === check ||
-                          check_ordered(date, check)) &&
-                          styles.checkBoxSelected,
+                        styles.shiftButton,
+                        (selectedMap[date.format('YYYY-MM-DD')] === shift ||
+                          check_ordered(date, shift)) &&
+                          styles.shiftButtonSelected,
+                        disable_ordered_btn(date) && styles.shiftButtonDisabled,
                       ]}
-                      onPress={() => {
-                        handleCheckBoxPress(date, check);
-                      }}>
+                      onPress={() => handleCheckBoxPress(date, shift)}>
                       <Text
                         style={[
-                          styles.checkBoxText,
-                          (selectedMap[date.format('YYYY-MM-DD')] === check ||
-                            check_ordered(date, check)) &&
-                            styles.checkBoxTextSelected,
+                          styles.shiftText,
+                          (selectedMap[date.format('YYYY-MM-DD')] === shift ||
+                            check_ordered(date, shift)) &&
+                            styles.shiftTextSelected,
+                          disable_ordered_btn(date) && styles.shiftTextDisabled,
                         ]}>
-                        {check === 'DAY' ? t('dd') : t('nn')}
+                        {shift === 'DAY' ? t('dd') : t('nn')}
                       </Text>
                     </TouchableOpacity>
-                  ))
-                )}
-              </View>
-              {isDayOff && (
-                <Text style={styles.noMealText}>{t('no.meal.today')}</Text>
+                  ))}
+                </View>
               )}
             </View>
           );
         })}
       </ScrollView>
-      <TouchableOpacity onPress={handleOrderShow}>
-        <View style={styles.orderDetailForUser}>
-          <Text style={styles.orderDetailText}>{month}</Text>
-          <Text style={styles.orderDetailText}>
-            {t('ord')}: {ordered.length}
-          </Text>
-          <Text style={styles.orderDetailText}>
-            {t('pid')}: {picked}
-          </Text>
-        </View>
+
+      <TouchableOpacity activeOpacity={0.8} onPress={() => setIsVisible(true)}>
+        <LinearGradient
+          colors={['#1a237e', '#0d47a1']}
+          start={{x: 0, y: 0}}
+          end={{x: 1, y: 1}}
+          style={styles.orderSummary}>
+          <View style={styles.summaryContent}>
+            <Text style={styles.summaryMonth}>{month}</Text>
+            <View style={styles.summaryStats}>
+              <View style={styles.statItem}>
+                <Text style={styles.summaryText}>{t('ord')}</Text>
+                <Text style={styles.summaryNumber}>{ordered.length}</Text>
+              </View>
+              <View style={styles.statDivider} />
+              <View style={styles.statItem}>
+                <Text style={styles.summaryText}>{t('pid')}</Text>
+                <Text style={styles.summaryNumber}>{picked}</Text>
+              </View>
+            </View>
+          </View>
+        </LinearGradient>
       </TouchableOpacity>
-      <ModalMessage
-        isVisible={isMessageModalVisible}
-        onClose={() => setMessageModalVisible(false)}
-        message={messageModal}
-        type={messageType}
-        t={t}
-        duration={duration}
-      />
+
       <OrderModal
         visible={isVisible}
         orders={ordered}
-        onClose={() => {
-          setIsVisible(!isVisible);
-        }}
+        onClose={() => setIsVisible(false)}
+        showAlert={showMessage}
         getUserOrders={getUserOrders}
+        t={t}
+      />
+
+      <ModalMessage
+        message={messageModal}
+        type={messageType}
+        isVisible={isMessageModalVisible}
+        duration={duration}
+        onClose={() => setMessageModalVisible(false)}
         t={t}
       />
     </View>
@@ -287,103 +331,146 @@ const Order = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.background,
+    backgroundColor: '#f5f5f5',
+  },
+  headerContainer: {
+    backgroundColor: 'transparent',
+  },
+  headerGradient: {
+    paddingTop: Platform.OS === 'ios' ? 44 : StatusBar.currentHeight,
   },
   scrollViewContent: {
-    padding: SIZES.base * 2,
-    paddingBottom: 24,
+    padding: 16,
+    paddingBottom: 100,
   },
-  dayContainer: {
+  dayCard: {
     backgroundColor: COLORS.white,
-    borderRadius: SIZES.radius * 2,
-    marginBottom: 14,
-    ...SHADOWS.light,
-    padding: SIZES.base,
+    borderRadius: 20,
+    marginBottom: 16,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   dayHeader: {
+    padding: 16,
+  },
+  dayInfo: {
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: COLORS.lightGray1,
-    borderRadius: SIZES.radius,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    marginBottom: 8,
+    alignItems: 'center',
   },
-  dayHeaderWeekText: {
-    ...FONTS.body3,
-    color: COLORS.primary,
-    fontWeight: 'bold',
-  },
-  dayHeaderOff: {
-    backgroundColor: COLORS.danger,
-  },
-  dayHeaderText: {
-    ...FONTS.body3,
-    color: COLORS.text,
-    fontWeight: 'bold',
-  },
-  dayHeaderTextOff: {
+  dayName: {
+    fontSize: 18,
+    fontWeight: '600',
     color: COLORS.white,
-    fontWeight: 'bold',
+    letterSpacing: 0.5,
   },
-  checkBoxContainer: {
+  dayDate: {
+    fontSize: 16,
+    color: 'rgba(255,255,255,0.9)',
+    fontWeight: '500',
+  },
+  weekendText: {
+    color: COLORS.white,
+    opacity: 0.9,
+  },
+  shiftContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-evenly',
-    marginTop: 4,
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
+    gap: 12,
+    backgroundColor: COLORS.white,
   },
-  checkBox: {
-    minWidth: 80,
-    paddingVertical: 8,
-    borderRadius: 20,
+  shiftButton: {
+    flex: 1,
+    borderRadius: 25,
     borderWidth: 1,
-    borderColor: COLORS.primary,
-    backgroundColor: COLORS.white,
+    borderColor: '#2196f3',
+    padding: 12,
     alignItems: 'center',
-    marginHorizontal: 6,
-    ...SHADOWS.light,
+    backgroundColor: 'white',
   },
-  checkBoxSelected: {
-    backgroundColor: COLORS.primary,
-    borderColor: COLORS.primary,
+  shiftButtonSelected: {
+    backgroundColor: '#2196f3',
+    borderColor: '#2196f3',
   },
-  checkBoxText: {
-    ...FONTS.body4,
-    color: COLORS.primary,
-    fontWeight: 'bold',
+  shiftButtonDisabled: {
+    borderColor: '#e0e0e0',
+    backgroundColor: '#f5f5f5',
   },
-  checkBoxTextSelected: {
+  shiftText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#2196f3',
+  },
+  shiftTextSelected: {
     color: COLORS.white,
-    fontWeight: 'bold',
   },
-  emptyCheckBox: {
-    minWidth: 80,
-    paddingVertical: 8,
-    borderRadius: 20,
-    backgroundColor: COLORS.lightGray2,
-    marginHorizontal: 6,
+  shiftTextDisabled: {
+    color: '#9e9e9e',
   },
-  orderDetailForUser: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+  noMealContainer: {
+    padding: 20,
     alignItems: 'center',
+    justifyContent: 'center',
     backgroundColor: COLORS.white,
-    borderRadius: SIZES.radius * 2,
-    margin: SIZES.base * 2,
-    padding: SIZES.base * 2,
-    ...SHADOWS.light,
-  },
-  orderDetailText: {
-    ...FONTS.body3,
-    color: COLORS.text,
-    fontWeight: 'bold',
   },
   noMealText: {
-    ...FONTS.body4,
-    color: COLORS.danger,
-    textAlign: 'center',
-    marginTop: 6,
+    fontSize: 16,
+    color: '#e53935',
     fontStyle: 'italic',
+  },
+  orderSummary: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: -4},
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+  summaryContent: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  summaryMonth: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: COLORS.white,
+    letterSpacing: 0.5,
+  },
+  summaryStats: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  statItem: {
+    alignItems: 'center',
+    paddingHorizontal: 16,
+  },
+  statDivider: {
+    width: 1,
+    height: '70%',
+    backgroundColor: COLORS.white,
+    opacity: 0.2,
+  },
+  summaryText: {
+    fontSize: 12,
+    color: 'rgba(255,255,255,0.9)',
+    marginBottom: 4,
+  },
+  summaryNumber: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: COLORS.white,
   },
 });
 
