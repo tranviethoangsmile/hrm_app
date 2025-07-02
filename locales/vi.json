@@ -277,5 +277,26 @@
     "confirm": "Xác nhận"
   },
   "show_more": "Xem thêm",
-  "show_less": "Thu gọn"
+  "show_less": "Thu gọn",
+  "select.product.title": "Chọn sản phẩm",
+  "order.success": "Đặt cơm thành công!",
+  "order.fail": "Đặt cơm thất bại!",
+  "order.list.title": "Danh sách đặt cơm",
+  "order.empty.message": "Bạn chưa đặt cơm nào.",
+  "order.empty.subtitle": "Hãy đặt cơm cho những ngày sắp tới!",
+  "order.section.title": "Danh sách đã đặt",
+  "Monday": "Thứ hai",
+  "Tuesday": "Thứ ba",
+  "Wednesday": "Thứ tư",
+  "Thursday": "Thứ năm",
+  "Friday": "Thứ sáu",
+  "Saturday": "Thứ bảy",
+  "Sunday": "Chủ nhật",
+  "monday": "Thứ hai",
+  "tuesday": "Thứ ba",
+  "wednesday": "Thứ tư",
+  "thursday": "Thứ năm",
+  "friday": "Thứ sáu",
+  "saturday": "Thứ bảy",
+  "sunday": "Chủ nhật"
 }

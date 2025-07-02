@@ -1,7 +1,7 @@
-// export const BASE_URL = 'http://54.200.248.63';
-// export const PORT = ':80';
-export const BASE_URL = 'http://192.168.1.64';
-export const PORT = ':4000';
+export const BASE_URL = 'http://54.200.248.63';
+export const PORT = ':80';
+// export const BASE_URL = 'http://192.168.1.64';
+// export const PORT = ':4000';
 export const API = '/api';
 export const VERSION = '/version';
 export const V1 = '/v1';
