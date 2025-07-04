@@ -10,7 +10,7 @@ import Setting from './Setting';
 import Profile from './Profile';
 import Login from './Login';
 import Leave from './Leave';
-import ReportView from './ReportView';
+import Manager from './Manager';
 import Report from './Report';
 import Notifications from './Notifications';
 import Event from './Event';
@@ -34,7 +34,7 @@ export {
   Profile,
   Login,
   Leave,
-  ReportView,
+  Manager,
   Report,
   Notifications,
   Event,

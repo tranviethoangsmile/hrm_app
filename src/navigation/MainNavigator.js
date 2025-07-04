@@ -14,7 +14,7 @@ import {
   Main,
   Checkin,
   Leave,
-  ReportView,
+  Manager,
   Report,
   Notifications,
   Event,
@@ -43,7 +43,7 @@ const MainNavigator = () => {
         />
         <Stack.Screen
           name="ReportView"
-          component={ReportView}
+          component={Manager}
           options={{headerShown: false}}
         />
         <Stack.Screen

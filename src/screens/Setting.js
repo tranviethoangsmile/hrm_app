@@ -6,11 +6,14 @@ import {
   StyleSheet,
   FlatList,
   StatusBar,
+  SafeAreaView,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {useNavigation} from '@react-navigation/native';
 import {useTranslation} from 'react-i18next';
 import i18next from '../../services/i18next';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import LinearGradient from 'react-native-linear-gradient';
 import {
   BG_COLOR,
   TEXT_COLOR,
@@ -19,74 +22,127 @@ import {
 } from '../utils/Colors';
 
 const Setting = () => {
-  const [selectedLocale, setSelectedLocale] = useState('');
+  const [selectedLocale, setSelectedLocale] = useState('en');
 
   const {t} = useTranslation();
-  const getLanguage = async () => {
-    return await AsyncStorage.getItem('Language');
-  };
-  useEffect(() => {
-    const checkLanguage = async () => {
-      const lang = await getLanguage();
-      if (lang != null) {
-        i18next.changeLanguage(lang);
-      }
-    };
-    checkLanguage();
-  }, [selectedLocale]);
-
   const navigation = useNavigation();
 
+  const getLanguage = async () => {
+    try {
+      const lang = await AsyncStorage.getItem('Language');
+      return lang;
+    } catch (error) {
+      console.error('Error getting language:', error);
+      return null;
+    }
+  };
+
+  useEffect(() => {
+    const initializeLanguage = async () => {
+      const lang = await getLanguage();
+      if (lang) {
+        setSelectedLocale(lang);
+        i18next.changeLanguage(lang);
+      } else {
+        setSelectedLocale('en'); // Default fallback
+      }
+    };
+    initializeLanguage();
+  }, []);
+
   const supportedLocales = [
-    {id: 'en', label: 'English'},
-    {id: 'vi', label: 'Tiếng Việt'},
-    {id: 'ja', label: '日本語'},
-    {id: 'pt', label: 'Português (Brasil)'},
+    {id: 'en', label: 'English', flag: '🇺🇸'},
+    {id: 'vi', label: 'Tiếng Việt', flag: '🇻🇳'},
+    {id: 'ja', label: '日本語', flag: '🇯🇵'},
+    {id: 'pt', label: 'Português (Brasil)', flag: '🇧🇷'},
   ];
 
   const onSelectLocale = async locale => {
     try {
       await AsyncStorage.setItem('Language', locale);
       setSelectedLocale(locale);
+      await i18next.changeLanguage(locale);
     } catch (error) {
       console.error('Error saving language:', error);
-      // Display error message to the user
     }
   };
 
-  const renderItem = ({item}) => (
-    <TouchableOpacity
-      style={[
-        styles.languageButton,
-        selectedLocale === item.id && styles.selectedLanguage,
-      ]}
-      onPress={() => onSelectLocale(item.id)}>
-      <Text style={styles.languageText}>{item.label}</Text>
-    </TouchableOpacity>
-  );
+  const renderItem = ({item}) => {
+    if (!item || !item.id) return null; // Safety check
+
+    return (
+      <TouchableOpacity
+        style={[
+          styles.languageItem,
+          selectedLocale === item.id && styles.selectedLanguageItem,
+        ]}
+        onPress={() => onSelectLocale(item.id)}
+        activeOpacity={0.7}>
+        <Text style={styles.flagText}>{item.flag || '🏳️'}</Text>
+        <Text
+          style={[
+            styles.languageText,
+            selectedLocale === item.id && styles.selectedLanguageText,
+          ]}>
+          {item.label || 'Unknown'}
+        </Text>
+        {selectedLocale === item.id && (
+          <Icon name="check" size={20} color={THEME_COLOR} />
+        )}
+      </TouchableOpacity>
+    );
+  };
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#fff" />
-      <View style={styles.tileView}>
-        <Text style={styles.title}>{t('lng')}</Text>
-      </View>
-      <View style={styles.listView}>
+      <StatusBar
+        barStyle="light-content"
+        backgroundColor="transparent"
+        translucent
+      />
+
+      {/* Modern Header with Gradient */}
+      <LinearGradient
+        colors={['#667eea', '#764ba2']}
+        start={{x: 0, y: 0}}
+        end={{x: 1, y: 1}}
+        style={styles.headerGradient}>
+        <View style={styles.headerContent}>
+          <TouchableOpacity
+            onPress={() => navigation.goBack()}
+            style={styles.backButton}>
+            <Icon name="arrow-left" size={24} color="#fff" />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>{t('settings', 'Settings')}</Text>
+          <View style={styles.headerSpacer} />
+        </View>
+      </LinearGradient>
+
+      <View style={styles.content}>
+        <View style={styles.sectionHeader}>
+          <Icon name="translate" size={24} color={THEME_COLOR} />
+          <Text style={styles.sectionTitle}>{t('language', 'Language')}</Text>
+        </View>
+
         <FlatList
-          contentContainerStyle={styles.listContainer}
           data={supportedLocales}
           renderItem={renderItem}
           keyExtractor={item => item.id}
           extraData={selectedLocale}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.listContainer}
         />
-      </View>
-      <View style={styles.buttonContainer}>
+
         <TouchableOpacity
-          style={styles.nextButton}
-          onPress={() => {
-            navigation.goBack();
-          }}>
-          <Text style={styles.nextButtonText}>{t('appl')}</Text>
+          style={styles.applyButton}
+          onPress={() => navigation.goBack()}>
+          <Icon
+            name="check"
+            size={20}
+            color="white"
+            style={styles.buttonIcon}
+          />
+          <Text style={styles.applyButtonText}>{t('apply', 'Apply')}</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -94,63 +150,120 @@ const Setting = () => {
 };
 
 const styles = StyleSheet.create({
-  listView: {
-    flex: 0.4,
-    width: '100%',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  tileView: {
-    flex: 0.1,
-    width: '100%',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
   container: {
     flex: 1,
-    backgroundColor: BG_COLOR,
-    flexDirection: 'column',
+    backgroundColor: '#f8fafc',
   },
-  title: {
-    fontSize: 24,
+  headerGradient: {
+    paddingTop: (StatusBar.currentHeight || 44) + 10,
+    paddingBottom: 25,
+  },
+  headerContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 12,
+    paddingTop: 10,
+  },
+  backButton: {
+    padding: 8,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+  },
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#fff',
+    letterSpacing: 0.5,
+  },
+  headerSpacer: {
+    width: 40,
+    height: 40,
+  },
+  content: {
+    flex: 1,
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    marginTop: 5,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 24,
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e0e6ed',
+  },
+  sectionTitle: {
+    fontSize: 18,
     fontWeight: 'bold',
     color: TEXT_COLOR,
+    marginLeft: 12,
   },
   listContainer: {
-    flexGrow: 1,
-    justifyContent: 'center',
+    paddingVertical: 8,
   },
-  languageButton: {
-    padding: 15,
-    marginVertical: 5,
-    backgroundColor: '#fff',
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: '#ccc',
+  languageItem: {
+    flexDirection: 'row',
     alignItems: 'center',
+    backgroundColor: '#ffffff',
+    borderRadius: 12,
+    padding: 16,
+    marginVertical: 6,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+    borderWidth: 1,
+    borderColor: '#f0f4f8',
+  },
+  selectedLanguageItem: {
+    borderColor: THEME_COLOR,
+    borderWidth: 2,
+    backgroundColor: '#f8f9ff',
+  },
+  flagText: {
+    fontSize: 24,
+    marginRight: 16,
   },
   languageText: {
-    fontSize: 18,
+    flex: 1,
+    fontSize: 16,
     color: TEXT_COLOR,
+    fontWeight: '500',
   },
-  selectedLanguage: {
-    backgroundColor: THEME_COLOR,
+  selectedLanguageText: {
+    color: THEME_COLOR,
+    fontWeight: 'bold',
   },
-  buttonContainer: {
-    flex: 0.2,
-    width: '100%',
-  },
-  nextButton: {
-    marginTop: 10,
-    paddingVertical: 10,
-    paddingHorizontal: 30,
+  applyButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
     backgroundColor: THEME_COLOR_2,
-    borderRadius: 5,
-    alignSelf: 'center',
+    borderRadius: 12,
+    paddingVertical: 16,
+    marginTop: 24,
+    marginBottom: 20,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 4,
   },
-  nextButtonText: {
+  buttonIcon: {
+    marginRight: 8,
+  },
+  applyButtonText: {
     color: 'white',
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: 'bold',
   },
 });
