@@ -682,7 +682,7 @@ function Manager() {
           <TouchableOpacity
             onPress={() => navigation.goBack()}
             style={styles.backButton}>
-            <Icon name="arrow-left" size={24} color="#fff" />
+            <Icon name="arrow-left" size={18} color="#fff" />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>
             {t('manager.title', 'Manager')}
@@ -1090,30 +1090,30 @@ const styles = StyleSheet.create({
     backgroundColor: '#f8fafc',
   },
   headerGradient: {
-    paddingTop: (StatusBar.currentHeight || 44) + 10,
-    paddingBottom: 25,
+    paddingTop: (StatusBar.currentHeight || 44) + 6,
+    paddingBottom: 12,
   },
   headerContent: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 12,
-    paddingTop: 10,
+    paddingTop: 6,
   },
   backButton: {
-    padding: 8,
-    borderRadius: 20,
+    padding: 6,
+    borderRadius: 16,
     backgroundColor: 'rgba(255,255,255,0.2)',
   },
   headerTitle: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: '700',
     color: '#fff',
     letterSpacing: 0.5,
   },
   headerSpacer: {
-    width: 40,
-    height: 40,
+    width: 30,
+    height: 30,
   },
   contentWrapper: {
     flex: 1,

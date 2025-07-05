@@ -1,5 +1,5 @@
 import React, {useEffect} from 'react';
-import {PermissionsAndroid, Platform} from 'react-native';
+import {PermissionsAndroid, Platform, LogBox} from 'react-native';
 import {Provider} from 'react-redux';
 import MainNavigator from './src/navigation/MainNavigator';
 import MyStore from './src/redux/MyStore';
@@ -7,6 +7,12 @@ import {
   NotificationServices,
   requestUserPermission,
 } from './src/utils/notification/PushNotifications';
+
+// Clear LogBox to prevent property overflow in development
+if (__DEV__) {
+  LogBox.ignoreAllLogs(true);
+  console.clear();
+}
 
 const App = () => {
   const requestStoragePermission = async () => {

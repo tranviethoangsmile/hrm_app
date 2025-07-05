@@ -1,5 +1,5 @@
 /* eslint-disable react/self-closing-comp */
-import React, {useState} from 'react';
+import React, {useState, useEffect} from 'react';
 import {
   StyleSheet,
   Text,
@@ -23,6 +23,8 @@ const OrderModal = ({
   onClose,
   orders,
   getUserOrders,
+  showAlert,
+  onOrderDeleted,
   t,
   textColor,
   titleColor,
@@ -32,26 +34,44 @@ const OrderModal = ({
   const closeModal = () => {
     onClose();
   };
+  const [localOrders, setLocalOrders] = useState(orders);
   const [messageModal, setMessageModal] = useState('');
   const [messageType, setMessageType] = useState('success');
   const [duration, setDuration] = useState(1000);
   const [isMessageModalVisible, setMessageModalVisible] = useState(false);
+
+  // Update local orders when parent orders change
+  useEffect(() => {
+    // Filter out any undefined/null orders
+    const validOrders = orders ? orders.filter(order => order && order.id) : [];
+    setLocalOrders(validOrders);
+  }, [orders]);
+
   const showMessage = (msg, type, dur) => {
     setMessageModalVisible(true);
     setMessageModal(msg);
     setMessageType(type);
     setDuration(dur);
   };
+
   const handleCancelOrder = async id => {
     try {
       const deleteOrder = await axios.delete(
         `${BASE_URL}${PORT}${API}${VERSION}${V1}${ORDER_URL}/${id}`,
       );
       if (deleteOrder?.data?.success) {
-        getUserOrders();
-        showMessage('dltSuc', 'success', 1000);
+        // Success - remove from local state and notify parent
+        const updatedOrders = localOrders.filter(
+          order => order && order.id && order.id !== id,
+        );
+        setLocalOrders(updatedOrders);
+        showMessage('success', 'success', 1500);
+
+        // Notify parent to remove from main ordered state
+        if (onOrderDeleted) {
+          onOrderDeleted(id);
+        }
       } else {
-        getUserOrders();
         showMessage('unSuccess', 'warning', 1000);
       }
     } catch (error) {
@@ -260,8 +280,10 @@ const OrderModal = ({
     },
   });
 
-  const totalOrders = orders.length;
-  const pickedOrders = orders.filter(order => order.isPicked).length;
+  const totalOrders = localOrders ? localOrders.length : 0;
+  const pickedOrders = localOrders
+    ? localOrders.filter(order => order && order.isPicked).length
+    : 0;
 
   return (
     <Modal
@@ -275,7 +297,7 @@ const OrderModal = ({
             <View style={styles.modalContent}>
               {/* Header with Gradient */}
               <LinearGradient
-                colors={['#1a237e', '#0d47a1']}
+                colors={['#667eea', '#764ba2']}
                 start={{x: 0, y: 0}}
                 end={{x: 1, y: 1}}
                 style={styles.headerGradient}>
@@ -307,7 +329,7 @@ const OrderModal = ({
                 style={styles.body}
                 contentContainerStyle={styles.bodyContent}
                 showsVerticalScrollIndicator={false}>
-                {orders.length === 0 ? (
+                {!localOrders || localOrders.length === 0 ? (
                   <View style={styles.emptyContainer}>
                     <View style={styles.emptyIcon}>
                       <Icon name="food-off" size={40} color="#bdc3c7" />
@@ -324,88 +346,90 @@ const OrderModal = ({
                     <Text style={styles.sectionTitle}>
                       {t('order.section.title')}
                     </Text>
-                    {orders.map((order, index) => {
-                      const isPast = moment(order.date, 'YYYY-MM-DD').isBefore(
-                        today,
-                        'day',
-                      );
-                      const orderMoment = moment(order.date, 'YYYY-MM-DD');
-                      const isDay = order.dayOrNight === 'DAY';
-                      const canDelete = !isPast && !order.isPicked;
+                    {localOrders
+                      .filter(order => order && order.id)
+                      .map((order, index) => {
+                        const isPast = moment(
+                          order.date,
+                          'YYYY-MM-DD',
+                        ).isBefore(today, 'day');
+                        const orderMoment = moment(order.date, 'YYYY-MM-DD');
+                        const isDay = order.dayOrNight === 'DAY';
+                        const canDelete = !isPast && !order.isPicked;
 
-                      return (
-                        <View
-                          key={index}
-                          style={[
-                            styles.orderCard,
-                            isPast && styles.pastOrderCard,
-                          ]}>
-                          <LinearGradient
-                            colors={
-                              isPast
-                                ? ['#ecf0f1', '#ecf0f1']
-                                : ['#ffffff', '#f8f9fa']
-                            }
-                            start={{x: 0, y: 0}}
-                            end={{x: 1, y: 1}}
-                            style={styles.orderCardHeader}>
-                            <View style={styles.orderCardContent}>
-                              <View style={styles.orderDateSection}>
-                                <Text style={styles.orderDate}>
-                                  {orderMoment.format('DD/MM/YYYY')}
-                                </Text>
-                                <Text style={styles.orderDay}>
-                                  {t(getWeekdayKey(orderMoment))}
-                                </Text>
-                              </View>
-
-                              <View style={styles.orderShiftSection}>
-                                <Icon
-                                  name={
-                                    isDay
-                                      ? 'white-balance-sunny'
-                                      : 'moon-waning-crescent'
-                                  }
-                                  size={16}
-                                  color={isDay ? '#f39c12' : '#8e44ad'}
-                                />
-                                <Text style={styles.orderShiftText}>
-                                  {isDay ? t('dd') : t('nn')}
-                                </Text>
-                              </View>
-
-                              {/* Show status badge if picked */}
-                              {order.isPicked && (
-                                <View style={styles.pickedBadge}>
-                                  <Icon
-                                    name="check-circle"
-                                    size={16}
-                                    color="#27ae60"
-                                  />
-                                  <Text style={styles.pickedText}>
-                                    {t('pid')}
+                        return (
+                          <View
+                            key={order.id}
+                            style={[
+                              styles.orderCard,
+                              isPast && styles.pastOrderCard,
+                            ]}>
+                            <LinearGradient
+                              colors={
+                                isPast
+                                  ? ['#ecf0f1', '#ecf0f1']
+                                  : ['#ffffff', '#f8f9fa']
+                              }
+                              start={{x: 0, y: 0}}
+                              end={{x: 1, y: 1}}
+                              style={styles.orderCardHeader}>
+                              <View style={styles.orderCardContent}>
+                                <View style={styles.orderDateSection}>
+                                  <Text style={styles.orderDate}>
+                                    {orderMoment.format('DD/MM/YYYY')}
+                                  </Text>
+                                  <Text style={styles.orderDay}>
+                                    {t(getWeekdayKey(orderMoment))}
                                   </Text>
                                 </View>
-                              )}
 
-                              {/* Only show delete button if can delete */}
-                              {canDelete && (
-                                <TouchableOpacity
-                                  style={styles.deleteButton}
-                                  onPress={() => handleCancelOrder(order.id)}
-                                  activeOpacity={0.7}>
+                                <View style={styles.orderShiftSection}>
                                   <Icon
-                                    name="delete"
-                                    size={18}
-                                    color="#e74c3c"
+                                    name={
+                                      isDay
+                                        ? 'white-balance-sunny'
+                                        : 'moon-waning-crescent'
+                                    }
+                                    size={16}
+                                    color={isDay ? '#f39c12' : '#8e44ad'}
                                   />
-                                </TouchableOpacity>
-                              )}
-                            </View>
-                          </LinearGradient>
-                        </View>
-                      );
-                    })}
+                                  <Text style={styles.orderShiftText}>
+                                    {isDay ? t('dd') : t('nn')}
+                                  </Text>
+                                </View>
+
+                                {/* Show status badge if picked */}
+                                {order.isPicked && (
+                                  <View style={styles.pickedBadge}>
+                                    <Icon
+                                      name="check-circle"
+                                      size={16}
+                                      color="#27ae60"
+                                    />
+                                    <Text style={styles.pickedText}>
+                                      {t('pid')}
+                                    </Text>
+                                  </View>
+                                )}
+
+                                {/* Only show delete button if can delete */}
+                                {canDelete && (
+                                  <TouchableOpacity
+                                    style={styles.deleteButton}
+                                    onPress={() => handleCancelOrder(order.id)}
+                                    activeOpacity={0.7}>
+                                    <Icon
+                                      name="delete"
+                                      size={18}
+                                      color="#e74c3c"
+                                    />
+                                  </TouchableOpacity>
+                                )}
+                              </View>
+                            </LinearGradient>
+                          </View>
+                        );
+                      })}
                   </>
                 )}
               </ScrollView>

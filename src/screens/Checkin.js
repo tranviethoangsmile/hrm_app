@@ -74,10 +74,13 @@ const Checkin = () => {
     setVisible(!isVisible);
   };
 
-  const checkin = {
-    user_id: authData.data.data.id,
-    date: today.format('YYYY-MM-DD'),
-  };
+  // Check if authData is available before creating checkin object
+  const checkin = authData?.data?.data?.id
+    ? {
+        user_id: authData.data.data.id,
+        date: today.format('YYYY-MM-DD'),
+      }
+    : null;
 
   const handleQRCodeScanner = value => {
     if (!isScanned) {
@@ -92,6 +95,11 @@ const Checkin = () => {
 
   const handleScannerQRCodePicked = async () => {
     try {
+      if (!checkin) {
+        showMessage('auth.required', 'error', 1500);
+        return;
+      }
+
       const time = moment().format('HH:mm:ss A');
       if (
         moment(time, 'HH:mm:ss A').isBefore(moment('12:00:00 PM', 'HH:mm:ss A'))
@@ -138,6 +146,11 @@ const Checkin = () => {
 
   const handleCheckinForOfficer = async () => {
     try {
+      if (!checkin) {
+        showMessage('auth.required', 'error', 1000);
+        return;
+      }
+
       const field = {
         user_id: checkin.user_id,
         date: today.format('YYYY-MM-DD'),
@@ -168,7 +181,7 @@ const Checkin = () => {
       if (qrValue === 'picked') {
         handleScannerQRCodePicked();
       } else if (qrValue === 'checkin') {
-        if (authData.data.data.is_officer) {
+        if (authData?.data?.data?.is_officer) {
           handleCheckinForOfficer();
         } else {
           setVisible(true);

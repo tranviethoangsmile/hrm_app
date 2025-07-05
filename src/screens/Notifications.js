@@ -8,6 +8,8 @@ import {
   FlatList,
   TouchableOpacity,
   RefreshControl,
+  Platform,
+  Dimensions,
 } from 'react-native';
 import {useSelector} from 'react-redux';
 import axios from 'axios';
@@ -15,6 +17,7 @@ import {useTranslation} from 'react-i18next';
 import moment from 'moment';
 import LinearGradient from 'react-native-linear-gradient';
 import Icon from 'react-native-vector-icons/Ionicons';
+import IconMCI from 'react-native-vector-icons/MaterialCommunityIcons';
 import {
   BASE_URL,
   PORT,
@@ -26,6 +29,9 @@ import {
   UPDATE,
 } from '../utils/constans';
 import Loader from '../components/Loader';
+import {COLORS, SIZES, FONTS, SHADOWS} from '../config/theme';
+
+const {width: SCREEN_WIDTH} = Dimensions.get('window');
 
 const Notifications = ({navigation}) => {
   const {t} = useTranslation();
@@ -33,7 +39,7 @@ const Notifications = ({navigation}) => {
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [activeTab, setActiveTab] = useState('all'); // 'all', 'system'
-  const [expandedId, setExpandedId] = useState(null); // Thêm state để track item đang mở rộng
+  const [expandedId, setExpandedId] = useState(null);
   const authData = useSelector(state => state.auth);
   const userInfo = authData?.data?.data;
 
@@ -81,7 +87,24 @@ const Notifications = ({navigation}) => {
       case 'ERROR':
         return '#F44390';
       default:
-        return '#757575';
+        return '#667eea';
+    }
+  };
+
+  const getNotificationIcon = type => {
+    switch (type?.toUpperCase()) {
+      case 'SUCCESS':
+        return 'checkmark-circle';
+      case 'SYSTEM':
+        return 'settings';
+      case 'INFO':
+        return 'information-circle';
+      case 'WARNING':
+        return 'warning';
+      case 'ERROR':
+        return 'close-circle';
+      default:
+        return 'notifications';
     }
   };
 
@@ -152,6 +175,73 @@ const Notifications = ({navigation}) => {
     setExpandedId(expandedId === id ? null : id);
   };
 
+  const renderModernHeader = () => (
+    <LinearGradient
+      colors={['#667eea', '#764ba2']}
+      start={{x: 0, y: 0}}
+      end={{x: 1, y: 1}}
+      style={styles.headerGradient}>
+      <View style={styles.headerOverlay} />
+      <View style={styles.telegramHeader}>
+        <View style={styles.headerLeft}>
+          <TouchableOpacity
+            onPress={() => navigation.goBack()}
+            style={styles.headerIconContainer}>
+            <Icon name="arrow-back" size={24} color="#ffffff" />
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.headerTitleContainer}>
+          <Text style={styles.headerTitle}>
+            {t('notifications_title', 'Thông báo')}
+          </Text>
+        </View>
+
+        <View style={styles.headerRight}>
+          <TouchableOpacity
+            style={styles.headerIconContainer}
+            onPress={markAllAsRead}>
+            <Icon name="checkmark-done" size={24} color="#ffffff" />
+          </TouchableOpacity>
+        </View>
+      </View>
+    </LinearGradient>
+  );
+
+  const renderTabContainer = () => (
+    <View style={styles.tabContainer}>
+      <TouchableOpacity
+        style={[styles.tab, activeTab === 'all' && styles.activeTab]}
+        onPress={() => setActiveTab('all')}>
+        <Icon
+          name="notifications"
+          size={18}
+          color={activeTab === 'all' ? '#667eea' : '#94a3b8'}
+        />
+        <Text
+          style={[styles.tabText, activeTab === 'all' && styles.activeTabText]}>
+          {t('notification_all', 'Tất cả')}
+        </Text>
+      </TouchableOpacity>
+      <TouchableOpacity
+        style={[styles.tab, activeTab === 'system' && styles.activeTab]}
+        onPress={() => setActiveTab('system')}>
+        <Icon
+          name="settings"
+          size={18}
+          color={activeTab === 'system' ? '#667eea' : '#94a3b8'}
+        />
+        <Text
+          style={[
+            styles.tabText,
+            activeTab === 'system' && styles.activeTabText,
+          ]}>
+          {t('notification_system', 'Hệ thống')}
+        </Text>
+      </TouchableOpacity>
+    </View>
+  );
+
   const renderNotifications = ({item}) => {
     const isUnread = !item.is_readed;
     const notificationColor = getNotificationColor(item.type);
@@ -162,37 +252,39 @@ const Notifications = ({navigation}) => {
       <TouchableOpacity
         style={[styles.notificationItem, isUnread && styles.unreadItem]}
         onPress={() => handle_notification_click(item)}>
-        <LinearGradient
-          colors={isUnread ? ['#fff', '#f0f9ff'] : ['#fff', '#fff']}
-          style={styles.notificationGradient}>
+        <View style={styles.notificationCard}>
           <View style={styles.notificationHeader}>
-            <View style={styles.iconContainer}>
-              <View
-                style={[styles.typeDot, {backgroundColor: notificationColor}]}
-              />
+            <View
+              style={[
+                styles.iconContainer,
+                {backgroundColor: notificationColor + '15'},
+              ]}>
               <Icon
-                name={
-                  item.type?.toUpperCase() === 'SUCCESS'
-                    ? 'checkmark-circle'
-                    : 'information-circle'
-                }
-                size={24}
+                name={getNotificationIcon(item.type)}
+                size={20}
                 color={notificationColor}
               />
+              {isUnread && (
+                <View
+                  style={[
+                    styles.unreadDot,
+                    {backgroundColor: notificationColor},
+                  ]}
+                />
+              )}
             </View>
             <View style={styles.textContainer}>
-              <View style={styles.titleContainer}>
+              <View style={styles.titleRow}>
                 <Text
                   style={[styles.title, isExpanded && styles.expandedTitle]}
                   numberOfLines={isExpanded ? undefined : 2}>
                   {item.title}
                 </Text>
-                <View
-                  style={[
-                    styles.statusDot,
-                    {backgroundColor: notificationColor},
-                  ]}
-                />
+                <View style={styles.typeChip}>
+                  <Text style={[styles.typeText, {color: notificationColor}]}>
+                    {item.type?.toUpperCase()}
+                  </Text>
+                </View>
               </View>
               <Text
                 style={[styles.message, isExpanded && styles.expandedMessage]}
@@ -206,69 +298,65 @@ const Notifications = ({navigation}) => {
                 {isSystemNotification && (
                   <TouchableOpacity
                     onPress={e => {
-                      e.stopPropagation(); // Ngăn không cho sự kiện click lan tỏa lên parent
+                      e.stopPropagation();
                       handleExpand(item.id);
                     }}
                     style={styles.expandButton}>
+                    <Text style={styles.expandButtonText}>
+                      {isExpanded
+                        ? t('notification_collapse', 'Thu gọn')
+                        : t('notification_expand', 'Xem thêm')}
+                    </Text>
                     <Icon
                       name={isExpanded ? 'chevron-up' : 'chevron-down'}
-                      size={20}
-                      color="#94a3b8"
+                      size={16}
+                      color="#667eea"
                     />
                   </TouchableOpacity>
                 )}
               </View>
             </View>
           </View>
-        </LinearGradient>
+        </View>
       </TouchableOpacity>
     );
   };
 
-  return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#fff" />
-      <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}>
-          <Icon name="arrow-back" size={24} color="#000" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>{t('noti')}</Text>
-        <TouchableOpacity
-          style={styles.markAllReadButton}
-          onPress={markAllAsRead}>
-          <Icon name="checkmark-done" size={24} color="#2196F3" />
-        </TouchableOpacity>
+  const renderEmptyState = () => (
+    <View style={styles.emptyContainer}>
+      <View style={styles.emptyIconContainer}>
+        <IconMCI name="bell-off" size={80} color="#e2e8f0" />
       </View>
+      <Text style={styles.emptyTitle}>
+        {t('notification_empty_title', 'Không có thông báo')}
+      </Text>
+      <Text style={styles.emptyDescription}>
+        {t(
+          'notification_empty_description',
+          'Thông báo của bạn sẽ xuất hiện ở đây',
+        )}
+      </Text>
+      <TouchableOpacity style={styles.refreshButton} onPress={onRefresh}>
+        <Icon name="refresh" size={18} color="#667eea" />
+        <Text style={styles.refreshButtonText}>
+          {t('notification_refresh', 'Làm mới')}
+        </Text>
+      </TouchableOpacity>
+    </View>
+  );
 
-      <View style={styles.tabContainer}>
-        <TouchableOpacity
-          style={[styles.tab, activeTab === 'all' && styles.activeTab]}
-          onPress={() => setActiveTab('all')}>
-          <Text
-            style={[
-              styles.tabText,
-              activeTab === 'all' && styles.activeTabText,
-            ]}>
-            {t('notification_all')}
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.tab, activeTab === 'system' && styles.activeTab]}
-          onPress={() => setActiveTab('system')}>
-          <Text
-            style={[
-              styles.tabText,
-              activeTab === 'system' && styles.activeTabText,
-            ]}>
-            {t('notification_system')}
-          </Text>
-        </TouchableOpacity>
-      </View>
+  return (
+    <View style={styles.container}>
+      <StatusBar
+        barStyle="light-content"
+        backgroundColor="transparent"
+        translucent
+      />
+      {renderModernHeader()}
+      {renderTabContainer()}
 
       <View style={styles.content}>
-        {loading ? (
+        {loading && notifications.length === 0 ? (
           <Loader />
         ) : (
           <FlatList
@@ -279,20 +367,12 @@ const Notifications = ({navigation}) => {
             refreshControl={
               <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
             }
-            ListEmptyComponent={() => (
-              <View style={styles.emptyContainer}>
-                <Icon
-                  name="notifications-off-outline"
-                  size={64}
-                  color="#94a3b8"
-                />
-                <Text style={styles.emptyText}>{t('notification_empty')}</Text>
-              </View>
-            )}
+            ListEmptyComponent={renderEmptyState}
+            showsVerticalScrollIndicator={false}
           />
         )}
       </View>
-    </SafeAreaView>
+    </View>
   );
 };
 
@@ -301,26 +381,55 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#f8fafc',
   },
-  header: {
+  headerGradient: {
+    paddingTop: Platform.OS === 'ios' ? 44 : 20,
+    shadowColor: '#667eea',
+    shadowOffset: {width: 0, height: 4},
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+  headerOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+  },
+  telegramHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    height: 56,
-    backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#f1f5f9',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    height: 64,
   },
-  backButton: {
-    padding: 8,
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  headerTitleContainer: {
+    flex: 1,
+    alignItems: 'center',
   },
   headerTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#000',
+    fontSize: 22,
+    fontWeight: '700',
+    color: '#ffffff',
+    textShadowColor: 'rgba(0,0,0,0.3)',
+    textShadowOffset: {width: 0, height: 1},
+    textShadowRadius: 3,
   },
-  rightPlaceholder: {
-    width: 40,
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  headerIconContainer: {
+    padding: 8,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255,255,255,0.15)',
   },
   content: {
     flex: 1,
@@ -333,22 +442,102 @@ const styles = StyleSheet.create({
     marginVertical: 6,
     borderRadius: 12,
     backgroundColor: '#fff',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.05,
-    shadowRadius: 3.84,
-    elevation: 2,
+    ...SHADOWS.light,
   },
   unreadItem: {
-    shadowOpacity: 0.1,
-    elevation: 3,
+    ...SHADOWS.dark,
   },
-  notificationContent: {
+  tabContainer: {
+    flexDirection: 'row',
+    backgroundColor: '#fff',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e2e8f0',
+    ...SHADOWS.light,
+  },
+  tab: {
+    flex: 1,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    alignItems: 'center',
+    borderRadius: 24,
+    marginHorizontal: 4,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    backgroundColor: '#f7fafc',
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+  },
+  activeTab: {
+    backgroundColor: '#667eea',
+    borderColor: '#667eea',
+  },
+  tabText: {
+    ...FONTS.body4,
+    color: '#64748b',
+    fontWeight: '600',
+    marginLeft: 6,
+  },
+  activeTabText: {
+    color: '#fff',
+  },
+  title: {
+    ...FONTS.h4,
+    color: '#1e293b',
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  message: {
+    ...FONTS.body3,
+    color: '#64748b',
+    lineHeight: 20,
+    marginBottom: 6,
+  },
+  time: {
+    ...FONTS.body4,
+    color: '#94a3b8',
+  },
+  emptyContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingTop: 60,
+    paddingHorizontal: 32,
+  },
+  expandedTitle: {
+    marginBottom: 8,
+  },
+  expandedMessage: {
+    marginBottom: 8,
+  },
+  footerContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  expandButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    borderRadius: 6,
+    backgroundColor: '#f1f5f9',
+  },
+  unreadDot: {
+    position: 'absolute',
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    right: -2,
+    top: -2,
+  },
+  notificationCard: {
     borderRadius: 12,
     overflow: 'hidden',
+    backgroundColor: '#fff',
+    ...SHADOWS.light,
   },
   notificationHeader: {
     flexDirection: 'row',
@@ -366,101 +555,60 @@ const styles = StyleSheet.create({
   textContainer: {
     flex: 1,
   },
-  title: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#1e293b',
-    marginBottom: 4,
-  },
-  message: {
-    fontSize: 14,
-    color: '#64748b',
-    lineHeight: 20,
-    marginBottom: 6,
-  },
-  time: {
-    fontSize: 12,
-    color: '#94a3b8',
-  },
-  emptyContainer: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingTop: 120,
-  },
-  emptyText: {
-    marginTop: 16,
-    fontSize: 16,
-    color: '#94a3b8',
-    textAlign: 'center',
-  },
-  typeDot: {
-    position: 'absolute',
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    right: -2,
-    top: -2,
-  },
-  titleContainer: {
+  titleRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
   },
-  statusDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    marginLeft: 8,
+  typeChip: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    backgroundColor: '#f1f5f9',
   },
-  tabContainer: {
-    flexDirection: 'row',
-    backgroundColor: '#fff',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f1f5f9',
+  typeText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#64748b',
   },
-  tab: {
-    flex: 1,
-    paddingVertical: 8,
-    alignItems: 'center',
-    borderRadius: 8,
-    marginHorizontal: 4,
-  },
-  activeTab: {
-    backgroundColor: '#e3f2fd',
-  },
-  tabText: {
+  expandButtonText: {
     fontSize: 14,
     fontWeight: '500',
+    color: '#667eea',
+    marginRight: 4,
+  },
+  emptyIconContainer: {
+    marginBottom: 20,
+  },
+  emptyTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: '#1e293b',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  emptyDescription: {
+    fontSize: 16,
     color: '#64748b',
+    textAlign: 'center',
+    lineHeight: 24,
+    marginBottom: 24,
   },
-  activeTabText: {
-    color: '#2196F3',
-  },
-  markAllReadButton: {
-    padding: 8,
-  },
-  expandedTitle: {
-    marginBottom: 8,
-  },
-  expandedMessage: {
-    marginBottom: 8,
-  },
-  footerContainer: {
+  refreshButton: {
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 24,
+    backgroundColor: '#667eea',
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    marginTop: 4,
+    justifyContent: 'center',
+    ...SHADOWS.light,
   },
-  notificationGradient: {
-    borderRadius: 12,
-    overflow: 'hidden',
-    padding: 12,
-  },
-  expandButton: {
-    padding: 4,
+  refreshButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#fff',
+    marginLeft: 8,
   },
 });
 

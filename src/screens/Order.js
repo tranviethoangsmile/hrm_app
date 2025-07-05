@@ -51,6 +51,7 @@ const Order = () => {
   const [picked, setPicked] = useState(0);
   const [isVisible, setIsVisible] = useState(false);
   const [orderedDates, setOrderedDates] = useState([]);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [messageModal, setMessageModal] = useState('');
   const [messageType, setMessageType] = useState('success');
   const [duration, setDuration] = useState(1000);
@@ -88,24 +89,35 @@ const Order = () => {
 
   const getUserOrders = async () => {
     try {
+      // Check if authData is available
+      if (!authData?.data?.data?.id) {
+        console.log('AuthData not available, skipping getUserOrders');
+        return;
+      }
+
       const res = await axios.post(
         `${BASE_URL}${PORT}${API}${VERSION}${V1}${ORDER_URL}/user/`,
         {
           user_id: authData.data.data.id,
         },
       );
-      if (res?.data?.success) {
-        setOrdered(res?.data?.data);
+      if (res?.data?.success && res?.data?.data) {
+        // Filter out any invalid orders
+        const validOrders = res.data.data.filter(item => item && item.id);
+        setOrdered(validOrders);
         setOrderedDates(
-          res.data.data.map(item => ({
+          validOrders.map(item => ({
             date: item.date,
             shift: item.dayOrNight,
           })),
         );
-        const pickedCount = res.data.data.filter(item => item.isPicked).length;
+        const pickedCount = validOrders.filter(
+          item => item && item.isPicked,
+        ).length;
         setPicked(pickedCount);
       }
     } catch (error) {
+      console.error('Error fetching orders:', error);
       setOrdered([]);
       setOrderedDates([]);
       setPicked(0);
@@ -145,9 +157,15 @@ const Order = () => {
     };
 
     initializeData();
-  }, [isVisible]);
+  }, [isVisible, refreshTrigger]);
 
   const handleCheckBoxPress = async (date, check) => {
+    // Check if authData is available
+    if (!authData?.data?.data?.id) {
+      showMessage('auth.required', 'error', 2000);
+      return;
+    }
+
     const order = {
       user_id: authData.data.data.id,
       date: date.format('YYYY-MM-DD'),
@@ -162,12 +180,29 @@ const Order = () => {
       );
 
       if (orderSuccess?.data?.success) {
-        showMessage('order.success', 'success', 2000);
+        showMessage('success', 'success', 2000);
         setSelectedMap(prev => ({
           ...prev,
           [date.format('YYYY-MM-DD')]: check,
         }));
-        getUserOrders();
+
+        // Add new order to state immediately
+        const newOrder = {
+          id: orderSuccess.data.data?.id || Date.now(), // Use timestamp as fallback ID
+          date: date.format('YYYY-MM-DD'),
+          dayOrNight: check,
+          isPicked: false,
+          user_id: authData.data.data.id,
+        };
+
+        setOrdered(prev => [...prev, newOrder]);
+        setOrderedDates(prev => [
+          ...prev,
+          {
+            date: date.format('YYYY-MM-DD'),
+            shift: check,
+          },
+        ]);
       } else {
         showMessage('order.fail', 'error', 2000);
       }
@@ -178,6 +213,38 @@ const Order = () => {
 
   const handleOrderShow = () => {
     setIsVisible(true);
+  };
+
+  const handleOrderDeleted = deletedOrderId => {
+    // Find the deleted order first (before removing it)
+    const deletedOrder = ordered.find(order => order.id === deletedOrderId);
+
+    // Remove from ordered state
+    const updatedOrders = ordered.filter(order => order.id !== deletedOrderId);
+    setOrdered(updatedOrders);
+
+    // Update orderedDates
+    setOrderedDates(
+      updatedOrders.map(item => ({
+        date: item.date,
+        shift: item.dayOrNight,
+      })),
+    );
+
+    // Update picked count
+    const pickedCount = updatedOrders.filter(
+      item => item && item.isPicked,
+    ).length;
+    setPicked(pickedCount);
+
+    // Clear selected map for the deleted date
+    if (deletedOrder) {
+      setSelectedMap(prev => {
+        const newMap = {...prev};
+        delete newMap[deletedOrder.date];
+        return newMap;
+      });
+    }
   };
 
   const isWeekendOrHoliday = date => {
@@ -210,7 +277,7 @@ const Order = () => {
       />
       <View style={styles.headerContainer}>
         <LinearGradient
-          colors={['#1a237e', '#0d47a1']}
+          colors={['#667eea', '#764ba2']}
           start={{x: 0, y: 0}}
           end={{x: 1, y: 1}}
           style={styles.headerGradient}>
@@ -230,7 +297,7 @@ const Order = () => {
             <View key={index} style={styles.dayCard}>
               <LinearGradient
                 colors={
-                  isOffDay ? ['#e53935', '#d32f2f'] : ['#1e88e5', '#1565c0']
+                  isOffDay ? ['#e53935', '#d32f2f'] : ['#667eea', '#764ba2']
                 }
                 start={{x: 0, y: 0}}
                 end={{x: 1, y: 1}}
@@ -286,7 +353,7 @@ const Order = () => {
 
       <TouchableOpacity activeOpacity={0.8} onPress={() => setIsVisible(true)}>
         <LinearGradient
-          colors={['#1a237e', '#0d47a1']}
+          colors={['#667eea', '#764ba2']}
           start={{x: 0, y: 0}}
           end={{x: 1, y: 1}}
           style={styles.orderSummary}>
@@ -295,12 +362,14 @@ const Order = () => {
             <View style={styles.summaryStats}>
               <View style={styles.statItem}>
                 <Text style={styles.summaryText}>{t('ord')}</Text>
-                <Text style={styles.summaryNumber}>{ordered.length}</Text>
+                <Text style={styles.summaryNumber}>
+                  {ordered ? ordered.length : 0}
+                </Text>
               </View>
               <View style={styles.statDivider} />
               <View style={styles.statItem}>
                 <Text style={styles.summaryText}>{t('pid')}</Text>
-                <Text style={styles.summaryNumber}>{picked}</Text>
+                <Text style={styles.summaryNumber}>{picked || 0}</Text>
               </View>
             </View>
           </View>
@@ -310,9 +379,13 @@ const Order = () => {
       <OrderModal
         visible={isVisible}
         orders={ordered}
-        onClose={() => setIsVisible(false)}
+        onClose={() => {
+          setIsVisible(false);
+          // No need to refresh data - already handled by handleOrderDeleted
+        }}
         showAlert={showMessage}
         getUserOrders={getUserOrders}
+        onOrderDeleted={handleOrderDeleted}
         t={t}
       />
 
@@ -331,7 +404,7 @@ const Order = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#f8fafc',
   },
   headerContainer: {
     backgroundColor: 'transparent',
@@ -389,14 +462,14 @@ const styles = StyleSheet.create({
     flex: 1,
     borderRadius: 25,
     borderWidth: 1,
-    borderColor: '#2196f3',
+    borderColor: '#667eea',
     padding: 12,
     alignItems: 'center',
     backgroundColor: 'white',
   },
   shiftButtonSelected: {
-    backgroundColor: '#2196f3',
-    borderColor: '#2196f3',
+    backgroundColor: '#667eea',
+    borderColor: '#667eea',
   },
   shiftButtonDisabled: {
     borderColor: '#e0e0e0',
@@ -405,7 +478,7 @@ const styles = StyleSheet.create({
   shiftText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#2196f3',
+    color: '#667eea',
   },
   shiftTextSelected: {
     color: COLORS.white,

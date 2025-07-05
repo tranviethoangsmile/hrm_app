@@ -4,19 +4,16 @@ import {
   View,
   Text,
   StyleSheet,
-  Image,
   TouchableOpacity,
   TextInput,
   Alert,
   Modal,
   Dimensions,
   Platform,
-  Keyboard,
   KeyboardAvoidingView,
   ScrollView,
   StatusBar,
-  FlatList,
-  ActivityIndicator,
+  SafeAreaView,
 } from 'react-native';
 import {
   API,
@@ -30,9 +27,7 @@ import {
 
 import {useSelector} from 'react-redux';
 import DailyModal from '../components/DailyModal';
-import {TEXT_COLOR, THEME_COLOR, BG_COLOR} from '../utils/Colors';
 import {useNavigation} from '@react-navigation/native';
-import CheckBox from '@react-native-community/checkbox';
 import moment from 'moment';
 import {useTranslation} from 'react-i18next';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -42,15 +37,12 @@ import IconFA from 'react-native-vector-icons/FontAwesome5';
 import axios from 'axios';
 import Loader from '../components/Loader';
 import ModalMessage from '../components/ModalMessage';
-import Header from '../components/common/Header';
 import LinearGradient from 'react-native-linear-gradient';
-import {format} from 'date-fns';
 
 // Modern UI components and theme
 import {COLORS, SIZES, FONTS, SHADOWS} from '../config/theme';
-import Button from '../components/common/Button';
-import Input from '../components/common/Input';
-import Card from '../components/common/Card';
+
+const {width: SCREEN_WIDTH} = Dimensions.get('window');
 
 const Daily = () => {
   const {t} = useTranslation();
@@ -100,8 +92,6 @@ const Daily = () => {
   const [productValue, setProductValue] = useState('');
   const [operator_history, setOperator_history] = useState('');
   const [quantity, setQuantity] = useState(0);
-  const [Acheck, setAcheck] = useState(false);
-  const [Bcheck, setBcheck] = useState(false);
   const [quatity, setQuatity] = useState(0);
   const [fisrtProduct, setFisrtProduct] = useState(0);
   const [temperature, setTemperature] = useState(0);
@@ -114,8 +104,6 @@ const Daily = () => {
   const [tempPercent, setTempPercent] = useState(0);
   const [isShowSendBtn, setIsShowSendBtn] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
-  const [showReview, setShowReview] = useState(false);
-  const [content, setContent] = useState('');
 
   const handleSendDailyReport = async () => {
     try {
@@ -158,6 +146,7 @@ const Daily = () => {
   const handleClickChoiceProduct = product => {
     setProductName(product.label);
     setProductValue(product.value);
+    setIsModalProductChoiceVisible(false);
   };
 
   const handleCal = () => {
@@ -193,28 +182,6 @@ const Daily = () => {
     navigation.goBack();
   };
 
-  const handleSubmit = () => {
-    if (!content.trim()) {
-      Alert.alert(t('error'), t('please_enter_content'));
-      return;
-    }
-    setShowReview(true);
-  };
-
-  const handleConfirm = async () => {
-    setLoader(true);
-    try {
-      await handleSendDailyReport();
-      setShowReview(false);
-      Alert.alert(t('success'), t('daily_report_sent'));
-      navigation.goBack();
-    } catch (error) {
-      Alert.alert(t('error'), error.message);
-    } finally {
-      setLoader(false);
-    }
-  };
-
   useEffect(() => {
     const checkLanguage = async () => {
       const lang = await getLanguage();
@@ -225,525 +192,376 @@ const Daily = () => {
     checkLanguage();
   }, []);
 
-  const formatDate = () => {
-    const today = new Date();
-    const day = String(today.getDate()).padStart(2, '0');
-    const month = String(today.getMonth() + 1).padStart(2, '0');
-    const year = today.getFullYear();
-    return `${day}/${month}/${year}`;
-  };
+  const renderModernHeader = () => (
+    <LinearGradient
+      colors={['#667eea', '#764ba2']}
+      start={{x: 0, y: 0}}
+      end={{x: 1, y: 1}}
+      style={styles.headerGradient}>
+      <View style={styles.headerOverlay} />
+      <View style={styles.telegramHeader}>
+        <View style={styles.headerLeft}>
+          <TouchableOpacity
+            onPress={() => navigation.goBack()}
+            style={styles.headerIconContainer}>
+            <Icon name="arrow-left" size={24} color="#ffffff" />
+          </TouchableOpacity>
+        </View>
 
-  const renderReviewModal = () => (
+        <View style={styles.headerTitleContainer}>
+          <Text style={styles.headerTitle}>
+            {t('daily_report', 'Báo cáo ngày')}
+          </Text>
+        </View>
+
+        <View style={styles.headerRight}>
+          <View style={styles.headerPlaceholder} />
+        </View>
+      </View>
+    </LinearGradient>
+  );
+
+  const renderProductCard = () => (
+    <View style={styles.card}>
+      <View style={styles.cardHeader}>
+        <Icon name="package-variant" size={20} color="#667eea" />
+        <Text style={styles.cardTitle}>
+          {t('product_information', 'Thông tin sản phẩm')}
+        </Text>
+      </View>
+      <TouchableOpacity
+        style={styles.productSelector}
+        onPress={() => setIsModalProductChoiceVisible(true)}>
+        <Text
+          style={[styles.productText, !productName && styles.placeholderText]}>
+          {productName || t('select_product', 'Chọn sản phẩm')}
+        </Text>
+        <Icon name="chevron-down" size={20} color="#667eea" />
+      </TouchableOpacity>
+    </View>
+  );
+
+  const renderInputField = (
+    label,
+    value,
+    onChangeText,
+    placeholder,
+    iconName,
+  ) => (
+    <View style={styles.inputContainer}>
+      <View style={styles.inputLabel}>
+        <IconFA name={iconName} size={14} color="#667eea" />
+        <Text style={styles.inputLabelText}>{label}</Text>
+      </View>
+      <TextInput
+        style={styles.modernInput}
+        keyboardType="number-pad"
+        value={value === 0 || value === '0' ? '' : value.toString()}
+        onChangeText={onChangeText}
+        placeholder={placeholder}
+        placeholderTextColor="#a0a0a0"
+      />
+    </View>
+  );
+
+  const renderProductionCard = () => (
+    <View style={styles.card}>
+      <View style={styles.cardHeader}>
+        <Icon name="factory" size={20} color="#667eea" />
+        <Text style={styles.cardTitle}>
+          {t('production_details', 'Chi tiết sản xuất')}
+        </Text>
+      </View>
+      <View style={styles.inputGrid}>
+        <View style={styles.inputColumn}>
+          {renderInputField(
+            t('quantity', 'Số lượng'),
+            quatity,
+            setQuatity,
+            t('enter_quantity', 'Nhập số lượng'),
+            'hashtag',
+          )}
+          {renderInputField(
+            t('low_speed', 'Tốc độ thấp'),
+            fisrtProduct,
+            setFisrtProduct,
+            t('enter_low_speed', 'Nhập tốc độ thấp'),
+            'tachometer-alt',
+          )}
+          {renderInputField(
+            t('high_speed', 'Tốc độ cao'),
+            temperature,
+            setTemperature,
+            t('enter_high_speed', 'Nhập tốc độ cao'),
+            'thermometer-half',
+          )}
+        </View>
+        <View style={styles.inputColumn}>
+          {renderInputField(
+            t('error_count', 'Lỗi'),
+            error,
+            setError,
+            t('enter_error_count', 'Nhập số lỗi'),
+            'exclamation-triangle',
+          )}
+          {renderInputField(
+            t('shutdown_time', 'Thời gian dừng'),
+            shutdown_time,
+            setShutdown_time,
+            t('enter_shutdown_time', 'Nhập thời gian dừng'),
+            'power-off',
+          )}
+          {renderInputField(
+            t('operated_time', 'Thời gian hoạt động'),
+            timeWork,
+            setTimeWork,
+            t('enter_operated_time', 'Nhập thời gian hoạt động'),
+            'clock',
+          )}
+        </View>
+      </View>
+    </View>
+  );
+
+  const renderResultsCard = () =>
+    isShowSendBtn && (
+      <View style={styles.card}>
+        <View style={styles.cardHeader}>
+          <Icon name="chart-line" size={20} color="#667eea" />
+          <Text style={styles.cardTitle}>
+            {t('calculation_results', 'Kết quả tính toán')}
+          </Text>
+        </View>
+        <View style={styles.resultsContainer}>
+          {percent !== 0 && percent !== '0' && percent !== '0.0' && (
+            <View style={styles.resultItem}>
+              <Text style={styles.resultLabel}>
+                {t('efficiency_percentage', 'Hiệu suất')}:
+              </Text>
+              <Text style={styles.resultValue}>{percent}%</Text>
+            </View>
+          )}
+          {fisrtPercent !== 0 &&
+            fisrtPercent !== '0' &&
+            fisrtPercent !== '0.0' && (
+              <View style={styles.resultItem}>
+                <Text style={styles.resultLabel}>
+                  {t('low_speed', 'Tốc độ thấp')}:
+                </Text>
+                <Text style={styles.resultValue}>{fisrtPercent}%</Text>
+              </View>
+            )}
+          {tempPercent !== 0 &&
+            tempPercent !== '0' &&
+            tempPercent !== '0.0' && (
+              <View style={styles.resultItem}>
+                <Text style={styles.resultLabel}>
+                  {t('high_speed', 'Tốc độ cao')}:
+                </Text>
+                <Text style={styles.resultValue}>{tempPercent}%</Text>
+              </View>
+            )}
+          {errPercemt !== 0 && errPercemt !== '0' && errPercemt !== '0.0' && (
+            <View style={styles.resultItem}>
+              <Text style={styles.resultLabel}>{t('error_count', 'Lỗi')}:</Text>
+              <Text style={styles.resultValue}>{errPercemt}%</Text>
+            </View>
+          )}
+          {quantity !== 0 && quantity !== '0' && (
+            <View style={styles.resultItem}>
+              <Text style={styles.resultLabel}>
+                {t('final_quantity', 'Tổng số lượng cuối')}:
+              </Text>
+              <Text style={styles.resultValue}>{quantity}</Text>
+            </View>
+          )}
+        </View>
+      </View>
+    );
+
+  const renderActionButtons = () => (
+    <View style={styles.actionButtonsContainer}>
+      <TouchableOpacity style={styles.primaryButton} onPress={handleCal}>
+        <LinearGradient
+          colors={['#667eea', '#764ba2']}
+          start={{x: 0, y: 0}}
+          end={{x: 1, y: 1}}
+          style={styles.buttonGradient}>
+          <Icon name="calculator" size={20} color="#fff" />
+          <Text style={styles.buttonText}>{t('calculate', 'Tính toán')}</Text>
+        </LinearGradient>
+      </TouchableOpacity>
+
+      {isShowSendBtn && (
+        <TouchableOpacity
+          style={styles.successButton}
+          onPress={() => setShowModalSendReport(true)}>
+          <LinearGradient
+            colors={['#00D4AA', '#00B894']}
+            start={{x: 0, y: 0}}
+            end={{x: 1, y: 1}}
+            style={styles.buttonGradient}>
+            <Icon name="send" size={20} color="#fff" />
+            <Text style={styles.buttonText}>
+              {t('send_report', 'Gửi báo cáo')}
+            </Text>
+          </LinearGradient>
+        </TouchableOpacity>
+      )}
+
+      <TouchableOpacity style={styles.outlineButton} onPress={handleCancel}>
+        <Text style={styles.outlineButtonText}>{t('cancel', 'Hủy')}</Text>
+      </TouchableOpacity>
+    </View>
+  );
+
+  const renderSendModal = () => (
     <Modal
-      visible={showReview}
-      transparent
       animationType="slide"
-      onRequestClose={() => setShowReview(false)}>
+      transparent={true}
+      visible={isShowModalSendReport}
+      onRequestClose={() => setShowModalSendReport(false)}>
       <View style={styles.modalOverlay}>
-        <View style={styles.modalContent}>
+        <View style={styles.modalContainer}>
           <LinearGradient
             colors={['#667eea', '#764ba2']}
             start={{x: 0, y: 0}}
             end={{x: 1, y: 1}}
             style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>{t('review_daily')}</Text>
+            <Text style={styles.modalTitle}>
+              {t('confirm_report_submission', 'Xác nhận gửi báo cáo')}
+            </Text>
             <TouchableOpacity
-              onPress={() => setShowReview(false)}
-              style={styles.closeButton}>
+              onPress={() => setShowModalSendReport(false)}
+              style={styles.modalCloseButton}>
               <Icon name="close" size={24} color="#fff" />
             </TouchableOpacity>
           </LinearGradient>
 
-          <ScrollView style={styles.reviewContent}>
-            <View style={styles.reviewSection}>
-              <Text style={styles.reviewLabel}>{t('date')}</Text>
-              <Text style={styles.reviewValue}>{formatDate()}</Text>
-            </View>
-
-            <View style={styles.reviewSection}>
-              <Text style={styles.reviewLabel}>{t('content')}</Text>
-              <Text style={styles.reviewValue}>{content}</Text>
-            </View>
-
-            <View style={styles.reviewButtonContainer}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalSectionTitle}>
+              {t('select_work_shift', 'Chọn ca làm việc')}
+            </Text>
+            <View style={styles.shiftSelector}>
               <TouchableOpacity
-                style={[styles.reviewButton, styles.cancelButton]}
-                onPress={() => setShowReview(false)}>
+                style={[
+                  styles.shiftButton,
+                  shift === 'A' && styles.shiftButtonActive,
+                ]}
+                onPress={() => setShift('A')}>
                 <Text
-                  style={[styles.reviewButtonText, styles.cancelButtonText]}>
-                  {t('cancel')}
+                  style={[
+                    styles.shiftButtonText,
+                    shift === 'A' && styles.shiftButtonTextActive,
+                  ]}>
+                  {t('shift_a', 'Ca A')}
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[styles.reviewButton, styles.confirmButton]}
-                onPress={handleConfirm}>
+                style={[
+                  styles.shiftButton,
+                  shift === 'B' && styles.shiftButtonActive,
+                ]}
+                onPress={() => setShift('B')}>
                 <Text
-                  style={[styles.reviewButtonText, styles.confirmButtonText]}>
-                  {t('confirm')}
+                  style={[
+                    styles.shiftButtonText,
+                    shift === 'B' && styles.shiftButtonTextActive,
+                  ]}>
+                  {t('shift_b', 'Ca B')}
                 </Text>
               </TouchableOpacity>
             </View>
-          </ScrollView>
+
+            <Text style={styles.modalSectionTitle}>
+              {t('operator_history', 'Lịch sử vận hành')}
+            </Text>
+            <TextInput
+              style={styles.modalTextInput}
+              value={operator_history}
+              onChangeText={setOperator_history}
+              placeholder={t('enter_operator_history', 'Nhập lịch sử vận hành')}
+              placeholderTextColor="#a0a0a0"
+              multiline
+              numberOfLines={3}
+            />
+
+            <View style={styles.summaryContainer}>
+              <Text style={styles.modalSectionTitle}>
+                {t('summary', 'Tóm tắt')}
+              </Text>
+              <View style={styles.summaryItem}>
+                <Text style={styles.summaryLabel}>
+                  {t('product', 'Sản phẩm')}:
+                </Text>
+                <Text style={styles.summaryValue}>{productName}</Text>
+              </View>
+              <View style={styles.summaryItem}>
+                <Text style={styles.summaryLabel}>
+                  {t('quantity', 'Số lượng')}:
+                </Text>
+                <Text style={styles.summaryValue}>{quantity}</Text>
+              </View>
+              <View style={styles.summaryItem}>
+                <Text style={styles.summaryLabel}>{t('date', 'Ngày')}:</Text>
+                <Text style={styles.summaryValue}>
+                  {moment(today).format('DD/MM/YYYY')}
+                </Text>
+              </View>
+            </View>
+
+            <TouchableOpacity
+              style={styles.modalSendButton}
+              onPress={handleSendDailyReport}>
+              <LinearGradient
+                colors={['#667eea', '#764ba2']}
+                start={{x: 0, y: 0}}
+                end={{x: 1, y: 1}}
+                style={styles.buttonGradient}>
+                <Text style={styles.buttonText}>
+                  {t('send_report', 'Gửi báo cáo')}
+                </Text>
+              </LinearGradient>
+            </TouchableOpacity>
+          </View>
         </View>
       </View>
     </Modal>
   );
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      style={styles.modernContainer}>
-      <StatusBar barStyle="light-content" backgroundColor={COLORS.primary} />
-      <Header
-        title={t('daily.report', 'Báo cáo ngày')}
-        onBack={() => navigation.goBack()}
+    <View style={styles.container}>
+      <StatusBar
+        barStyle="light-content"
+        backgroundColor="transparent"
+        translucent
       />
-      <ScrollView
-        contentContainerStyle={styles.scrollViewContent}
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}>
-        <View style={styles.formContainer}>
+      {renderModernHeader()}
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={styles.keyboardAvoidingView}>
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollViewContent}
+          showsVerticalScrollIndicator={false}>
           <Loader visible={loader} />
 
-          <Card style={styles.card}>
-            <Text style={styles.cardTitle}>{t('product.information')}</Text>
-            <TouchableOpacity
-              style={styles.productSelector}
-              onPress={() => {
-                setIsModalProductChoiceVisible(!isModalProductChoiceVisible);
-              }}>
-              <Text
-                style={[
-                  styles.productSelectorText,
-                  !productName && styles.placeholderText,
-                ]}>
-                {productName || t('select.product')}
-              </Text>
-              <Icon name="chevron-down" size={SIZES.h3} color={COLORS.icon} />
-            </TouchableOpacity>
-            <DailyModal
-              products={listProduct}
-              visible={isModalProductChoiceVisible}
-              onClose={() => {
-                setIsModalProductChoiceVisible(!isModalProductChoiceVisible);
-              }}
-              onProductSelected={handleClickChoiceProduct}
-            />
-          </Card>
+          {renderProductCard()}
+          {renderProductionCard()}
+          {renderResultsCard()}
+          {renderActionButtons()}
 
-          <Card style={styles.card}>
-            <Text style={styles.cardTitle}>{t('production.details')}</Text>
-            <View style={styles.inputGridRow}>
-              <View style={styles.inputGridCol}>
-                <Input
-                  label={
-                    <>
-                      <IconFA name="hashtag" size={14} color={COLORS.primary} />{' '}
-                      {t('quantity')}
-                    </>
-                  }
-                  keyboardType="number-pad"
-                  value={
-                    quatity === 0 || quatity === '0' ? '' : quatity.toString()
-                  }
-                  onChangeText={txt => setQuatity(txt)}
-                  placeholder={t('enter.quantity')}
-                  containerStyle={styles.inputField}
-                />
-                <Input
-                  label={
-                    <>
-                      <IconFA
-                        name="tachometer-alt"
-                        size={14}
-                        color={COLORS.primary}
-                      />{' '}
-                      {t('l.speed')}
-                    </>
-                  }
-                  keyboardType="number-pad"
-                  value={
-                    fisrtProduct === 0 || fisrtProduct === '0'
-                      ? ''
-                      : fisrtProduct.toString()
-                  }
-                  onChangeText={txt => setFisrtProduct(txt)}
-                  placeholder={t('enter.l.speed')}
-                  containerStyle={styles.inputField}
-                />
-                <Input
-                  label={
-                    <>
-                      <IconFA
-                        name="thermometer-half"
-                        size={14}
-                        color={COLORS.primary}
-                      />{' '}
-                      {t('h.speed')}
-                    </>
-                  }
-                  keyboardType="number-pad"
-                  value={
-                    temperature === 0 || temperature === '0'
-                      ? ''
-                      : temperature.toString()
-                  }
-                  onChangeText={txt => setTemperature(txt)}
-                  placeholder={t('enter.h.speed')}
-                  containerStyle={styles.inputField}
-                />
-              </View>
-              <View style={styles.inputGridCol}>
-                <Input
-                  label={
-                    <>
-                      <IconFA
-                        name="exclamation-triangle"
-                        size={14}
-                        color={COLORS.primary}
-                      />{' '}
-                      {t('err')}
-                    </>
-                  }
-                  keyboardType="number-pad"
-                  value={error === 0 || error === '0' ? '' : error.toString()}
-                  onChangeText={txt => setError(txt)}
-                  placeholder={t('enter.error.count')}
-                  containerStyle={styles.inputField}
-                />
-                <Input
-                  label={
-                    <>
-                      <IconFA
-                        name="power-off"
-                        size={14}
-                        color={COLORS.primary}
-                      />{' '}
-                      {t('shutdown_time')}
-                    </>
-                  }
-                  keyboardType="number-pad"
-                  value={
-                    shutdown_time === 0 || shutdown_time === '0'
-                      ? ''
-                      : shutdown_time.toString()
-                  }
-                  onChangeText={txt => setShutdown_time(txt)}
-                  placeholder={t('enter.shutdown.time')}
-                  containerStyle={styles.inputField}
-                />
-                <Input
-                  label={
-                    <>
-                      <IconFA name="clock" size={14} color={COLORS.primary} />{' '}
-                      {t('operated_time')}
-                    </>
-                  }
-                  keyboardType="number-pad"
-                  value={
-                    timeWork === 0 || timeWork === '0'
-                      ? ''
-                      : timeWork.toString()
-                  }
-                  onChangeText={txt => setTimeWork(txt)}
-                  placeholder={t('enter.operated.time')}
-                  containerStyle={styles.inputField}
-                />
-              </View>
-            </View>
-          </Card>
+          <DailyModal
+            products={listProduct}
+            visible={isModalProductChoiceVisible}
+            onClose={() => setIsModalProductChoiceVisible(false)}
+            onProductSelected={handleClickChoiceProduct}
+          />
 
-          {isShowSendBtn && (
-            <Card style={styles.card}>
-              <Text style={styles.cardTitle}>{t('results')}</Text>
-              {percent !== 0 && percent !== '0' && percent !== '0.0' && (
-                <View style={styles.resultItem}>
-                  <Text style={styles.resultLabel}>{t('per')}:</Text>
-                  <Text style={styles.resultValue}>{percent}%</Text>
-                </View>
-              )}
-              {fisrtPercent !== 0 &&
-                fisrtPercent !== '0' &&
-                fisrtPercent !== '0.0' && (
-                  <View style={styles.resultItem}>
-                    <Text style={styles.resultLabel}>{t('l.speed')}:</Text>
-                    <Text style={styles.resultValue}>{fisrtPercent}%</Text>
-                  </View>
-                )}
-              {tempPercent !== 0 &&
-                tempPercent !== '0' &&
-                tempPercent !== '0.0' && (
-                  <View style={styles.resultItem}>
-                    <Text style={styles.resultLabel}>{t('h.speed')}:</Text>
-                    <Text style={styles.resultValue}>{tempPercent}%</Text>
-                  </View>
-                )}
-              {errPercemt !== 0 &&
-                errPercemt !== '0' &&
-                errPercemt !== '0.0' && (
-                  <View style={styles.resultItem}>
-                    <Text style={styles.resultLabel}>{t('err')}:</Text>
-                    <Text style={styles.resultValue}>{errPercemt}%</Text>
-                  </View>
-                )}
-              {quantity !== 0 && quantity !== '0' && (
-                <View style={styles.resultItem}>
-                  <Text style={styles.resultLabel}>
-                    {t('total.quantity.final')}:
-                  </Text>
-                  <Text style={styles.resultValue}>{quantity}</Text>
-                </View>
-              )}
-            </Card>
-          )}
+          {renderSendModal()}
+        </ScrollView>
+      </KeyboardAvoidingView>
 
-          <View style={styles.buttonContainer}>
-            <Button
-              title={t('acc')}
-              onPress={handleCal}
-              style={styles.actionButton}
-              variant="primary"
-            />
-            {isShowSendBtn && (
-              <Button
-                title={t('Send')}
-                onPress={() => {
-                  setShowModalSendReport(true);
-                }}
-                style={styles.actionButton}
-                variant="success"
-              />
-            )}
-            <Button
-              title={t('c')}
-              onPress={handleCancel}
-              style={styles.actionButton}
-              variant="outline"
-            />
-          </View>
-
-          <Modal
-            animationType="slide"
-            transparent={true}
-            visible={isShowModalSendReport}
-            onRequestClose={() => setShowModalSendReport(false)}>
-            <View
-              style={{
-                flex: 1,
-                justifyContent: 'center',
-                alignItems: 'center',
-                backgroundColor: 'rgba(0,0,0,0.35)',
-              }}>
-              <View
-                style={{
-                  width: 330,
-                  minHeight: 340,
-                  backgroundColor: '#fff',
-                  borderRadius: 18,
-                  padding: 20,
-                  alignItems: 'stretch',
-                  justifyContent: 'flex-start',
-                  shadowColor: '#000',
-                  shadowOffset: {width: 0, height: 4},
-                  shadowOpacity: 0.18,
-                  shadowRadius: 8,
-                  elevation: 8,
-                }}>
-                {/* Header */}
-                <View
-                  style={{
-                    flexDirection: 'row',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    marginBottom: 16,
-                  }}>
-                  <Text
-                    style={{
-                      fontSize: 20,
-                      fontWeight: 'bold',
-                      color: COLORS.primary,
-                      letterSpacing: 0.2,
-                    }}>
-                    {t('confirm.report.submission')}
-                  </Text>
-                  <TouchableOpacity
-                    onPress={() => setShowModalSendReport(false)}>
-                    <Icon name="close" size={24} color={COLORS.primary} />
-                  </TouchableOpacity>
-                </View>
-                {/* Shift selector */}
-                <View
-                  style={{
-                    flexDirection: 'row',
-                    justifyContent: 'space-around',
-                    marginBottom: 16,
-                  }}>
-                  <TouchableOpacity
-                    style={{
-                      flex: 1,
-                      marginHorizontal: 8,
-                      paddingVertical: 12,
-                      borderRadius: 24,
-                      backgroundColor:
-                        shift === 'A' ? COLORS.primary : '#f4f6fb',
-                      borderWidth: 1.5,
-                      borderColor: COLORS.primary,
-                      alignItems: 'center',
-                      shadowColor:
-                        shift === 'A' ? COLORS.primary : 'transparent',
-                      shadowOpacity: shift === 'A' ? 0.15 : 0,
-                      elevation: shift === 'A' ? 2 : 0,
-                    }}
-                    onPress={() => setShift('A')}>
-                    <Text
-                      style={{
-                        color: shift === 'A' ? '#fff' : COLORS.primary,
-                        fontWeight: 'bold',
-                        fontSize: 16,
-                        letterSpacing: 1,
-                      }}>
-                      {t('shiftA', 'A')}
-                    </Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={{
-                      flex: 1,
-                      marginHorizontal: 8,
-                      paddingVertical: 12,
-                      borderRadius: 24,
-                      backgroundColor:
-                        shift === 'B' ? COLORS.primary : '#f4f6fb',
-                      borderWidth: 1.5,
-                      borderColor: COLORS.primary,
-                      alignItems: 'center',
-                      shadowColor:
-                        shift === 'B' ? COLORS.primary : 'transparent',
-                      shadowOpacity: shift === 'B' ? 0.15 : 0,
-                      elevation: shift === 'B' ? 2 : 0,
-                    }}
-                    onPress={() => setShift('B')}>
-                    <Text
-                      style={{
-                        color: shift === 'B' ? '#fff' : COLORS.primary,
-                        fontWeight: 'bold',
-                        fontSize: 16,
-                        letterSpacing: 1,
-                      }}>
-                      {t('shiftB', 'B')}
-                    </Text>
-                  </TouchableOpacity>
-                </View>
-                {/* Operator history */}
-                <Text
-                  style={{
-                    fontWeight: 'bold',
-                    marginBottom: 6,
-                    color: COLORS.text,
-                    fontSize: 15,
-                  }}>
-                  {t('operator_history')}
-                </Text>
-                <TextInput
-                  value={operator_history}
-                  onChangeText={text => setOperator_history(text)}
-                  placeholder={t('enter.operator.history')}
-                  multiline
-                  numberOfLines={3}
-                  style={{
-                    borderWidth: 1.2,
-                    borderColor: COLORS.primary,
-                    borderRadius: 10,
-                    padding: 12,
-                    minHeight: 54,
-                    marginBottom: 14,
-                    backgroundColor: '#f7fafd',
-                    color: COLORS.text,
-                    fontSize: 15,
-                  }}
-                  placeholderTextColor={COLORS.placeholder || '#888'}
-                />
-                {/* Summary */}
-                <Text
-                  style={{
-                    fontWeight: 'bold',
-                    marginBottom: 6,
-                    color: COLORS.text,
-                    fontSize: 15,
-                  }}>
-                  {t('summary')}
-                </Text>
-                <View
-                  style={{
-                    marginBottom: 12,
-                    borderWidth: 1,
-                    borderColor: '#e3e6ee',
-                    borderRadius: 10,
-                    padding: 10,
-                    backgroundColor: '#f9fafd',
-                  }}>
-                  <Text style={{color: COLORS.textSecondary, fontSize: 14}}>
-                    {t('product')}:{' '}
-                    <Text style={{color: COLORS.primary, fontWeight: 'bold'}}>
-                      {t(productName, productName)}
-                    </Text>
-                  </Text>
-                  <Text style={{color: COLORS.textSecondary, fontSize: 14}}>
-                    {t('quantity')}:{' '}
-                    <Text style={{color: COLORS.primary, fontWeight: 'bold'}}>
-                      {quantity}
-                    </Text>
-                  </Text>
-                  <Text style={{color: COLORS.textSecondary, fontSize: 14}}>
-                    {t('shift')}:{' '}
-                    <Text style={{color: COLORS.primary, fontWeight: 'bold'}}>
-                      {t('shift' + shift, shift)}
-                    </Text>
-                  </Text>
-                  <Text style={{color: COLORS.textSecondary, fontSize: 14}}>
-                    {t('operated_time')}:{' '}
-                    <Text style={{color: COLORS.primary, fontWeight: 'bold'}}>
-                      {timeWork}
-                    </Text>
-                  </Text>
-                  <Text style={{color: COLORS.textSecondary, fontSize: 14}}>
-                    {t('cycle')}:{' '}
-                    <Text style={{color: COLORS.primary, fontWeight: 'bold'}}>
-                      {productValue}
-                    </Text>
-                  </Text>
-                  <Text style={{color: COLORS.textSecondary, fontSize: 14}}>
-                    {t('shutdown_time')}:{' '}
-                    <Text style={{color: COLORS.primary, fontWeight: 'bold'}}>
-                      {shutdown_time}
-                    </Text>
-                  </Text>
-                  <Text style={{color: COLORS.textSecondary, fontSize: 14}}>
-                    {t('date')}:{' '}
-                    <Text style={{color: COLORS.primary, fontWeight: 'bold'}}>
-                      {moment(today).format('YYYY-MM-DD')}
-                    </Text>
-                  </Text>
-                </View>
-                {/* Nút gửi báo cáo */}
-                <TouchableOpacity
-                  style={{
-                    backgroundColor: COLORS.primary,
-                    borderRadius: 10,
-                    paddingVertical: 12,
-                    alignItems: 'center',
-                    marginTop: 8,
-                  }}
-                  onPress={handleSendDailyReport}>
-                  <Text
-                    style={{color: '#fff', fontWeight: 'bold', fontSize: 16}}>
-                    {t('Send')}
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          </Modal>
-        </View>
-      </ScrollView>
       <ModalMessage
         isVisible={showSuccessModal}
         onClose={() => {
@@ -755,190 +573,310 @@ const Daily = () => {
         t={t}
         duration={1500}
       />
-      {renderReviewModal()}
-    </KeyboardAvoidingView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  modernContainer: {
+  container: {
     flex: 1,
-    backgroundColor: COLORS.background,
+    backgroundColor: '#f8fafc',
   },
-  scrollViewContent: {
-    paddingBottom: SIZES.padding * 2,
+  headerGradient: {
+    paddingTop: Platform.OS === 'ios' ? 44 : 20,
+    shadowColor: '#667eea',
+    shadowOffset: {width: 0, height: 4},
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+    elevation: 8,
   },
-  formContainer: {
-    paddingHorizontal: SIZES.padding,
-    paddingTop: SIZES.padding,
+  headerOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(255,255,255,0.05)',
   },
-  card: {
-    marginBottom: SIZES.padding * 1.2,
-    padding: SIZES.padding * 0.8,
-  },
-  header: {
+  telegramHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: SIZES.padding / 1.5,
-    paddingVertical: SIZES.base * 1.5,
-    backgroundColor: COLORS.primary,
-    height: SIZES.headerHeight,
-    ...SHADOWS.light,
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    height: 64,
   },
-  headerButton: {
-    padding: SIZES.base,
-    minWidth: SIZES.h1,
+  headerLeft: {
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+  },
+  headerTitleContainer: {
+    flex: 1,
+    alignItems: 'center',
   },
   headerTitle: {
-    ...FONTS.h3,
-    color: COLORS.white,
-    fontWeight: 'bold',
+    fontSize: 22,
+    fontWeight: '700',
+    color: '#ffffff',
+    textShadowColor: 'rgba(0,0,0,0.3)',
+    textShadowOffset: {width: 0, height: 1},
+    textShadowRadius: 3,
+  },
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  headerIconContainer: {
+    padding: 8,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+  },
+  headerPlaceholder: {
+    width: 40,
+    height: 40,
+  },
+  keyboardAvoidingView: {
+    flex: 1,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollViewContent: {
+    padding: 20,
+    paddingBottom: 40,
+  },
+  card: {
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 20,
+    ...SHADOWS.light,
+  },
+  cardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
   },
   cardTitle: {
     ...FONTS.h4,
-    color: COLORS.text,
-    marginBottom: SIZES.padding * 0.8,
+    color: '#1a202c',
     fontWeight: 'bold',
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.borderColor,
-    paddingBottom: SIZES.base,
+    marginLeft: 8,
   },
   productSelector: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: SIZES.base * 1.5,
-    paddingHorizontal: SIZES.inputPaddingHorizontal || SIZES.base,
+    justifyContent: 'space-between',
+    backgroundColor: '#f7fafc',
+    borderRadius: 12,
+    padding: 16,
     borderWidth: 1,
-    borderColor: COLORS.borderColor,
-    borderRadius: SIZES.radius,
-    backgroundColor: COLORS.white,
-    height: SIZES.inputHeight,
-    marginBottom: SIZES.base,
+    borderColor: '#e2e8f0',
   },
-  productSelectorText: {
+  productText: {
     ...FONTS.body3,
-    color: COLORS.text,
+    color: '#1a202c',
     flex: 1,
   },
   placeholderText: {
-    color: COLORS.placeholder,
+    color: '#a0a0a0',
   },
-  inputField: {
-    marginBottom: SIZES.base * 1.8,
+  inputGrid: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 16,
+  },
+  inputColumn: {
+    flex: 1,
+  },
+  inputContainer: {
+    marginBottom: 16,
+  },
+  inputLabel: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  inputLabelText: {
+    ...FONTS.body4,
+    color: '#4a5568',
+    marginLeft: 6,
+    fontWeight: '600',
+  },
+  modernInput: {
+    backgroundColor: '#f7fafc',
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    ...FONTS.body3,
+    color: '#1a202c',
+  },
+  resultsContainer: {
+    backgroundColor: '#f7fafc',
+    borderRadius: 12,
+    padding: 16,
   },
   resultItem: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: SIZES.base,
+    paddingVertical: 8,
     borderBottomWidth: 1,
-    borderBottomColor: COLORS.lightGray2,
-    ':last-child': {
-      borderBottomWidth: 0,
-    },
+    borderBottomColor: '#e2e8f0',
   },
   resultLabel: {
-    ...FONTS.body3,
-    color: COLORS.textSecondary,
+    ...FONTS.body4,
+    color: '#4a5568',
   },
   resultValue: {
-    ...FONTS.body3,
-    color: COLORS.primary,
+    ...FONTS.body4,
+    color: '#667eea',
     fontWeight: 'bold',
   },
-  buttonContainer: {
-    marginTop: SIZES.padding,
+  actionButtonsContainer: {
+    marginTop: 20,
+  },
+  primaryButton: {
+    marginBottom: 12,
+    borderRadius: 12,
+    overflow: 'hidden',
+    ...SHADOWS.light,
+  },
+  successButton: {
+    marginBottom: 12,
+    borderRadius: 12,
+    overflow: 'hidden',
+    ...SHADOWS.light,
+  },
+  buttonGradient: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 16,
+    paddingHorizontal: 20,
   },
-  actionButton: {
-    flex: 1,
-    marginHorizontal: SIZES.base / 2,
+  buttonText: {
+    ...FONTS.h4,
+    color: '#fff',
+    fontWeight: 'bold',
+    marginLeft: 8,
   },
-
+  outlineButton: {
+    borderWidth: 1,
+    borderColor: '#667eea',
+    borderRadius: 12,
+    paddingVertical: 16,
+    alignItems: 'center',
+  },
+  outlineButtonText: {
+    ...FONTS.h4,
+    color: '#667eea',
+    fontWeight: 'bold',
+  },
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'center',
     alignItems: 'center',
   },
-  modalContent: {
-    width: '90%',
+  modalContainer: {
+    width: SCREEN_WIDTH * 0.9,
     maxHeight: '80%',
     backgroundColor: '#fff',
     borderRadius: 16,
     overflow: 'hidden',
+    ...SHADOWS.dark,
   },
   modalHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: 16,
+    paddingHorizontal: 20,
+    paddingVertical: 16,
   },
   modalTitle: {
-    fontSize: 18,
-    fontWeight: '600',
+    ...FONTS.h4,
     color: '#fff',
+    fontWeight: 'bold',
   },
-  closeButton: {
+  modalCloseButton: {
     padding: 4,
   },
-  reviewContent: {
-    padding: 16,
+  modalContent: {
+    padding: 20,
   },
-  reviewSection: {
-    marginBottom: 16,
+  modalSectionTitle: {
+    ...FONTS.h4,
+    color: '#1a202c',
+    fontWeight: 'bold',
+    marginBottom: 12,
   },
-  reviewLabel: {
-    fontSize: 14,
-    color: '#1a1a1a',
-    marginBottom: 4,
-    fontWeight: '500',
-  },
-  reviewValue: {
-    fontSize: 16,
-    color: '#333',
-    lineHeight: 22,
-  },
-  reviewButtonContainer: {
+  shiftSelector: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 24,
-  },
-  reviewButton: {
-    flex: 1,
-    padding: 16,
-    borderRadius: 12,
-    alignItems: 'center',
-    marginHorizontal: 8,
-  },
-  cancelButton: {
-    backgroundColor: '#f1f1f1',
-  },
-  confirmButton: {
-    backgroundColor: '#667eea',
-  },
-  reviewButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  cancelButtonText: {
-    color: '#666',
-  },
-  confirmButtonText: {
-    color: '#fff',
-  },
-  inputGridRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    marginBottom: 24,
     gap: 12,
   },
-  inputGridCol: {
+  shiftButton: {
     flex: 1,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 24,
+    backgroundColor: '#f7fafc',
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    alignItems: 'center',
+  },
+  shiftButtonActive: {
+    backgroundColor: '#667eea',
+    borderColor: '#667eea',
+  },
+  shiftButtonText: {
+    ...FONTS.body4,
+    color: '#4a5568',
+    fontWeight: 'bold',
+  },
+  shiftButtonTextActive: {
+    color: '#fff',
+  },
+  modalTextInput: {
+    backgroundColor: '#f7fafc',
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    ...FONTS.body3,
+    color: '#1a202c',
+    marginBottom: 24,
+    minHeight: 80,
+    textAlignVertical: 'top',
+  },
+  summaryContainer: {
+    backgroundColor: '#f7fafc',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 24,
+  },
+  summaryItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 6,
+  },
+  summaryLabel: {
+    ...FONTS.body4,
+    color: '#4a5568',
+  },
+  summaryValue: {
+    ...FONTS.body4,
+    color: '#667eea',
+    fontWeight: 'bold',
+  },
+  modalSendButton: {
+    borderRadius: 12,
+    overflow: 'hidden',
+    ...SHADOWS.light,
   },
 });
 
