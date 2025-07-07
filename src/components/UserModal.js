@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useState, useEffect} from 'react';
 import {
   View,
   Text,
@@ -8,13 +8,20 @@ import {
   Image,
   Modal,
   TouchableOpacity,
+  TouchableWithoutFeedback,
   KeyboardAvoidingView,
   Platform,
+  Dimensions,
+  Keyboard,
 } from 'react-native';
-import Icon from 'react-native-vector-icons/FontAwesome';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import LinearGradient from 'react-native-linear-gradient';
 import defaultAvatar from '../assets/images/avatar.jpg';
 import {COLORS, SIZES, FONTS, SHADOWS} from '../config/theme';
+import {THEME_COLOR, TEXT_COLOR} from '../utils/Colors';
 import ModalMessage from './ModalMessage';
+
+const {width: SCREEN_WIDTH, height: SCREEN_HEIGHT} = Dimensions.get('window');
 
 const UserModal = ({isVisible, onClose, users, onSelectUser, t}) => {
   const [searchText, setSearchText] = useState('');
@@ -24,6 +31,27 @@ const UserModal = ({isVisible, onClose, users, onSelectUser, t}) => {
   const [messageType, setMessageType] = useState('success');
   const [duration, setDuration] = useState(1000);
   const [isMessageModalVisible, setMessageModalVisible] = useState(false);
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
+
+  useEffect(() => {
+    const keyboardDidShowListener = Keyboard.addListener(
+      'keyboardDidShow',
+      e => {
+        setKeyboardHeight(e.endCoordinates.height);
+      },
+    );
+    const keyboardDidHideListener = Keyboard.addListener(
+      'keyboardDidHide',
+      () => {
+        setKeyboardHeight(0);
+      },
+    );
+
+    return () => {
+      keyboardDidShowListener?.remove();
+      keyboardDidHideListener?.remove();
+    };
+  }, []);
 
   const showMessage = (msg, type, dur) => {
     setMessageModalVisible(true);
@@ -46,136 +74,277 @@ const UserModal = ({isVisible, onClose, users, onSelectUser, t}) => {
     }
   };
 
+  const handleScroll = () => {
+    Keyboard.dismiss();
+  };
+
   const filteredUsers = users.filter(user =>
     user.name.toLowerCase().includes(searchText.toLowerCase()),
   );
 
-  const renderUserItem = ({item}) => (
-    <TouchableOpacity
-      style={styles.userItem}
-      onPress={() => toggleUserSelection(item)}
-      activeOpacity={0.85}>
-      <View style={styles.avatarContainer}>
-        <Image
-          source={item.avatar ? {uri: item.avatar} : defaultAvatar}
-          style={styles.avatar}
-        />
-      </View>
-      <View style={styles.userInfo}>
-        <Text style={styles.userName}>{item.name}</Text>
-        <Text style={styles.userSubInfo}>{item.department.name}</Text>
-      </View>
-      <View style={styles.checkbox}>
-        {selectedUsers.some(selected => selected.id === item.id) && (
-          <Icon name="check-circle" size={22} color={COLORS.primary} />
-        )}
-      </View>
-    </TouchableOpacity>
-  );
-
-  const handleCreateGroup = () => {
-    if (selectedUsers.length > 1 && groupName.trim() === '') {
-      showMessage('Nhập tên nhóm', 'warning', 1000);
-      return;
-    }
-    onSelectUser(selectedUsers, groupName);
-    setGroupName('');
+  const handleClose = () => {
     setSelectedUsers([]);
+    setGroupName('');
+    setSearchText('');
     onClose();
   };
+
+  const renderUserItem = ({item}) => {
+    const isSelected = selectedUsers.some(selected => selected.id === item.id);
+
+    return (
+      <TouchableOpacity
+        style={[styles.userItem, isSelected && styles.selectedUserItem]}
+        onPress={() => toggleUserSelection(item)}
+        activeOpacity={0.7}>
+        <View style={styles.avatarContainer}>
+          <Image
+            source={item.avatar ? {uri: item.avatar} : defaultAvatar}
+            style={styles.avatar}
+          />
+          {isSelected && (
+            <View style={styles.selectedBadge}>
+              <Icon name="check" size={14} color="#fff" />
+            </View>
+          )}
+        </View>
+
+        <View style={styles.userInfo}>
+          <Text style={styles.userName} numberOfLines={1}>
+            {item.name}
+          </Text>
+          <Text style={styles.userDepartment} numberOfLines={1}>
+            {item.department?.name || 'Chưa có phòng ban'}
+          </Text>
+        </View>
+
+        <View style={styles.selectionIndicator}>
+          {isSelected ? (
+            <Icon name="check-circle" size={24} color={THEME_COLOR} />
+          ) : (
+            <View style={styles.unselectedCheckbox} />
+          )}
+        </View>
+      </TouchableOpacity>
+    );
+  };
+
+  const handleCreateChat = () => {
+    if (selectedUsers.length === 0) {
+      showMessage('Vui lòng chọn người để trò chuyện', 'warning', 1500);
+      return;
+    }
+
+    if (selectedUsers.length > 1 && groupName.trim() === '') {
+      showMessage('Vui lòng nhập tên nhóm', 'warning', 1500);
+      return;
+    }
+
+    onSelectUser(selectedUsers, groupName);
+    handleClose();
+  };
+
+  const renderSelectedUsers = () => {
+    if (selectedUsers.length === 0) return null;
+
+    return (
+      <View style={styles.selectedSection}>
+        <Text style={styles.selectedTitle}>
+          Đã chọn ({selectedUsers.length})
+        </Text>
+        <FlatList
+          horizontal
+          data={selectedUsers}
+          keyExtractor={item => item.id.toString()}
+          showsHorizontalScrollIndicator={false}
+          renderItem={({item}) => (
+            <View style={styles.selectedUserChip}>
+              <Image
+                source={item.avatar ? {uri: item.avatar} : defaultAvatar}
+                style={styles.selectedUserAvatar}
+              />
+              <TouchableOpacity
+                style={styles.removeUserBtn}
+                onPress={() => toggleUserSelection(item)}>
+                <Icon name="close-circle" size={18} color="#FF3B30" />
+              </TouchableOpacity>
+            </View>
+          )}
+          contentContainerStyle={styles.selectedUsersList}
+        />
+      </View>
+    );
+  };
+
+  const renderGroupNameInput = () => {
+    if (selectedUsers.length <= 1) return null;
+
+    return (
+      <View style={styles.groupNameSection}>
+        <View style={styles.groupNameContainer}>
+          <Icon name="account-group" size={20} color="#8E8E93" />
+          <TextInput
+            style={styles.groupNameInput}
+            placeholder="Nhập tên nhóm chat..."
+            placeholderTextColor="#8E8E93"
+            value={groupName}
+            onChangeText={setGroupName}
+            autoCapitalize="words"
+          />
+          {groupName ? (
+            <TouchableOpacity onPress={() => setGroupName('')}>
+              <Icon name="close-circle" size={20} color="#8E8E93" />
+            </TouchableOpacity>
+          ) : null}
+        </View>
+      </View>
+    );
+  };
+
+  if (!isVisible) return null;
 
   return (
     <Modal
       transparent={true}
-      animationType="fade"
+      animationType="slide"
       visible={isVisible}
-      onRequestClose={onClose}>
-      <KeyboardAvoidingView
-        style={styles.modalOverlay}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-        <View style={styles.modalContent}>
-          {/* Header */}
-          <View style={styles.header}>
-            <TouchableOpacity onPress={onClose} style={styles.headerBackBtn}>
-              <Icon name="arrow-left" size={22} color={COLORS.text} />
-            </TouchableOpacity>
-            <Text style={styles.headerTitle}>{t('newGroup')}</Text>
-            <Text style={styles.headerSelectedCount}>{`${t('selected')}: ${
-              selectedUsers.length
-            }`}</Text>
-          </View>
-
-          {/* Group name input */}
-          {selectedUsers.length > 1 && (
-            <View style={styles.groupNameContainer}>
-              <TextInput
-                style={styles.groupNameInput}
-                placeholder={t('groupNameMake')}
-                placeholderTextColor={COLORS.placeholder}
-                value={groupName}
-                onChangeText={text => setGroupName(text)}
-              />
-            </View>
-          )}
-
-          {/* Search bar */}
-          <View style={styles.searchBarWrap}>
-            <Icon
-              name="search"
-              size={18}
-              color={COLORS.placeholder}
-              style={styles.searchIcon}
-            />
-            <TextInput
-              style={styles.searchInput}
-              placeholder={t('searchFriend')}
-              placeholderTextColor={COLORS.placeholder}
-              value={searchText}
-              onChangeText={handleSearch}
-            />
-          </View>
-
-          {/* User list */}
-          <FlatList
-            data={filteredUsers}
-            keyExtractor={item => item.id.toString()}
-            renderItem={renderUserItem}
-            contentContainerStyle={styles.flatListContent}
-            keyboardShouldPersistTaps="handled"
-            ListFooterComponent={
-              <View style={styles.selectedUserList}>
-                {selectedUsers.map(user => (
-                  <View key={user.id} style={styles.selectedUserItem}>
-                    <Image
-                      source={user.avatar ? {uri: user.avatar} : defaultAvatar}
-                      style={styles.selectedUserAvatar}
-                    />
-                  </View>
-                ))}
+      onRequestClose={handleClose}
+      statusBarTranslucent={true}
+      presentationStyle="overFullScreen">
+      <View style={styles.modalOverlay}>
+        <KeyboardAvoidingView
+          style={styles.keyboardView}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}>
+          <View
+            style={[
+              styles.modalContent,
+              {
+                marginBottom:
+                  keyboardHeight > 0 ? Math.min(keyboardHeight * 0.05, 20) : 0,
+              },
+            ]}>
+            {/* Header */}
+            <LinearGradient
+              colors={['#667eea', '#764ba2']}
+              start={{x: 0, y: 0}}
+              end={{x: 1, y: 1}}
+              style={styles.headerGradient}>
+              <View style={styles.headerContent}>
+                <TouchableOpacity
+                  onPress={handleClose}
+                  style={styles.backButton}>
+                  <Icon name="close" size={20} color="#fff" />
+                </TouchableOpacity>
+                <Text style={styles.headerTitle}>
+                  {selectedUsers.length > 1
+                    ? 'Tạo nhóm chat'
+                    : 'Chọn người trò chuyện'}
+                </Text>
+                <View style={styles.headerRight}>
+                  {selectedUsers.length > 0 && (
+                    <Text style={styles.selectedCount}>
+                      {selectedUsers.length}
+                    </Text>
+                  )}
+                </View>
               </View>
-            }
-          />
+            </LinearGradient>
 
-          {/* Create group button */}
-          {selectedUsers.length > 0 && (
-            <TouchableOpacity
-              style={styles.createGroupButton}
-              onPress={handleCreateGroup}
-              activeOpacity={0.85}>
-              <Icon name="arrow-right" size={22} color={COLORS.white} />
-            </TouchableOpacity>
-          )}
+            {/* Search Bar */}
+            <View style={styles.searchSection}>
+              <View style={styles.searchContainer}>
+                <Icon name="magnify" size={20} color="#8E8E93" />
+                <TextInput
+                  style={styles.searchInput}
+                  placeholder="Tìm kiếm đồng nghiệp..."
+                  placeholderTextColor="#8E8E93"
+                  value={searchText}
+                  onChangeText={handleSearch}
+                  autoCapitalize="none"
+                />
+                {searchText ? (
+                  <TouchableOpacity onPress={() => setSearchText('')}>
+                    <Icon name="close-circle" size={20} color="#8E8E93" />
+                  </TouchableOpacity>
+                ) : null}
+              </View>
+            </View>
 
-          <ModalMessage
-            isVisible={isMessageModalVisible}
-            onClose={() => setMessageModalVisible(false)}
-            message={messageModal}
-            type={messageType}
-            t={t}
-            duration={duration}
-          />
-        </View>
-      </KeyboardAvoidingView>
+            {/* Selected Users */}
+            {renderSelectedUsers()}
+
+            {/* Group Name Input */}
+            {renderGroupNameInput()}
+
+            {/* User List */}
+            <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+              <View style={styles.listContainer}>
+                <FlatList
+                  data={filteredUsers}
+                  keyExtractor={item => item.id.toString()}
+                  renderItem={renderUserItem}
+                  contentContainerStyle={[
+                    styles.flatListContent,
+                    {
+                      paddingBottom:
+                        keyboardHeight > 0 ? keyboardHeight + 20 : 20,
+                    },
+                  ]}
+                  keyboardShouldPersistTaps="handled"
+                  showsVerticalScrollIndicator={false}
+                  onScroll={handleScroll}
+                  onScrollBeginDrag={handleScroll}
+                  scrollEventThrottle={16}
+                  ListEmptyComponent={() => (
+                    <View style={styles.emptyContainer}>
+                      <Icon name="account-search" size={60} color="#C7C7CC" />
+                      <Text style={styles.emptyTitle}>
+                        Không tìm thấy kết quả
+                      </Text>
+                      <Text style={styles.emptySubtitle}>
+                        {searchText
+                          ? 'Thử tìm kiếm với từ khóa khác'
+                          : 'Danh sách trống'}
+                      </Text>
+                    </View>
+                  )}
+                />
+              </View>
+            </TouchableWithoutFeedback>
+
+            {/* Bottom Button */}
+            {selectedUsers.length > 0 && (
+              <View style={styles.bottomSection}>
+                <TouchableOpacity
+                  style={styles.createButton}
+                  onPress={handleCreateChat}
+                  activeOpacity={0.8}>
+                  <Icon
+                    name={selectedUsers.length > 1 ? 'account-group' : 'send'}
+                    size={20}
+                    color="#fff"
+                  />
+                  <Text style={styles.createButtonText}>
+                    {selectedUsers.length > 1
+                      ? 'Tạo nhóm chat'
+                      : 'Bắt đầu trò chuyện'}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            )}
+
+            <ModalMessage
+              isVisible={isMessageModalVisible}
+              onClose={() => setMessageModalVisible(false)}
+              message={messageModal}
+              type={messageType}
+              t={t}
+              duration={duration}
+            />
+          </View>
+        </KeyboardAvoidingView>
+      </View>
     </Modal>
   );
 };
@@ -183,159 +352,258 @@ const UserModal = ({isVisible, onClose, users, onSelectUser, t}) => {
 const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.25)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'flex-end',
+  },
+  keyboardView: {
+    flex: 1,
+    justifyContent: 'flex-end',
   },
   modalContent: {
-    width: '92%',
-    maxHeight: '90%',
-    backgroundColor: COLORS.white,
-    borderRadius: SIZES.radius * 2,
-    paddingVertical: 18,
-    paddingHorizontal: 0,
-    ...SHADOWS.medium,
-    alignSelf: 'center',
+    backgroundColor: '#f8fafc',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    height: SCREEN_HEIGHT * 0.85,
+    overflow: 'hidden',
   },
-  header: {
+  headerGradient: {
+    paddingTop: Platform.OS === 'ios' ? 50 : 25,
+    paddingBottom: 12,
+  },
+  headerContent: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: SIZES.base * 2,
-    paddingBottom: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.borderColor,
-    marginBottom: 8,
+    paddingHorizontal: 16,
+    paddingTop: 5,
   },
-  headerBackBtn: {
+  backButton: {
     padding: 6,
-    marginRight: 4,
+    borderRadius: 16,
+    backgroundColor: 'rgba(255,255,255,0.2)',
   },
   headerTitle: {
-    ...FONTS.h3,
-    color: COLORS.text,
-    fontWeight: 'bold',
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#fff',
     flex: 1,
     textAlign: 'center',
+    marginHorizontal: 12,
   },
-  headerSelectedCount: {
-    ...FONTS.body4,
-    color: COLORS.textSecondary,
-    marginLeft: 8,
-    minWidth: 60,
-    textAlign: 'right',
+  headerRight: {
+    minWidth: 32,
+    alignItems: 'center',
   },
-  groupNameContainer: {
-    paddingHorizontal: SIZES.base * 2,
-    marginBottom: 8,
+  selectedCount: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#fff',
+    backgroundColor: 'rgba(255,255,255,0.3)',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 10,
+    minWidth: 20,
+    textAlign: 'center',
   },
-  groupNameInput: {
-    height: 40,
-    borderRadius: SIZES.radius,
-    backgroundColor: COLORS.lightGray1,
-    paddingHorizontal: SIZES.inputPaddingHorizontal,
-    color: COLORS.text,
-    ...FONTS.body3,
-    borderWidth: 1,
-    borderColor: COLORS.borderColor,
+  searchSection: {
+    backgroundColor: '#fff',
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F2F2F7',
   },
-  searchBarWrap: {
+  searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: COLORS.lightGray1,
-    borderRadius: SIZES.radius,
-    marginHorizontal: SIZES.base * 2,
-    marginBottom: 8,
-    borderWidth: 1,
-    borderColor: COLORS.borderColor,
-    height: 40,
-    paddingHorizontal: 12,
-  },
-  searchIcon: {
-    marginRight: 8,
+    backgroundColor: '#F2F2F7',
+    borderRadius: 20,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    height: 44,
   },
   searchInput: {
     flex: 1,
     fontSize: 16,
-    color: COLORS.text,
+    color: TEXT_COLOR,
+    marginLeft: 8,
     paddingVertical: 0,
-    backgroundColor: 'transparent',
+  },
+  listContainer: {
+    flex: 1,
+    backgroundColor: '#fff',
   },
   flatListContent: {
-    paddingBottom: 16,
-    paddingHorizontal: SIZES.base * 2,
+    paddingVertical: 8,
   },
   userItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: COLORS.white,
-    borderRadius: SIZES.radius,
-    paddingVertical: 10,
-    paddingHorizontal: 8,
-    marginBottom: 8,
-    borderWidth: 1,
-    borderColor: COLORS.lightGray2,
-    ...SHADOWS.light,
+    backgroundColor: '#fff',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderBottomWidth: 0.5,
+    borderBottomColor: '#F2F2F7',
+  },
+  selectedUserItem: {
+    backgroundColor: '#F8F9FF',
   },
   avatarContainer: {
-    marginRight: 14,
+    position: 'relative',
+    marginRight: 12,
   },
   avatar: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: COLORS.lightGray2,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#F2F2F7',
+  },
+  selectedBadge: {
+    position: 'absolute',
+    bottom: -2,
+    right: -2,
+    backgroundColor: THEME_COLOR,
+    borderRadius: 10,
+    width: 20,
+    height: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#fff',
   },
   userInfo: {
     flex: 1,
     justifyContent: 'center',
   },
   userName: {
-    ...FONTS.body3,
-    color: COLORS.text,
-    fontWeight: 'bold',
+    fontSize: 16,
+    fontWeight: '600',
+    color: TEXT_COLOR,
+    marginBottom: 2,
   },
-  userSubInfo: {
-    ...FONTS.body5,
-    color: COLORS.textSecondary,
-    marginTop: 2,
+  userDepartment: {
+    fontSize: 14,
+    color: '#8E8E93',
   },
-  checkbox: {
-    paddingLeft: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
+  selectionIndicator: {
+    marginLeft: 12,
   },
-  selectedUserList: {
+  unselectedCheckbox: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: '#C7C7CC',
+    backgroundColor: 'transparent',
+  },
+  bottomSection: {
+    backgroundColor: '#fff',
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#F2F2F7',
+  },
+  createButton: {
+    backgroundColor: THEME_COLOR,
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    marginTop: 8,
-    marginBottom: 8,
-    minHeight: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 16,
+    borderRadius: 12,
   },
-  selectedUserItem: {
-    marginRight: 6,
-    marginBottom: 6,
+  createButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#fff',
+    marginLeft: 8,
+  },
+  emptyContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 60,
+    paddingHorizontal: 40,
+  },
+  emptyTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: TEXT_COLOR,
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  emptySubtitle: {
+    fontSize: 14,
+    color: '#8E8E93',
+    textAlign: 'center',
+  },
+  selectedSection: {
+    backgroundColor: '#fff',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F2F2F7',
+  },
+  selectedTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: TEXT_COLOR,
+    marginBottom: 12,
+  },
+  selectedUsersList: {
+    paddingVertical: 4,
+  },
+  selectedUserChip: {
+    position: 'relative',
+    marginRight: 12,
+    alignItems: 'center',
   },
   selectedUserAvatar: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#F2F2F7',
     borderWidth: 2,
-    borderColor: COLORS.primary,
-    backgroundColor: COLORS.lightGray2,
+    borderColor: THEME_COLOR,
   },
-  createGroupButton: {
+  removeUserBtn: {
     position: 'absolute',
-    right: 24,
-    bottom: 24,
-    backgroundColor: COLORS.primary,
-    width: 52,
-    height: 52,
-    borderRadius: 26,
+    top: -2,
+    right: -2,
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    width: 20,
+    height: 20,
     justifyContent: 'center',
     alignItems: 'center',
-    ...SHADOWS.medium,
-    zIndex: 10,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 1.5,
+    elevation: 2,
+  },
+  groupNameSection: {
+    backgroundColor: '#fff',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F2F2F7',
+  },
+  groupNameContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F2F2F7',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    height: 44,
+  },
+  groupNameInput: {
+    flex: 1,
+    fontSize: 16,
+    color: TEXT_COLOR,
+    marginLeft: 8,
+    paddingVertical: 0,
   },
 });
 

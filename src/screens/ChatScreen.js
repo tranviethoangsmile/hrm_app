@@ -22,6 +22,7 @@ import {
 import Video from 'react-native-video';
 import RNFS from 'react-native-fs';
 import Clipboard from '@react-native-clipboard/clipboard';
+import LinearGradient from 'react-native-linear-gradient';
 import {
   BG_COLOR,
   TEXT_COLOR,
@@ -76,9 +77,9 @@ function injectDateLabels(messages) {
     const msgDate = moment(msg.created_at).startOf('day');
     if (!lastDate || !msgDate.isSame(lastDate)) {
       let label = '';
-      if (msgDate.isSame(moment(), 'day')) label = 'Hôm nay';
+      if (msgDate.isSame(moment(), 'day')) label = 'today';
       else if (msgDate.isSame(moment().subtract(1, 'day'), 'day'))
-        label = 'Hôm qua';
+        label = 'yesterday';
       else label = msgDate.format('DD/MM/YYYY');
       result.push({
         type: 'date',
@@ -736,7 +737,7 @@ const ChatScreen = ({route}) => {
                 fontSize: 13,
                 overflow: 'hidden',
               }}>
-              {item.label}
+              {t(item.label)}
             </Text>
           </View>
         );
@@ -760,44 +761,55 @@ const ChatScreen = ({route}) => {
     <KeyboardAvoidingView
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-      <StatusBar barStyle="dark-content" backgroundColor="#fff" />
       <TouchableWithoutFeedback onPress={handleOutsidePress}>
         <SafeAreaView style={styles.container}>
-          <View style={styles.headerCompact}>
-            <TouchableOpacity
-              style={styles.headerBackBtn}
-              onPress={() => navigation.goBack()}>
-              <IconFA name="arrow-left" size={20} color={COLORS.text} />
-            </TouchableOpacity>
-            <Image
-              source={friendAvatar ? {uri: friendAvatar} : defaultAvatar}
-              style={styles.headerAvatarSmall}
-            />
-            <View style={styles.nameContainerCompact}>
-              <Text style={styles.headerNameCompact} numberOfLines={1}>
-                {friendName}
-              </Text>
-              <View style={styles.encryptedMessageContainer}>
-                <Text style={styles.encryptedMessageText}>
-                  {t(`encryptedMessage`)}
-                </Text>
-                <Icon
-                  name="lock-closed-sharp"
-                  size={13}
-                  style={styles.lockIcon}
-                  color={COLORS.placeholder}
+          <StatusBar
+            barStyle="light-content"
+            backgroundColor="transparent"
+            translucent
+          />
+          <LinearGradient
+            colors={['#4A90E2', '#357ABD', '#1E3A8A']}
+            start={{x: 0, y: 0}}
+            end={{x: 1, y: 1}}
+            style={styles.headerContainer}>
+            <View style={styles.headerContent}>
+              <TouchableOpacity
+                style={styles.headerBackBtn}
+                onPress={() => navigation.goBack()}>
+                <IconFA name="arrow-left" size={20} color="#fff" />
+              </TouchableOpacity>
+
+              <View style={styles.userInfoContainer}>
+                <Image
+                  source={friendAvatar ? {uri: friendAvatar} : defaultAvatar}
+                  style={styles.userAvatar}
                 />
+                <View style={styles.userDetails}>
+                  <Text style={styles.userName} numberOfLines={1}>
+                    {friendName}
+                  </Text>
+                  <View style={styles.encryptedMessageContainer}>
+                    <Icon
+                      name="lock-closed-sharp"
+                      size={12}
+                      color="rgba(255,255,255,0.8)"
+                      style={styles.lockIcon}
+                    />
+                  </View>
+                </View>
+              </View>
+
+              <View style={styles.headerActionsCompact}>
+                <TouchableOpacity style={styles.headerActionBtnCompact}>
+                  <Icon name="call" color="#fff" size={18} />
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.headerActionBtnCompact}>
+                  <Icon name="videocam" color="#fff" size={18} />
+                </TouchableOpacity>
               </View>
             </View>
-            <View style={styles.headerActionsCompact}>
-              <TouchableOpacity style={styles.headerActionBtnCompact}>
-                <Icon name="call" color={COLORS.primary} size={18} />
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.headerActionBtnCompact}>
-                <Icon name="videocam" color={COLORS.primary} size={18} />
-              </TouchableOpacity>
-            </View>
-          </View>
+          </LinearGradient>
 
           {messages.length === 0 ? (
             <View style={styles.notMessageContainer}>
@@ -982,49 +994,72 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
-  headerCompact: {
+  lockIcon: {
+    marginRight: 4,
+  },
+  headerContainer: {
+    paddingTop: (StatusBar.currentHeight || 44) + 10,
+    paddingBottom: 15,
+    paddingHorizontal: 20,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 5,
+    zIndex: 100,
+  },
+  headerContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: COLORS.white,
-    paddingHorizontal: SIZES.base,
-    height: 48,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.borderColor,
-    zIndex: 10,
+    justifyContent: 'space-between',
   },
   headerBackBtn: {
-    padding: 4,
-    marginRight: 6,
-  },
-  headerAvatarSmall: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: COLORS.lightGray2,
-    borderWidth: 1,
-    borderColor: COLORS.lightGray2,
-    marginRight: 8,
-  },
-  nameContainerCompact: {
-    flex: 1,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255,255,255,0.2)',
     justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 15,
   },
-  headerNameCompact: {
-    ...FONTS.body3,
-    color: COLORS.text,
+  userInfoContainer: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  userAvatar: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#F2F2F7',
+    borderWidth: 2,
+    borderColor: 'rgba(255,255,255,0.3)',
+    marginRight: 12,
+  },
+  userDetails: {
+    flex: 1,
+  },
+  userName: {
+    fontSize: 18,
     fontWeight: 'bold',
-    textAlign: 'left',
-    maxWidth: 140,
+    color: '#fff',
+    marginBottom: 2,
   },
   headerActionsCompact: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginLeft: 4,
   },
   headerActionBtnCompact: {
-    padding: 4,
-    marginLeft: 2,
-    borderRadius: 16,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: 8,
   },
   imageStyle: {
     width: 180,
