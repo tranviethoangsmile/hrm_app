@@ -3,7 +3,7 @@
 /* eslint-disable no-shadow */
 /* eslint-disable prettier/prettier */
 /* eslint-disable react-native/no-inline-styles */
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useState, useCallback, useMemo} from 'react';
 import {
   StyleSheet,
   Text,
@@ -40,10 +40,15 @@ import {COLORS, FONTS, SHADOWS} from '../config/theme';
 
 const Order = () => {
   const {t} = useTranslation();
-  const getLanguage = async () => {
+
+  // Memoize getLanguage function to prevent recreating on each render
+  const getLanguage = useCallback(async () => {
     return await AsyncStorage.getItem('Language');
-  };
+  }, []);
+
   const authData = useSelector(state => state.auth);
+
+  // Initialize states with proper default values
   const [yearlyDates, setYearlyDates] = useState([]);
   const [month, setMonth] = useState('');
   const [selectedMap, setSelectedMap] = useState({});
@@ -59,35 +64,43 @@ const Order = () => {
   const [dayoffs, setDayOffs] = useState([]);
   const navigation = useNavigation();
 
-  const showMessage = (msg, type, dur) => {
+  // Memoize showMessage function
+  const showMessage = useCallback((msg, type, dur) => {
     setMessageModalVisible(true);
     setMessageModal(msg);
     setMessageType(type);
     setDuration(dur);
-  };
+  }, []);
 
-  const get_all_day_off = async () => {
+  // Memoize get_all_day_off function
+  const get_all_day_off = useCallback(async () => {
     try {
       const res = await axios.get(
         `${BASE_URL}${PORT}${API}${VERSION}${V1}${DAY_OFFS}${GET_ALL}`,
       );
       if (res?.data?.success) {
-        const offs = res?.data?.data.map(item => item.date);
+        const offs = res?.data?.data?.map(item => item.date) || [];
         setDayOffs(offs);
       }
     } catch (error) {
+      console.error('Error fetching day offs:', error);
       setDayOffs([]);
     }
-  };
+  }, []);
 
-  const config = {
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${authData.data.token}`,
-    },
-  };
+  // Memoize config object
+  const config = useMemo(
+    () => ({
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${authData?.data?.token || ''}`,
+      },
+    }),
+    [authData?.data?.token],
+  );
 
-  const getUserOrders = async () => {
+  // Memoize getUserOrders function
+  const getUserOrders = useCallback(async () => {
     try {
       // Check if authData is available
       if (!authData?.data?.data?.id) {
@@ -100,10 +113,15 @@ const Order = () => {
         {
           user_id: authData.data.data.id,
         },
+        config,
       );
+
       if (res?.data?.success && res?.data?.data) {
-        // Filter out any invalid orders
-        const validOrders = res.data.data.filter(item => item && item.id);
+        // Filter out any invalid orders and limit array size
+        const validOrders = res.data.data
+          .filter(item => item && item.id)
+          .slice(0, 100); // Limit to 100 orders to prevent memory issues
+
         setOrdered(validOrders);
         setOrderedDates(
           validOrders.map(item => ({
@@ -111,6 +129,7 @@ const Order = () => {
             shift: item.dayOrNight,
           })),
         );
+
         const pickedCount = validOrders.filter(
           item => item && item.isPicked,
         ).length;
@@ -122,139 +141,179 @@ const Order = () => {
       setOrderedDates([]);
       setPicked(0);
     }
-  };
+  }, [authData?.data?.data?.id, config]);
 
-  const check_ordered = (date, check) => {
-    return orderedDates.some(
-      order =>
-        order.date === date.format('YYYY-MM-DD') && order.shift === check,
-    );
-  };
+  // Memoize check_ordered function
+  const check_ordered = useCallback(
+    (date, check) => {
+      return orderedDates.some(
+        order =>
+          order.date === date.format('YYYY-MM-DD') && order.shift === check,
+      );
+    },
+    [orderedDates],
+  );
 
-  const disable_ordered_btn = date => {
-    return orderedDates.some(order => order.date === date.format('YYYY-MM-DD'));
-  };
+  // Memoize disable_ordered_btn function
+  const disable_ordered_btn = useCallback(
+    date => {
+      return orderedDates.some(
+        order => order.date === date.format('YYYY-MM-DD'),
+      );
+    },
+    [orderedDates],
+  );
 
+  // Optimize useEffect with proper dependencies
   useEffect(() => {
+    let isMounted = true;
+
     const initializeData = async () => {
-      const lang = await getLanguage();
-      if (lang != null) {
-        i18next.changeLanguage(lang);
+      try {
+        const lang = await getLanguage();
+        if (lang != null && isMounted) {
+          await i18next.changeLanguage(lang);
+        }
+
+        if (isMounted) {
+          await get_all_day_off();
+          const today = moment();
+          setMonth(today.format('YYYY-MM'));
+
+          // Limit to 30 days to prevent memory issues
+          const yearDays = Array.from({length: 30}, (_, index) => {
+            const date = today.clone().add(index, 'days');
+            return date;
+          });
+
+          setYearlyDates(yearDays);
+          await getUserOrders();
+        }
+      } catch (error) {
+        console.error('Error initializing data:', error);
       }
-
-      await get_all_day_off();
-      const today = moment();
-      setMonth(today.format('YYYY-MM'));
-
-      // Get next 30 days
-      const yearDays = Array.from({length: 30}, (_, index) => {
-        const date = today.clone().add(index, 'days');
-        return date;
-      });
-
-      setYearlyDates(yearDays);
-      getUserOrders();
     };
 
     initializeData();
-  }, [isVisible, refreshTrigger]);
 
-  const handleCheckBoxPress = async (date, check) => {
-    // Check if authData is available
-    if (!authData?.data?.data?.id) {
-      showMessage('auth.required', 'error', 2000);
-      return;
-    }
-
-    const order = {
-      user_id: authData.data.data.id,
-      date: date.format('YYYY-MM-DD'),
-      dayOrNight: check,
+    // Cleanup function
+    return () => {
+      isMounted = false;
     };
+  }, [getLanguage, get_all_day_off, getUserOrders]);
 
-    try {
-      const orderSuccess = await axios.post(
-        `${BASE_URL}${PORT}${API}${VERSION}${V1}${ORDER_URL}`,
-        order,
-        config,
-      );
+  // Memoize handleCheckBoxPress function
+  const handleCheckBoxPress = useCallback(
+    async (date, check) => {
+      // Check if authData is available
+      if (!authData?.data?.data?.id) {
+        showMessage('auth.required', 'error', 2000);
+        return;
+      }
 
-      if (orderSuccess?.data?.success) {
-        showMessage('success', 'success', 2000);
-        setSelectedMap(prev => ({
-          ...prev,
-          [date.format('YYYY-MM-DD')]: check,
-        }));
+      const order = {
+        user_id: authData.data.data.id,
+        date: date.format('YYYY-MM-DD'),
+        dayOrNight: check,
+      };
 
-        // Add new order to state immediately
-        const newOrder = {
-          id: orderSuccess.data.data?.id || Date.now(), // Use timestamp as fallback ID
-          date: date.format('YYYY-MM-DD'),
-          dayOrNight: check,
-          isPicked: false,
-          user_id: authData.data.data.id,
-        };
+      try {
+        const orderSuccess = await axios.post(
+          `${BASE_URL}${PORT}${API}${VERSION}${V1}${ORDER_URL}`,
+          order,
+          config,
+        );
 
-        setOrdered(prev => [...prev, newOrder]);
-        setOrderedDates(prev => [
-          ...prev,
-          {
+        if (orderSuccess?.data?.success) {
+          showMessage('success', 'success', 2000);
+          setSelectedMap(prev => ({
+            ...prev,
+            [date.format('YYYY-MM-DD')]: check,
+          }));
+
+          // Add new order to state immediately
+          const newOrder = {
+            id: orderSuccess.data.data?.id || Date.now(),
             date: date.format('YYYY-MM-DD'),
-            shift: check,
-          },
-        ]);
-      } else {
+            dayOrNight: check,
+            isPicked: false,
+            user_id: authData.data.data.id,
+          };
+
+          setOrdered(prev => [...prev, newOrder].slice(0, 100)); // Limit array size
+          setOrderedDates(prev =>
+            [
+              ...prev,
+              {
+                date: date.format('YYYY-MM-DD'),
+                shift: check,
+              },
+            ].slice(0, 100),
+          ); // Limit array size
+        } else {
+          showMessage('order.fail', 'error', 2000);
+        }
+      } catch (error) {
+        console.error('Error placing order:', error);
         showMessage('order.fail', 'error', 2000);
       }
-    } catch (error) {
-      showMessage('order.fail', 'error', 2000);
-    }
-  };
+    },
+    [authData?.data?.data?.id, config, showMessage],
+  );
 
-  const handleOrderShow = () => {
-    setIsVisible(true);
-  };
+  // Memoize handleOrderDeleted function
+  const handleOrderDeleted = useCallback(
+    deletedOrderId => {
+      // Find the deleted order first (before removing it)
+      const deletedOrder = ordered.find(order => order.id === deletedOrderId);
 
-  const handleOrderDeleted = deletedOrderId => {
-    // Find the deleted order first (before removing it)
-    const deletedOrder = ordered.find(order => order.id === deletedOrderId);
+      // Remove from ordered state
+      const updatedOrders = ordered.filter(
+        order => order.id !== deletedOrderId,
+      );
+      setOrdered(updatedOrders);
 
-    // Remove from ordered state
-    const updatedOrders = ordered.filter(order => order.id !== deletedOrderId);
-    setOrdered(updatedOrders);
+      // Update orderedDates
+      setOrderedDates(
+        updatedOrders.map(item => ({
+          date: item.date,
+          shift: item.dayOrNight,
+        })),
+      );
 
-    // Update orderedDates
-    setOrderedDates(
-      updatedOrders.map(item => ({
-        date: item.date,
-        shift: item.dayOrNight,
-      })),
-    );
+      // Update picked count
+      const pickedCount = updatedOrders.filter(
+        item => item && item.isPicked,
+      ).length;
+      setPicked(pickedCount);
 
-    // Update picked count
-    const pickedCount = updatedOrders.filter(
-      item => item && item.isPicked,
-    ).length;
-    setPicked(pickedCount);
+      // Clear selected map for the deleted date
+      if (deletedOrder) {
+        setSelectedMap(prev => {
+          const newMap = {...prev};
+          delete newMap[deletedOrder.date];
+          return newMap;
+        });
+      }
+    },
+    [ordered],
+  );
 
-    // Clear selected map for the deleted date
-    if (deletedOrder) {
-      setSelectedMap(prev => {
-        const newMap = {...prev};
-        delete newMap[deletedOrder.date];
-        return newMap;
-      });
-    }
-  };
+  // Memoize isWeekendOrHoliday function
+  const isWeekendOrHoliday = useCallback(
+    date => {
+      const day = date.format('d');
+      return (
+        day === '0' ||
+        day === '6' ||
+        dayoffs.includes(date.format('YYYY-MM-DD'))
+      );
+    },
+    [dayoffs],
+  );
 
-  const isWeekendOrHoliday = date => {
-    const day = date.format('d');
-    return (
-      day === '0' || day === '6' || dayoffs.includes(date.format('YYYY-MM-DD'))
-    );
-  };
-
-  const getWeekdayKey = date => {
+  // Memoize getWeekdayKey function
+  const getWeekdayKey = useCallback(date => {
     const dayNames = [
       'sunday',
       'monday',
@@ -264,9 +323,78 @@ const Order = () => {
       'friday',
       'saturday',
     ];
-    const dayIndex = date.day(); // 0 = Sunday, 1 = Monday, etc.
+    const dayIndex = date.day();
     return dayNames[dayIndex];
-  };
+  }, []);
+
+  // Memoize rendered dates to prevent unnecessary re-renders
+  const renderedDates = useMemo(() => {
+    return yearlyDates.map((date, index) => {
+      const isOffDay = isWeekendOrHoliday(date);
+      return (
+        <View
+          key={`${date.format('YYYY-MM-DD')}-${index}`}
+          style={styles.dayCard}>
+          <LinearGradient
+            colors={isOffDay ? ['#e53935', '#d32f2f'] : ['#667eea', '#764ba2']}
+            start={{x: 0, y: 0}}
+            end={{x: 1, y: 1}}
+            style={styles.dayHeader}>
+            <View style={styles.dayInfo}>
+              <Text style={[styles.dayName, isOffDay && styles.weekendText]}>
+                {t(getWeekdayKey(date))}
+              </Text>
+              <Text style={[styles.dayDate, isOffDay && styles.weekendText]}>
+                {date.format('DD/MM')}
+              </Text>
+            </View>
+          </LinearGradient>
+
+          {isOffDay ? (
+            <View style={styles.noMealContainer}>
+              <Text style={styles.noMealText}>{t('no.meal.today')}</Text>
+            </View>
+          ) : (
+            <View style={styles.shiftContainer}>
+              {['DAY', 'NIGHT'].map(shift => (
+                <TouchableOpacity
+                  key={shift}
+                  disabled={disable_ordered_btn(date)}
+                  style={[
+                    styles.shiftButton,
+                    (selectedMap[date.format('YYYY-MM-DD')] === shift ||
+                      check_ordered(date, shift)) &&
+                      styles.shiftButtonSelected,
+                    disable_ordered_btn(date) && styles.shiftButtonDisabled,
+                  ]}
+                  onPress={() => handleCheckBoxPress(date, shift)}>
+                  <Text
+                    style={[
+                      styles.shiftText,
+                      (selectedMap[date.format('YYYY-MM-DD')] === shift ||
+                        check_ordered(date, shift)) &&
+                        styles.shiftTextSelected,
+                      disable_ordered_btn(date) && styles.shiftTextDisabled,
+                    ]}>
+                    {shift === 'DAY' ? t('dd') : t('nn')}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
+        </View>
+      );
+    });
+  }, [
+    yearlyDates,
+    isWeekendOrHoliday,
+    getWeekdayKey,
+    t,
+    disable_ordered_btn,
+    selectedMap,
+    check_ordered,
+    handleCheckBoxPress,
+  ]);
 
   return (
     <View style={styles.container}>
@@ -291,64 +419,7 @@ const Order = () => {
       <ScrollView
         contentContainerStyle={styles.scrollViewContent}
         showsVerticalScrollIndicator={false}>
-        {yearlyDates.map((date, index) => {
-          const isOffDay = isWeekendOrHoliday(date);
-          return (
-            <View key={index} style={styles.dayCard}>
-              <LinearGradient
-                colors={
-                  isOffDay ? ['#e53935', '#d32f2f'] : ['#667eea', '#764ba2']
-                }
-                start={{x: 0, y: 0}}
-                end={{x: 1, y: 1}}
-                style={styles.dayHeader}>
-                <View style={styles.dayInfo}>
-                  <Text
-                    style={[styles.dayName, isOffDay && styles.weekendText]}>
-                    {t(getWeekdayKey(date))}
-                  </Text>
-                  <Text
-                    style={[styles.dayDate, isOffDay && styles.weekendText]}>
-                    {date.format('DD/MM')}
-                  </Text>
-                </View>
-              </LinearGradient>
-
-              {isOffDay ? (
-                <View style={styles.noMealContainer}>
-                  <Text style={styles.noMealText}>{t('no.meal.today')}</Text>
-                </View>
-              ) : (
-                <View style={styles.shiftContainer}>
-                  {['DAY', 'NIGHT'].map(shift => (
-                    <TouchableOpacity
-                      key={shift}
-                      disabled={disable_ordered_btn(date)}
-                      style={[
-                        styles.shiftButton,
-                        (selectedMap[date.format('YYYY-MM-DD')] === shift ||
-                          check_ordered(date, shift)) &&
-                          styles.shiftButtonSelected,
-                        disable_ordered_btn(date) && styles.shiftButtonDisabled,
-                      ]}
-                      onPress={() => handleCheckBoxPress(date, shift)}>
-                      <Text
-                        style={[
-                          styles.shiftText,
-                          (selectedMap[date.format('YYYY-MM-DD')] === shift ||
-                            check_ordered(date, shift)) &&
-                            styles.shiftTextSelected,
-                          disable_ordered_btn(date) && styles.shiftTextDisabled,
-                        ]}>
-                        {shift === 'DAY' ? t('dd') : t('nn')}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              )}
-            </View>
-          );
-        })}
+        {renderedDates}
       </ScrollView>
 
       <TouchableOpacity activeOpacity={0.8} onPress={() => setIsVisible(true)}>
@@ -511,6 +582,7 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   summaryContent: {
+    flex: 1,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',

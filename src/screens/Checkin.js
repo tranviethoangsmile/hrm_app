@@ -166,10 +166,10 @@ const Checkin = () => {
       );
       if (result?.data?.success) {
         showMessage('checkin.success', 'success', 1000);
-        setTimeout(() => navigate.navigate('Main'), 1000);
+        setTimeout(() => navigate.navigate('Profile'), 1000);
       } else {
         showMessage('pta', 'warning', 1000);
-        setTimeout(() => navigate.navigate('Main'), 1000);
+        setTimeout(() => navigate.navigate('Profile'), 1000);
       }
     } catch (error) {
       showMessage('err', 'error', 1000);

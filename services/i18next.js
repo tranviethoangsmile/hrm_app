@@ -1,22 +1,44 @@
-import i18next from 'i18next';
+import i18n from 'i18next';
 import {initReactI18next} from 'react-i18next';
+
+// Import all translation files
 import en from '../locales/en.json';
 import vi from '../locales/vi.json';
-import pt from '../locales/pt.json';
 import ja from '../locales/ja.json';
+import pt from '../locales/pt.json';
 
-export const languageResources = {
-  en: {translation: en},
-  ja: {translation: ja},
-  vi: {translation: vi},
-  pt: {translation: pt},
+const resources = {
+  en: {
+    translation: en,
+  },
+  vi: {
+    translation: vi,
+  },
+  ja: {
+    translation: ja,
+  },
+  pt: {
+    translation: pt,
+  },
 };
 
-i18next.use(initReactI18next).init({
+i18n.use(initReactI18next).init({
   compatibilityJSON: 'v3',
   lng: 'en',
   fallbackLng: 'en',
-  resources: languageResources,
+  resources,
+
+  interpolation: {
+    escapeValue: false,
+  },
+
+  react: {
+    useSuspense: false,
+  },
+
+  debug: __DEV__,
+  load: 'languageOnly',
+  cleanCode: true,
 });
 
-export default i18next;
+export default i18n;

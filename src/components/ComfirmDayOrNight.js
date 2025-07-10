@@ -76,7 +76,7 @@ const ConfirmDayOrNight = ({visible, closeModal, checkin, time, t}) => {
         showMessage('checkin.success', 'success', 500);
         setTimeout(() => {
           closeModal();
-          navigate.navigate('Main');
+          navigate.navigate('Profile');
         }, 500);
       }
     } catch (error) {
