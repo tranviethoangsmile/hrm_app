@@ -82,7 +82,9 @@ const ModalMessage = ({isVisible, onClose, message, type, t, duration}) => {
     <View style={styles.nonBlockingContainer}>
       <View style={[getModalStyles(), styles.shadowBox]}>
         {getIcon()}
-        <Text style={styles.modalMessage}>{t(message)}</Text>
+        <Text style={styles.modalMessage}>
+          {message ? t(message) : message}
+        </Text>
         <TouchableOpacity style={styles.closeButton} onPress={onClose}>
           <Icon name={'close'} size={28} color={'#888'} />
         </TouchableOpacity>

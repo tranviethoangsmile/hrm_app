@@ -131,6 +131,7 @@ const MediaViewer = ({
           duration={1000}
           onClose={() => setIsMessageVisible(false)}
           containerStyle={styles.messageContainer}
+          t={t}
         />
       </SafeAreaView>
     </Modal>

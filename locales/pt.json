@@ -244,6 +244,8 @@
   "manager.title": "Gerente",
   "media.back": "Voltar",
   "media.posted_on": "Postado em",
+  "media.shared_image": "Compartilhou uma imagem",
+  "media.shared_video": "Compartilhou um vídeo",
   "message": "Mensagem",
   "messages_title": "Mensagens",
   "monday": "Segunda-feira",
@@ -451,6 +453,9 @@
   "total": "Total",
   "total.quantity.final": "Quantidade Final Total",
   "tranS": "Traduzir",
+  "translating": "Traduzindo...",
+  "translate.error": "Tradução falhou. Tente novamente.",
+  "translate.rate.limit": "Limite de tradução excedido. Tente novamente mais tarde.",
   "tuesday": "Terça-feira",
   "tuesday_short": "Ter",
   "tymess": "Digite sua mensagem...",
@@ -469,6 +474,7 @@
   "upload.title": "Carregar",
   "user_no_check_ins": "Este usuário não possui nenhum check-in neste mês",
   "viewMore": "Ver mais",
+  "views": "visualizações",
   "w.end.salary": "Salário final de semana",
   "wantDelete": "Você deseja excluir esta informação?",
   "wednesday": "Quarta-feira",
@@ -485,5 +491,10 @@
   "wt": "Tempo de trabalho",
   "y": "Sim",
   "yes": "Sim",
-  "yesterday": "Ontem"
+  "yesterday": "Ontem",
+  "Username or Email": "Usuário ou Email",
+  "Show Password": "Mostrar Senha",
+  "Save Login": "Salvar Login",
+  "Forgot Password?": "Esqueceu a Senha?",
+  "back_to_chat": "Desfazer"
 }

@@ -1,7 +1,7 @@
 /* eslint-disable no-shadow */
 /* eslint-disable react/no-unstable-nested-components */
 /* eslint-disable react-hooks/exhaustive-deps */
-import React, {useState, useEffect, useRef} from 'react';
+import React, {useState, useEffect, useRef, Fragment} from 'react';
 import {
   View,
   Text,
@@ -18,6 +18,9 @@ import {
   Platform,
   StatusBar,
   ActivityIndicator,
+  Modal,
+  Dimensions,
+  Linking,
 } from 'react-native';
 import Video from 'react-native-video';
 import RNFS from 'react-native-fs';
@@ -31,6 +34,7 @@ import {
 } from '../utils/Colors';
 import Icon from 'react-native-vector-icons/Ionicons';
 import {useTranslation} from 'react-i18next';
+import i18n from 'i18next';
 import {useSelector} from 'react-redux';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -59,8 +63,10 @@ import LinkPreview from 'react-native-link-preview';
 import IconFA from 'react-native-vector-icons/FontAwesome';
 import {useNavigation} from '@react-navigation/native';
 import moment from 'moment';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 
 const extractFirstUrl = text => {
+  if (!text) return null;
   const urlRegex =
     /(https?:\/\/[\w\-._~:/?#[\]@!$&'()*+,;=%]+)|(www\.[\w\-._~:/?#[\]@!$&'()*+,;=%]+)/gi;
   const match = text.match(urlRegex);
@@ -72,8 +78,8 @@ function injectDateLabels(messages) {
   if (!messages.length) return [];
   let result = [];
   let lastDate = null;
+  let dateKeyCount = {};
   messages.forEach(msg => {
-    // Giả sử msg.createdAt là timestamp hoặc ISO string
     const msgDate = moment(msg.created_at).startOf('day');
     if (!lastDate || !msgDate.isSame(lastDate)) {
       let label = '';
@@ -81,10 +87,18 @@ function injectDateLabels(messages) {
       else if (msgDate.isSame(moment().subtract(1, 'day'), 'day'))
         label = 'yesterday';
       else label = msgDate.format('DD/MM/YYYY');
+      // Tạo key unique cho nhãn ngày
+      const baseId = `date-${msgDate.format('YYYYMMDD')}`;
+      if (!dateKeyCount[baseId]) dateKeyCount[baseId] = 0;
+      else dateKeyCount[baseId]++;
+      const uniqueId =
+        dateKeyCount[baseId] === 0
+          ? baseId
+          : `${baseId}-${dateKeyCount[baseId]}`;
       result.push({
         type: 'date',
         label,
-        id: `date-${msgDate.format('YYYYMMDD')}`,
+        id: uniqueId,
       });
       lastDate = msgDate;
     }
@@ -98,7 +112,7 @@ const ChatScreen = ({route}) => {
   const {conversationId, friendName, friendAvatar} = route.params;
   const [messages, setMessages] = useState([]);
   const [message, setMessage] = useState('');
-  const [notMessage, setNotMessage] = useState('');
+  const [notMessage, setNotMessage] = useState('not.mess');
   const {t} = useTranslation();
   const authData = useSelector(state => state.auth);
   const USER_INFOR = authData?.data?.data;
@@ -114,6 +128,11 @@ const ChatScreen = ({route}) => {
   const [isMessageModalVisible, setMessageModalVisible] = useState(false);
   const navigation = useNavigation();
   const [uploadingMedia, setUploadingMedia] = useState(null);
+  // 1. Thêm state lưu vị trí modal
+  const [modalPosition, setModalPosition] = useState({top: null, left: null});
+  const [isTranslating, setIsTranslating] = useState(false);
+  const [linkPreviews, setLinkPreviews] = useState({});
+
   const showMessage = (msg, type, dur) => {
     setMessageModalVisible(true);
     setMessageModal(msg);
@@ -160,9 +179,7 @@ const ChatScreen = ({route}) => {
     };
     launchImageLibrary(options, async response => {
       if (response.didCancel) {
-        console.log('Người dùng đã hủy việc chọn ảnh.');
       } else if (response.errorCode) {
-        console.log('Lỗi: ', response.errorCode);
       } else {
         const asset = response.assets[0];
         setUploadingMedia({
@@ -235,6 +252,9 @@ const ChatScreen = ({route}) => {
 
         socket.emit('send-message', newMessage);
         setMessage('');
+        setTimeout(() => {
+          flatListRef.current?.scrollToEnd({animated: true});
+        }, 300);
       } else {
         showMessage('networkError', 'error', 2000);
         setIsloading(false);
@@ -268,7 +288,29 @@ const ChatScreen = ({route}) => {
           );
           return !isDeletedByUser;
         });
-        setMessages(filteredMessages);
+
+        // Load tin nhắn đã dịch từ AsyncStorage
+        const lang = await getLanguage();
+        const targetLang =
+          lang === 'vi'
+            ? 'vi'
+            : lang === 'ja'
+            ? 'ja'
+            : lang === 'pt'
+            ? 'pt'
+            : 'en';
+
+        const messagesWithTranslations = await Promise.all(
+          filteredMessages.map(async msg => {
+            const translationKey = `translation_${conversationId}_${msg.id}_${targetLang}`;
+            const translatedText = await AsyncStorage.getItem(translationKey);
+            return translatedText
+              ? {...msg, translatedMessage: translatedText}
+              : msg;
+          }),
+        );
+
+        setMessages(messagesWithTranslations);
       }
     } catch (error) {
       showMessage('networkError', 'error', 2000);
@@ -319,597 +361,676 @@ const ChatScreen = ({route}) => {
     };
   }, [conversationId]);
 
-  useEffect(() => {
-    flatListRef.current?.scrollToEnd({animated: true});
+  // 1. Refactor modal position and style for Messenger-like floating effect
+  const messagesWithDateLabels = React.useMemo(() => {
+    const sortedMessages = [...messages]
+      .sort((a, b) => new Date(a.created_at) - new Date(b.created_at))
+      .filter(
+        (message, index, self) =>
+          index === 0 || message.id !== self[index - 1].id,
+      );
+    return injectDateLabels(sortedMessages);
   }, [messages]);
 
-  const handleLongPress = message => {
-    setSelectedMessageId(message.id);
-    setShowOptions(true);
-  };
-
-  const handleUnsendMessage = async messageId => {
-    try {
-      socket.emit('un_send_message', {
-        message_id: messageId,
-        conversation_id: conversationId,
-      });
-      setShowOptions(false);
-    } catch (error) {
-      showMessage('networkError', 'error', 2000);
-    } finally {
-      setShowOptions(false);
+  // 2. Fix keyExtractor for FlatList
+  const keyExtractor = React.useCallback((item, index) => {
+    if (item.type === 'date') {
+      return item.id;
     }
-  };
+    return `message-${item.id}`;
+  }, []);
 
-  const handleDeleteMessage = async messageId => {
-    try {
-      socket.emit('delete_message', {
-        message_id: messageId,
-        user_id: USER_INFOR.id,
-        conversation_id: conversationId,
-      });
-      setShowOptions(false);
-    } catch (error) {
-      showMessage('networkError', 'error', 2000);
-    } finally {
-      setShowOptions(false);
-    }
-  };
-
-  const handleCopy = async messageId => {
-    try {
-      const messageToCopy = messages.find(msg => msg.id === messageId);
-      if (!messageToCopy) {
-        showMessage('copy.not.success', 'error', 1500);
-        return;
-      }
-      Clipboard.setString(decrypt(messageToCopy.message, conversationId));
-      showMessage('co.py', 'success', 1000);
-      setShowOptions(false);
-    } catch (error) {
-      showMessage('err', 'error', 1500);
-    } finally {
-      setShowOptions(false);
-      setSelectedMessageId(null);
-    }
-  };
-
-  const handleTranslateMessage = async messageId => {
-    try {
-      const lang = await getLanguage();
-      const messageToTranslate = messages.find(msg => msg.id === messageId);
-
-      if (!messageToTranslate) {
-        throw new Error('Message not found');
-      }
-
-      const response = await axios.post(url, {
-        q: decrypt(messageToTranslate.message, conversationId),
-        target: lang,
-        key: API_KEY_GOOGLE,
-      });
-
-      if (
-        !response ||
-        !response.data ||
-        !response.data.data ||
-        !response.data.data.translations ||
-        response.data.data.translations.length === 0
-      ) {
-        throw new Error('Translation error');
-      }
-
-      const translatedText = response.data.data.translations[0]?.translatedText;
-      if (!translatedText) {
-        throw new Error('Translation not found');
-      }
-      setShowOptions(false);
-      setMessages(prevMessages =>
-        prevMessages.map(msg =>
-          msg.id === messageId
-            ? {...msg, translatedMessage: translatedText}
-            : msg,
-        ),
-      );
-    } catch (error) {
-      showMessage('networkError', 'error', 1500);
-    } finally {
-      setShowOptions(false);
-    }
-  };
-  const handleFocusInput = () => {
-    if (showEmojiPicker) {
-      setShowEmojiPicker(false);
-    }
-  };
-  const handleOutsidePress = () => {
-    setShowOptions(false);
-    setSelectedMessageId(null);
-    handleToggleEmojiPicker(false);
-    Keyboard.dismiss();
-  };
-
-  const Message = ({item, isUser, isLastFromSender}) => {
-    const [linkPreview, setLinkPreview] = React.useState(null);
-    React.useEffect(() => {
-      if (item.message_type === 'TEXT') {
-        const text =
-          item.translatedMessage || decrypt(item.message, conversationId);
-        const url = extractFirstUrl(text);
-        if (url) {
-          LinkPreview.getPreview(url)
-            .then(data => {
-              setLinkPreview({
-                title: data.title || url,
-                description: data.description || '',
-                image:
-                  data.images && data.images.length > 0 ? data.images[0] : null,
-                url: data.url || url,
-              });
-            })
-            .catch(() => setLinkPreview(null));
-        } else {
-          setLinkPreview(null);
-        }
-      } else {
-        setLinkPreview(null);
-      }
-    }, [item]);
-
-    if (item.message_type === 'IMAGE') {
-      return (
-        <View
-          style={{
-            alignItems: isUser ? 'flex-end' : 'flex-start',
-            marginVertical: 4,
-          }}>
-          <TouchableOpacity
-            onLongPress={() => handleLongPress(item)}
-            activeOpacity={0.95}>
-            <Image
-              source={{uri: item.message}}
-              style={styles.imageStyle}
-              resizeMode="cover"
-            />
-          </TouchableOpacity>
-          {!isUser && isLastFromSender && (
-            <Image
-              source={
-                item?.user.avatar ? {uri: item?.user.avatar} : defaultAvatar
-              }
-              style={styles.senderAvatar}
-            />
-          )}
-          {showOptions && selectedMessageId === item.id && (
-            <View style={styles.optionsContainer}>
-              {isUser ? (
-                <>
-                  <TouchableOpacity
-                    onPress={() => {
-                      Alert.alert(
-                        t('dl.mess'),
-                        '',
-                        [
-                          {
-                            text: t('dl'),
-                            onPress: () => handleDeleteMessage(item.id),
-                          },
-                          {
-                            text: t('c'),
-                            onPress: () => handleOutsidePress(),
-                            style: 'cancel',
-                          },
-                        ],
-                        {cancelable: true},
-                      );
-                    }}
-                    style={styles.optionButton}>
-                    <Text style={styles.optionText}>{t('dl')}</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    onPress={() => {
-                      Alert.alert(
-                        t('un.send.noti'),
-                        '',
-                        [
-                          {
-                            text: t('back'),
-                            onPress: () => handleUnsendMessage(item.id),
-                          },
-                          {
-                            text: t('c'),
-                            onPress: () => handleOutsidePress(),
-                            style: 'cancel',
-                          },
-                        ],
-                        {cancelable: true},
-                      );
-                    }}
-                    style={styles.optionButton}>
-                    <Text style={styles.optionText}>{t('back')}</Text>
-                  </TouchableOpacity>
-                </>
-              ) : (
-                <>
-                  <TouchableOpacity
-                    onPress={() => handleCopy(item.id)}
-                    style={styles.optionButton}>
-                    <Text style={styles.optionText}>{t('copy')}</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    onPress={() => handleTranslateMessage(item.id)}
-                    style={styles.optionButton}>
-                    <Text style={styles.optionText}>{t('tranS')}</Text>
-                  </TouchableOpacity>
-                </>
-              )}
-            </View>
-          )}
-        </View>
-      );
-    }
-
-    const renderMessageContent = () => {
-      if (item.is_unsend) {
-        return <Text style={styles.unsendMessageText}>{t('un_send')}</Text>;
-      }
-      switch (item.message_type) {
-        case 'VIDEO':
-          return (
-            <Video
-              source={{uri: item.message}}
-              style={styles.videoStyle}
-              resizeMode="cover"
-              controls
-            />
-          );
-        case 'TEXT':
-        default:
-          const text =
-            item.translatedMessage || decrypt(item.message, conversationId);
-          return (
-            <>
-              <Text
-                style={[
-                  styles.messageText,
-                  isUser ? styles.userMessageText : styles.otherMessageText,
-                  item.translatedMessage ? styles.translatedMessageText : null,
-                ]}>
-                {text}
-              </Text>
-              {linkPreview && (
-                <TouchableOpacity
-                  style={styles.linkPreviewBox}
-                  onPress={() => {
-                    if (linkPreview.url) {
-                      try {
-                        require('react-native').Linking.openURL(
-                          linkPreview.url,
-                        );
-                      } catch (e) {}
-                    }
-                  }}>
-                  {linkPreview.image && (
-                    <Image
-                      source={{uri: linkPreview.image}}
-                      style={styles.linkPreviewImg}
-                    />
-                  )}
-                  <View style={{flex: 1, marginLeft: 10}}>
-                    <Text style={styles.linkPreviewTitle} numberOfLines={2}>
-                      {linkPreview.title}
-                    </Text>
-                    {linkPreview.description ? (
-                      <Text style={styles.linkPreviewDesc} numberOfLines={2}>
-                        {linkPreview.description}
-                      </Text>
-                    ) : null}
-                    <Text style={styles.linkPreviewUrl} numberOfLines={1}>
-                      {linkPreview.url}
-                    </Text>
-                  </View>
-                </TouchableOpacity>
-              )}
-            </>
-          );
-      }
-    };
-
-    return (
-      <View
-        style={
-          isUser ? styles.userMessageContainer : styles.otherMessageContainer
-        }>
-        <TouchableOpacity
-          style={[
-            styles.messageContainer,
-            item.is_unsend ? styles.unsendMessageContainer : null,
-          ]}
-          onLongPress={() => handleLongPress(item)}>
-          {renderMessageContent()}
-        </TouchableOpacity>
-        {!isUser && isLastFromSender && (
-          <Image
-            source={
-              item?.user.avatar ? {uri: item?.user.avatar} : defaultAvatar
-            }
-            style={styles.senderAvatar}
-          />
-        )}
-        {showOptions && selectedMessageId === item.id && (
-          <View style={styles.optionsContainer}>
-            {isUser ? (
-              <>
-                <TouchableOpacity
-                  onPress={() => {
-                    Alert.alert(
-                      t('dl.mess'),
-                      '',
-                      [
-                        {
-                          text: t('dl'),
-                          onPress: () => handleDeleteMessage(item.id),
-                        },
-                        {
-                          text: t('c'),
-                          onPress: () => handleOutsidePress(),
-                          style: 'cancel',
-                        },
-                      ],
-                      {cancelable: true},
-                    );
-                  }}
-                  style={styles.optionButton}>
-                  <Text style={styles.optionText}>{t('dl')}</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  onPress={() => {
-                    Alert.alert(
-                      t('un.send.noti'),
-                      '',
-                      [
-                        {
-                          text: t('back'),
-                          onPress: () => handleUnsendMessage(item.id),
-                        },
-                        {
-                          text: t('c'),
-                          onPress: () => handleOutsidePress(),
-                          style: 'cancel',
-                        },
-                      ],
-                      {cancelable: true},
-                    );
-                  }}
-                  style={styles.optionButton}>
-                  <Text style={styles.optionText}>{t('back')}</Text>
-                </TouchableOpacity>
-              </>
-            ) : (
-              <>
-                <TouchableOpacity
-                  onPress={() => handleCopy(item.id)}
-                  style={styles.optionButton}>
-                  <Text style={styles.optionText}>{t('copy')}</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  onPress={() => handleTranslateMessage(item.id)}
-                  style={styles.optionButton}>
-                  <Text style={styles.optionText}>{t('tranS')}</Text>
-                </TouchableOpacity>
-              </>
-            )}
-          </View>
-        )}
-      </View>
-    );
-  };
-
-  // Khi render FlatList, dùng dữ liệu đã inject nhãn ngày
-  const messagesWithDateLabels = injectDateLabels(messages);
-
-  // Bọc Message bằng React.memo để tránh render lại không cần thiết
-  const MemoizedMessage = React.memo(({item, isUser, isLastFromSender}) => {
-    return (
-      <Message
-        item={item}
-        isUser={isUser}
-        isLastFromSender={isLastFromSender}
-      />
-    );
-  });
-
-  // Tối ưu renderItem bằng useCallback
+  // 3. Ensure messagesWithDateLabels is memoized and not mutated
   const renderItem = React.useCallback(
     ({item, index}) => {
       if (item.type === 'date') {
         return (
-          <View style={{alignItems: 'center', marginVertical: 10}}>
+          <View style={styles.dateLabelContainer}>
             <Text
               style={{
-                backgroundColor: '#222',
-                color: '#fff',
-                paddingHorizontal: 16,
-                paddingVertical: 4,
-                borderRadius: 12,
-                fontWeight: 'bold',
+                color: '#888',
                 fontSize: 13,
                 overflow: 'hidden',
               }}>
-              {t(item.label)}
+              {item.label === 'today' || item.label === 'yesterday'
+                ? safeTranslate(item.label, item.label)
+                : item.label}
             </Text>
           </View>
         );
       }
       const isUser = item.user_id === USER_INFOR.id;
+
+      // Tìm tin nhắn tiếp theo trong messagesWithDateLabels để xác định isLastFromSender
+      const nextItem = messagesWithDateLabels[index + 1];
       const isLastFromSender =
-        index === messages.length - 1 ||
-        messages[index + 1]?.user_id !== item.user_id;
+        !nextItem ||
+        nextItem.type === 'date' ||
+        nextItem.user_id !== item.user_id;
+
       return (
-        <MemoizedMessage
+        <Message
           item={item}
           isUser={isUser}
           isLastFromSender={isLastFromSender}
+          handleLongPress={handleLongPress}
         />
       );
     },
-    [USER_INFOR.id, messages],
+    [USER_INFOR.id, messagesWithDateLabels, t],
   );
 
-  return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-      <TouchableWithoutFeedback onPress={handleOutsidePress}>
-        <SafeAreaView style={styles.container}>
-          <StatusBar
-            barStyle="light-content"
-            backgroundColor="transparent"
-            translucent
-          />
-          <LinearGradient
-            colors={['#4A90E2', '#357ABD', '#1E3A8A']}
-            start={{x: 0, y: 0}}
-            end={{x: 1, y: 1}}
-            style={styles.headerContainer}>
-            <View style={styles.headerContent}>
-              <TouchableOpacity
-                style={styles.headerBackBtn}
-                onPress={() => navigation.goBack()}>
-                <IconFA name="arrow-left" size={20} color="#fff" />
-              </TouchableOpacity>
+  // Get selected message for options
+  const selectedMessage = messages.find(msg => msg.id === selectedMessageId);
+  const isSelectedMessageUser = selectedMessage?.user_id === USER_INFOR.id;
 
-              <View style={styles.userInfoContainer}>
-                <Image
-                  source={friendAvatar ? {uri: friendAvatar} : defaultAvatar}
-                  style={styles.userAvatar}
-                />
-                <View style={styles.userDetails}>
-                  <Text style={styles.userName} numberOfLines={1}>
-                    {friendName}
-                  </Text>
-                  <View style={styles.encryptedMessageContainer}>
-                    <Icon
-                      name="lock-closed-sharp"
-                      size={12}
-                      color="rgba(255,255,255,0.8)"
-                      style={styles.lockIcon}
-                    />
+  // Memory optimization for large message lists
+  const optimizeMemory = React.useCallback(() => {
+    if (messages.length > 100) {
+      // Keep only the last 50 messages in memory for performance
+      setMessages(prevMessages => prevMessages.slice(-50));
+    }
+  }, [messages.length]);
+
+  React.useEffect(() => {
+    optimizeMemory();
+  }, [optimizeMemory]);
+
+  // Improved translation error handling
+  const safeTranslate = React.useCallback(
+    (key, fallback = '') => {
+      try {
+        const result = t(key);
+        return result === key ? fallback : result;
+      } catch (error) {
+        return fallback;
+      }
+    },
+    [t],
+  );
+
+  // Re-add handlers and Message component above the return statement
+  const handleDeleteMessage = async messageId => {
+    try {
+      const response = await axios.post(
+        `${BASE_URL}${PORT}${API}${VERSION}${V1}${MESSAGE}${UNSEND}`,
+        {
+          message_id: messageId,
+        },
+      );
+      if (response?.data.success) {
+        showMessage('unsend.success', 'success', 500);
+        getAllMessage();
+      } else {
+        showMessage('unsend.error', 'error', 2000);
+      }
+    } catch (error) {
+      showMessage('networkError', 'error', 2000);
+    }
+  };
+
+  const handleUnsendMessage = async messageId => {
+    try {
+      const response = await axios.post(
+        `${BASE_URL}${PORT}${API}${VERSION}${V1}${MESSAGE}${UNSEND}`,
+        {
+          message_id: messageId,
+        },
+      );
+      if (response?.data.success) {
+        showMessage('unsend.success', 'success', 500);
+        getAllMessage();
+      } else {
+        showMessage('unsend.error', 'error', 2000);
+      }
+    } catch (error) {
+      showMessage('networkError', 'error', 2000);
+    }
+  };
+
+  const handleCopy = async messageId => {
+    const msg = messages.find(msg => msg.id === messageId);
+    if (msg) {
+      const messageToCopy =
+        msg.translatedMessage || decrypt(msg.message, conversationId);
+      Clipboard.setString(messageToCopy);
+      showMessage('copy.success', 'success', 500);
+    }
+  };
+
+  const handleOutsidePress = () => {
+    setShowOptions(false);
+    setSelectedMessageId(null);
+  };
+
+  const handleFocusInput = () => {
+    textInputRef.current?.focus();
+  };
+
+  const handleTranslateMessage = async messageId => {
+    const messageToTranslate = messages.find(msg => msg.id === messageId);
+    if (!messageToTranslate) return;
+
+    const originalMessage = decrypt(messageToTranslate.message, conversationId);
+
+    // Kiểm tra nếu tin nhắn rỗng hoặc không có nội dung
+    if (!originalMessage || originalMessage.trim() === '') {
+      showMessage('translate.error', 'error', 1000);
+      return;
+    }
+
+    try {
+      setIsTranslating(true);
+      // Sử dụng POST với JSON data như Google Translate API yêu cầu
+      const data = {
+        q: originalMessage,
+        target: i18n.language,
+        format: 'text',
+      };
+      const response = await axios.post(url, data, {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response?.data?.data?.translations?.[0]?.translatedText) {
+        const translatedText =
+          response.data.data.translations[0].translatedText;
+        const newMessage = {
+          ...messageToTranslate,
+          translatedMessage: translatedText,
+        };
+        setMessages(prevMessages =>
+          prevMessages.map(msg => (msg.id === messageId ? newMessage : msg)),
+        );
+        showMessage('translate.success', 'success', 1000);
+        setShowOptions(false); // Tắt modal khi dịch thành công
+      } else {
+        showMessage('translate.error', 'error', 2000);
+        setShowOptions(false); // Tắt modal khi có lỗi
+      }
+    } catch (error) {
+      console.error('Translation error:', error);
+
+      // Kiểm tra nếu là rate limit error
+      if (
+        error.response?.data?.error?.code === 403 &&
+        error.response?.data?.error?.message?.includes('Rate Limit')
+      ) {
+        showMessage('translate.rate.limit', 'error', 3000);
+        setShowOptions(false); // Tắt modal khi bị rate limit
+      } else {
+        showMessage('networkError', 'error', 2000);
+        setShowOptions(false); // Tắt modal khi có lỗi network
+      }
+    } finally {
+      setIsTranslating(false);
+    }
+  };
+
+  // Định nghĩa lại handleLongPress trong ChatScreen
+  const handleLongPress = (message, ref) => {
+    if (ref && ref.current) {
+      ref.current.measure((fx, fy, width, height, px, py) => {
+        setModalPosition({top: py - 80, left: px + width / 2});
+        setSelectedMessageId(message.id);
+        setShowOptions(true);
+      });
+    } else {
+      setSelectedMessageId(message.id);
+      setShowOptions(true);
+    }
+  };
+
+  // Sửa lại Message component thành function component chuẩn
+  // Component LinkPreview
+  const LinkPreview = React.memo(function LinkPreview({url}) {
+    const [preview, setPreview] = useState(null);
+    const [loading, setLoading] = useState(false);
+
+    useEffect(() => {
+      if (url && !linkPreviews[url]) {
+        fetchLinkPreview(url);
+      } else if (url && linkPreviews[url]) {
+        setPreview(linkPreviews[url]);
+      }
+    }, [url]);
+
+    const fetchLinkPreview = async linkUrl => {
+      setLoading(true);
+      try {
+        // Parse URL thủ công vì React Native không hỗ trợ URL.hostname
+        let fullUrl = linkUrl;
+        if (!linkUrl.startsWith('http')) {
+          fullUrl = `https://${linkUrl}`;
+        }
+
+        // Extract domain và path thủ công
+        const urlRegex = /^https?:\/\/([^\/]+)(.*)$/;
+        const match = fullUrl.match(urlRegex);
+
+        if (match) {
+          const domain = match[1].replace('www.', '');
+          const path = match[2] || '';
+
+          // Tạo title từ domain
+          let title = domain.charAt(0).toUpperCase() + domain.slice(1);
+          if (path && path !== '/') {
+            const pathParts = path.split('/').filter(part => part.length > 0);
+            if (pathParts.length > 0) {
+              const lastPart = pathParts[pathParts.length - 1];
+              title += ' ' + lastPart.replace(/[-_]/g, ' ').substring(0, 20);
+            }
+          }
+
+          const previewData = {
+            title: title,
+            description: `Visit ${domain}`,
+            url: linkUrl,
+            domain: domain,
+          };
+          setPreview(previewData);
+          setLinkPreviews(prev => ({...prev, [linkUrl]: previewData}));
+        } else {
+          setPreview({title: 'Link', url: linkUrl});
+        }
+      } catch (error) {
+        console.log('Failed to parse URL:', error);
+        setPreview({title: 'Link', url: linkUrl});
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (loading) {
+      return (
+        <View style={styles.linkPreviewContainer}>
+          <ActivityIndicator size="small" color="#007AFF" />
+          <Text style={styles.linkPreviewLoading}>Loading preview...</Text>
+        </View>
+      );
+    }
+
+    if (!preview) {
+      return null;
+    }
+
+    return (
+      <TouchableOpacity
+        style={styles.linkPreviewContainer}
+        onPress={() => Linking.openURL(preview.url)}
+        activeOpacity={0.7}>
+        <View style={styles.linkPreviewIconContainer}>
+          <Icon name="link" size={18} color="#007AFF" />
+        </View>
+        <View style={styles.linkPreviewContent}>
+          <Text style={styles.linkPreviewTitle} numberOfLines={2}>
+            {preview.title}
+          </Text>
+          {preview.description && (
+            <Text style={styles.linkPreviewDescription} numberOfLines={2}>
+              {preview.description}
+            </Text>
+          )}
+          <Text style={styles.linkPreviewUrl} numberOfLines={1}>
+            {preview.url}
+          </Text>
+        </View>
+      </TouchableOpacity>
+    );
+  });
+
+  const Message = React.memo(function Message({
+    item,
+    isUser,
+    isLastFromSender,
+    handleLongPress,
+  }) {
+    const messageRef = React.useRef(null);
+    const isDeleted = item.is_unsend || item.is_deleted;
+    const messageText =
+      item.translatedMessage || decrypt(item.message, conversationId);
+    const isLink = extractFirstUrl(messageText);
+    const isImage = item.message_type === 'IMAGE';
+    const isVideo = item.message_type === 'VIDEO';
+    const isDocument = item.message_type === 'DOCUMENT';
+    const isOther = item.message_type === 'OTHER';
+
+    return (
+      <View
+        ref={messageRef}
+        style={[
+          isUser ? styles.userMessageContainer : styles.otherMessageContainer,
+          isDeleted && styles.unsendMessageContainer,
+        ]}>
+        <TouchableOpacity
+          onLongPress={() => handleLongPress(item, messageRef)}
+          delayLongPress={500}
+          activeOpacity={0.8}
+          style={styles.messageContainer}>
+          <Text
+            style={[
+              isUser ? styles.userMessageText : styles.otherMessageText,
+              isDeleted && styles.unsendMessageText,
+            ]}>
+            {messageText}
+          </Text>
+          {isLink && <LinkPreview url={isLink} />}
+          {isImage && (
+            <Image source={{uri: item.message}} style={styles.imageStyle} />
+          )}
+          {isVideo && (
+            <Video
+              source={{uri: item.message}}
+              style={styles.videoStyle}
+              controls={false}
+              resizeMode="cover"
+            />
+          )}
+          {isDocument && (
+            <View style={styles.documentContainer}>
+              <IconFA name="file-o" size={20} color="#4A90E2" />
+              <Text style={styles.documentText}>{item.message}</Text>
+            </View>
+          )}
+          {isOther && (
+            <View style={styles.otherMessageTextContainer}>
+              <Text style={styles.otherMessageText}>{item.message}</Text>
+            </View>
+          )}
+        </TouchableOpacity>
+      </View>
+    );
+  });
+
+  return (
+    <React.Fragment>
+      <Modal
+        visible={showOptions}
+        transparent
+        animationType="fade"
+        onRequestClose={handleOutsidePress}>
+        <TouchableWithoutFeedback onPress={handleOutsidePress}>
+          <View style={styles.modalOverlay}>
+            <View
+              style={[
+                styles.actionModalContainer,
+                modalPosition.top !== null && modalPosition.left !== null
+                  ? {
+                      position: 'absolute',
+                      top: modalPosition.top,
+                      left: Math.max(
+                        8,
+                        Math.min(
+                          modalPosition.left - 60,
+                          Dimensions.get('window').width - 136,
+                        ),
+                      ),
+                      // 120 là tổng width modal, 8 là padding lề, 136 là max lề phải
+                      minWidth: undefined,
+                      margin: 0,
+                    }
+                  : {},
+              ]}>
+              <View style={styles.actionGrid}>
+                {isSelectedMessageUser ? (
+                  <>
+                    <TouchableOpacity
+                      style={styles.actionItem}
+                      onPress={() => handleDeleteMessage(selectedMessageId)}>
+                      <View
+                        style={[
+                          styles.actionIcon,
+                          {
+                            backgroundColor: '#ff4444',
+                            width: 20,
+                            height: 20,
+                            borderRadius: 10,
+                          },
+                        ]}>
+                        <Ionicons name="trash-outline" size={12} color="#fff" />
+                      </View>
+                      <Text style={styles.actionText}>{t('delete')}</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={styles.actionItem}
+                      onPress={() => handleUnsendMessage(selectedMessageId)}>
+                      <View
+                        style={[
+                          styles.actionIcon,
+                          {
+                            backgroundColor: '#ff9500',
+                            width: 20,
+                            height: 20,
+                            borderRadius: 10,
+                          },
+                        ]}>
+                        <Ionicons
+                          name="close-circle-outline"
+                          size={12}
+                          color="#fff"
+                        />
+                      </View>
+                      <Text style={styles.actionText}>{t('back_to_chat')}</Text>
+                    </TouchableOpacity>
+                  </>
+                ) : (
+                  <>
+                    <TouchableOpacity
+                      style={styles.actionItem}
+                      onPress={() => handleTranslateMessage(selectedMessageId)}
+                      disabled={isTranslating}>
+                      <View
+                        style={[
+                          styles.actionIcon,
+                          {
+                            backgroundColor: '#007AFF',
+                            width: 20,
+                            height: 20,
+                            borderRadius: 10,
+                          },
+                        ]}>
+                        {isTranslating ? (
+                          <ActivityIndicator size="small" color="#fff" />
+                        ) : (
+                          <Ionicons
+                            name="language-outline"
+                            size={12}
+                            color="#fff"
+                          />
+                        )}
+                      </View>
+                      <Text style={styles.actionText}>
+                        {isTranslating ? t('translating') : t('tranS')}
+                      </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={styles.actionItem}
+                      onPress={() => handleCopy(selectedMessageId)}>
+                      <View
+                        style={[
+                          styles.actionIcon,
+                          {
+                            backgroundColor: '#34C759',
+                            width: 20,
+                            height: 20,
+                            borderRadius: 10,
+                          },
+                        ]}>
+                        <Ionicons name="copy-outline" size={12} color="#fff" />
+                      </View>
+                      <Text style={styles.actionText}>{t('copy')}</Text>
+                    </TouchableOpacity>
+                  </>
+                )}
+              </View>
+            </View>
+          </View>
+        </TouchableWithoutFeedback>
+      </Modal>
+
+      <KeyboardAvoidingView
+        style={styles.container}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+        <TouchableWithoutFeedback onPress={handleOutsidePress}>
+          <SafeAreaView style={styles.container}>
+            <StatusBar
+              barStyle="light-content"
+              backgroundColor="transparent"
+              translucent
+            />
+            <LinearGradient
+              colors={['#4A90E2', '#357ABD', '#1E3A8A']}
+              start={{x: 0, y: 0}}
+              end={{x: 1, y: 1}}
+              style={styles.headerContainer}>
+              <View style={styles.headerContent}>
+                <TouchableOpacity
+                  style={styles.headerBackBtn}
+                  onPress={() => navigation.goBack()}>
+                  <IconFA name="arrow-left" size={20} color="#fff" />
+                </TouchableOpacity>
+
+                <View style={styles.userInfoContainer}>
+                  <Image
+                    source={friendAvatar ? {uri: friendAvatar} : defaultAvatar}
+                    style={styles.userAvatar}
+                  />
+                  <View style={styles.userDetails}>
+                    <Text style={styles.userName} numberOfLines={1}>
+                      {friendName}
+                    </Text>
+                    <View style={styles.encryptedMessageContainer}>
+                      <Icon
+                        name="lock-closed-sharp"
+                        size={12}
+                        color="rgba(255,255,255,0.8)"
+                        style={styles.lockIcon}
+                      />
+                    </View>
                   </View>
                 </View>
+
+                <View style={styles.headerActionsCompact}>
+                  <TouchableOpacity style={styles.headerActionBtnCompact}>
+                    <Icon name="call" color="#fff" size={18} />
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.headerActionBtnCompact}>
+                    <Icon name="videocam" color="#fff" size={18} />
+                  </TouchableOpacity>
+                </View>
               </View>
+            </LinearGradient>
 
-              <View style={styles.headerActionsCompact}>
-                <TouchableOpacity style={styles.headerActionBtnCompact}>
-                  <Icon name="call" color="#fff" size={18} />
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.headerActionBtnCompact}>
-                  <Icon name="videocam" color="#fff" size={18} />
-                </TouchableOpacity>
-              </View>
-            </View>
-          </LinearGradient>
-
-          {messages.length === 0 ? (
-            <View style={styles.notMessageContainer}>
-              <Text style={styles.notMessageText}>{t(notMessage)}</Text>
-            </View>
-          ) : (
-            <FlatList
-              ref={flatListRef}
-              data={messagesWithDateLabels}
-              renderItem={renderItem}
-              keyExtractor={item =>
-                item.type === 'date' ? item.id : `message-${item.id}`
-              }
-              contentContainerStyle={styles.messagesList}
-              contentInset={{bottom: 65}}
-              onEndReached={getAllMessage}
-              onEndReachedThreshold={0.1}
-              ListFooterComponent={
-                isLoading ? (
-                  <ActivityIndicator size="small" color="#888" />
-                ) : null
-              }
-            />
-          )}
-
-          {uploadingMedia && (
-            <View style={styles.mediaContainer}>
-              {uploadingMedia.type === 'IMAGE' ? (
-                <Image
-                  source={{uri: uploadingMedia.uri}}
-                  style={styles.media}
-                />
-              ) : (
-                <Video
-                  source={{uri: uploadingMedia.uri}}
-                  style={styles.media}
-                />
-              )}
-              <View style={styles.loadingOverlay}>
-                <ActivityIndicator size="large" color="#fff" />
-                <Text style={styles.percentText}>
-                  {uploadingMedia.percent}%
+            {messages.length === 0 ? (
+              <View style={styles.notMessageContainer}>
+                <Text style={styles.notMessageText}>
+                  {safeTranslate(notMessage, 'No messages to display')}
                 </Text>
               </View>
-            </View>
-          )}
-
-          <View style={styles.inputContainer}>
-            <TouchableOpacity
-              style={styles.iconButton}
-              onPress={handleToggleEmojiPicker}>
-              <Icon name="happy-outline" color={THEME_COLOR} size={24} />
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.iconButton}
-              onPress={handleImagePicker}>
-              <Icon name="images-outline" color={THEME_COLOR} size={24} />
-            </TouchableOpacity>
-
-            <TextInput
-              ref={textInputRef}
-              style={styles.textInput}
-              value={message}
-              onChangeText={setMessage}
-              placeholder={t('tymess')}
-              placeholderTextColor="#999"
-              onFocus={handleFocusInput}
-            />
-
-            <TouchableOpacity onPress={handleSend} style={styles.sendButton}>
-              <Icon name="send" color="#FFF" size={24} />
-            </TouchableOpacity>
-          </View>
-
-          {showEmojiPicker && (
-            <View style={styles.showEmojiTab}>
-              <EmojiSelector
-                onEmojiSelected={handleEmojiSelect}
-                showSearchBar={false}
-                columns={8}
-                showTabs={true}
-                showSectionTitles={true}
+            ) : (
+              <FlatList
+                ref={flatListRef}
+                data={messagesWithDateLabels}
+                renderItem={renderItem}
+                keyExtractor={keyExtractor}
+                contentContainerStyle={styles.messagesList}
+                contentInset={{bottom: 65}}
+                onEndReached={getAllMessage}
+                onEndReachedThreshold={0.1}
+                removeClippedSubviews={true}
+                maxToRenderPerBatch={10}
+                windowSize={10}
+                initialNumToRender={10}
+                getItemLayout={(data, index) => ({
+                  length: 80, // Approximate height of each item
+                  offset: 80 * index,
+                  index,
+                })}
+                ListFooterComponent={
+                  isLoading ? (
+                    <ActivityIndicator size="small" color="#888" />
+                  ) : null
+                }
               />
-            </View>
-          )}
+            )}
 
-          {isMessageModalVisible && (
-            <ModalMessage
-              isVisible={isMessageModalVisible}
-              onClose={() => setMessageModalVisible(false)}
-              message={messageModal}
-              type={messageType}
-              t={t}
-              duration={duration}
-            />
-          )}
-        </SafeAreaView>
-      </TouchableWithoutFeedback>
-    </KeyboardAvoidingView>
+            {uploadingMedia && (
+              <View style={styles.mediaContainer}>
+                {uploadingMedia.type === 'IMAGE' ? (
+                  <Image
+                    source={{uri: uploadingMedia.uri}}
+                    style={styles.media}
+                  />
+                ) : (
+                  <Video
+                    source={{uri: uploadingMedia.uri}}
+                    style={styles.media}
+                  />
+                )}
+                <View style={styles.loadingOverlay}>
+                  <ActivityIndicator size="large" color="#fff" />
+                  <Text style={styles.percentText}>
+                    {uploadingMedia.percent}%
+                  </Text>
+                </View>
+              </View>
+            )}
+
+            <View style={styles.inputContainer}>
+              <TouchableOpacity
+                style={styles.iconButton}
+                onPress={handleToggleEmojiPicker}>
+                <Icon name="happy-outline" color={THEME_COLOR} size={24} />
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.iconButton}
+                onPress={handleImagePicker}>
+                <Icon name="images-outline" color={THEME_COLOR} size={24} />
+              </TouchableOpacity>
+
+              <TextInput
+                ref={textInputRef}
+                style={styles.textInput}
+                value={message}
+                onChangeText={setMessage}
+                placeholder={safeTranslate('tymess', 'Type your message...')}
+                placeholderTextColor="#999"
+                onFocus={handleFocusInput}
+              />
+
+              <TouchableOpacity onPress={handleSend} style={styles.sendButton}>
+                <Icon name="send" color="#FFF" size={24} />
+              </TouchableOpacity>
+            </View>
+
+            {showEmojiPicker && (
+              <View style={styles.showEmojiTab}>
+                <EmojiSelector
+                  onEmojiSelected={handleEmojiSelect}
+                  showSearchBar={false}
+                  columns={8}
+                  showTabs={true}
+                  showSectionTitles={true}
+                />
+              </View>
+            )}
+
+            {isMessageModalVisible && (
+              <ModalMessage
+                isVisible={isMessageModalVisible}
+                onClose={() => setMessageModalVisible(false)}
+                message={messageModal}
+                type={messageType}
+                t={t}
+                duration={duration}
+              />
+            )}
+          </SafeAreaView>
+        </TouchableWithoutFeedback>
+      </KeyboardAvoidingView>
+    </React.Fragment>
   );
 };
 
@@ -954,7 +1075,8 @@ const styles = StyleSheet.create({
   },
   translatedMessageText: {
     fontStyle: 'italic',
-    color: 'red',
+    color: '#4A90E2',
+    marginTop: 2,
   },
   container: {
     flex: 1,
@@ -974,11 +1096,20 @@ const styles = StyleSheet.create({
   optionsContainer: {
     backgroundColor: '#FFF',
     borderRadius: 10,
-    elevation: 2,
+    elevation: 10,
     flexDirection: 'row',
-    padding: 5,
+    padding: 8,
     marginTop: 5,
     justifyContent: 'space-around',
+    zIndex: 9999,
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
   },
   options: {
     justifyContent: 'space-around',
@@ -1002,10 +1133,7 @@ const styles = StyleSheet.create({
     paddingBottom: 15,
     paddingHorizontal: 20,
     shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
+    shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 5,
@@ -1144,21 +1272,55 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     backgroundColor: COLORS.lightGray2,
   },
-  linkPreviewTitle: {
-    ...FONTS.body3,
-    color: COLORS.text,
-    fontWeight: 'bold',
-    marginBottom: 2,
-  },
-  linkPreviewDesc: {
-    ...FONTS.body5,
-    color: COLORS.textSecondary,
-    marginBottom: 2,
-  },
   linkPreviewUrl: {
     color: COLORS.primary,
-    fontSize: 12,
+    fontSize: 10,
     textDecorationLine: 'underline',
+    flexShrink: 1,
+  },
+  linkPreviewContainer: {
+    flexDirection: 'row',
+    backgroundColor: '#f8f9fa',
+    borderRadius: 8,
+    padding: 10,
+    marginTop: 6,
+    borderWidth: 1,
+    borderColor: '#e9ecef',
+    maxWidth: '100%',
+    alignSelf: 'flex-start',
+  },
+  linkPreviewIconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 6,
+    marginRight: 8,
+    backgroundColor: '#f0f8ff',
+    justifyContent: 'center',
+    alignItems: 'center',
+    flexShrink: 0,
+  },
+  linkPreviewContent: {
+    flex: 1,
+    justifyContent: 'space-between',
+    minWidth: 0,
+  },
+  linkPreviewTitle: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#212529',
+    marginBottom: 2,
+    flexShrink: 1,
+  },
+  linkPreviewDescription: {
+    fontSize: 11,
+    color: '#6c757d',
+    marginBottom: 2,
+    flexShrink: 1,
+  },
+  linkPreviewLoading: {
+    fontSize: 12,
+    color: '#6c757d',
+    marginLeft: 8,
   },
   mediaContainer: {
     width: 150,
@@ -1184,6 +1346,60 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     fontSize: 18,
     marginTop: 8,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  actionModalContainer: {
+    backgroundColor: '#23232a',
+    borderRadius: 14,
+    padding: 6,
+    margin: 0,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 1},
+    shadowOpacity: 0.13,
+    shadowRadius: 3,
+    elevation: 3,
+    minWidth: undefined,
+    maxWidth: 200,
+  },
+  actionGrid: {
+    flexDirection: 'row',
+    flexWrap: 'nowrap',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  actionItem: {
+    alignItems: 'center',
+    margin: 2,
+    minWidth: 36,
+  },
+  actionIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 2,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 1},
+    shadowOpacity: 0.1,
+    shadowRadius: 1,
+    elevation: 1,
+  },
+  actionText: {
+    color: '#fff',
+    fontSize: 10,
+    fontWeight: '400',
+    textAlign: 'center',
+    marginTop: 0,
+  },
+  dateLabelContainer: {
+    alignItems: 'center',
+    marginVertical: 10,
   },
 });
 

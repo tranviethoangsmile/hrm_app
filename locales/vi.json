@@ -244,6 +244,8 @@
   "manager.title": "Quản lý",
   "media.back": "Quay lại",
   "media.posted_on": "Đăng lúc",
+  "media.shared_image": "Đã chia sẻ hình ảnh",
+  "media.shared_video": "Đã chia sẻ video",
   "message": "Tin nhắn",
   "messages_title": "Tin nhắn",
   "monday": "Thứ hai",
@@ -451,6 +453,9 @@
   "total": "Tổng",
   "total.quantity.final": "Tổng số lượng cuối",
   "tranS": "Dịch",
+  "translating": "Đang dịch...",
+  "translate.error": "Dịch thất bại. Vui lòng thử lại.",
+  "translate.rate.limit": "Đã vượt quá giới hạn dịch. Vui lòng thử lại sau 1-2 phút.",
   "tuesday": "Thứ ba",
   "tuesday_short": "T3",
   "tymess": "Nhập tin nhắn...",
@@ -469,6 +474,7 @@
   "upload.title": "Tải lên",
   "user_no_check_ins": "Người dùng này không có lịch sử chấm công trong tháng này",
   "viewMore": "Xem thêm",
+  "views": "lượt xem",
   "w.end.salary": "Lương cuối tuần",
   "wantDelete": "Bạn có muốn xóa thông tin này không?",
   "wednesday": "Thứ tư",
@@ -485,5 +491,10 @@
   "wt": "Giờ làm việc",
   "y": "Có",
   "yes": "Có",
-  "yesterday": "Hôm qua"
+  "yesterday": "Hôm qua",
+  "Username or Email": "Tên đăng nhập hoặc Email",
+  "Show Password": "Hiển thị mật khẩu",
+  "Save Login": "Lưu đăng nhập",
+  "Forgot Password?": "Quên mật khẩu?",
+  "back_to_chat": "Thu hồi"
 }

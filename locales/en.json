@@ -244,6 +244,8 @@
   "manager.title": "Manager",
   "media.back": "Back",
   "media.posted_on": "posted",
+  "media.shared_image": "Shared an image",
+  "media.shared_video": "Shared a video",
   "message": "Message",
   "messages_title": "Messages",
   "monday": "Monday",
@@ -451,6 +453,9 @@
   "total": "Total",
   "total.quantity.final": "Total final quantity",
   "tranS": "Translate",
+  "translating": "Translating...",
+  "translate.error": "Translation failed. Please try again.",
+  "translate.rate.limit": "Translation rate limit exceeded. Please try again in 1-2 minutes.",
   "tuesday": "Tuesday",
   "tuesday_short": "Tue",
   "tymess": "Type your message...",
@@ -469,6 +474,7 @@
   "upload.title": "Upload",
   "user_no_check_ins": "This user does not have any check-ins in this month",
   "viewMore": "View more",
+  "views": "views",
   "w.end.salary": "Weekend Salary",
   "wantDelete": "Do you want to Delete this is Information??",
   "wednesday": "Wednesday",
@@ -485,5 +491,10 @@
   "wt": "Work Time",
   "y": "Yes",
   "yes": "Yes",
-  "yesterday": "Yesterday"
+  "yesterday": "Yesterday",
+  "Username or Email": "Username or Email",
+  "Show Password": "Show Password",
+  "Save Login": "Save Login",
+  "Forgot Password?": "Forgot Password?",
+  "back_to_chat": "Undo"
 }

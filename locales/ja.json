@@ -244,6 +244,8 @@
   "manager.title": "マネージャー",
   "media.back": "戻る",
   "media.posted_on": "投稿日時",
+  "media.shared_image": "画像を共有しました",
+  "media.shared_video": "動画を共有しました",
   "message": "メッセージ",
   "messages_title": "メッセージ",
   "monday": "月曜日",
@@ -451,6 +453,9 @@
   "total": "合計",
   "total.quantity.final": "最終数量",
   "tranS": "翻訳",
+  "translating": "翻訳中...",
+  "translate.error": "翻訳に失敗しました。もう一度お試しください。",
+  "translate.rate.limit": "翻訳の制限を超えました。1-2分後に再試行してください。",
   "tuesday": "火曜日",
   "tuesday_short": "火",
   "tymess": "メッセージを入力してください...",
@@ -469,6 +474,7 @@
   "upload.title": "アップロード",
   "user_no_check_ins": "このユーザーは今月チェックインしていません",
   "viewMore": "もっと見る",
+  "views": "回視聴",
   "w.end.salary": "休日給",
   "wantDelete": "この情報を削除しますか？",
   "wednesday": "水曜日",
@@ -485,5 +491,10 @@
   "wt": "勤務時間",
   "y": "はい",
   "yes": "はい",
-  "yesterday": "昨日"
+  "yesterday": "昨日",
+  "Username or Email": "ユーザー名またはメール",
+  "Show Password": "パスワードを表示",
+  "Save Login": "ログイン保存",
+  "Forgot Password?": "パスワードを忘れましたか？",
+  "back_to_chat": "チャットに戻る"
 }

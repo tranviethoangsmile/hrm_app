@@ -162,10 +162,11 @@ const ProcessingOrdersTab = ({USER_INFOR}) => {
       )}
       <ModalMessage
         visible={isMessageModalVisible}
-        message={t(message)}
+        message={message}
         type={messageType}
         duration={duration}
         onClose={() => setMessageModalVisible(false)}
+        t={t}
       />
     </View>
   );
