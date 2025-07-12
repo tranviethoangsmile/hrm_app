@@ -57,6 +57,7 @@ import socket from '../socket.io/socket.io';
 import {Loader} from '../components';
 import {encrypt, decrypt} from '../services';
 import {ModalMessage} from '../components';
+import MediaViewer from '../components/common/MediaViewer';
 import defaultAvatar from '../assets/images/avatar.jpg';
 import {COLORS, SIZES, FONTS, SHADOWS} from '../config/theme';
 import LinkPreview from 'react-native-link-preview';
@@ -132,6 +133,7 @@ const ChatScreen = ({route}) => {
   const [modalPosition, setModalPosition] = useState({top: null, left: null});
   const [isTranslating, setIsTranslating] = useState(false);
   const [linkPreviews, setLinkPreviews] = useState({});
+  const [selectedMedia, setSelectedMedia] = useState(null);
 
   const showMessage = (msg, type, dur) => {
     setMessageModalVisible(true);
@@ -498,6 +500,21 @@ const ChatScreen = ({route}) => {
     }
   };
 
+  const handleMediaPress = (mediaUrl, mediaType, messageInfo) => {
+    setSelectedMedia({
+      url: mediaUrl,
+      type: mediaType,
+      postInfo: {
+        user: messageInfo.user_name || friendName,
+        content:
+          messageInfo.translatedMessage ||
+          decrypt(messageInfo.message, conversationId),
+        date: messageInfo.created_at,
+        is_event: false,
+      },
+    });
+  };
+
   const handleOutsidePress = () => {
     setShowOptions(false);
     setSelectedMessageId(null);
@@ -696,11 +713,20 @@ const ChatScreen = ({route}) => {
     const isDocument = item.message_type === 'DOCUMENT';
     const isOther = item.message_type === 'OTHER';
 
+    // Nếu là hình ảnh hoặc video, không sử dụng background color
+    const shouldUseBackground = !isImage && !isVideo;
+
     return (
       <View
         ref={messageRef}
         style={[
-          isUser ? styles.userMessageContainer : styles.otherMessageContainer,
+          shouldUseBackground
+            ? isUser
+              ? styles.userMessageContainer
+              : styles.otherMessageContainer
+            : isUser
+            ? styles.userMediaMessageContainer
+            : styles.mediaMessageContainer,
           isDeleted && styles.unsendMessageContainer,
         ]}>
         <TouchableOpacity
@@ -717,15 +743,34 @@ const ChatScreen = ({route}) => {
           </Text>
           {isLink && <LinkPreview url={isLink} />}
           {isImage && (
-            <Image source={{uri: item.message}} style={styles.imageStyle} />
+            <View style={styles.mediaWrapper}>
+              <TouchableOpacity
+                onPress={() => handleMediaPress(item.message, 'image', item)}
+                activeOpacity={0.9}>
+                <Image source={{uri: item.message}} style={styles.imageStyle} />
+              </TouchableOpacity>
+            </View>
           )}
           {isVideo && (
-            <Video
-              source={{uri: item.message}}
-              style={styles.videoStyle}
-              controls={false}
-              resizeMode="cover"
-            />
+            <View style={styles.mediaWrapper}>
+              <TouchableOpacity
+                onPress={() => handleMediaPress(item.message, 'video', item)}
+                activeOpacity={0.9}>
+                <Video
+                  source={{uri: item.message}}
+                  style={styles.videoStyle}
+                  controls={false}
+                  resizeMode="cover"
+                />
+                <View style={styles.playIcon}>
+                  <Icon
+                    name="play-circle"
+                    size={40}
+                    color="rgba(255,255,255,0.9)"
+                  />
+                </View>
+              </TouchableOpacity>
+            </View>
           )}
           {isDocument && (
             <View style={styles.documentContainer}>
@@ -1027,6 +1072,13 @@ const ChatScreen = ({route}) => {
                 duration={duration}
               />
             )}
+            <MediaViewer
+              visible={!!selectedMedia}
+              onClose={() => setSelectedMedia(null)}
+              mediaUrl={selectedMedia?.url}
+              mediaType={selectedMedia?.type}
+              postInfo={selectedMedia?.postInfo}
+            />
           </SafeAreaView>
         </TouchableWithoutFeedback>
       </KeyboardAvoidingView>
@@ -1056,6 +1108,28 @@ const styles = StyleSheet.create({
     marginLeft: 10,
     position: 'relative',
     ...SHADOWS.light,
+  },
+  mediaMessageContainer: {
+    alignSelf: 'flex-start',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: 12,
+    marginVertical: 4,
+    padding: 8,
+    maxWidth: '75%',
+    marginLeft: 10,
+    position: 'relative',
+    backdropFilter: 'blur(10px)',
+  },
+  userMediaMessageContainer: {
+    alignSelf: 'flex-end',
+    backgroundColor: 'rgba(74, 144, 226, 0.1)',
+    borderRadius: 12,
+    marginVertical: 4,
+    padding: 8,
+    maxWidth: '75%',
+    marginRight: 10,
+    position: 'relative',
+    backdropFilter: 'blur(10px)',
   },
   senderAvatar: {
     width: 18,
@@ -1190,16 +1264,31 @@ const styles = StyleSheet.create({
     marginLeft: 8,
   },
   imageStyle: {
-    width: 180,
-    height: 180,
-    borderRadius: 10,
+    width: 200,
+    height: 200,
+    borderRadius: 8,
     alignSelf: 'center',
-    marginVertical: 2,
+    marginVertical: 0,
+    backgroundColor: 'transparent',
   },
   videoStyle: {
     width: 250,
     height: 150,
-    borderRadius: 10,
+    borderRadius: 8,
+    backgroundColor: 'transparent',
+  },
+  mediaWrapper: {
+    marginVertical: 0,
+    backgroundColor: 'transparent',
+    position: 'relative',
+  },
+  playIcon: {
+    position: 'absolute',
+    top: '50%',
+    left: '50%',
+    transform: [{translateX: -20}, {translateY: -20}],
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   inputContainer: {
     flexDirection: 'row',
