@@ -454,6 +454,7 @@
   "total.quantity.final": "Tổng số lượng cuối",
   "tranS": "Dịch",
   "translating": "Đang dịch...",
+  "translate": "Đã dịch",
   "translate.error": "Dịch thất bại. Vui lòng thử lại.",
   "translate.rate.limit": "Đã vượt quá giới hạn dịch. Vui lòng thử lại sau 1-2 phút.",
   "tuesday": "Thứ ba",

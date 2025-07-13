@@ -454,6 +454,7 @@
   "total.quantity.final": "Total final quantity",
   "tranS": "Translate",
   "translating": "Translating...",
+  "translate": "Translated",
   "translate.error": "Translation failed. Please try again.",
   "translate.rate.limit": "Translation rate limit exceeded. Please try again in 1-2 minutes.",
   "tuesday": "Tuesday",

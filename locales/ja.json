@@ -454,6 +454,7 @@
   "total.quantity.final": "最終数量",
   "tranS": "翻訳",
   "translating": "翻訳中...",
+  "translate": "翻訳した",
   "translate.error": "翻訳に失敗しました。もう一度お試しください。",
   "translate.rate.limit": "翻訳の制限を超えました。1-2分後に再試行してください。",
   "tuesday": "火曜日",
