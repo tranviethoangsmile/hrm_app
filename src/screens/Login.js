@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useState, useCallback, useMemo} from 'react';
 import {
   View,
   Text,
@@ -14,6 +14,8 @@ import {
   Keyboard,
   SafeAreaView,
   TouchableWithoutFeedback,
+  Animated,
+  TextInput,
 } from 'react-native';
 import axios from 'axios';
 import {useNavigation} from '@react-navigation/native';
@@ -24,14 +26,24 @@ import {useDispatch} from 'react-redux';
 import {setAuthData} from '../redux/AuthSlice';
 import {API, BASE_URL, LOGIN_URL, PORT, V1, VERSION} from '../utils/constans';
 import CheckBox from '@react-native-community/checkbox';
+import LinearGradient from 'react-native-linear-gradient';
+import Icon from 'react-native-vector-icons/Ionicons';
 
 import {
   NotificationServices,
   requestUserPermission,
 } from '../utils/notification/PushNotifications';
-import {TEXT_COLOR, THEME_COLOR, THEME_COLOR_2} from '../utils/Colors';
-import CustomTextInput from '../components/CustomTextInput';
+import {
+  TEXT_COLOR,
+  THEME_COLOR,
+  THEME_COLOR_2,
+  BACKGROUND_COLOR,
+  LIGHT_GRAY,
+  ERROR_COLOR,
+} from '../utils/Colors';
+
 import Loader from '../components/Loader';
+import {COLORS, SIZES, FONTS, SHADOWS} from '../config/theme';
 
 const {width, height} = Dimensions.get('window');
 
@@ -47,6 +59,11 @@ const Login = () => {
   const [visible, setVisible] = useState(false);
   const [savePass, setSavePass] = useState(true);
 
+  // Animation values
+  const fadeAnim = useMemo(() => new Animated.Value(0), []);
+  const slideAnim = useMemo(() => new Animated.Value(50), []);
+  const scaleAnim = useMemo(() => new Animated.Value(0.8), []);
+
   const showAlert = message => {
     Alert.alert(t('noti'), message);
   };
@@ -60,26 +77,46 @@ const Login = () => {
     return JSON.parse(userIF);
   };
 
-  const checkLanguage = async () => {
+  const checkLanguage = useCallback(async () => {
     const lang = await getLanguage();
     if (lang != null) {
       i18next.changeLanguage(lang);
     }
-  };
+  }, []);
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     const userIF = await getUserIF();
     if (userIF != null) {
       setUserName(userIF.username);
       setPassword(userIF.password);
       setSavePass(true);
     }
-  };
+  }, []);
 
   useEffect(() => {
     checkLanguage();
     fetchData();
-  }, []);
+
+    // Start animations
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 1000,
+        useNativeDriver: true,
+      }),
+      Animated.timing(slideAnim, {
+        toValue: 0,
+        duration: 800,
+        useNativeDriver: true,
+      }),
+      Animated.spring(scaleAnim, {
+        toValue: 1,
+        tension: 50,
+        friction: 7,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, [checkLanguage, fetchData, fadeAnim, slideAnim, scaleAnim]);
 
   const validate = () => {
     let isValid = true;
@@ -158,99 +195,219 @@ const Login = () => {
   };
 
   return (
-    <SafeAreaView style={styles.modernContainer}>
-      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+    <SafeAreaView style={styles.container}>
+      <StatusBar
+        barStyle="light-content"
+        backgroundColor="transparent"
+        translucent
+      />
+
+      {/* Animated Background */}
+      <LinearGradient
+        colors={['#667eea', '#764ba2', '#f093fb', '#f5576c']}
+        style={styles.animatedBackground}
+        start={{x: 0, y: 0}}
+        end={{x: 1, y: 1}}
+      />
+
+      {/* Floating Orbs */}
+      <Animated.View style={[styles.orb1, {opacity: fadeAnim}]} />
+      <Animated.View style={[styles.orb2, {opacity: fadeAnim}]} />
+      <Animated.View style={[styles.orb3, {opacity: fadeAnim}]} />
+
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.modernKeyboardAvoidingView}>
+        style={styles.keyboardAvoidingView}>
         <TouchableWithoutFeedback onPress={handlePressOutsideTextInput}>
           <ScrollView
-            contentContainerStyle={styles.modernScrollViewContent}
-            keyboardShouldPersistTaps="handled">
-            <View style={styles.modernContentContainer}>
-              <Image
-                source={require('../assets/images/daihatsu-metal-logo.jpg')}
-                style={styles.modernLogo}
-                resizeMode="contain"
-              />
-              <Text style={styles.modernTitle}>{t('Login')}</Text>
-
-              <View style={styles.modernFormContainer}>
-                <CustomTextInput
-                  placeholder={t('Username or Email')}
-                  value={userName}
-                  onChangeText={setUserName}
-                  isValid={!badUserName}
-                  inputStyle={styles.modernInput}
-                />
-                {!!badUserName && (
-                  <Text style={styles.modernErrorText}>{badUserName}</Text>
-                )}
-
-                <CustomTextInput
-                  placeholder={t('Password')}
-                  value={password}
-                  onChangeText={setPassword}
-                  isValid={!badPassword}
-                  secureTextEntry={!secury}
-                  inputStyle={styles.modernInput}
-                />
-                {!!badPassword && (
-                  <Text style={styles.modernErrorText}>{badPassword}</Text>
-                )}
-
-                <View style={styles.checkboxMainContainer}>
-                  <View style={styles.checkboxContainer}>
-                    <CheckBox
-                      disabled={false}
-                      value={secury}
-                      onValueChange={newValue => setSecury(newValue)}
-                      tintColors={{true: THEME_COLOR, false: '#aaa'}}
+            contentContainerStyle={styles.scrollViewContent}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}>
+            <Animated.View
+              style={[
+                styles.contentContainer,
+                {
+                  opacity: fadeAnim,
+                  transform: [{translateY: slideAnim}, {scale: scaleAnim}],
+                },
+              ]}>
+              {/* Header Section */}
+              <View style={styles.headerSection}>
+                <Animated.View
+                  style={[styles.logoContainer, {opacity: fadeAnim}]}>
+                  <LinearGradient
+                    colors={['rgba(255,255,255,0.2)', 'rgba(255,255,255,0.1)']}
+                    style={styles.logoGradient}
+                    start={{x: 0, y: 0}}
+                    end={{x: 1, y: 1}}>
+                    <Image
+                      source={require('../assets/images/daihatsu-metal-logo.jpg')}
+                      style={styles.logo}
+                      resizeMode="contain"
                     />
-                    <Text
-                      style={styles.checkboxLabel}
-                      onPress={() => setSecury(!secury)}>
-                      {t('Show Password')}
-                    </Text>
-                  </View>
+                  </LinearGradient>
+                </Animated.View>
 
-                  <View style={styles.checkboxContainer}>
-                    <CheckBox
-                      disabled={false}
-                      value={savePass}
-                      onValueChange={newValue => setSavePass(newValue)}
-                      tintColors={{true: THEME_COLOR, false: '#aaa'}}
-                    />
-                    <Text
-                      style={styles.checkboxLabel}
-                      onPress={() => setSavePass(!savePass)}>
-                      {t('Save Login')}
-                    </Text>
-                  </View>
-                </View>
-
-                <TouchableOpacity
-                  style={styles.modernLoginButton}
-                  onPress={handleLogin}
-                  disabled={visible}>
-                  {visible ? (
-                    <Loader visible={visible} />
-                  ) : (
-                    <Text style={styles.modernLoginButtonText}>
-                      {t('Login')}
-                    </Text>
-                  )}
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={styles.modernForgotPasswordButton}
-                  onPress={() => navigation.navigate('Forget')}>
-                  <Text style={styles.modernForgotPasswordText}>
-                    {t('Forgot Password?')}
+                <Animated.View
+                  style={[styles.textContainer, {opacity: fadeAnim}]}>
+                  <Text style={styles.welcomeTitle}>{t('Welcome Back')}</Text>
+                  <Text style={styles.welcomeSubtitle}>
+                    {t('Sign in to continue')}
                   </Text>
-                </TouchableOpacity>
+                </Animated.View>
               </View>
-            </View>
+
+              {/* Login Form */}
+              <Animated.View style={[styles.formSection, {opacity: fadeAnim}]}>
+                <LinearGradient
+                  colors={['rgba(255,255,255,0.95)', 'rgba(255,255,255,0.9)']}
+                  style={styles.formCard}
+                  start={{x: 0, y: 0}}
+                  end={{x: 1, y: 1}}>
+                  {/* Username Input */}
+                  <View style={styles.inputGroup}>
+                    <View
+                      style={[
+                        styles.inputContainer,
+                        badUserName ? styles.inputError : null,
+                      ]}>
+                      <Icon
+                        name="person-circle-outline"
+                        size={24}
+                        color={badUserName ? ERROR_COLOR : THEME_COLOR}
+                        style={styles.inputIcon}
+                      />
+                      <TextInput
+                        placeholder={t('Username or Email')}
+                        value={userName}
+                        onChangeText={setUserName}
+                        style={styles.input}
+                        placeholderTextColor="rgba(0,0,0,0.5)"
+                      />
+                    </View>
+                    {!!badUserName && (
+                      <Animated.View
+                        style={[styles.errorContainer, {opacity: fadeAnim}]}>
+                        <Icon
+                          name="alert-circle"
+                          size={16}
+                          color={ERROR_COLOR}
+                        />
+                        <Text style={styles.errorText}>{badUserName}</Text>
+                      </Animated.View>
+                    )}
+                  </View>
+
+                  {/* Password Input */}
+                  <View style={styles.inputGroup}>
+                    <View
+                      style={[
+                        styles.inputContainer,
+                        badPassword ? styles.inputError : null,
+                      ]}>
+                      <Icon
+                        name="lock-closed"
+                        size={24}
+                        color={badPassword ? ERROR_COLOR : THEME_COLOR}
+                        style={styles.inputIcon}
+                      />
+                      <TextInput
+                        placeholder={t('Password')}
+                        value={password}
+                        onChangeText={setPassword}
+                        secureTextEntry={!secury}
+                        style={styles.input}
+                        placeholderTextColor="rgba(0,0,0,0.5)"
+                      />
+                      <TouchableOpacity
+                        style={styles.eyeButton}
+                        onPress={() => setSecury(!secury)}
+                        activeOpacity={0.7}>
+                        <Icon
+                          name={secury ? 'eye' : 'eye-off'}
+                          size={20}
+                          color={THEME_COLOR}
+                        />
+                      </TouchableOpacity>
+                    </View>
+                    {!!badPassword && (
+                      <Animated.View
+                        style={[styles.errorContainer, {opacity: fadeAnim}]}>
+                        <Icon
+                          name="alert-circle"
+                          size={16}
+                          color={ERROR_COLOR}
+                        />
+                        <Text style={styles.errorText}>{badPassword}</Text>
+                      </Animated.View>
+                    )}
+
+                    {/* Save Login Option */}
+                    <View style={styles.saveLoginOption}>
+                      <CheckBox
+                        disabled={false}
+                        value={savePass}
+                        onValueChange={newValue => setSavePass(newValue)}
+                        tintColors={{true: THEME_COLOR, false: '#ccc'}}
+                        style={styles.checkbox}
+                      />
+                      <Text style={styles.optionText}>{t('Save Login')}</Text>
+                    </View>
+                  </View>
+
+                  {/* Login Button */}
+                  <TouchableOpacity
+                    style={[
+                      styles.loginButton,
+                      visible && styles.loginButtonDisabled,
+                    ]}
+                    onPress={handleLogin}
+                    disabled={visible}
+                    activeOpacity={0.8}>
+                    <LinearGradient
+                      colors={
+                        visible
+                          ? ['#ccc', '#ccc']
+                          : [THEME_COLOR, THEME_COLOR_2]
+                      }
+                      style={styles.loginButtonGradient}
+                      start={{x: 0, y: 0}}
+                      end={{x: 1, y: 0}}>
+                      {visible ? (
+                        <View style={styles.loadingContainer}>
+                          <Loader visible={visible} />
+                          <Text style={styles.loginButtonText}>
+                            {t('Signing in...')}
+                          </Text>
+                        </View>
+                      ) : (
+                        <>
+                          <Icon
+                            name="log-in"
+                            size={20}
+                            color="#fff"
+                            style={styles.buttonIcon}
+                          />
+                          <Text style={styles.loginButtonText}>
+                            {t('Login')}
+                          </Text>
+                        </>
+                      )}
+                    </LinearGradient>
+                  </TouchableOpacity>
+
+                  {/* Forgot Password */}
+                  <TouchableOpacity
+                    style={styles.forgotPasswordButton}
+                    onPress={() => navigation.navigate('Forget')}
+                    activeOpacity={0.7}>
+                    <Text style={styles.forgotPasswordText}>
+                      {t('Forgot Password?')}
+                    </Text>
+                  </TouchableOpacity>
+                </LinearGradient>
+              </Animated.View>
+            </Animated.View>
           </ScrollView>
         </TouchableWithoutFeedback>
       </KeyboardAvoidingView>
@@ -261,96 +418,216 @@ const Login = () => {
 export default Login;
 
 const styles = StyleSheet.create({
-  modernContainer: {
+  container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#000',
   },
-  modernKeyboardAvoidingView: {
+  animatedBackground: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: 0,
+    bottom: 0,
+  },
+  orb1: {
+    position: 'absolute',
+    width: 200,
+    height: 200,
+    borderRadius: 100,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    top: -50,
+    right: -50,
+  },
+  orb2: {
+    position: 'absolute',
+    width: 150,
+    height: 150,
+    borderRadius: 75,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    bottom: 100,
+    left: -30,
+  },
+  orb3: {
+    position: 'absolute',
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    top: height * 0.3,
+    right: 50,
+  },
+  keyboardAvoidingView: {
     flex: 1,
   },
-  modernScrollViewContent: {
+  scrollViewContent: {
     flexGrow: 1,
     justifyContent: 'center',
-    paddingBottom: 20,
+    paddingBottom: 40,
   },
-  modernContentContainer: {
+  contentContainer: {
     alignItems: 'center',
-    paddingHorizontal: 30,
+    paddingHorizontal: 24,
+    paddingTop: Platform.OS === 'ios' ? 60 : 40,
   },
-  modernLogo: {
-    width: width * 0.35,
-    height: width * 0.35,
-    marginBottom: 30,
-  },
-  modernTitle: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: TEXT_COLOR,
-    marginBottom: 25,
-    textAlign: 'center',
-  },
-  modernFormContainer: {
-    width: '100%',
-    padding: 10,
-    borderRadius: 12,
-  },
-  modernInput: {
-    height: 55,
-    backgroundColor: '#f7f7f7',
-    borderRadius: 10,
-    paddingHorizontal: 15,
-    fontSize: 16,
-    marginBottom: 15,
-    borderWidth: 1,
-    borderColor: '#e0e0e0',
-    color: TEXT_COLOR,
-  },
-  modernErrorText: {
-    color: '#D32F2F',
-    fontSize: 13,
-    marginBottom: 10,
-    paddingLeft: 5,
-  },
-  checkboxMainContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 20,
-    width: '100%',
-  },
-  checkboxContainer: {
-    flexDirection: 'row',
+  headerSection: {
     alignItems: 'center',
+    marginBottom: 40,
   },
-  checkboxLabel: {
-    marginLeft: Platform.OS === 'ios' ? 8 : 0,
-    fontSize: 14,
-    color: TEXT_COLOR,
+  logoContainer: {
+    marginBottom: 24,
   },
-  modernLoginButton: {
-    backgroundColor: THEME_COLOR,
-    height: 55,
-    borderRadius: 10,
+  logoGradient: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 20,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 10},
+    shadowOpacity: 0.3,
+    shadowRadius: 20,
+    elevation: 10,
+  },
+  logo: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+  },
+  textContainer: {
+    alignItems: 'center',
+  },
+  welcomeTitle: {
+    fontSize: 32,
+    fontWeight: '700',
+    color: '#fff',
+    textAlign: 'center',
+    marginBottom: 8,
+    textShadowColor: 'rgba(0,0,0,0.3)',
+    textShadowOffset: {width: 0, height: 2},
+    textShadowRadius: 4,
+  },
+  welcomeSubtitle: {
+    fontSize: 16,
+    color: 'rgba(255,255,255,0.8)',
+    textAlign: 'center',
+    fontWeight: '400',
+  },
+  formSection: {
+    width: '100%',
+    maxWidth: 400,
+  },
+  formCard: {
+    borderRadius: 20,
+    padding: 24,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 15},
+    shadowOpacity: 0.25,
+    shadowRadius: 25,
+    elevation: 12,
+  },
+  inputGroup: {
+    marginBottom: 16,
+  },
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f8f9fa',
+    borderRadius: 16,
+    borderWidth: 2,
+    borderColor: 'transparent',
+    paddingHorizontal: 16,
+    height: 56,
     shadowColor: '#000',
     shadowOffset: {width: 0, height: 2},
-    shadowOpacity: 0.15,
-    shadowRadius: 3,
-    elevation: 3,
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
   },
-  modernLoginButtonText: {
-    color: '#fff',
+  inputError: {
+    borderColor: ERROR_COLOR,
+    backgroundColor: '#fff5f5',
+  },
+  inputIcon: {
+    marginRight: 12,
+  },
+  input: {
+    flex: 1,
+    fontSize: 16,
+    color: '#333',
+    paddingVertical: 0,
+    backgroundColor: 'transparent',
+    borderWidth: 0,
+    fontWeight: '500',
+  },
+  eyeButton: {
+    padding: 8,
+    borderRadius: 8,
+  },
+  errorContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 8,
+    paddingLeft: 4,
+  },
+  errorText: {
+    color: ERROR_COLOR,
+    fontSize: 14,
+    marginLeft: 6,
+    fontWeight: '500',
+  },
+  saveLoginOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 12,
+    marginBottom: 8,
+  },
+  checkbox: {
+    marginRight: 8,
+  },
+  optionText: {
+    fontSize: 14,
+    color: '#666',
+    fontWeight: '500',
+  },
+  loginButton: {
+    borderRadius: 14,
+    overflow: 'hidden',
+    marginBottom: 20,
+    shadowColor: THEME_COLOR,
+    shadowOffset: {width: 0, height: 6},
+    shadowOpacity: 0.25,
+    shadowRadius: 10,
+    elevation: 6,
+  },
+  loginButtonDisabled: {
+    opacity: 0.7,
+  },
+  loginButtonGradient: {
+    height: 56,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  buttonIcon: {
+    marginRight: 8,
+  },
+  loginButtonText: {
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: '700',
+    color: '#fff',
   },
-  modernForgotPasswordButton: {
+  forgotPasswordButton: {
     alignItems: 'center',
     paddingVertical: 12,
   },
-  modernForgotPasswordText: {
+  forgotPasswordText: {
+    fontSize: 16,
     color: THEME_COLOR_2,
-    fontSize: 14,
-    fontWeight: '500',
+    fontWeight: '600',
+    textDecorationLine: 'underline',
   },
 });

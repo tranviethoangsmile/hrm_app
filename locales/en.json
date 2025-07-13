@@ -496,5 +496,8 @@
   "Show Password": "Show Password",
   "Save Login": "Save Login",
   "Forgot Password?": "Forgot Password?",
-  "back_to_chat": "Undo"
+  "back_to_chat": "Undo",
+  "Welcome Back": "Welcome Back",
+  "Sign in to continue": "Sign in to continue",
+  "Signing in...": "Signing in..."
 }

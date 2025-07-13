@@ -496,5 +496,8 @@
   "Show Password": "パスワードを表示",
   "Save Login": "ログイン保存",
   "Forgot Password?": "パスワードを忘れましたか？",
-  "back_to_chat": "チャットに戻る"
+  "back_to_chat": "チャットに戻る",
+  "Welcome Back": "おかえりなさい",
+  "Sign in to continue": "続行するにはサインインしてください",
+  "Signing in...": "サインイン中..."
 }
