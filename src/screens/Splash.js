@@ -39,7 +39,7 @@ const Splash = () => {
       <View style={{height: 5}} />
       <ActivityIndicator size="large" color="#fff" />
       <View style={styles.versionTextView}>
-        <Text style={styles.text}>V.13.07.25</Text>
+        <Text style={styles.text}>V.17.07.25</Text>
       </View>
     </View>
   );

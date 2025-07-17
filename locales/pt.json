@@ -210,7 +210,7 @@
   "image.send.error": "Falha ao enviar a imagem!!!",
   "image.send.success": "Imagem enviada com sucesso!!!",
   "image_message": "📷 Imagem",
-  "important.title": "Relatório Importante",
+  "important.title": "Relatórios Importantes",
   "info": "Informações",
   "infoDetail": "detalhes da informação",
   "inorout": "Você quer fazer check-in ou check-out?",
@@ -500,5 +500,16 @@
   "back_to_chat": "Desfazer",
   "Welcome Back": "Bem-vindo de volta",
   "Sign in to continue": "Entre para continuar",
-  "Signing in...": "Entrando..."
+  "Signing in...": "Entrando...",
+  "solution": "Solução",
+  "attach_image": "Anexar Imagem",
+  "attach_image_hint": "Você pode anexar uma foto (opcional)",
+  "danger": "Perigo",
+  "accident": "Acidente",
+  "potential_danger": "Perigo Potencial",
+  "other": "Outro",
+  "remove_image": "Remover imagem",
+  "remove_image_hint": "Remover a imagem anexada",
+  "change_image": "Alterar imagem",
+  "attached_image": "Imagem anexada"
 }

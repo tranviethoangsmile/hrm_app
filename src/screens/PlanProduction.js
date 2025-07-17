@@ -116,7 +116,11 @@ const PlanProduction = () => {
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#fff" />
+      <StatusBar
+        barStyle="dark-content"
+        backgroundColor="transparent"
+        translucent
+      />
       <Header
         title={t('plan.title', 'Kế hoạch sản xuất')}
         onBack={() => navigation.goBack()}

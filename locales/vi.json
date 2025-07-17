@@ -500,5 +500,17 @@
   "back_to_chat": "Thu hồi",
   "Welcome Back": "Chào mừng trở lại",
   "Sign in to continue": "Đăng nhập để tiếp tục",
-  "Signing in...": "Đang đăng nhập..."
+  "Signing in...": "Đang đăng nhập...",
+  "solution": "Giải pháp",
+  "attach_image": "Đính kèm ảnh",
+  "attach_image_hint": "Chọn ảnh từ thư viện",
+  "danger": "Nguy hiểm",
+  "accident": "Tai nạn đã xảy ra",
+  "potential_danger": "Khả năng nguy hiểm",
+  "other": "Khác",
+  "choose_title": "Chọn loại sự cố",
+  "remove_image": "Xóa ảnh",
+  "remove_image_hint": "Xóa ảnh đã đính kèm",
+  "change_image": "Đổi ảnh",
+  "attached_image": "Ảnh đính kèm"
 }

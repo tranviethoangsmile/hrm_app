@@ -209,26 +209,13 @@ const Uniform = ({route}) => {
   );
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
       <StatusBar
         barStyle={isDarkMode ? 'light-content' : 'dark-content'}
-        backgroundColor={COLORS.background}
+        backgroundColor="transparent"
+        translucent
       />
-
-      <Header
-        title={t('uniform.title')}
-        onBack={() => navigation.goBack()}
-        backgroundColor={COLORS.primary}
-        textColor={COLORS.white}
-        right={
-          <TouchableOpacity
-            style={styles.helpButton}
-            onPress={() => setIsGuideVisible(true)}>
-            <Icon name="help-outline" size={24} color={COLORS.white} />
-          </TouchableOpacity>
-        }
-      />
-
+      <Header title={t('uniform.title')} onBack={() => navigation.goBack()} />
       <View style={styles.content}>
         <Animated.View style={[styles.tabBar, {elevation: 4}]}>
           {tabs.map((tab, index) => (
@@ -262,14 +249,14 @@ const Uniform = ({route}) => {
         title={t('uniform_guide_title')}
         content={t('uniform_guide_content')}
       />
-    </SafeAreaView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.background,
+    backgroundColor: '#F5F5F5',
   },
   content: {
     flex: 1,

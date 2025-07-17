@@ -440,7 +440,11 @@ const Leave = () => {
       keyboardVerticalOffset={100}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#f5f6fa" />
+      <StatusBar
+        barStyle="dark-content"
+        backgroundColor="transparent"
+        translucent
+      />
       <Header
         title={t('leave.title', 'Đơn nghỉ phép')}
         onBack={() => navigation.goBack()}
@@ -654,7 +658,7 @@ const Leave = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f6fa',
+    backgroundColor: '#F5F5F5',
   },
   errorText: {
     color: '#e74c3c',

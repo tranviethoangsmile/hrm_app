@@ -210,7 +210,7 @@
   "image.send.error": "Image send failed!!!",
   "image.send.success": "Image sent successfully!!!",
   "image_message": "📷 Image",
-  "important.title": "Important report",
+  "important.title": "Important Reports",
   "info": "Infomations",
   "infoDetail": "information detail",
   "inorout": "Do you want to check in or check out?",
@@ -500,5 +500,16 @@
   "back_to_chat": "Undo",
   "Welcome Back": "Welcome Back",
   "Sign in to continue": "Sign in to continue",
-  "Signing in...": "Signing in..."
+  "Signing in...": "Signing in...",
+  "solution": "Solution",
+  "attach_image": "Attach Image",
+  "attach_image_hint": "You can attach a photo (optional)",
+  "danger": "Danger",
+  "accident": "Accident",
+  "potential_danger": "Potential Danger",
+  "other": "Other",
+  "remove_image": "Remove image",
+  "remove_image_hint": "Remove the attached image",
+  "change_image": "Change image",
+  "attached_image": "Attached image"
 }

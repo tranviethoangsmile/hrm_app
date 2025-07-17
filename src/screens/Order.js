@@ -37,6 +37,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import Header from '../components/common/Header';
 import {useNavigation} from '@react-navigation/native';
 import {COLORS, FONTS, SHADOWS} from '../config/theme';
+import Icon from 'react-native-vector-icons/Ionicons';
 
 const Order = () => {
   const {t} = useTranslation();
@@ -403,26 +404,14 @@ const Order = () => {
         backgroundColor="transparent"
         translucent
       />
-      <View style={styles.headerContainer}>
-        <LinearGradient
-          colors={['#667eea', '#764ba2']}
-          start={{x: 0, y: 0}}
-          end={{x: 1, y: 1}}
-          style={styles.headerGradient}>
-          <Header
-            title={t('order.title')}
-            onBack={() => navigation.goBack()}
-            backgroundColor="transparent"
-          />
-        </LinearGradient>
-      </View>
+      <Header title={t('order.title')} onBack={() => navigation.goBack()} />
       <ScrollView
         contentContainerStyle={styles.scrollViewContent}
         showsVerticalScrollIndicator={false}>
         {renderedDates}
       </ScrollView>
 
-      <TouchableOpacity activeOpacity={0.8} onPress={() => setIsVisible(true)}>
+      <View style={styles.orderSummaryContainer}>
         <LinearGradient
           colors={['#667eea', '#764ba2']}
           start={{x: 0, y: 0}}
@@ -445,7 +434,13 @@ const Order = () => {
             </View>
           </View>
         </LinearGradient>
-      </TouchableOpacity>
+        {/* Invisible touch overlay to ensure click works */}
+        <TouchableOpacity
+          style={styles.touchOverlay}
+          activeOpacity={1}
+          onPress={() => setIsVisible(true)}
+        />
+      </View>
 
       <OrderModal
         visible={isVisible}
@@ -568,11 +563,14 @@ const styles = StyleSheet.create({
     color: '#e53935',
     fontStyle: 'italic',
   },
-  orderSummary: {
+  orderSummaryContainer: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
+    zIndex: 10,
+  },
+  orderSummary: {
     paddingVertical: 16,
     paddingHorizontal: 20,
     shadowColor: '#000',
@@ -580,6 +578,14 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 8,
     elevation: 5,
+  },
+  touchOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 15,
   },
   summaryContent: {
     flex: 1,
