@@ -473,6 +473,9 @@
   "unpaid_leave": "Unpaid leave",
   "upcoming": "Upcoming",
   "upload.title": "Upload",
+  "upload.input_required": "Please enter title or content",
+  "upload.success": "Post successfully!",
+  "upload.unSuccess": "Post failed!",
   "user_no_check_ins": "This user does not have any check-ins in this month",
   "viewMore": "View more",
   "views": "views",
@@ -511,5 +514,7 @@
   "remove_image": "Remove image",
   "remove_image_hint": "Remove the attached image",
   "change_image": "Change image",
-  "attached_image": "Attached image"
+  "attached_image": "Attached image",
+  "no_posts": "No posts yet",
+  "what_are_you_thinking": "What are you thinking?"
 }

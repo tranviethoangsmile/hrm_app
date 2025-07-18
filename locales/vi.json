@@ -151,7 +151,7 @@
   "dl.mess": "Tin nhắn này vẫn hiển thị với người nhận",
   "dltSuc": "Xóa đơn hàng thành công",
   "e": "Điện",
-  "edit": "Sửa",
+  "edit": "Chỉnh sửa",
   "editReport": "Chỉnh sửa Báo Cáo",
   "edit_request_failed": "Cập nhật thất bại!",
   "edit_request_success": "Cập nhật thành công!",
@@ -473,6 +473,9 @@
   "unpaid_leave": "Nghỉ không lương",
   "upcoming": "Sắp tới",
   "upload.title": "Tải lên",
+  "upload.input_required": "Vui lòng nhập tiêu đề hoặc nội dung",
+  "upload.success": "Đăng bài thành công!",
+  "upload.unSuccess": "Đăng bài thất bại!",
   "user_no_check_ins": "Người dùng này không có lịch sử chấm công trong tháng này",
   "viewMore": "Xem thêm",
   "views": "lượt xem",
@@ -512,5 +515,7 @@
   "remove_image": "Xóa ảnh",
   "remove_image_hint": "Xóa ảnh đã đính kèm",
   "change_image": "Đổi ảnh",
-  "attached_image": "Ảnh đính kèm"
+  "attached_image": "Ảnh đính kèm",
+  "no_posts": "Chưa có bài đăng nào",
+  "what_are_you_thinking": "Bạn đang nghĩ gì?"
 }

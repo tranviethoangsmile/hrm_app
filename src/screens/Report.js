@@ -8,7 +8,7 @@ import {
   StatusBar,
   Switch,
 } from 'react-native';
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useState, useColorScheme} from 'react';
 import axios from 'axios';
 import {useNavigation} from '@react-navigation/native';
 import {TEXT_COLOR, THEME_COLOR, THEME_COLOR_2} from '../utils/Colors';
@@ -64,6 +64,7 @@ const Report = () => {
   const [productValue, setProductValue] = useState('');
   const [compareShift, setCompareShift] = useState(false);
   const [dailyReports, setDailyReports] = useState([]);
+  const isDarkMode = useColorScheme() === 'dark';
 
   const getLanguage = async () => {
     return await AsyncStorage.getItem('Language');
@@ -305,7 +306,11 @@ const Report = () => {
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#fff" />
+      <StatusBar
+        barStyle={isDarkMode ? 'light-content' : 'dark-content'}
+        backgroundColor="transparent"
+        translucent
+      />
       <Header
         title={t('report.title', 'Báo cáo')}
         onBack={() => navigation.goBack()}

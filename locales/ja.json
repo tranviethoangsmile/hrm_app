@@ -473,6 +473,9 @@
   "unpaid_leave": "無給休暇",
   "upcoming": "今後",
   "upload.title": "アップロード",
+  "upload.input_required": "タイトルまたは内容を入力してください",
+  "upload.success": "投稿に成功しました！",
+  "upload.unSuccess": "投稿に失敗しました！",
   "user_no_check_ins": "このユーザーは今月チェックインしていません",
   "viewMore": "もっと見る",
   "views": "回視聴",
@@ -512,5 +515,7 @@
   "remove_image": "画像を削除",
   "remove_image_hint": "添付画像を削除します",
   "change_image": "画像を変更",
-  "attached_image": "添付画像"
+  "attached_image": "添付画像",
+  "no_posts": "投稿がありません",
+  "what_are_you_thinking": "今何を考えていますか？"
 }

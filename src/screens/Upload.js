@@ -46,10 +46,11 @@ import LinkPreview from 'react-native-link-preview';
 import ModalMessage from '../components/ModalMessage';
 import Header from '../components/common/Header';
 import {useNavigation} from '@react-navigation/native';
+import Loader from '../components/Loader';
 
 const {width} = Dimensions.get('window');
 
-const PostInput = ({onPost, loading}) => {
+const PostInput = ({onPost, loading, onShowMessage}) => {
   const {t} = useTranslation();
   const authData = useSelector(state => state.auth);
   const user = authData?.data?.data;
@@ -57,11 +58,6 @@ const PostInput = ({onPost, loading}) => {
   const [content, setContent] = useState('');
   const [image, setImage] = useState(null);
   const [isPublic, setIsPublic] = useState(true);
-  const [modal, setModal] = useState({
-    visible: false,
-    type: 'info',
-    message: '',
-  });
   const [errorTitle, setErrorTitle] = useState(false);
   const [errorContent, setErrorContent] = useState(false);
 
@@ -91,16 +87,12 @@ const PostInput = ({onPost, loading}) => {
       setErrorContent(false);
     }
     if (hasError) {
-      setModal({
-        visible: true,
-        type: 'error',
-        message: 'Vui lòng nhập tiêu đề và nội dung',
-      });
+      if (onShowMessage) onShowMessage('upload.input_required', 'error', 1800);
       return;
     }
     setErrorTitle(false);
     setErrorContent(false);
-    onPost({title, content, image, is_public: isPublic, setModal});
+    onPost({title, content, image, is_public: isPublic});
     setTitle('');
     setContent('');
     setImage(null);
@@ -118,7 +110,7 @@ const PostInput = ({onPost, loading}) => {
     <View style={styles.inputBlockModern}>
       <TextInput
         style={[styles.inputTitleModern, errorTitle && styles.inputError]}
-        placeholder={t('til', 'Tiêu đề')}
+        placeholder={t('til')}
         placeholderTextColor="#b0b3b8"
         value={title}
         onChangeText={handleTitleChange}
@@ -168,14 +160,6 @@ const PostInput = ({onPost, loading}) => {
           )}
         </TouchableOpacity>
       </View>
-      <ModalMessage
-        isVisible={modal.visible}
-        type={modal.type}
-        message={modal.message}
-        onClose={() => setModal({...modal, visible: false})}
-        duration={1800}
-        t={t}
-      />
     </View>
   );
 };
@@ -271,7 +255,7 @@ const PostCard = ({item, onDelete, onEdit, onPressLink, showMenu}) => {
                 onEdit(item);
               }}>
               <Icon name="edit" size={18} color={THEME_COLOR_2} />
-              <Text style={styles.menuText}>Chỉnh sửa</Text>
+              <Text style={styles.menuText}>{t('edit')}</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.menuItem}
@@ -280,7 +264,9 @@ const PostCard = ({item, onDelete, onEdit, onPressLink, showMenu}) => {
                 onDelete(item.id);
               }}>
               <Icon name="trash" size={18} color="#e74c3c" />
-              <Text style={[styles.menuText, {color: '#e74c3c'}]}>Xóa</Text>
+              <Text style={[styles.menuText, {color: '#e74c3c'}]}>
+                {t('delete')}
+              </Text>
             </TouchableOpacity>
           </View>
         </TouchableOpacity>
@@ -298,11 +284,19 @@ const Upload = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [posting, setPosting] = useState(false);
-  const [modal, setModal] = useState({
-    visible: false,
-    type: 'info',
-    message: '',
-  });
+  // State cho ModalMessage
+  const [isMessageModalVisible, setMessageModalVisible] = useState(false);
+  const [messageModal, setMessageModal] = useState('');
+  const [messageType, setMessageType] = useState('success');
+  const [duration, setDuration] = useState(1500);
+
+  // Hàm showMessage chuẩn
+  const showMessage = React.useCallback((msg, type, dur) => {
+    setMessageModalVisible(true);
+    setMessageModal(msg);
+    setMessageType(type);
+    setDuration(dur);
+  }, []);
 
   const showAlert = message => {
     Alert.alert(t('noti'), t(message));
@@ -324,11 +318,11 @@ const Upload = () => {
       }
     } catch (error) {
       setIsLoading(false);
-      showAlert(error.message);
+      showMessage(error.message, 'error', 1500);
     }
   };
 
-  useEffect(() => {
+  React.useEffect(() => {
     getInformationPostedOfUser();
   }, []);
 
@@ -338,24 +332,10 @@ const Upload = () => {
     setRefreshing(false);
   };
 
-  const showModal = (type, message) => {
-    setModal({visible: true, type, message});
-  };
-
-  const handlePost = async ({
-    title,
-    content,
-    image,
-    is_public,
-    setModal: setInputModal,
-  }) => {
+  // Sử dụng showMessage khi đăng bài thành công/thất bại
+  const handlePost = async ({title, content, image, is_public}) => {
     if (!title.trim() && !content.trim()) {
-      if (setInputModal)
-        setInputModal({
-          visible: true,
-          type: 'error',
-          message: 'Vui lòng nhập tiêu đề hoặc nội dung',
-        });
+      showMessage(t('upload.input_required'), 'error', 1800);
       return;
     }
     setPosting(true);
@@ -385,32 +365,19 @@ const Upload = () => {
         },
       );
       if (res?.data?.success) {
-        if (setInputModal)
-          setInputModal({
-            visible: true,
-            type: 'success',
-            message: 'Đăng bài thành công!',
-          });
-        showModal('success', 'Đăng bài thành công!');
+        showMessage(t('upload.success'), 'success', 1500);
         getInformationPostedOfUser();
       } else {
-        if (setInputModal)
-          setInputModal({
-            visible: true,
-            type: 'error',
-            message: 'Đăng bài thất bại!',
-          });
-        showModal('error', 'Đăng bài thất bại!');
+        showMessage(t('upload.unSuccess'), 'error', 1500);
       }
     } catch (e) {
-      if (setInputModal)
-        setInputModal({visible: true, type: 'error', message: e.message});
-      showModal('error', e.message);
+      showMessage(e.message, 'error', 1500);
     } finally {
       setPosting(false);
     }
   };
 
+  // Sử dụng showMessage khi xóa bài thành công/thất bại
   const handleDelete = async id => {
     setIsLoading(true);
     try {
@@ -419,13 +386,13 @@ const Upload = () => {
         {id},
       );
       if (result.data.success) {
-        showAlert('success');
+        showMessage('success', 'success', 1500);
         getInformationPostedOfUser();
       } else {
-        showAlert('unSuccess');
+        showMessage('unSuccess', 'error', 1500);
       }
     } catch (e) {
-      showAlert(e.message);
+      showMessage(e.message, 'error', 1500);
     } finally {
       setIsLoading(false);
     }
@@ -437,7 +404,11 @@ const Upload = () => {
 
   return (
     <View style={{flex: 1, backgroundColor: BG_COLOR}}>
-      <StatusBar barStyle="dark-content" backgroundColor="#fff" />
+      <StatusBar
+        translucent
+        backgroundColor="transparent"
+        barStyle="dark-content"
+      />
       <Header
         title={t('upload.title', 'Tải lên')}
         onBack={() => {
@@ -451,7 +422,11 @@ const Upload = () => {
         style={{flex: 1, backgroundColor: '#f5f6fa'}}>
         <FlatList
           ListHeaderComponent={
-            <PostInput onPost={handlePost} loading={posting} />
+            <PostInput
+              onPost={handlePost}
+              loading={posting}
+              onShowMessage={showMessage}
+            />
           }
           data={posts}
           keyExtractor={item => item.id?.toString()}
@@ -492,6 +467,17 @@ const Upload = () => {
           }
         />
       </KeyboardAvoidingView>
+      {/* Loader ngoài cùng */}
+      <Loader visible={isLoading || posting} />
+      {/* ModalMessage ngoài cùng */}
+      <ModalMessage
+        isVisible={isMessageModalVisible}
+        onClose={() => setMessageModalVisible(false)}
+        message={messageModal}
+        type={messageType}
+        t={t}
+        duration={duration}
+      />
     </View>
   );
 };

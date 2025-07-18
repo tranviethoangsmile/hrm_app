@@ -341,19 +341,23 @@ const Important = ({route}) => {
   const [confirmDeleteModal, setConfirmDeleteModal] = useState(false);
   const [deleteId, setDeleteId] = useState(null);
 
-  const showMessage = (msg, type, dur) => {
-    setMessageModalVisible(true);
+  const showMessage = useCallback((msg, type, dur) => {
+    setMessageModalVisible(prev => {
+      return true;
+    });
     setMessageModal(msg);
     setMessageType(type);
     setDuration(dur);
-  };
+  }, []);
 
+  // Sửa triệt để lỗi render liên tục: today chỉ tính trong hàm, dependency đúng
   const getAllSafetyReportByUserI = useCallback(
     async userId => {
+      const today = moment().format('YYYY-MM-DD');
       try {
         const result = await axios.post(
           `${BASE_URL}${PORT}${API}${VERSION}${V1}${SAFETY_REPORT}${GET_ALL_BY_USER_ID}`,
-          {user_id: userId, date: today.format('YYYY-MM-DD')},
+          {user_id: userId, date: today},
         );
         setData(result.data.data || []);
       } catch (error) {
@@ -362,9 +366,8 @@ const Important = ({route}) => {
         setIsLoading(false);
       }
     },
-    [today],
+    [showMessage],
   );
-
   useEffect(() => {
     getAllSafetyReportByUserI(USER_INFOR.id);
   }, [USER_INFOR.id, getAllSafetyReportByUserI]);
@@ -412,7 +415,7 @@ const Important = ({route}) => {
         setIsLoading(false);
         resetForm();
         // Hiển thị ModalMessage thành công
-        showMessage('success', 'success', 500);
+        showMessage('success', 'success', 1500);
       }
     } catch (error) {
       setModal({visible: true, type: 'error', message: t('unSuccess')});
@@ -459,7 +462,7 @@ const Important = ({route}) => {
         setIsEdit(false);
         resetForm();
         // Hiển thị ModalMessage thành công khi cập nhật
-        showMessage('success', 'success', 500);
+        showMessage('success', 'success', 1500);
       }
     } catch (error) {
       setModal({visible: true, type: 'error', message: t('unSuccess')});
@@ -514,10 +517,10 @@ const Important = ({route}) => {
       );
       if (result.data.success) {
         setData(prev => prev.filter(item => item.id !== deleteId));
-        showMessage('success', 'success', 500);
+        showMessage('success', 'success', 1500);
       }
     } catch (error) {
-      showMessage('contactAdmin', 'warning', 500);
+      showMessage('contactAdmin', 'warning', 1500);
     } finally {
       setDeleteId(null);
     }
@@ -746,9 +749,12 @@ const Important = ({route}) => {
           />
           <Loader visible={isLoading} />
         </BeautifulModal>
+        {/* ModalMessage */}
         <ModalMessage
           isVisible={isMessageModalVisible}
-          onClose={() => setMessageModalVisible(false)}
+          onClose={() => {
+            setMessageModalVisible(false);
+          }}
           message={messageModal}
           type={messageType}
           t={t}

@@ -57,7 +57,6 @@ const Order = () => {
   const [picked, setPicked] = useState(0);
   const [isVisible, setIsVisible] = useState(false);
   const [orderedDates, setOrderedDates] = useState([]);
-  const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [messageModal, setMessageModal] = useState('');
   const [messageType, setMessageType] = useState('success');
   const [duration, setDuration] = useState(1000);

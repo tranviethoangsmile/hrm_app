@@ -473,6 +473,9 @@
   "unpaid_leave": "Licença não Remunerada",
   "upcoming": "Próximos",
   "upload.title": "Carregar",
+  "upload.input_required": "Por favor, insira o título ou o conteúdo",
+  "upload.success": "Postagem bem-sucedida!",
+  "upload.unSuccess": "Falha ao postar!",
   "user_no_check_ins": "Este usuário não possui nenhum check-in neste mês",
   "viewMore": "Ver mais",
   "views": "visualizações",
@@ -511,5 +514,7 @@
   "remove_image": "Remover imagem",
   "remove_image_hint": "Remover a imagem anexada",
   "change_image": "Alterar imagem",
-  "attached_image": "Imagem anexada"
+  "attached_image": "Imagem anexada",
+  "no_posts": "Ainda não há postagens",
+  "what_are_you_thinking": "O que você está pensando?"
 }
