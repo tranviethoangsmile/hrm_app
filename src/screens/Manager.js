@@ -76,6 +76,7 @@ function Manager() {
   const {t} = useTranslation();
   const authData = useSelector(state => state.auth);
   const [activeTab, setActiveTab] = useState('leave');
+  const [activeLeaveSubTab, setActiveLeaveSubTab] = useState('pending'); // Thêm state cho tab con
   const [refreshing, setRefreshing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [err, setError] = useState('');
@@ -225,6 +226,55 @@ function Manager() {
     setShowModalFeedback(false);
   };
 
+  // Thêm các hàm để lọc dữ liệu theo trạng thái
+  const getFilteredLeaveData = () => {
+    if (!leaveRequested || leaveRequested.length === 0) return [];
+
+    switch (activeLeaveSubTab) {
+      case 'pending':
+        return leaveRequested.filter(
+          item => !item.is_approve && !item.feedback,
+        );
+      case 'approved':
+        return leaveRequested.filter(item => item.is_approve && !item.feedback);
+      case 'rejected':
+        return leaveRequested.filter(item => !item.is_approve && item.feedback);
+      default:
+        return leaveRequested;
+    }
+  };
+
+  const getSubTabTitle = subTab => {
+    switch (subTab) {
+      case 'pending':
+        return t('manager.leave.pending', 'Chưa duyệt');
+      case 'approved':
+        return t('manager.leave.approved', 'Đã duyệt');
+      case 'rejected':
+        return t('manager.leave.rejected', 'Từ chối');
+      default:
+        return '';
+    }
+  };
+
+  const getSubTabCount = subTab => {
+    if (!leaveRequested || leaveRequested.length === 0) return 0;
+
+    switch (subTab) {
+      case 'pending':
+        return leaveRequested.filter(item => !item.is_approve && !item.feedback)
+          .length;
+      case 'approved':
+        return leaveRequested.filter(item => item.is_approve && !item.feedback)
+          .length;
+      case 'rejected':
+        return leaveRequested.filter(item => !item.is_approve && item.feedback)
+          .length;
+      default:
+        return 0;
+    }
+  };
+
   // Overtime Management Functions
   const handleOvertimeFormChange = (field, value) => {
     setOvertimeFormData(prev => ({
@@ -368,20 +418,19 @@ function Manager() {
   };
 
   const renderTabBar = () => (
-    <View style={styles.tabBar}>
+    <View style={styles.tabBarContainer}>
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.tabScrollContainer}>
+        contentContainerStyle={styles.tabBarScroll}>
         {TABS.map(tab => (
           <TouchableOpacity
             key={tab.id}
             style={[
-              styles.tabItem,
-              activeTab === tab.id && styles.activeTabItem,
+              styles.tabButton,
+              activeTab === tab.id && styles.activeTabButton,
             ]}
-            onPress={() => setActiveTab(tab.id)}
-            activeOpacity={0.7}>
+            onPress={() => setActiveTab(tab.id)}>
             <Icon
               name={tab.icon}
               size={20}
@@ -389,8 +438,8 @@ function Manager() {
             />
             <Text
               style={[
-                styles.tabText,
-                activeTab === tab.id && styles.activeTabText,
+                styles.tabButtonText,
+                activeTab === tab.id && styles.activeTabButtonText,
               ]}>
               {t(tab.titleKey, tab.title)}
             </Text>
@@ -399,6 +448,56 @@ function Manager() {
       </ScrollView>
     </View>
   );
+
+  // Thêm component renderLeaveSubTabs
+  const renderLeaveSubTabs = () => {
+    const subTabs = [
+      {id: 'pending', title: 'pending', icon: 'clock-outline'},
+      {id: 'approved', title: 'approved', icon: 'check-circle'},
+      {id: 'rejected', title: 'rejected', icon: 'close-circle'},
+    ];
+
+    return (
+      <View style={styles.subTabBarContainer}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.subTabBarScroll}>
+          {subTabs.map(subTab => {
+            const count = getSubTabCount(subTab.id);
+            return (
+              <TouchableOpacity
+                key={subTab.id}
+                style={[
+                  styles.subTabButton,
+                  activeLeaveSubTab === subTab.id && styles.activeSubTabButton,
+                ]}
+                onPress={() => setActiveLeaveSubTab(subTab.id)}>
+                <Icon
+                  name={subTab.icon}
+                  size={16}
+                  color={activeLeaveSubTab === subTab.id ? '#fff' : '#666'}
+                />
+                <Text
+                  style={[
+                    styles.subTabButtonText,
+                    activeLeaveSubTab === subTab.id &&
+                      styles.activeSubTabButtonText,
+                  ]}>
+                  {getSubTabTitle(subTab.title)}
+                </Text>
+                {count > 0 && (
+                  <View style={styles.subTabBadge}>
+                    <Text style={styles.subTabBadgeText}>{count}</Text>
+                  </View>
+                )}
+              </TouchableOpacity>
+            );
+          })}
+        </ScrollView>
+      </View>
+    );
+  };
 
   const renderItem = ({item}) => {
     let statusText = '';
@@ -563,7 +662,7 @@ function Manager() {
   const renderLeaveManagement = () => (
     <View style={styles.leaveManagementContainer}>
       <FlatList
-        data={leaveRequested}
+        data={getFilteredLeaveData()}
         renderItem={renderItem}
         keyExtractor={item => item?.id?.toString()}
         refreshControl={
@@ -576,7 +675,7 @@ function Manager() {
         }
         contentContainerStyle={[
           styles.modernListContainer,
-          leaveRequested.length === 0 && styles.emptyListContainer,
+          getFilteredLeaveData().length === 0 && styles.emptyListContainer,
         ]}
         showsVerticalScrollIndicator={false}
         ItemSeparatorComponent={() => <View style={styles.cardSeparator} />}
@@ -593,9 +692,21 @@ function Manager() {
                 style={styles.emptyIconContainer}>
                 <Icon name="calendar-check" size={64} color={THEME_COLOR} />
               </LinearGradient>
-              <Text style={styles.modernEmptyTitle}>Không có đơn nghỉ nào</Text>
+              <Text style={styles.modernEmptyTitle}>
+                {activeLeaveSubTab === 'pending' &&
+                  'Không có đơn nghỉ chờ duyệt'}
+                {activeLeaveSubTab === 'approved' &&
+                  'Không có đơn nghỉ đã duyệt'}
+                {activeLeaveSubTab === 'rejected' &&
+                  'Không có đơn nghỉ bị từ chối'}
+              </Text>
               <Text style={styles.modernEmptySubtitle}>
-                Hiện tại chưa có đơn xin nghỉ phép nào cần được duyệt
+                {activeLeaveSubTab === 'pending' &&
+                  'Hiện tại chưa có đơn xin nghỉ phép nào cần được duyệt'}
+                {activeLeaveSubTab === 'approved' &&
+                  'Chưa có đơn xin nghỉ phép nào được duyệt'}
+                {activeLeaveSubTab === 'rejected' &&
+                  'Chưa có đơn xin nghỉ phép nào bị từ chối'}
               </Text>
               <TouchableOpacity
                 style={styles.refreshButton}
@@ -695,6 +806,7 @@ function Manager() {
 
       <View style={styles.contentWrapper}>
         {renderTabBar()}
+        {activeTab === 'leave' && renderLeaveSubTabs()}
         {renderTabContent()}
       </View>
 
@@ -1129,36 +1241,7 @@ const styles = StyleSheet.create({
     marginTop: 8,
     fontSize: 14,
   },
-  tabBar: {
-    backgroundColor: '#fff',
-    paddingVertical: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f0f2f5',
-  },
-  tabScrollContainer: {
-    paddingHorizontal: 16,
-  },
-  tabItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    marginRight: 12,
-    backgroundColor: '#f8fafc',
-    gap: 8,
-  },
-  activeTabItem: {
-    backgroundColor: THEME_COLOR,
-  },
-  tabText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#666',
-  },
-  activeTabText: {
-    color: '#fff',
-  },
+
   listContainer: {
     padding: 16,
     paddingTop: 20,
@@ -2065,6 +2148,94 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 14,
     fontWeight: '600',
+  },
+  // New styles for sub-tabs
+  subTabBarContainer: {
+    backgroundColor: '#f8fafc',
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f2f5',
+  },
+  subTabBarScroll: {
+    paddingHorizontal: 16,
+  },
+  subTabButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    marginRight: 12,
+    backgroundColor: '#f8fafc',
+    gap: 8,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+  },
+  activeSubTabButton: {
+    backgroundColor: THEME_COLOR,
+    borderColor: THEME_COLOR,
+  },
+  subTabButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#666',
+  },
+  activeSubTabButtonText: {
+    color: '#fff',
+  },
+  subTabBadge: {
+    backgroundColor: '#e74c3c',
+    borderRadius: 10,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    minWidth: 20,
+    alignItems: 'center',
+  },
+  subTabBadgeText: {
+    color: '#fff',
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  tabBarContainer: {
+    backgroundColor: '#fff',
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f2f5',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  tabBarScroll: {
+    paddingHorizontal: 16,
+  },
+  tabButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 25,
+    marginRight: 12,
+    backgroundColor: '#f8fafc',
+    gap: 8,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+  },
+  activeTabButton: {
+    backgroundColor: THEME_COLOR,
+    borderColor: THEME_COLOR,
+  },
+  tabButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#666',
+  },
+  activeTabButtonText: {
+    color: '#fff',
   },
 });
 

@@ -629,15 +629,20 @@ const Leave = () => {
                   dropDownContainerStyle={{backgroundColor: '#f5f6fa'}}
                   style={styles.leaveInputModern}
                 />
-                <TouchableOpacity
-                  style={styles.leavePostBtnModern}
-                  onPress={handleRequestDayOffPaid}>
-                  {isLoading ? (
-                    <ActivityIndicator color="#fff" />
-                  ) : (
-                    <Icon name="send" size={18} color="#fff" />
-                  )}
-                </TouchableOpacity>
+                <View style={styles.submitButtonContainer}>
+                  <TouchableOpacity
+                    style={styles.submitButtonModern}
+                    onPress={handleRequestDayOffPaid}
+                    disabled={isLoading}>
+                    {isLoading ? (
+                      <ActivityIndicator color="#fff" size="small" />
+                    ) : (
+                      <Text style={styles.submitButtonTextModern}>
+                        {editLeave ? t('update') : t('submit')}
+                      </Text>
+                    )}
+                  </TouchableOpacity>
+                </View>
               </View>
             </View>
           </TouchableWithoutFeedback>
@@ -967,20 +972,27 @@ const styles = StyleSheet.create({
     color: '#222',
     marginLeft: 8,
   },
-  leavePostBtnModern: {
-    position: 'absolute',
-    bottom: 18,
-    right: 18,
+  submitButtonContainer: {
+    marginTop: 20,
+    alignItems: 'center',
+  },
+  submitButtonModern: {
     backgroundColor: THEME_COLOR,
-    borderRadius: 22,
-    padding: 14,
+    borderRadius: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 40,
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: THEME_COLOR,
     shadowOffset: {width: 0, height: 2},
-    shadowOpacity: 0.12,
+    shadowOpacity: 0.15,
     shadowRadius: 8,
-    elevation: 2,
+    elevation: 3,
+  },
+  submitButtonTextModern: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });
 
