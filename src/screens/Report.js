@@ -7,8 +7,9 @@ import {
   StyleSheet,
   StatusBar,
   Switch,
+  useColorScheme,
 } from 'react-native';
-import React, {useEffect, useState, useColorScheme} from 'react';
+import React, {useEffect, useState} from 'react';
 import axios from 'axios';
 import {useNavigation} from '@react-navigation/native';
 import {TEXT_COLOR, THEME_COLOR, THEME_COLOR_2} from '../utils/Colors';

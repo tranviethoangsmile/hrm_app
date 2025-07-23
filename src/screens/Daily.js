@@ -38,6 +38,7 @@ import axios from 'axios';
 import Loader from '../components/Loader';
 import ModalMessage from '../components/ModalMessage';
 import LinearGradient from 'react-native-linear-gradient';
+import Header from '../components/common/Header';
 
 // Modern UI components and theme
 import {COLORS, SIZES, FONTS, SHADOWS} from '../config/theme';
@@ -191,35 +192,6 @@ const Daily = () => {
     };
     checkLanguage();
   }, []);
-
-  const renderModernHeader = () => (
-    <LinearGradient
-      colors={['#667eea', '#764ba2']}
-      start={{x: 0, y: 0}}
-      end={{x: 1, y: 1}}
-      style={styles.headerGradient}>
-      <View style={styles.headerOverlay} />
-      <View style={styles.telegramHeader}>
-        <View style={styles.headerLeft}>
-          <TouchableOpacity
-            onPress={() => navigation.goBack()}
-            style={styles.headerIconContainer}>
-            <Icon name="arrow-left" size={24} color="#ffffff" />
-          </TouchableOpacity>
-        </View>
-
-        <View style={styles.headerTitleContainer}>
-          <Text style={styles.headerTitle}>
-            {t('daily_report', 'Báo cáo ngày')}
-          </Text>
-        </View>
-
-        <View style={styles.headerRight}>
-          <View style={styles.headerPlaceholder} />
-        </View>
-      </View>
-    </LinearGradient>
-  );
 
   const renderProductCard = () => (
     <View style={styles.card}>
@@ -536,7 +508,10 @@ const Daily = () => {
         backgroundColor="transparent"
         translucent
       />
-      {renderModernHeader()}
+      <Header
+        title={t('daily_report', 'Báo cáo ngày')}
+        onBack={() => navigation.goBack()}
+      />
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardAvoidingView}>
@@ -582,60 +557,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#f8fafc',
   },
-  headerGradient: {
-    paddingTop: Platform.OS === 'ios' ? 44 : 20,
-    shadowColor: '#667eea',
-    shadowOffset: {width: 0, height: 4},
-    shadowOpacity: 0.3,
-    shadowRadius: 12,
-    elevation: 8,
-  },
-  headerOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(255,255,255,0.05)',
-  },
-  telegramHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    height: 64,
-  },
-  headerLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  headerTitleContainer: {
-    flex: 1,
-    alignItems: 'center',
-  },
-  headerTitle: {
-    fontSize: 22,
-    fontWeight: '700',
-    color: '#ffffff',
-    textShadowColor: 'rgba(0,0,0,0.3)',
-    textShadowOffset: {width: 0, height: 1},
-    textShadowRadius: 3,
-  },
-  headerRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  headerIconContainer: {
-    padding: 8,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255,255,255,0.15)',
-  },
-  headerPlaceholder: {
-    width: 40,
-    height: 40,
-  },
+
   keyboardAvoidingView: {
     flex: 1,
   },
