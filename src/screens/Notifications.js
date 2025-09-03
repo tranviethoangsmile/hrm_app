@@ -408,6 +408,7 @@ const styles = StyleSheet.create({
   headerLeft: {
     flexDirection: 'row',
     alignItems: 'center',
+    minWidth: 50,
   },
   headerTitleContainer: {
     flex: 1,
@@ -425,11 +426,17 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
+    minWidth: 50,
+    justifyContent: 'flex-end',
   },
   headerIconContainer: {
-    padding: 8,
-    borderRadius: 20,
+    padding: 10,
+    borderRadius: 22,
     backgroundColor: 'rgba(255,255,255,0.15)',
+    minWidth: 44,
+    minHeight: 44,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   content: {
     flex: 1,

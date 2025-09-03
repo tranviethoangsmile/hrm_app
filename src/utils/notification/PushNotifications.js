@@ -17,7 +17,6 @@ export async function requestUserPermission(USER_INFOR) {
   const enabled =
     authStatus === messaging.AuthorizationStatus.AUTHORIZED ||
     authStatus === messaging.AuthorizationStatus.PROVISIONAL;
-
   if (enabled) {
     getFcmToken(USER_INFOR);
   }
@@ -26,10 +25,10 @@ export async function requestUserPermission(USER_INFOR) {
 const getFcmToken = async USER_INFOR => {
   try {
     let fcmToken = await AsyncStorage.getItem('fcmToken');
-
     if (!fcmToken) {
       await messaging().registerDeviceForRemoteMessages();
       fcmToken = await messaging().getToken();
+
       await AsyncStorage.setItem('fcmToken', fcmToken);
     }
     const device_type = Platform.OS;
@@ -47,7 +46,7 @@ const getFcmToken = async USER_INFOR => {
       },
     );
   } catch (error) {
-    console.error('Đã xảy ra lỗi:', error);
+    console.error('Đã xảy ra lỗi: ', error);
   }
 };
 // Tạo channel cho Android
@@ -60,14 +59,13 @@ if (Platform.OS === 'android' && PushNotification) {
       importance: 4,
       vibrate: true,
     },
-    created => console.log(`createChannel returned '${created}'`),
+    created => created,
   );
 }
 // Hàm để xử lý các sự kiện thông báo
 export const NotificationServices = async () => {
   // Xử lý khi người dùng mở ứng dụng từ thông báo
   messaging().onNotificationOpenedApp(remoteMessage => {
-    console.log(remoteMessage);
 
     // try {
     //   const encryptedMessage = remoteMessage?.notification.body;
@@ -93,7 +91,6 @@ export const NotificationServices = async () => {
   // Xử lý khi nhận được thông báo khi ứng dụng đang chạy
   messaging().onMessage(remoteMessage => {
     try {
-      console.log('Received foreground message:', remoteMessage);
       const encryptedMessage = remoteMessage?.notification?.body;
       const key = remoteMessage?.data?.key;
 
@@ -132,7 +129,6 @@ export const NotificationServices = async () => {
     .getInitialNotification()
     .then(remoteMessage => {
       if (remoteMessage) {
-        console.log(remoteMessage);
         // try {
         //   const encryptedMessage = remoteMessage?.notification.body;
         //   const key = remoteMessage?.data.key;
@@ -158,7 +154,6 @@ export const NotificationServices = async () => {
   // Uncomment and update background message handler
   messaging().setBackgroundMessageHandler(async remoteMessage => {
     try {
-      console.log('Received background message:', remoteMessage);
       const encryptedMessage = remoteMessage?.notification?.body;
       const key = remoteMessage?.data?.key;
 

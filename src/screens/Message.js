@@ -178,7 +178,7 @@ const Message = () => {
       setIsLoading(false);
     };
     loadData();
-  }, [navigation, handleGetConversations, getAllFriendList]);
+  }, []); // Chỉ chạy 1 lần khi component mount
 
   const handleSearch = text => {
     setSearchText(text);
@@ -436,13 +436,17 @@ const Message = () => {
       <View style={styles.headerContent}>
         <TouchableOpacity
           onPress={() => navigation.goBack()}
-          style={styles.backButton}>
+          style={styles.backButton}
+          hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}>
           <Icon name="arrow-left" size={20} color="#fff" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>{t('messages_title')}</Text>
+        <Text style={styles.headerTitle} numberOfLines={1} ellipsizeMode="tail">
+          {t('messages_title')}
+        </Text>
         <TouchableOpacity
-          style={styles.headerButton}
-          onPress={() => setSearchText('')}>
+          style={styles.backButton}
+          onPress={() => setSearchText('')}
+          hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}>
           <Icon name="broom" size={18} color="#fff" />
         </TouchableOpacity>
       </View>
@@ -553,7 +557,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#f8fafc',
   },
   headerGradient: {
-    paddingTop: (StatusBar.currentHeight || 44) + 5,
+    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight || 24 : 44,
     paddingBottom: 12,
     shadowColor: '#667eea',
     shadowOffset: {width: 0, height: 4},
@@ -572,17 +576,16 @@ const styles = StyleSheet.create({
     padding: 6,
     borderRadius: 16,
     backgroundColor: 'rgba(255,255,255,0.2)',
-  },
-  headerButton: {
-    padding: 6,
-    borderRadius: 16,
-    backgroundColor: 'rgba(255,255,255,0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   headerTitle: {
     fontSize: 18,
     fontWeight: '600',
     color: '#fff',
     letterSpacing: 0.3,
+    flex: 1,
+    textAlign: 'center',
   },
   searchSection: {
     backgroundColor: '#fff',

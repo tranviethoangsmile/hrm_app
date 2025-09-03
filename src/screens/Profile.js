@@ -15,6 +15,7 @@ import {
   RefreshControl,
   ActivityIndicator,
   Dimensions,
+  Platform,
 } from 'react-native';
 import {useSelector} from 'react-redux';
 import axios from 'axios';
@@ -250,16 +251,18 @@ const Profile = () => {
         <View style={styles.headerContent}>
           <TouchableOpacity
             onPress={() => navigation.goBack()}
-            style={styles.backButton}>
-            <Icon name="arrow-back" size={24} color="#fff" />
+            style={styles.backButton}
+            hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}>
+            <Icon name="arrow-back" size={20} color="#fff" />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>
+          <Text style={styles.headerTitle} numberOfLines={1} ellipsizeMode="tail">
             {t('profile.title', 'Profile')}
           </Text>
           <TouchableOpacity
             onPress={() => navigation.navigate('Salary')}
-            style={styles.salaryButton}>
-            <Icon name="wallet-outline" size={24} color="#fff" />
+            style={styles.backButton}
+            hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}>
+            <Icon name="wallet-outline" size={20} color="#fff" />
           </TouchableOpacity>
         </View>
       </LinearGradient>
@@ -521,35 +524,39 @@ const styles = StyleSheet.create({
     backgroundColor: '#f8fafc',
   },
   headerGradient: {
-    paddingTop: StatusBar.currentHeight || 44,
-    paddingBottom: 20,
+    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight || 24 : 44,
+    paddingBottom: 12,
+    shadowColor: '#667eea',
+    shadowOffset: {width: 0, height: 4},
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+    elevation: 8,
   },
   headerContent: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 12,
-    paddingTop: 10,
+    paddingTop: 5,
   },
   backButton: {
-    padding: 8,
-    borderRadius: 20,
+    padding: 6,
+    borderRadius: 16,
     backgroundColor: 'rgba(255,255,255,0.2)',
-  },
-  salaryButton: {
-    padding: 8,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255,255,255,0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   headerTitle: {
-    fontSize: 20,
-    fontWeight: '700',
+    fontSize: 18,
+    fontWeight: '600',
     color: '#fff',
-    letterSpacing: 0.5,
+    letterSpacing: 0.3,
+    flex: 1,
+    textAlign: 'center',
   },
   scrollContainer: {
     flex: 1,
-    marginTop: -10,
+    marginTop: -5,
   },
   employeeCard: {
     marginHorizontal: 0,

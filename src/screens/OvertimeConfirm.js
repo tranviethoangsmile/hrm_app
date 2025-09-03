@@ -10,7 +10,10 @@ import {
   Image,
   Alert,
   ScrollView,
+  StatusBar,
+  Platform,
 } from 'react-native';
+import LinearGradient from 'react-native-linear-gradient';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import {useTranslation} from 'react-i18next';
 import {THEME_COLOR_2} from '../utils/Colors';
@@ -250,21 +253,37 @@ const OvertimeConfirm = ({navigation}) => {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity
-          onPress={() => navigation.goBack()}
-          style={styles.backButton}>
-          <Icon name="arrow-left" size={20} color={THEME_COLOR_2} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>{t('overtime.title')}</Text>
-        <View style={styles.rightHeader}>
+      <StatusBar
+        barStyle="light-content"
+        backgroundColor="transparent"
+        translucent
+      />
+      
+      <LinearGradient
+        colors={['#667eea', '#764ba2']}
+        start={{x: 0, y: 0}}
+        end={{x: 1, y: 1}}
+        style={styles.headerGradient}>
+        <View style={styles.headerContent}>
           <TouchableOpacity
-            style={styles.headerButton}
-            onPress={() => setShowGuide(true)}>
-            <Icon name="question-circle" size={20} color={THEME_COLOR_2} />
+            onPress={() => navigation.goBack()}
+            style={styles.backButton}
+            hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}>
+            <Icon name="arrow-left" size={20} color="#fff" />
+          </TouchableOpacity>
+          
+          <Text style={styles.headerTitle} numberOfLines={1} ellipsizeMode="tail">
+            {t('overtime.title')}
+          </Text>
+          
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => setShowGuide(true)}
+            hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}>
+            <Icon name="question-circle" size={20} color="#fff" />
           </TouchableOpacity>
         </View>
-      </View>
+      </LinearGradient>
 
       <View style={styles.content}>
         {isLoading ? (
@@ -323,38 +342,41 @@ const OvertimeConfirm = ({navigation}) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f6fa',
+    backgroundColor: '#f8fafc',
   },
-  header: {
+  headerGradient: {
+    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight || 24 : 44,
+    paddingBottom: 12,
+    shadowColor: '#667eea',
+    shadowOffset: {width: 0, height: 4},
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+  headerContent: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: {width: 0, height: 2},
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
+    paddingHorizontal: 12,
+    paddingTop: 5,
   },
+
   headerTitle: {
-    flex: 1,
     fontSize: 18,
     fontWeight: '600',
-    color: THEME_COLOR_2,
+    color: '#fff',
+    letterSpacing: 0.3,
+    flex: 1,
     textAlign: 'center',
-    marginHorizontal: 16,
   },
   backButton: {
-    padding: 8,
-  },
-  rightHeader: {
-    width: 40,
+    padding: 6,
+    borderRadius: 16,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    justifyContent: 'center',
     alignItems: 'center',
   },
+
   content: {
     flex: 1,
     padding: 16,

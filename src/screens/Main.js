@@ -1,6 +1,6 @@
 /* eslint-disable eqeqeq */
 /* eslint-disable react-native/no-inline-styles */
-import React, {useEffect, useState, useRef} from 'react';
+import React, {useEffect, useState, useRef, useCallback} from 'react';
 import {
   View,
   Text,
@@ -19,17 +19,63 @@ import HomeTab from '../components/tabs/HomeTab';
 import FeatureTab from '../components/tabs/FeatureTab';
 import {useNavigation} from '@react-navigation/native';
 import LinearGradient from 'react-native-linear-gradient';
+import axios from 'axios';
+import {
+  BASE_URL,
+  PORT,
+  API,
+  VERSION,
+  V1,
+  NOTIFICATION,
+  SEARCH_BY_ID,
+} from '../utils/constans';
 
 const Main = () => {
   const isDarkMode = useColorScheme() === 'dark';
   const authData = useSelector(state => state.auth);
   const navigation = useNavigation();
   const [selectedTab, setSelectedTab] = useState(0);
+  const [notificationCount, setNotificationCount] = useState(0);
+  const userInfo = authData?.data?.data;
 
   const lastScrollY = useRef(0);
   const bottomNavHeight = 75; // Simple clean height
   const bottomNavTranslateY = useRef(new Animated.Value(0)).current;
   const [isBottomNavVisible, setIsBottomNavVisible] = useState(true);
+
+  // Hàm lấy số lượng thông báo
+  const getNotificationCount = useCallback(async () => {
+    try {
+      const user_id = userInfo?.id;
+      const notifications = await axios.post(
+        `${BASE_URL}${PORT}${API}${VERSION}${V1}${NOTIFICATION}${SEARCH_BY_ID}`,
+        {
+          user_id,
+        },
+      );
+      if (notifications?.data?.success) {
+        setNotificationCount(notifications?.data.data.length);
+      }
+    } catch (error) {
+      console.error('Error getting notification count:', error);
+    }
+  }, [userInfo?.id]);
+
+  // Lấy notification count khi component mount và khi user thay đổi
+  useEffect(() => {
+    if (userInfo?.id) {
+      getNotificationCount();
+    }
+  }, [userInfo?.id]); // Chỉ phụ thuộc vào userInfo?.id
+
+  // Refresh notification count khi focus vào Notifications tab
+  const handleNotificationPress = () => {
+    navigation.navigate('Notifications');
+    // Refresh count sau khi user xem notifications
+    setTimeout(() => {
+      getNotificationCount();
+    }, 1000);
+  };
 
   const handleScroll = event => {
     if (!event) return;
@@ -86,10 +132,11 @@ const Main = () => {
   );
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
       <StatusBar
-        barStyle={isDarkMode ? 'light-content' : 'dark-content'}
-        backgroundColor="#f8fafc"
+        barStyle="light-content"
+        backgroundColor="transparent"
+        translucent={true}
       />
       {selectedTab === 0 ? (
         <HomeTab onScrollList={handleScroll} />
@@ -116,6 +163,15 @@ const Main = () => {
           />
 
           <TouchableOpacity
+            style={styles.tabItem}
+            onPress={() => navigation.navigate('Message')}
+            activeOpacity={0.7}>
+            <View style={styles.unselectedTab}>
+              <Icon name="chatbubble-outline" size={24} color="#94a3b8" />
+            </View>
+          </TouchableOpacity>
+
+          <TouchableOpacity
             style={styles.centerTabItem}
             onPress={() => navigation.navigate('Checkin')}
             activeOpacity={0.8}>
@@ -124,6 +180,24 @@ const Main = () => {
               style={styles.centerTabGradient}>
               <Icon name="finger-print" size={26} color="#fff" />
             </LinearGradient>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.tabItem}
+            onPress={handleNotificationPress}
+            activeOpacity={0.7}>
+            <View style={styles.unselectedTab}>
+              <Icon name="notifications-outline" size={24} color="#94a3b8" />
+              {notificationCount > 0 && (
+                <LinearGradient
+                  colors={['#ff6b6b', '#ff8e8e']}
+                  style={styles.notificationBadge}>
+                  <Text style={styles.notificationText}>
+                    {notificationCount > 99 ? '99+' : notificationCount}
+                  </Text>
+                </LinearGradient>
+              )}
+            </View>
           </TouchableOpacity>
 
           <TabButton
@@ -135,7 +209,7 @@ const Main = () => {
           />
         </LinearGradient>
       </Animated.View>
-    </SafeAreaView>
+    </View>
   );
 };
 
@@ -164,13 +238,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-around',
-    paddingHorizontal: 20,
+    paddingHorizontal: 10,
     paddingBottom: 20,
     paddingTop: 10,
   },
   tabItem: {
     alignItems: 'center',
-    flex: 1,
+    flex: 0.8,
   },
   selectedTabGradient: {
     width: 36,
@@ -190,8 +264,13 @@ const styles = StyleSheet.create({
   },
   centerTabItem: {
     alignItems: 'center',
-    flex: 1,
+    flex: 1.2,
     marginTop: -15,
+    shadowColor: '#4FACFE',
+    shadowOffset: {width: 0, height: 3},
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 6,
   },
   centerTabGradient: {
     width: 56,
@@ -199,13 +278,27 @@ const styles = StyleSheet.create({
     borderRadius: 28,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#4FACFE',
-    shadowOffset: {width: 0, height: 3},
-    shadowOpacity: 0.3,
-    shadowRadius: 6,
-    elevation: 6,
+    backgroundColor: '#4FACFE',
     borderWidth: 3,
     borderColor: '#fff',
+  },
+  notificationBadge: {
+    position: 'absolute',
+    right: -2,
+    top: -2,
+    borderRadius: 10,
+    minWidth: 20,
+    height: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#ffffff',
+  },
+  notificationText: {
+    color: 'white',
+    fontSize: 11,
+    fontWeight: '700',
+    paddingHorizontal: 4,
   },
 });
 

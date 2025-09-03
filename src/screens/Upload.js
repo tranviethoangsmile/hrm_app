@@ -44,9 +44,9 @@ import * as ImagePicker from 'react-native-image-picker';
 import moment from 'moment';
 import LinkPreview from 'react-native-link-preview';
 import ModalMessage from '../components/ModalMessage';
-import Header from '../components/common/Header';
 import {useNavigation} from '@react-navigation/native';
 import Loader from '../components/Loader';
+import LinearGradient from 'react-native-linear-gradient';
 
 const {width} = Dimensions.get('window');
 
@@ -164,12 +164,26 @@ const PostInput = ({onPost, loading, onShowMessage}) => {
   );
 };
 
-// Hàm nhận diện link trong text
+// Hàm nhận diện link trong text - Cải thiện regex
 function extractFirstUrl(text) {
-  const urlRegex =
-    /(https?:\/\/[\w\-._~:/?#[\]@!$&'()*+,;=%]+)|(www\.[\w\-._~:/?#[\]@!$&'()*+,;=%]+)/gi;
-  const match = text.match(urlRegex);
-  return match ? match[0] : null;
+  if (!text) return null;
+  
+  // Regex pattern mạnh hơn để nhận diện nhiều loại URL
+  const urlRegex = /(https?:\/\/[^\s]+|www\.[^\s]+|[a-zA-Z0-9][a-zA-Z0-9-]{1,61}[a-zA-Z0-9]\.[a-zA-Z]{2,}[^\s]*)/gi;
+  const matches = text.match(urlRegex);
+  
+  if (matches && matches.length > 0) {
+    let url = matches[0];
+    
+    // Thêm protocol nếu thiếu
+    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+      url = 'https://' + url;
+    }
+    
+    return url;
+  }
+  
+  return null;
 }
 
 const PostCard = ({item, onDelete, onEdit, onPressLink, showMenu}) => {
@@ -178,19 +192,25 @@ const PostCard = ({item, onDelete, onEdit, onPressLink, showMenu}) => {
   const [linkPreview, setLinkPreview] = useState(null);
   useEffect(() => {
     const url = extractFirstUrl(item.content);
+    
     if (url) {
       LinkPreview.getPreview(url)
         .then(data => {
           setLinkPreview({
-            title: data.title || url,
+            title: data.title || 'Link Preview',
             description: data.description || '',
-            image:
-              data.images && data.images.length > 0 ? data.images[0] : null,
+            image: data.images && data.images.length > 0 ? data.images[0] : null,
             url: data.url || url,
           });
         })
         .catch(e => {
-          setLinkPreview(null);
+          // Fallback: tạo preview đơn giản
+          setLinkPreview({
+            title: url,
+            description: 'Click to open link',
+            image: null,
+            url: url,
+          });
         });
     } else {
       setLinkPreview(null);
@@ -210,14 +230,15 @@ const PostCard = ({item, onDelete, onEdit, onPressLink, showMenu}) => {
       {linkPreview && (
         <TouchableOpacity
           style={styles.linkPreviewBoxFlat}
-          onPress={() => onPressLink(linkPreview.url)}>
+          onPress={() => onPressLink(linkPreview.url)}
+          activeOpacity={0.7}>
           {linkPreview.image && (
             <Image
               source={{uri: linkPreview.image}}
               style={styles.linkPreviewImgFlat}
             />
           )}
-          <View style={{flex: 1, marginLeft: 10}}>
+          <View style={{flex: 1, marginLeft: linkPreview.image ? 12 : 0}}>
             <Text style={styles.linkPreviewTitleFlat} numberOfLines={2}>
               {linkPreview.title}
             </Text>
@@ -230,6 +251,7 @@ const PostCard = ({item, onDelete, onEdit, onPressLink, showMenu}) => {
               {linkPreview.url}
             </Text>
           </View>
+          <Icon name="external-link" size={16} color="#667eea" style={{marginLeft: 8}} />
         </TouchableOpacity>
       )}
       {item.media && (
@@ -403,19 +425,32 @@ const Upload = () => {
   };
 
   return (
-    <View style={{flex: 1, backgroundColor: BG_COLOR}}>
+    <View style={styles.container}>
       <StatusBar
-        translucent
+        barStyle="light-content"
         backgroundColor="transparent"
-        barStyle="dark-content"
+        translucent
       />
-      <Header
-        title={t('upload.title', 'Tải lên')}
-        onBack={() => {
-          if (typeof navigation !== 'undefined' && navigation.goBack)
-            navigation.goBack();
-        }}
-      />
+      
+      {/* Modern Header with Gradient */}
+      <LinearGradient
+        colors={['#667eea', '#764ba2']}
+        start={{x: 0, y: 0}}
+        end={{x: 1, y: 1}}
+        style={styles.headerGradient}>
+        <View style={styles.headerContent}>
+          <TouchableOpacity
+            onPress={() => navigation.goBack()}
+            style={styles.backButton}
+            hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}>
+            <Icon name="arrow-left" size={20} color="#fff" />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle} numberOfLines={1} ellipsizeMode="tail">
+            {t('upload.title', 'Tải lên')}
+          </Text>
+          <View style={styles.headerSpacer} />
+        </View>
+      </LinearGradient>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0}
@@ -483,72 +518,123 @@ const Upload = () => {
 };
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#f8fafc',
+  },
+  headerGradient: {
+    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight || 24 : 44,
+    paddingBottom: 12,
+    shadowColor: '#667eea',
+    shadowOffset: {width: 0, height: 4},
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+  headerContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 12,
+    paddingTop: 5,
+  },
+  backButton: {
+    padding: 6,
+    borderRadius: 16,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#fff',
+    letterSpacing: 0.3,
+    flex: 1,
+    textAlign: 'center',
+  },
+  headerSpacer: {
+    width: 32,
+  },
   inputBlockModern: {
     backgroundColor: '#fff',
-    borderRadius: 18,
+    borderRadius: 20,
     borderWidth: 1,
-    borderColor: '#e4e6eb',
-    marginHorizontal: 12,
-    marginBottom: 18,
-    marginTop: 8,
-    padding: 16,
-    shadowColor: '#000',
-    shadowOffset: {width: 0, height: 2},
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    elevation: 2,
+    borderColor: '#e2e8f0',
+    marginHorizontal: 16,
+    marginBottom: 20,
+    marginTop: 12,
+    padding: 20,
+    shadowColor: '#667eea',
+    shadowOffset: {width: 0, height: 4},
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 6,
   },
   inputTitleModern: {
     fontSize: 16,
-    color: '#222',
-    backgroundColor: '#f5f6fa',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    marginBottom: 8,
+    color: '#1e293b',
+    backgroundColor: '#f8fafc',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    marginBottom: 12,
     borderWidth: 1,
-    borderColor: '#e4e6eb',
+    borderColor: '#e2e8f0',
+    fontWeight: '500',
   },
   inputContentModern: {
     fontSize: 16,
-    color: '#222',
-    backgroundColor: '#f5f6fa',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    minHeight: 60,
+    color: '#1e293b',
+    backgroundColor: '#f8fafc',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    minHeight: 80,
     borderWidth: 1,
-    borderColor: '#e4e6eb',
-    marginBottom: 10,
+    borderColor: '#e2e8f0',
+    marginBottom: 16,
+    textAlignVertical: 'top',
   },
   inputActionsRowModern: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 2,
+    marginTop: 8,
   },
   inputIconBtnModern: {
-    padding: 8,
-    borderRadius: 16,
-    backgroundColor: '#f5f6fa',
-    marginRight: 8,
+    padding: 12,
+    borderRadius: 20,
+    backgroundColor: '#f1f5f9',
+    marginRight: 12,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
   },
   privacyBtnModern: {
-    padding: 8,
-    borderRadius: 16,
-    backgroundColor: '#f5f6fa',
-    marginRight: 8,
+    padding: 12,
+    borderRadius: 20,
+    backgroundColor: '#f1f5f9',
+    marginRight: 12,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
   },
   postBtnModern: {
-    backgroundColor: THEME_COLOR,
-    borderRadius: 22,
-    padding: 12,
+    backgroundColor: '#667eea',
+    borderRadius: 24,
+    paddingHorizontal: 24,
+    paddingVertical: 12,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: THEME_COLOR,
-    shadowOffset: {width: 0, height: 2},
-    shadowOpacity: 0.12,
+    shadowColor: '#667eea',
+    shadowOffset: {width: 0, height: 4},
+    shadowOpacity: 0.3,
     shadowRadius: 8,
-    elevation: 2,
+    elevation: 4,
   },
   mediaPreviewModern: {
     marginTop: 8,
@@ -570,36 +656,42 @@ const styles = StyleSheet.create({
     padding: 2,
   },
   feedBlock: {
-    backgroundColor: 'transparent',
-    paddingVertical: 0,
-    marginBottom: 18,
-    marginHorizontal: 0,
+    backgroundColor: '#fff',
+    marginHorizontal: 16,
+    marginBottom: 16,
+    borderRadius: 16,
+    padding: 20,
+    shadowColor: '#667eea',
+    shadowOffset: {width: 0, height: 4},
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 6,
     position: 'relative',
   },
   feedTitle: {
-    fontSize: 17,
-    fontWeight: '600',
-    color: '#222',
-    marginBottom: 2,
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#1e293b',
+    marginBottom: 8,
     marginTop: 0,
-    paddingHorizontal: 20,
+    lineHeight: 24,
   },
   feedContent: {
-    fontSize: 15,
-    color: '#222',
-    marginBottom: 2,
-    lineHeight: 22,
-    paddingHorizontal: 20,
+    fontSize: 16,
+    color: '#475569',
+    marginBottom: 12,
+    lineHeight: 24,
   },
   linkPreviewBoxFlat: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    backgroundColor: '#f0f2f5',
+    backgroundColor: '#f8fafc',
     borderRadius: 12,
-    padding: 10,
-    marginTop: 6,
-    marginBottom: 2,
-    marginHorizontal: 16,
+    padding: 12,
+    marginTop: 8,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
   },
   linkPreviewImgFlat: {
     width: 54,
@@ -625,27 +717,27 @@ const styles = StyleSheet.create({
   },
   feedImage: {
     width: '100%',
-    height: 220,
-    borderRadius: 14,
-    marginTop: 10,
-    backgroundColor: '#eee',
-    marginBottom: 2,
+    height: 240,
+    borderRadius: 16,
+    marginTop: 12,
+    backgroundColor: '#f1f5f9',
+    marginBottom: 8,
   },
   feedDate: {
-    fontSize: 12,
-    color: '#b0b3b8',
-    marginTop: 6,
+    fontSize: 13,
+    color: '#94a3b8',
+    marginTop: 8,
     marginBottom: 0,
-    paddingHorizontal: 20,
+    fontWeight: '500',
   },
   menuBtnFlat: {
     position: 'absolute',
-    top: 8,
-    right: 12,
+    top: 12,
+    right: 16,
     zIndex: 2,
-    padding: 4,
-    borderRadius: 16,
-    backgroundColor: 'transparent',
+    padding: 8,
+    borderRadius: 20,
+    backgroundColor: 'rgba(0,0,0,0.05)',
   },
   menuOverlay: {
     flex: 1,
@@ -677,11 +769,8 @@ const styles = StyleSheet.create({
     marginLeft: 10,
   },
   feedSeparator: {
-    height: 1,
-    backgroundColor: '#e4e6eb',
-    marginHorizontal: 16,
-    borderRadius: 1,
-    marginBottom: 2,
+    height: 8,
+    backgroundColor: 'transparent',
   },
   inputError: {
     borderColor: '#e74c3c',

@@ -9,6 +9,7 @@ import {
   TouchableOpacity,
   Platform,
 } from 'react-native';
+import LinearGradient from 'react-native-linear-gradient';
 import {useNavigation} from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Icon from 'react-native-vector-icons/Ionicons';
@@ -63,11 +64,7 @@ const FeatureTab = ({onScrollList}) => {
       labelKey: 'Lea',
       action: () => navigation.navigate('Leave'),
     },
-    {
-      iconName: 'chatbubbles-outline',
-      labelKey: 'Mess',
-      action: () => navigation.navigate('Message'),
-    },
+
     {
       iconName: 'cloud-upload-outline',
       labelKey: 'Up',
@@ -142,8 +139,13 @@ const FeatureTab = ({onScrollList}) => {
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
-      <Text style={styles.title}>{t('Fea')}</Text>
+      <LinearGradient
+        colors={['#667eea', '#764ba2']}
+        start={{x: 0, y: 0}}
+        end={{x: 1, y: 1}}
+        style={styles.header}>
+        <Text style={styles.title}>{t('Fea')}</Text>
+      </LinearGradient>
       <ScrollView
         onScroll={handleScroll}
         scrollEventThrottle={16}
@@ -159,14 +161,19 @@ const FeatureTab = ({onScrollList}) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#f8fafc',
+  },
+  header: {
+    paddingTop: Platform.OS === 'ios' ? 50 : 30,
+    paddingBottom: 16,
+    paddingHorizontal: 20,
+    alignItems: 'center',
   },
   title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: TEXT_COLOR,
-    marginVertical: 16,
-    paddingHorizontal: 16,
+    fontSize: 22,
+    fontWeight: '700',
+    color: '#ffffff',
+    textAlign: 'center',
   },
   scrollViewContent: {
     paddingHorizontal: 0,

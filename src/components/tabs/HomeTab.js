@@ -14,6 +14,7 @@ import {
   ScrollView,
   Animated,
   Platform,
+  SafeAreaView,
 } from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import {useSelector} from 'react-redux';
@@ -74,7 +75,7 @@ const HomeTab = ({onScrollList}) => {
   const [err, setError] = useState('');
   const [posts, setPosts] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
-  const [notificationCount, setNotificationCount] = useState(0);
+
   const [is_notification, setIsNotification] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [event, setEvent] = useState({});
@@ -179,22 +180,7 @@ const HomeTab = ({onScrollList}) => {
     }
   };
 
-  const handle_get_notification = async () => {
-    try {
-      const user_id = userInfo?.id;
-      const notifications = await axios.post(
-        `${BASE_URL}${PORT}${API}${VERSION}${V1}${NOTIFICATION}${SEARCH_BY_ID}`,
-        {
-          user_id,
-        },
-      );
-      if (notifications?.data?.success) {
-        setNotificationCount(notifications?.data.data.length);
-      }
-    } catch (error) {
-      showMessage(error?.message || 'networkError', 'error', 500);
-    }
-  };
+
 
   const handle_notification_click = async notification => {
     try {
@@ -208,7 +194,7 @@ const HomeTab = ({onScrollList}) => {
         {field},
       );
       if (updateNotification?.data?.success) {
-        handle_get_notification();
+        // Notification updated successfully
       }
     } catch (error) {
       showMessage(error?.message || 'networkError', 'error', 500);
@@ -286,7 +272,11 @@ const HomeTab = ({onScrollList}) => {
           }
           start={{x: 0, y: 0}}
           end={{x: 1, y: 1}}
-          style={[styles.postContent, isAdmin && styles.adminPostContent]}>
+          style={[
+            styles.postContent, 
+            isAdmin && styles.adminPostContent,
+            {backgroundColor: '#ffffff'}
+          ]}>
           {/* Glass overlay for modern effect */}
           <View style={styles.glassOverlay} />
 
@@ -301,7 +291,7 @@ const HomeTab = ({onScrollList}) => {
                 {isAdmin && (
                   <LinearGradient
                     colors={['#667eea', '#764ba2']}
-                    style={styles.adminBadge}>
+                    style={[styles.adminBadge, {backgroundColor: '#667eea'}]}>
                     <MaterialIcon name="shield-crown" size={12} color="#fff" />
                     <Text style={styles.adminBadgeText}>Admin</Text>
                   </LinearGradient>
@@ -475,7 +465,7 @@ const HomeTab = ({onScrollList}) => {
               onPress={handleGoToEventScreen}>
               <LinearGradient
                 colors={['#667eea', '#764ba2']}
-                style={styles.eventButtonGradient}>
+                style={[styles.eventButtonGradient, {backgroundColor: '#667eea'}]}>
                 <MaterialIcon name="calendar-check" size={18} color="#fff" />
                 <Text style={styles.eventButtonText}>{t('confirm.c')}</Text>
               </LinearGradient>
@@ -505,7 +495,6 @@ const HomeTab = ({onScrollList}) => {
       await get_event_detail();
     };
 
-    handle_get_notification();
     fetchData();
   }, []);
 
@@ -611,21 +600,15 @@ const HomeTab = ({onScrollList}) => {
 
   return (
     <View style={styles.container}>
-      <StatusBar
-        barStyle="light-content"
-        backgroundColor="transparent"
-        translucent
-      />
       <Loader visible={isLoading} />
 
-      {/* Modern Header with Gradient */}
+      {/* Simple Clean Header */}
       <LinearGradient
         colors={['#667eea', '#764ba2']}
         start={{x: 0, y: 0}}
         end={{x: 1, y: 1}}
-        style={styles.headerGradient}>
-        <View style={styles.headerOverlay} />
-        <View style={styles.telegramHeader}>
+        style={styles.header}>
+        <View style={styles.headerContent}>
           <View style={styles.headerLeft}>
             <TouchableOpacity
               onPress={handleControl}
@@ -639,23 +622,6 @@ const HomeTab = ({onScrollList}) => {
           </View>
 
           <View style={styles.headerRight}>
-            <TouchableOpacity
-              onPress={() => {
-                navigation.navigate('Notifications');
-              }}
-              style={styles.headerIconContainer}>
-              <MaterialIcon name="bell" size={24} color="#ffffff" />
-              {notificationCount > 0 && (
-                <LinearGradient
-                  colors={['#ff6b6b', '#ff8e8e']}
-                  style={styles.notificationBadge}>
-                  <Text style={styles.notificationText}>
-                    {notificationCount}
-                  </Text>
-                </LinearGradient>
-              )}
-            </TouchableOpacity>
-
             <TouchableOpacity
               onPress={() => {
                 navigation.navigate('Profile');
@@ -762,33 +728,27 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#f8fafc',
   },
-  headerGradient: {
-    paddingTop: Platform.OS === 'ios' ? 44 : 20,
-    shadowColor: '#667eea',
-    shadowOffset: {width: 0, height: 4},
-    shadowOpacity: 0.3,
-    shadowRadius: 12,
-    elevation: 8,
+  header: {
+    paddingTop: Platform.OS === 'ios' ? 50 : 30,
+    paddingBottom: 16,
+    paddingHorizontal: 20,
   },
-  headerOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(255,255,255,0.05)',
-  },
-  telegramHeader: {
+  headerContent: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    height: 64,
   },
   headerLeft: {
     flexDirection: 'row',
     alignItems: 'center',
+  },
+  headerIconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   headerTitleContainer: {
     flex: 1,
@@ -813,11 +773,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 12,
   },
-  headerIconContainer: {
-    padding: 8,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255,255,255,0.15)',
-  },
+
   profileContainer: {
     position: 'relative',
   },
@@ -838,24 +794,7 @@ const styles = StyleSheet.create({
     top: -4,
     left: -4,
   },
-  notificationBadge: {
-    position: 'absolute',
-    right: 2,
-    top: 2,
-    borderRadius: 10,
-    minWidth: 20,
-    height: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 2,
-    borderColor: '#ffffff',
-  },
-  notificationText: {
-    color: 'white',
-    fontSize: 11,
-    fontWeight: '700',
-    paddingHorizontal: 4,
-  },
+
   feedContainer: {
     flex: 1,
   },
