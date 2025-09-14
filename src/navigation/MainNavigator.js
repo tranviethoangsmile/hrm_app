@@ -30,7 +30,7 @@ const Stack = createStackNavigator();
 const MainNavigator = () => {
   return (
     <NavigationContainer>
-      <Stack.Navigator>
+        <Stack.Navigator>
         <Stack.Screen
           name="Splash"
           component={Splash}
@@ -143,7 +143,7 @@ const MainNavigator = () => {
           options={{headerShown: false}}
         />
       </Stack.Navigator>
-    </NavigationContainer>
+      </NavigationContainer>
   );
 };
 

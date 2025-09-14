@@ -10,6 +10,7 @@ import {
   Alert,
   Modal,
   ActivityIndicator,
+  Platform,
 } from 'react-native';
 import moment from 'moment';
 import {useSelector} from 'react-redux';
@@ -38,6 +39,7 @@ const Salary = () => {
     moment().subtract(1, 'month').format('YYYY-MM-DD'),
   );
   const [payrollData, setPayrollData] = useState({});
+  const [isExpanded, setIsExpanded] = useState(false);
   const navigation = useNavigation();
   const {t} = useTranslation();
   const authData = useSelector(state => state.auth);
@@ -68,6 +70,7 @@ const Salary = () => {
   }, [payrollMonth, userInfor.id, t]);
 
   useEffect(() => {
+    console.log('userInfor', userInfor);
     getPayrollOfUser();
   }, [payrollMonth, getPayrollOfUser]);
 
@@ -188,7 +191,7 @@ const Salary = () => {
         translucent
       />
 
-      {/* Modern Header with Gradient */}
+      {/* Standard Header with Gradient */}
       <LinearGradient
         colors={['#667eea', '#764ba2']}
         start={{x: 0, y: 0}}
@@ -197,11 +200,14 @@ const Salary = () => {
         <View style={styles.headerContent}>
           <TouchableOpacity
             onPress={() => navigation.goBack()}
-            style={styles.backButton}>
-            <Icon name="arrow-back" size={24} color="#fff" />
+            style={styles.backButton}
+            hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}>
+            <Icon name="arrow-back" size={20} color="#fff" />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>{t('salary.title', 'Salary')}</Text>
-          <View style={styles.backButton} />
+          <Text style={styles.headerTitle} numberOfLines={1} ellipsizeMode="tail">
+            {t('salary.title', 'Salary')}
+          </Text>
+          <View style={styles.headerSpacer} />
         </View>
       </LinearGradient>
 
@@ -215,86 +221,148 @@ const Salary = () => {
             start={{x: 0, y: 0}}
             end={{x: 1, y: 1}}
             style={styles.cardGradient}>
-            <View style={styles.employeeInfo}>
-              <Image
-                source={
-                  userInfor.avatar
-                    ? {uri: userInfor.avatar}
-                    : require('../assets/images/avatar.jpg')
-                }
-                style={styles.employeeAvatar}
-              />
+            {/* Card Header */}
+            <View style={styles.cardHeader}>
+              <Text style={styles.companyName}>DAIHATSU METAL</Text>
+            </View>
+
+            {/* Employee Info */}
+            <TouchableOpacity
+              style={styles.employeeInfo}
+              onPress={() => setIsExpanded(!isExpanded)}
+              activeOpacity={0.7}>
+              <View style={styles.avatarContainer}>
+                <Image
+                  source={require('../assets/images/avatar.jpg')}
+                  style={styles.employeeAvatar}
+                />
+              </View>
+
               <View style={styles.employeeDetails}>
-                <Text style={styles.employeeName}>{userInfor.name}</Text>
+                <Text style={styles.employeeName}>
+                  {userInfor.name || '---'}
+                </Text>
                 <Text style={styles.employeePosition}>
                   {userInfor.position || 'Employee'}
                 </Text>
-                <View style={styles.contactRow}>
-                  <Icon
-                    name="mail-outline"
-                    size={12}
-                    color="rgba(255,255,255,0.8)"
-                  />
-                  <Text style={styles.employeeEmail} numberOfLines={1}>
-                    {userInfor.email || 'email@company.com'}
-                  </Text>
-                </View>
               </View>
-            </View>
+
+              <View style={styles.employeeIdSection}>
+                <Text style={styles.idLabel}>ID</Text>
+                <Text style={styles.employeeId}>
+                  {userInfor.employee_id || '---'}
+                </Text>
+              </View>
+
+              <Icon
+                name={isExpanded ? 'chevron-up' : 'chevron-down'}
+                size={24}
+                color="rgba(255,255,255,0.8)"
+              />
+            </TouchableOpacity>
           </LinearGradient>
         </View>
 
-        {/* Month Selector */}
-        <TouchableOpacity
-          style={styles.monthSelector}
-          onPress={() => setIsModalVisible(true)}>
-          <LinearGradient
-            colors={['#4FACFE', '#00F2FE']}
-            start={{x: 0, y: 0}}
-            end={{x: 1, y: 1}}
-            style={styles.monthGradient}>
-            <Icon name="calendar-outline" size={18} color="#fff" />
-            <Text style={styles.monthText}>
-              {moment(payrollMonth).format('YYYY/MM')}
-            </Text>
-            <Icon name="chevron-down" size={16} color="#fff" />
-          </LinearGradient>
-        </TouchableOpacity>
+        {/* Beautiful Month Selector with Gradient */}
+        <View style={styles.monthSelectorContainer}>
+          <TouchableOpacity
+            style={styles.monthSelector}
+            onPress={() => setIsModalVisible(true)}
+            activeOpacity={0.8}>
+            <LinearGradient
+              colors={['#4FACFE', '#00F2FE']}
+              start={{x: 0, y: 0}}
+              end={{x: 1, y: 1}}
+              style={styles.monthCard}>
+              <View style={styles.monthHeader}>
+                <Icon name="calendar-outline" size={24} color="#ffffff" />
+                <Text style={styles.monthTitle}>Payroll Period</Text>
+              </View>
+              <View style={styles.monthContent}>
+                <Text style={styles.monthText}>
+                  {moment(payrollMonth).format('MMMM YYYY')}
+                </Text>
+                <Icon name="chevron-down" size={20} color="#ffffff" />
+              </View>
+            </LinearGradient>
+          </TouchableOpacity>
+        </View>
 
-        {/* Payroll Details */}
+        {/* Beautiful Salary Summary with Gradients */}
+        {Object.keys(payrollData).length > 0 && (
+          <View style={styles.summaryContainer}>
+            <View style={styles.summaryCard}>
+              <LinearGradient
+                colors={['#10b981', '#059669']}
+                start={{x: 0, y: 0}}
+                end={{x: 1, y: 1}}
+                style={styles.summaryGradient}>
+                <View style={styles.summaryContent}>
+                  <Icon name="wallet" size={24} color="#ffffff" />
+                  <View style={styles.summaryText}>
+                    <Text style={styles.summaryLabel}>Net Salary</Text>
+                    <Text style={styles.summaryValue}>
+                      {payrollData?.net_salary ? `$${payrollData.net_salary}` : '---'}
+                    </Text>
+                  </View>
+                </View>
+              </LinearGradient>
+            </View>
+            <View style={styles.summaryCard}>
+              <LinearGradient
+                colors={['#3b82f6', '#2563eb']}
+                start={{x: 0, y: 0}}
+                end={{x: 1, y: 1}}
+                style={styles.summaryGradient}>
+                <View style={styles.summaryContent}>
+                  <Icon name="calculator" size={24} color="#ffffff" />
+                  <View style={styles.summaryText}>
+                    <Text style={styles.summaryLabel}>Gross Salary</Text>
+                    <Text style={styles.summaryValue}>
+                      {payrollData?.gross_salary ? `$${payrollData.gross_salary}` : '---'}
+                    </Text>
+                  </View>
+                </View>
+              </LinearGradient>
+            </View>
+          </View>
+        )}
+
+        {/* Clean Payroll Details */}
         <View style={styles.payrollContainer}>
           <View style={styles.payrollHeader}>
-            <Icon name="list-outline" size={24} color="#667eea" />
-            <Text style={styles.payrollTitle}>
-              {t('payroll.details', 'Payroll Details')}
-            </Text>
+            <Text style={styles.payrollTitle}>Payroll Details</Text>
+            <TouchableOpacity style={styles.filterButton}>
+              <Icon name="filter" size={18} color="#64748b" />
+            </TouchableOpacity>
           </View>
 
           {isLoading ? (
             <View style={styles.loadingContainer}>
-              <ActivityIndicator size="large" color="#667eea" />
+              <ActivityIndicator size="large" color="#3b82f6" />
               <Text style={styles.loadingText}>Loading...</Text>
             </View>
           ) : Object.keys(payrollData).length === 0 ? (
             <View style={styles.emptyContainer}>
-              <Icon name="document-text-outline" size={64} color="#E0E0E0" />
-              <Text style={styles.emptyText}>
-                {t('not.data', 'No data available')}
+              <Icon name="document" size={48} color="#d1d5db" />
+              <Text style={styles.emptyText}>No data available</Text>
+              <Text style={styles.emptySubtext}>
+                Select a different month to view details
               </Text>
             </View>
           ) : (
-            <View style={styles.payrollGrid}>
+            <View style={styles.payrollList}>
               {payrollItems.map((item, index) => (
                 <View key={index} style={styles.payrollItem}>
-                  <LinearGradient
-                    colors={['#f8fafc', '#f1f5f9']}
-                    style={styles.payrollItemGradient}>
-                    <Icon name={item.icon} size={24} color="#667eea" />
-                    <Text style={styles.payrollItemLabel}>{item.label}</Text>
-                    <Text style={styles.payrollItemValue}>
-                      {item.value || '---'}
+                  <View style={styles.itemIcon}>
+                    <Icon name={item.icon} size={18} color="#64748b" />
+                  </View>
+                  <View style={styles.itemContent}>
+                    <Text style={styles.itemLabel}>{item.label}</Text>
+                    <Text style={styles.itemValue}>
+                      {item.value ? `$${item.value}` : '---'}
                     </Text>
-                  </LinearGradient>
+                  </View>
                 </View>
               ))}
             </View>
@@ -318,15 +386,20 @@ const styles = StyleSheet.create({
     backgroundColor: '#f8fafc',
   },
   headerGradient: {
-    paddingTop: StatusBar.currentHeight || 44,
-    paddingBottom: 20,
+    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight || 24 : 44,
+    paddingBottom: 12,
+    shadowColor: '#667eea',
+    shadowOffset: {width: 0, height: 4},
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
   },
   headerContent: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 20,
-    paddingTop: 10,
+    paddingTop: 8,
   },
   backButton: {
     padding: 8,
@@ -334,33 +407,50 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.2)',
   },
   headerTitle: {
-    fontSize: 20,
-    fontWeight: '700',
+    fontSize: 18,
+    fontWeight: '600',
     color: '#fff',
-    letterSpacing: 0.5,
+    textAlign: 'center',
+    flex: 1,
+  },
+  headerSpacer: {
+    width: 36,
   },
   scrollContainer: {
     flex: 1,
+    backgroundColor: '#f8fafc',
     marginTop: -10,
   },
   employeeCard: {
-    marginHorizontal: 20,
-    marginTop: 10,
-    borderRadius: 16,
-    backgroundColor: '#667eea',
-    shadowColor: '#000',
+    marginTop: 0,
+    borderRadius: 0,
+    shadowColor: '#667eea',
     shadowOffset: {width: 0, height: 8},
     shadowOpacity: 0.25,
     shadowRadius: 16,
     elevation: 12,
   },
   cardGradient: {
-    borderRadius: 16,
-    padding: 16,
+    borderRadius: 0,
+    padding: 20,
+  },
+  cardHeader: {
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  companyName: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: 'rgba(255,255,255,0.9)',
+    letterSpacing: 1.2,
   },
   employeeInfo: {
     flexDirection: 'row',
     alignItems: 'center',
+  },
+  avatarContainer: {
+    position: 'relative',
+    marginRight: 16,
   },
   employeeAvatar: {
     width: 60,
@@ -371,60 +461,116 @@ const styles = StyleSheet.create({
   },
   employeeDetails: {
     flex: 1,
-    marginLeft: 16,
   },
   employeeName: {
     fontSize: 18,
-    fontWeight: '800',
-    color: '#fff',
-    marginBottom: 2,
-    letterSpacing: 0.3,
+    fontWeight: '700',
+    color: '#ffffff',
+    marginBottom: 4,
   },
   employeePosition: {
     fontSize: 13,
     color: 'rgba(255,255,255,0.85)',
     fontWeight: '600',
-    marginBottom: 4,
+    marginBottom: 6,
   },
-  contactRow: {
-    flexDirection: 'row',
+  employeeIdSection: {
     alignItems: 'center',
+    marginLeft: 12,
   },
-  employeeEmail: {
-    fontSize: 11,
-    color: 'rgba(255,255,255,0.8)',
-    fontWeight: '500',
-    marginLeft: 4,
-    flex: 1,
+  idLabel: {
+    fontSize: 10,
+    color: 'rgba(255,255,255,0.7)',
+    fontWeight: '600',
+    marginBottom: 2,
   },
-  monthSelector: {
+  employeeId: {
+    fontSize: 14,
+    color: '#ffffff',
+    fontWeight: '700',
+  },
+  monthSelectorContainer: {
     marginHorizontal: 20,
     marginTop: 20,
   },
-  monthGradient: {
+  monthSelector: {
+    borderRadius: 20,
+    shadowColor: '#4FACFE',
+    shadowOffset: {width: 0, height: 8},
+    shadowOpacity: 0.3,
+    shadowRadius: 20,
+    elevation: 15,
+  },
+  monthCard: {
+    padding: 24,
+    borderRadius: 20,
+  },
+  monthHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 12,
-    borderRadius: 12,
-    shadowColor: '#4FACFE',
-    shadowOffset: {width: 0, height: 2},
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 4,
+    marginBottom: 12,
+  },
+  monthTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: 'rgba(255,255,255,0.9)',
+    marginLeft: 12,
+  },
+  monthContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
   monthText: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#fff',
-    marginHorizontal: 8,
+    fontSize: 22,
+    fontWeight: '800',
+    color: '#ffffff',
     letterSpacing: 0.3,
+  },
+  summaryContainer: {
+    flexDirection: 'row',
+    marginHorizontal: 20,
+    marginTop: 20,
+    gap: 12,
+  },
+  summaryCard: {
+    flex: 1,
+    borderRadius: 16,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 4},
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+  summaryGradient: {
+    borderRadius: 16,
+    padding: 20,
+  },
+  summaryContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  summaryText: {
+    flex: 1,
+    marginLeft: 12,
+  },
+  summaryLabel: {
+    fontSize: 12,
+    color: 'rgba(255,255,255,0.8)',
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  summaryValue: {
+    fontSize: 20,
+    fontWeight: '800',
+    color: '#ffffff',
+    letterSpacing: 0.5,
   },
   payrollContainer: {
     marginHorizontal: 20,
     marginTop: 20,
     marginBottom: 20,
-    backgroundColor: '#fff',
+    backgroundColor: '#ffffff',
     borderRadius: 20,
     shadowColor: '#000',
     shadowOffset: {width: 0, height: 8},
@@ -435,61 +581,87 @@ const styles = StyleSheet.create({
   payrollHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 20,
+    justifyContent: 'space-between',
+    padding: 24,
     borderBottomWidth: 1,
     borderBottomColor: '#f1f5f9',
   },
   payrollTitle: {
-    fontSize: 18,
-    fontWeight: '700',
+    fontSize: 20,
+    fontWeight: '800',
     color: '#1a202c',
-    marginLeft: 10,
     letterSpacing: 0.5,
   },
+  filterButton: {
+    padding: 10,
+    borderRadius: 25,
+    backgroundColor: '#f8fafc',
+  },
   loadingContainer: {
-    padding: 40,
+    padding: 60,
     alignItems: 'center',
   },
   loadingText: {
     color: '#667eea',
-    marginTop: 12,
+    marginTop: 16,
     fontSize: 16,
     fontWeight: '600',
   },
   emptyContainer: {
-    padding: 40,
+    padding: 60,
     alignItems: 'center',
   },
   emptyText: {
     color: '#94a3b8',
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: '700',
     marginTop: 16,
+    textAlign: 'center',
   },
-  payrollGrid: {
-    padding: 12,
-  },
-  payrollItem: {
-    marginBottom: 12,
-  },
-  payrollItemGradient: {
-    padding: 16,
-    borderRadius: 12,
-    alignItems: 'center',
-  },
-  payrollItemLabel: {
+  emptySubtext: {
+    color: '#cbd5e1',
     fontSize: 14,
-    color: '#64748b',
-    fontWeight: '600',
+    fontWeight: '500',
     marginTop: 8,
     textAlign: 'center',
   },
-  payrollItemValue: {
+  payrollList: {
+    padding: 16,
+  },
+  payrollItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f1f5f9',
+  },
+  itemIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#f0f9ff',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 16,
+  },
+  itemContent: {
+    flex: 1,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  itemLabel: {
+    fontSize: 14,
+    color: '#64748b',
+    fontWeight: '600',
+    flex: 1,
+  },
+  itemValue: {
     fontSize: 16,
     color: '#1a202c',
     fontWeight: '700',
-    marginTop: 4,
   },
 });
 
 export default Salary;
+

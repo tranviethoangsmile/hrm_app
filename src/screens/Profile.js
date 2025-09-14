@@ -250,7 +250,7 @@ const Profile = () => {
         style={styles.headerGradient}>
         <View style={styles.headerContent}>
           <TouchableOpacity
-            onPress={() => navigation.goBack()}
+            onPress={() => navigation.navigate('Main')}
             style={styles.backButton}
             hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}>
             <Icon name="arrow-back" size={20} color="#fff" />
@@ -258,12 +258,14 @@ const Profile = () => {
           <Text style={styles.headerTitle} numberOfLines={1} ellipsizeMode="tail">
             {t('profile.title', 'Profile')}
           </Text>
-          <TouchableOpacity
-            onPress={() => navigation.navigate('Salary')}
-            style={styles.backButton}
-            hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}>
-            <Icon name="wallet-outline" size={20} color="#fff" />
-          </TouchableOpacity>
+          <View style={styles.headerRightButtons}>
+            <TouchableOpacity
+              onPress={() => navigation.navigate('Salary')}
+              style={styles.backButton}
+              hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}>
+              <Icon name="wallet-outline" size={20} color="#fff" />
+            </TouchableOpacity>
+          </View>
         </View>
       </LinearGradient>
 
@@ -521,7 +523,6 @@ const Profile = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8fafc',
   },
   headerGradient: {
     paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight || 24 : 44,
@@ -553,6 +554,10 @@ const styles = StyleSheet.create({
     letterSpacing: 0.3,
     flex: 1,
     textAlign: 'center',
+  },
+  headerRightButtons: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   scrollContainer: {
     flex: 1,

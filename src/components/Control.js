@@ -8,21 +8,49 @@ import {
   TouchableOpacity,
   TouchableWithoutFeedback,
   Platform,
+  Animated,
+  Dimensions,
 } from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import {useDispatch, useSelector} from 'react-redux';
-import Icon from 'react-native-vector-icons/Feather';
+import Icon from 'react-native-vector-icons/Ionicons';
+import LinearGradient from 'react-native-linear-gradient';
 import {COLORS, SIZES, FONTS, SHADOWS} from '../config/theme';
+
+const {width, height} = Dimensions.get('window');
 
 const Control = ({visible, onClose, t}) => {
   const authData = useSelector(state => state.auth);
   const USER_INFOR = authData?.data?.data;
   const navigation = useNavigation();
   const disPatch = useDispatch();
+  const [scaleAnim] = useState(new Animated.Value(0));
+
+  React.useEffect(() => {
+    if (visible) {
+      Animated.spring(scaleAnim, {
+        toValue: 1,
+        tension: 100,
+        friction: 8,
+        useNativeDriver: true,
+      }).start();
+    } else {
+      Animated.timing(scaleAnim, {
+        toValue: 0,
+        duration: 200,
+        useNativeDriver: true,
+      }).start();
+    }
+  }, [visible]);
 
   const handleLogout = () => {
     onClose();
     navigation.navigate('Login');
+  };
+
+  const handleSettings = () => {
+    onClose();
+    navigation.navigate('Setting');
   };
 
   return (
@@ -34,57 +62,62 @@ const Control = ({visible, onClose, t}) => {
       <TouchableWithoutFeedback onPress={onClose}>
         <View style={styles.overlay}>
           <TouchableWithoutFeedback>
-            <View style={[styles.card, SHADOWS.medium]}>
-              <TouchableOpacity style={styles.closeBtn} onPress={onClose}>
-                <Icon name="x" size={22} color={COLORS.text} />
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.actionBtn}
-                activeOpacity={0.7}
-                onPress={() => {
-                  onClose();
-                  navigation.navigate('Important', {USER_INFOR});
-                }}>
-                <Icon
-                  name="star"
-                  size={20}
-                  color={COLORS.primary}
-                  style={styles.icon}
-                />
-                <Text style={styles.actionText}>{t('is_impor')}</Text>
-              </TouchableOpacity>
-              <View style={styles.divider} />
-              <TouchableOpacity
-                style={styles.actionBtn}
-                activeOpacity={0.7}
-                onPress={() => {
-                  onClose();
-                  navigation.navigate('Setting');
-                }}>
-                <Icon
-                  name="settings"
-                  size={20}
-                  color={COLORS.info}
-                  style={styles.icon}
-                />
-                <Text style={styles.actionText}>{t('Set')}</Text>
-              </TouchableOpacity>
-              <View style={styles.divider} />
-              <TouchableOpacity
-                style={styles.actionBtn}
-                activeOpacity={0.7}
-                onPress={handleLogout}>
-                <Icon
-                  name="log-out"
-                  size={20}
-                  color={COLORS.danger}
-                  style={styles.icon}
-                />
-                <Text style={[styles.actionText, {color: COLORS.danger}]}>
-                  {t('Lout')}
-                </Text>
-              </TouchableOpacity>
-            </View>
+            <Animated.View 
+              style={[
+                styles.card, 
+                {
+                  transform: [{scale: scaleAnim}],
+                }
+              ]}>
+              {/* Action buttons */}
+              <View style={styles.actionsContainer}>
+                <TouchableOpacity
+                  style={styles.actionBtn}
+                  activeOpacity={0.7}
+                  onPress={handleSettings}>
+                  <View style={styles.actionIconContainer}>
+                    <Icon
+                      name="settings-outline"
+                      size={24}
+                      color="#667eea"
+                    />
+                  </View>
+                  <View style={styles.actionContent}>
+                    <Text style={styles.actionTitle}>{t('Set')}</Text>
+                  </View>
+                  <Icon
+                    name="chevron-forward"
+                    size={20}
+                    color="#C7C7CC"
+                  />
+                </TouchableOpacity>
+
+                <View style={styles.divider} />
+
+                <TouchableOpacity
+                  style={[styles.actionBtn, styles.logoutBtn]}
+                  activeOpacity={0.7}
+                  onPress={handleLogout}>
+                  <View style={[styles.actionIconContainer, styles.logoutIconContainer]}>
+                    <Icon
+                      name="log-out-outline"
+                      size={24}
+                      color="#ff6b6b"
+                    />
+                  </View>
+                  <View style={styles.actionContent}>
+                    <Text style={[styles.actionTitle, styles.logoutText]}>
+                      {t('Lout')}
+                    </Text>
+                  </View>
+                  <Icon
+                    name="chevron-forward"
+                    size={20}
+                    color="#C7C7CC"
+                  />
+                </TouchableOpacity>
+              </View>
+            </Animated.View>
           </TouchableWithoutFeedback>
         </View>
       </TouchableWithoutFeedback>
@@ -97,49 +130,62 @@ export default Control;
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.15)',
+    backgroundColor: 'rgba(0,0,0,0.4)',
     justifyContent: 'flex-start',
     alignItems: 'flex-start',
+    paddingTop: Platform.OS === 'ios' ? 25 : 20,
+    paddingLeft: 20,
   },
   card: {
-    backgroundColor: COLORS.white,
-    borderRadius: SIZES.radius,
-    marginTop: Platform.OS === 'ios' ? 100 : 60,
-    marginLeft: 20,
+    backgroundColor: '#ffffff',
+    borderRadius: 12,
     width: 200,
-    paddingVertical: 18,
-    paddingHorizontal: 18,
-    alignItems: 'stretch',
-    minHeight: 180,
-    ...SHADOWS.medium,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 6},
+    shadowOpacity: 0.2,
+    shadowRadius: 12,
+    elevation: 8,
+    overflow: 'hidden',
   },
-  closeBtn: {
-    position: 'absolute',
-    top: 10,
-    right: 10,
-    zIndex: 2,
-    padding: 4,
+  actionsContainer: {
+    paddingVertical: 8,
   },
   actionBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 14,
-    paddingHorizontal: 8,
-    borderRadius: SIZES.radius,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
   },
-  actionText: {
-    ...FONTS.h4,
-    color: COLORS.text,
-    marginLeft: 12,
+  logoutBtn: {
+    backgroundColor: 'transparent',
   },
-  icon: {
-    width: 24,
-    textAlign: 'center',
+  actionIconContainer: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#f8f9ff',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 10,
+  },
+  logoutIconContainer: {
+    backgroundColor: '#fff5f5',
+  },
+  actionContent: {
+    flex: 1,
+  },
+  actionTitle: {
+    fontSize: 15,
+    fontWeight: '500',
+    color: '#1a202c',
+  },
+  logoutText: {
+    color: '#ff6b6b',
   },
   divider: {
     height: 1,
-    backgroundColor: COLORS.lightGray2,
+    backgroundColor: '#f1f5f9',
+    marginLeft: 58,
     marginVertical: 2,
-    marginLeft: 32,
   },
 });

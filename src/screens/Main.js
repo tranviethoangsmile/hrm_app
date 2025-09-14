@@ -13,7 +13,6 @@ import {
   Animated,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
-import {THEME_COLOR, THEME_COLOR_2} from '../utils/Colors';
 import {useSelector} from 'react-redux';
 import HomeTab from '../components/tabs/HomeTab';
 import FeatureTab from '../components/tabs/FeatureTab';
@@ -31,7 +30,6 @@ import {
 } from '../utils/constans';
 
 const Main = () => {
-  const isDarkMode = useColorScheme() === 'dark';
   const authData = useSelector(state => state.auth);
   const navigation = useNavigation();
   const [selectedTab, setSelectedTab] = useState(0);
@@ -216,7 +214,6 @@ const Main = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8fafc',
   },
   bottomNav: {
     position: 'absolute',
@@ -224,9 +221,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: 75,
-    backgroundColor: '#fff',
     borderTopWidth: 1,
-    borderTopColor: '#f1f5f9',
     shadowColor: '#000',
     shadowOffset: {width: 0, height: -2},
     shadowOpacity: 0.1,

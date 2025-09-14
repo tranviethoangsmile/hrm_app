@@ -18,12 +18,6 @@ import {
 } from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import {useSelector} from 'react-redux';
-import {
-  THEME_COLOR,
-  THEME_COLOR_2,
-  BG_COLOR,
-  TEXT_COLOR,
-} from '../../utils/Colors';
 import Control from '../Control';
 import Notifications from '../Notifications';
 import {useTranslation} from 'react-i18next';
