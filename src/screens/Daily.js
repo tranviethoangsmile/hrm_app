@@ -14,6 +14,8 @@ import {
   ScrollView,
   StatusBar,
   SafeAreaView,
+  Animated,
+  Easing,
 } from 'react-native';
 import {
   API,
@@ -41,15 +43,21 @@ import LinearGradient from 'react-native-linear-gradient';
 import Header from '../components/common/Header';
 
 // Modern UI components and theme
-import {COLORS, SIZES, FONTS, SHADOWS} from '../config/theme';
+import {useTheme} from '../hooks/useTheme';
 
 const {width: SCREEN_WIDTH} = Dimensions.get('window');
 
 const Daily = () => {
   const {t} = useTranslation();
+  const {colors, sizes, fonts, shadows, isDarkMode} = useTheme();
   const authData = useSelector(state => state.auth);
   const today = moment().toDate();
   const navigation = useNavigation();
+  
+  // Animation values
+  const fadeAnim = useState(new Animated.Value(0))[0];
+  const slideAnim = useState(new Animated.Value(50))[0];
+  const scaleAnim = useState(new Animated.Value(0.9))[0];
   const getLanguage = async () => {
     return await AsyncStorage.getItem('Language');
   };
@@ -191,26 +199,71 @@ const Daily = () => {
       }
     };
     checkLanguage();
+    
+    // Start animations
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 800,
+        useNativeDriver: true,
+      }),
+      Animated.timing(slideAnim, {
+        toValue: 0,
+        duration: 600,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: true,
+      }),
+      Animated.timing(scaleAnim, {
+        toValue: 1,
+        duration: 600,
+        easing: Easing.out(Easing.back(1.1)),
+        useNativeDriver: true,
+      }),
+    ]).start();
   }, []);
 
   const renderProductCard = () => (
-    <View style={styles.card}>
-      <View style={styles.cardHeader}>
-        <Icon name="package-variant" size={20} color="#667eea" />
-        <Text style={styles.cardTitle}>
-          {t('product_information', 'Thông tin sản phẩm')}
-        </Text>
-      </View>
-      <TouchableOpacity
-        style={styles.productSelector}
-        onPress={() => setIsModalProductChoiceVisible(true)}>
-        <Text
-          style={[styles.productText, !productName && styles.placeholderText]}>
-          {productName || t('select_product', 'Chọn sản phẩm')}
-        </Text>
-        <Icon name="chevron-down" size={20} color="#667eea" />
-      </TouchableOpacity>
-    </View>
+    <Animated.View 
+      style={[
+        styles.card,
+        {
+          opacity: fadeAnim,
+          transform: [
+            { translateY: slideAnim },
+            { scale: scaleAnim }
+          ]
+        }
+      ]}>
+      <LinearGradient
+        colors={isDarkMode ? [colors.surface, colors.surfaceSecondary] : [colors.white, colors.backgroundSecondary]}
+        style={styles.cardGradient}>
+        <View style={styles.cardHeader}>
+          <View style={[styles.iconContainer, { backgroundColor: colors.primary + '20' }]}>
+            <Icon name="package-variant" size={24} color={colors.primary} />
+          </View>
+          <Text style={[styles.cardTitle, { color: colors.text }]}>
+            {t('product_information', 'Thông tin sản phẩm')}
+          </Text>
+        </View>
+        <TouchableOpacity
+          style={[styles.productSelector, { 
+            backgroundColor: colors.backgroundSecondary,
+            borderColor: colors.border 
+          }]}
+          onPress={() => setIsModalProductChoiceVisible(true)}
+          activeOpacity={0.7}>
+          <Text
+            style={[
+              styles.productText, 
+              { color: colors.text },
+              !productName && { color: colors.placeholder }
+            ]}>
+            {productName || t('select_product', 'Chọn sản phẩm')}
+          </Text>
+          <Icon name="chevron-down" size={20} color={colors.primary} />
+        </TouchableOpacity>
+      </LinearGradient>
+    </Animated.View>
   );
 
   const renderInputField = (
@@ -222,140 +275,191 @@ const Daily = () => {
   ) => (
     <View style={styles.inputContainer}>
       <View style={styles.inputLabel}>
-        <IconFA name={iconName} size={14} color="#667eea" />
-        <Text style={styles.inputLabelText}>{label}</Text>
+        <View style={[styles.inputIconContainer, { backgroundColor: colors.primary + '15' }]}>
+          <IconFA name={iconName} size={12} color={colors.primary} />
+        </View>
+        <Text style={[styles.inputLabelText, { color: colors.textSecondary }]}>{label}</Text>
       </View>
       <TextInput
-        style={styles.modernInput}
+        style={[styles.modernInput, { 
+          backgroundColor: colors.backgroundSecondary,
+          borderColor: colors.border,
+          color: colors.text 
+        }]}
         keyboardType="number-pad"
         value={value === 0 || value === '0' ? '' : value.toString()}
         onChangeText={onChangeText}
         placeholder={placeholder}
-        placeholderTextColor="#a0a0a0"
+        placeholderTextColor={colors.placeholder}
       />
     </View>
   );
 
   const renderProductionCard = () => (
-    <View style={styles.card}>
-      <View style={styles.cardHeader}>
-        <Icon name="factory" size={20} color="#667eea" />
-        <Text style={styles.cardTitle}>
-          {t('production_details', 'Chi tiết sản xuất')}
-        </Text>
-      </View>
-      <View style={styles.inputGrid}>
-        <View style={styles.inputColumn}>
-          {renderInputField(
-            t('quantity', 'Số lượng'),
-            quatity,
-            setQuatity,
-            t('enter_quantity', 'Nhập số lượng'),
-            'hashtag',
-          )}
-          {renderInputField(
-            t('low_speed', 'Tốc độ thấp'),
-            fisrtProduct,
-            setFisrtProduct,
-            t('enter_low_speed', 'Nhập tốc độ thấp'),
-            'tachometer-alt',
-          )}
-          {renderInputField(
-            t('high_speed', 'Tốc độ cao'),
-            temperature,
-            setTemperature,
-            t('enter_high_speed', 'Nhập tốc độ cao'),
-            'thermometer-half',
-          )}
+    <Animated.View 
+      style={[
+        styles.card,
+        {
+          opacity: fadeAnim,
+          transform: [
+            { translateY: slideAnim },
+            { scale: scaleAnim }
+          ]
+        }
+      ]}>
+      <LinearGradient
+        colors={isDarkMode ? [colors.surface, colors.surfaceSecondary] : [colors.white, colors.backgroundSecondary]}
+        style={styles.cardGradient}>
+        <View style={styles.cardHeader}>
+          <View style={[styles.iconContainer, { backgroundColor: colors.success + '20' }]}>
+            <Icon name="factory" size={24} color={colors.success} />
+          </View>
+          <Text style={[styles.cardTitle, { color: colors.text }]}>
+            {t('production_details', 'Chi tiết sản xuất')}
+          </Text>
         </View>
-        <View style={styles.inputColumn}>
-          {renderInputField(
-            t('error_count', 'Lỗi'),
-            error,
-            setError,
-            t('enter_error_count', 'Nhập số lỗi'),
-            'exclamation-triangle',
-          )}
-          {renderInputField(
-            t('shutdown_time', 'Thời gian dừng'),
-            shutdown_time,
-            setShutdown_time,
-            t('enter_shutdown_time', 'Nhập thời gian dừng'),
-            'power-off',
-          )}
-          {renderInputField(
-            t('operated_time', 'Thời gian hoạt động'),
-            timeWork,
-            setTimeWork,
-            t('enter_operated_time', 'Nhập thời gian hoạt động'),
-            'clock',
-          )}
+        <View style={styles.inputGrid}>
+          <View style={styles.inputColumn}>
+            {renderInputField(
+              t('quantity', 'Số lượng'),
+              quatity,
+              setQuatity,
+              t('enter_quantity', 'Nhập số lượng'),
+              'hashtag',
+            )}
+            {renderInputField(
+              t('low_speed', 'Tốc độ thấp'),
+              fisrtProduct,
+              setFisrtProduct,
+              t('enter_low_speed', 'Nhập tốc độ thấp'),
+              'tachometer-alt',
+            )}
+            {renderInputField(
+              t('high_speed', 'Tốc độ cao'),
+              temperature,
+              setTemperature,
+              t('enter_high_speed', 'Nhập tốc độ cao'),
+              'thermometer-half',
+            )}
+          </View>
+          <View style={styles.inputColumn}>
+            {renderInputField(
+              t('error_count', 'Lỗi'),
+              error,
+              setError,
+              t('enter_error_count', 'Nhập số lỗi'),
+              'exclamation-triangle',
+            )}
+            {renderInputField(
+              t('shutdown_time', 'Thời gian dừng'),
+              shutdown_time,
+              setShutdown_time,
+              t('enter_shutdown_time', 'Nhập thời gian dừng'),
+              'power-off',
+            )}
+            {renderInputField(
+              t('operated_time', 'Thời gian hoạt động'),
+              timeWork,
+              setTimeWork,
+              t('enter_operated_time', 'Nhập thời gian hoạt động'),
+              'clock',
+            )}
+          </View>
         </View>
-      </View>
-    </View>
+      </LinearGradient>
+    </Animated.View>
   );
 
   const renderResultsCard = () =>
     isShowSendBtn && (
-      <View style={styles.card}>
-        <View style={styles.cardHeader}>
-          <Icon name="chart-line" size={20} color="#667eea" />
-          <Text style={styles.cardTitle}>
-            {t('calculation_results', 'Kết quả tính toán')}
-          </Text>
-        </View>
-        <View style={styles.resultsContainer}>
-          {percent !== 0 && percent !== '0' && percent !== '0.0' && (
-            <View style={styles.resultItem}>
-              <Text style={styles.resultLabel}>
-                {t('efficiency_percentage', 'Hiệu suất')}:
-              </Text>
-              <Text style={styles.resultValue}>{percent}%</Text>
+      <Animated.View 
+        style={[
+          styles.card,
+          {
+            opacity: fadeAnim,
+            transform: [
+              { translateY: slideAnim },
+              { scale: scaleAnim }
+            ]
+          }
+        ]}>
+        <LinearGradient
+          colors={isDarkMode ? [colors.surface, colors.surfaceSecondary] : [colors.white, colors.backgroundSecondary]}
+          style={styles.cardGradient}>
+          <View style={styles.cardHeader}>
+            <View style={[styles.iconContainer, { backgroundColor: colors.info + '20' }]}>
+              <Icon name="chart-line" size={24} color={colors.info} />
             </View>
-          )}
-          {fisrtPercent !== 0 &&
-            fisrtPercent !== '0' &&
-            fisrtPercent !== '0.0' && (
-              <View style={styles.resultItem}>
-                <Text style={styles.resultLabel}>
-                  {t('low_speed', 'Tốc độ thấp')}:
+            <Text style={[styles.cardTitle, { color: colors.text }]}>
+              {t('calculation_results', 'Kết quả tính toán')}
+            </Text>
+          </View>
+          <View style={[styles.resultsContainer, { backgroundColor: colors.backgroundTertiary }]}>
+            {percent !== 0 && percent !== '0' && percent !== '0.0' && (
+              <View style={[styles.resultItem, { borderBottomColor: colors.border }]}>
+                <Text style={[styles.resultLabel, { color: colors.textSecondary }]}>
+                  {t('efficiency_percentage', 'Hiệu suất')}:
                 </Text>
-                <Text style={styles.resultValue}>{fisrtPercent}%</Text>
+                <Text style={[styles.resultValue, { color: colors.success }]}>{percent}%</Text>
               </View>
             )}
-          {tempPercent !== 0 &&
-            tempPercent !== '0' &&
-            tempPercent !== '0.0' && (
-              <View style={styles.resultItem}>
-                <Text style={styles.resultLabel}>
-                  {t('high_speed', 'Tốc độ cao')}:
-                </Text>
-                <Text style={styles.resultValue}>{tempPercent}%</Text>
+            {fisrtPercent !== 0 &&
+              fisrtPercent !== '0' &&
+              fisrtPercent !== '0.0' && (
+                <View style={[styles.resultItem, { borderBottomColor: colors.border }]}>
+                  <Text style={[styles.resultLabel, { color: colors.textSecondary }]}>
+                    {t('low_speed', 'Tốc độ thấp')}:
+                  </Text>
+                  <Text style={[styles.resultValue, { color: colors.warning }]}>{fisrtPercent}%</Text>
+                </View>
+              )}
+            {tempPercent !== 0 &&
+              tempPercent !== '0' &&
+              tempPercent !== '0.0' && (
+                <View style={[styles.resultItem, { borderBottomColor: colors.border }]}>
+                  <Text style={[styles.resultLabel, { color: colors.textSecondary }]}>
+                    {t('high_speed', 'Tốc độ cao')}:
+                  </Text>
+                  <Text style={[styles.resultValue, { color: colors.warning }]}>{tempPercent}%</Text>
+                </View>
+              )}
+            {errPercemt !== 0 && errPercemt !== '0' && errPercemt !== '0.0' && (
+              <View style={[styles.resultItem, { borderBottomColor: colors.border }]}>
+                <Text style={[styles.resultLabel, { color: colors.textSecondary }]}>{t('error_count', 'Lỗi')}:</Text>
+                <Text style={[styles.resultValue, { color: colors.danger }]}>{errPercemt}%</Text>
               </View>
             )}
-          {errPercemt !== 0 && errPercemt !== '0' && errPercemt !== '0.0' && (
-            <View style={styles.resultItem}>
-              <Text style={styles.resultLabel}>{t('error_count', 'Lỗi')}:</Text>
-              <Text style={styles.resultValue}>{errPercemt}%</Text>
-            </View>
-          )}
-          {quantity !== 0 && quantity !== '0' && (
-            <View style={styles.resultItem}>
-              <Text style={styles.resultLabel}>
-                {t('final_quantity', 'Tổng số lượng cuối')}:
-              </Text>
-              <Text style={styles.resultValue}>{quantity}</Text>
-            </View>
-          )}
-        </View>
-      </View>
+            {quantity !== 0 && quantity !== '0' && (
+              <View style={[styles.resultItem, { borderBottomColor: colors.border }]}>
+                <Text style={[styles.resultLabel, { color: colors.textSecondary }]}>
+                  {t('final_quantity', 'Tổng số lượng cuối')}:
+                </Text>
+                <Text style={[styles.resultValue, { color: colors.primary }]}>{quantity}</Text>
+              </View>
+            )}
+          </View>
+        </LinearGradient>
+      </Animated.View>
     );
 
   const renderActionButtons = () => (
-    <View style={styles.actionButtonsContainer}>
-      <TouchableOpacity style={styles.primaryButton} onPress={handleCal}>
+    <Animated.View 
+      style={[
+        styles.actionButtonsContainer,
+        {
+          opacity: fadeAnim,
+          transform: [
+            { translateY: slideAnim },
+            { scale: scaleAnim }
+          ]
+        }
+      ]}>
+      <TouchableOpacity 
+        style={styles.primaryButton} 
+        onPress={handleCal}
+        activeOpacity={0.8}>
         <LinearGradient
-          colors={['#667eea', '#764ba2']}
+          colors={[colors.primary, colors.primary2]}
           start={{x: 0, y: 0}}
           end={{x: 1, y: 1}}
           style={styles.buttonGradient}>
@@ -367,9 +471,10 @@ const Daily = () => {
       {isShowSendBtn && (
         <TouchableOpacity
           style={styles.successButton}
-          onPress={() => setShowModalSendReport(true)}>
+          onPress={() => setShowModalSendReport(true)}
+          activeOpacity={0.8}>
           <LinearGradient
-            colors={['#00D4AA', '#00B894']}
+            colors={[colors.success, '#00B894']}
             start={{x: 0, y: 0}}
             end={{x: 1, y: 1}}
             style={styles.buttonGradient}>
@@ -381,10 +486,15 @@ const Daily = () => {
         </TouchableOpacity>
       )}
 
-      <TouchableOpacity style={styles.outlineButton} onPress={handleCancel}>
-        <Text style={styles.outlineButtonText}>{t('cancel', 'Hủy')}</Text>
+      <TouchableOpacity 
+        style={[styles.outlineButton, { borderColor: colors.primary }]} 
+        onPress={handleCancel}
+        activeOpacity={0.7}>
+        <Text style={[styles.outlineButtonText, { color: colors.primary }]}>
+          {t('cancel', 'Hủy')}
+        </Text>
       </TouchableOpacity>
-    </View>
+    </Animated.View>
   );
 
   const renderSendModal = () => (
@@ -393,10 +503,10 @@ const Daily = () => {
       transparent={true}
       visible={isShowModalSendReport}
       onRequestClose={() => setShowModalSendReport(false)}>
-      <View style={styles.modalOverlay}>
-        <View style={styles.modalContainer}>
+      <View style={[styles.modalOverlay, { backgroundColor: isDarkMode ? 'rgba(0,0,0,0.8)' : 'rgba(0,0,0,0.5)' }]}>
+        <View style={[styles.modalContainer, { backgroundColor: colors.surface }]}>
           <LinearGradient
-            colors={['#667eea', '#764ba2']}
+            colors={[colors.primary, colors.primary2]}
             start={{x: 0, y: 0}}
             end={{x: 1, y: 1}}
             style={styles.modalHeader}>
@@ -411,20 +521,25 @@ const Daily = () => {
           </LinearGradient>
 
           <View style={styles.modalContent}>
-            <Text style={styles.modalSectionTitle}>
+            <Text style={[styles.modalSectionTitle, { color: colors.text }]}>
               {t('select_work_shift', 'Chọn ca làm việc')}
             </Text>
             <View style={styles.shiftSelector}>
               <TouchableOpacity
                 style={[
                   styles.shiftButton,
-                  shift === 'A' && styles.shiftButtonActive,
+                  { 
+                    backgroundColor: colors.backgroundSecondary,
+                    borderColor: colors.border 
+                  },
+                  shift === 'A' && [styles.shiftButtonActive, { backgroundColor: colors.primary }],
                 ]}
                 onPress={() => setShift('A')}>
                 <Text
                   style={[
                     styles.shiftButtonText,
-                    shift === 'A' && styles.shiftButtonTextActive,
+                    { color: colors.textSecondary },
+                    shift === 'A' && [styles.shiftButtonTextActive, { color: '#fff' }],
                   ]}>
                   {t('shift_a', 'Ca A')}
                 </Text>
@@ -432,51 +547,60 @@ const Daily = () => {
               <TouchableOpacity
                 style={[
                   styles.shiftButton,
-                  shift === 'B' && styles.shiftButtonActive,
+                  { 
+                    backgroundColor: colors.backgroundSecondary,
+                    borderColor: colors.border 
+                  },
+                  shift === 'B' && [styles.shiftButtonActive, { backgroundColor: colors.primary }],
                 ]}
                 onPress={() => setShift('B')}>
                 <Text
                   style={[
                     styles.shiftButtonText,
-                    shift === 'B' && styles.shiftButtonTextActive,
+                    { color: colors.textSecondary },
+                    shift === 'B' && [styles.shiftButtonTextActive, { color: '#fff' }],
                   ]}>
                   {t('shift_b', 'Ca B')}
                 </Text>
               </TouchableOpacity>
             </View>
 
-            <Text style={styles.modalSectionTitle}>
+            <Text style={[styles.modalSectionTitle, { color: colors.text }]}>
               {t('operator_history', 'Lịch sử vận hành')}
             </Text>
             <TextInput
-              style={styles.modalTextInput}
+              style={[styles.modalTextInput, { 
+                backgroundColor: colors.backgroundSecondary,
+                borderColor: colors.border,
+                color: colors.text 
+              }]}
               value={operator_history}
               onChangeText={setOperator_history}
               placeholder={t('enter_operator_history', 'Nhập lịch sử vận hành')}
-              placeholderTextColor="#a0a0a0"
+              placeholderTextColor={colors.placeholder}
               multiline
               numberOfLines={3}
             />
 
-            <View style={styles.summaryContainer}>
-              <Text style={styles.modalSectionTitle}>
+            <View style={[styles.summaryContainer, { backgroundColor: colors.backgroundTertiary }]}>
+              <Text style={[styles.modalSectionTitle, { color: colors.text }]}>
                 {t('summary', 'Tóm tắt')}
               </Text>
               <View style={styles.summaryItem}>
-                <Text style={styles.summaryLabel}>
+                <Text style={[styles.summaryLabel, { color: colors.textSecondary }]}>
                   {t('product', 'Sản phẩm')}:
                 </Text>
-                <Text style={styles.summaryValue}>{productName}</Text>
+                <Text style={[styles.summaryValue, { color: colors.primary }]}>{productName}</Text>
               </View>
               <View style={styles.summaryItem}>
-                <Text style={styles.summaryLabel}>
+                <Text style={[styles.summaryLabel, { color: colors.textSecondary }]}>
                   {t('quantity', 'Số lượng')}:
                 </Text>
-                <Text style={styles.summaryValue}>{quantity}</Text>
+                <Text style={[styles.summaryValue, { color: colors.primary }]}>{quantity}</Text>
               </View>
               <View style={styles.summaryItem}>
-                <Text style={styles.summaryLabel}>{t('date', 'Ngày')}:</Text>
-                <Text style={styles.summaryValue}>
+                <Text style={[styles.summaryLabel, { color: colors.textSecondary }]}>{t('date', 'Ngày')}:</Text>
+                <Text style={[styles.summaryValue, { color: colors.primary }]}>
                   {moment(today).format('DD/MM/YYYY')}
                 </Text>
               </View>
@@ -484,9 +608,10 @@ const Daily = () => {
 
             <TouchableOpacity
               style={styles.modalSendButton}
-              onPress={handleSendDailyReport}>
+              onPress={handleSendDailyReport}
+              activeOpacity={0.8}>
               <LinearGradient
-                colors={['#667eea', '#764ba2']}
+                colors={[colors.primary, colors.primary2]}
                 start={{x: 0, y: 0}}
                 end={{x: 1, y: 1}}
                 style={styles.buttonGradient}>
@@ -502,9 +627,9 @@ const Daily = () => {
   );
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <StatusBar
-        barStyle="light-content"
+        barStyle={isDarkMode ? "light-content" : "dark-content"}
         backgroundColor="transparent"
         translucent
       />
@@ -555,7 +680,6 @@ const Daily = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8fafc',
   },
 
   keyboardAvoidingView: {
@@ -569,40 +693,54 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
   },
   card: {
-    backgroundColor: '#fff',
-    borderRadius: 16,
-    padding: 20,
+    borderRadius: 20,
     marginBottom: 20,
-    ...SHADOWS.light,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  cardGradient: {
+    padding: 24,
   },
   cardHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 20,
+  },
+  iconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
   },
   cardTitle: {
-    ...FONTS.h4,
-    color: '#1a202c',
+    fontSize: 18,
     fontWeight: 'bold',
-    marginLeft: 8,
+    flex: 1,
   },
   productSelector: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#f7fafc',
-    borderRadius: 12,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderRadius: 16,
+    padding: 18,
+    borderWidth: 1.5,
   },
   productText: {
-    ...FONTS.body3,
-    color: '#1a202c',
+    fontSize: 16,
     flex: 1,
+    fontWeight: '500',
   },
   placeholderText: {
-    color: '#a0a0a0',
+    opacity: 0.6,
   },
   inputGrid: {
     flexDirection: 'row',
@@ -613,192 +751,212 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   inputContainer: {
-    marginBottom: 16,
+    marginBottom: 20,
   },
   inputLabel: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: 10,
+  },
+  inputIconContainer: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 8,
   },
   inputLabelText: {
-    ...FONTS.body4,
-    color: '#4a5568',
-    marginLeft: 6,
+    fontSize: 14,
     fontWeight: '600',
+    flex: 1,
   },
   modernInput: {
-    backgroundColor: '#f7fafc',
-    borderRadius: 12,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-    ...FONTS.body3,
-    color: '#1a202c',
+    borderRadius: 16,
+    padding: 18,
+    borderWidth: 1.5,
+    fontSize: 16,
+    fontWeight: '500',
   },
   resultsContainer: {
-    backgroundColor: '#f7fafc',
-    borderRadius: 12,
-    padding: 16,
+    borderRadius: 16,
+    padding: 20,
   },
   resultItem: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 8,
+    paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#e2e8f0',
   },
   resultLabel: {
-    ...FONTS.body4,
-    color: '#4a5568',
+    fontSize: 14,
+    fontWeight: '500',
   },
   resultValue: {
-    ...FONTS.body4,
-    color: '#667eea',
+    fontSize: 16,
     fontWeight: 'bold',
   },
   actionButtonsContainer: {
-    marginTop: 20,
+    marginTop: 24,
   },
   primaryButton: {
-    marginBottom: 12,
-    borderRadius: 12,
+    marginBottom: 16,
+    borderRadius: 16,
     overflow: 'hidden',
-    ...SHADOWS.light,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 8,
   },
   successButton: {
-    marginBottom: 12,
-    borderRadius: 12,
+    marginBottom: 16,
+    borderRadius: 16,
     overflow: 'hidden',
-    ...SHADOWS.light,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 8,
   },
   buttonGradient: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 16,
-    paddingHorizontal: 20,
+    paddingVertical: 18,
+    paddingHorizontal: 24,
   },
   buttonText: {
-    ...FONTS.h4,
+    fontSize: 16,
     color: '#fff',
     fontWeight: 'bold',
-    marginLeft: 8,
+    marginLeft: 10,
   },
   outlineButton: {
-    borderWidth: 1,
-    borderColor: '#667eea',
-    borderRadius: 12,
-    paddingVertical: 16,
+    borderWidth: 2,
+    borderRadius: 16,
+    paddingVertical: 18,
     alignItems: 'center',
+    backgroundColor: 'transparent',
   },
   outlineButtonText: {
-    ...FONTS.h4,
-    color: '#667eea',
+    fontSize: 16,
     fontWeight: 'bold',
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'center',
     alignItems: 'center',
   },
   modalContainer: {
     width: SCREEN_WIDTH * 0.9,
     maxHeight: '80%',
-    backgroundColor: '#fff',
-    borderRadius: 16,
+    borderRadius: 20,
     overflow: 'hidden',
-    ...SHADOWS.dark,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 8,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 16,
+    elevation: 16,
   },
   modalHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
+    paddingHorizontal: 24,
+    paddingVertical: 20,
   },
   modalTitle: {
-    ...FONTS.h4,
+    fontSize: 18,
     color: '#fff',
     fontWeight: 'bold',
+    flex: 1,
   },
   modalCloseButton: {
-    padding: 4,
+    padding: 8,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255,255,255,0.2)',
   },
   modalContent: {
-    padding: 20,
+    padding: 24,
   },
   modalSectionTitle: {
-    ...FONTS.h4,
-    color: '#1a202c',
+    fontSize: 16,
     fontWeight: 'bold',
-    marginBottom: 12,
+    marginBottom: 16,
   },
   shiftSelector: {
     flexDirection: 'row',
-    marginBottom: 24,
-    gap: 12,
+    marginBottom: 28,
+    gap: 16,
   },
   shiftButton: {
     flex: 1,
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderRadius: 24,
-    backgroundColor: '#f7fafc',
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
+    paddingVertical: 14,
+    paddingHorizontal: 24,
+    borderRadius: 28,
+    borderWidth: 2,
     alignItems: 'center',
   },
   shiftButtonActive: {
-    backgroundColor: '#667eea',
-    borderColor: '#667eea',
+    borderColor: 'transparent',
   },
   shiftButtonText: {
-    ...FONTS.body4,
-    color: '#4a5568',
+    fontSize: 14,
     fontWeight: 'bold',
   },
   shiftButtonTextActive: {
     color: '#fff',
   },
   modalTextInput: {
-    backgroundColor: '#f7fafc',
-    borderRadius: 12,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-    ...FONTS.body3,
-    color: '#1a202c',
-    marginBottom: 24,
-    minHeight: 80,
+    borderRadius: 16,
+    padding: 18,
+    borderWidth: 1.5,
+    fontSize: 16,
+    marginBottom: 28,
+    minHeight: 100,
     textAlignVertical: 'top',
   },
   summaryContainer: {
-    backgroundColor: '#f7fafc',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 24,
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 28,
   },
   summaryItem: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 6,
+    paddingVertical: 8,
   },
   summaryLabel: {
-    ...FONTS.body4,
-    color: '#4a5568',
+    fontSize: 14,
+    fontWeight: '500',
   },
   summaryValue: {
-    ...FONTS.body4,
-    color: '#667eea',
+    fontSize: 14,
     fontWeight: 'bold',
   },
   modalSendButton: {
-    borderRadius: 12,
+    borderRadius: 16,
     overflow: 'hidden',
-    ...SHADOWS.light,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 8,
   },
 });
 

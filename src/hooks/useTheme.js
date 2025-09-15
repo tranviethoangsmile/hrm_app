@@ -1,13 +1,13 @@
 import {useThemeContext} from '../context/ThemeContext';
-import {LIGHT_THEME, DARK_THEME} from '../utils/Colors';
+import {lightTheme, darkTheme} from '../config/theme';
 
 export const useTheme = () => {
   const {isDarkMode, toggleTheme, setTheme, isLoading} = useThemeContext();
   
-  const colors = isDarkMode ? DARK_THEME : LIGHT_THEME;
+  const theme = isDarkMode ? darkTheme : lightTheme;
   
   return {
-    colors,
+    ...theme,
     isDarkMode,
     toggleTheme,
     setTheme,

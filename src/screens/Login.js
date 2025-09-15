@@ -43,6 +43,8 @@ import {
 } from '../utils/Colors';
 
 import Loader from '../components/Loader';
+import {DarkModeToggle} from '../components';
+import {useTheme} from '../hooks/useTheme';
 import {COLORS, SIZES, FONTS, SHADOWS} from '../config/theme';
 
 const {width, height} = Dimensions.get('window');
@@ -51,6 +53,7 @@ const Login = () => {
   const {t} = useTranslation();
   const navigation = useNavigation();
   const dispatch = useDispatch();
+  const {colors, isDarkMode} = useTheme();
   const [userName, setUserName] = useState('');
   const [password, setPassword] = useState('');
   const [badUserName, setBadUserName] = useState('');
@@ -195,16 +198,21 @@ const Login = () => {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, {backgroundColor: colors.background}]}>
       <StatusBar
-        barStyle="light-content"
+        barStyle={isDarkMode ? "light-content" : "dark-content"}
         backgroundColor="transparent"
         translucent
       />
 
+      {/* Dark Mode Toggle - Top Right */}
+      <View style={styles.darkModeToggleContainer}>
+        <DarkModeToggle size="small" showLabel={false} />
+      </View>
+
       {/* Animated Background */}
       <LinearGradient
-        colors={['#667eea', '#764ba2', '#f093fb', '#f5576c']}
+        colors={isDarkMode ? ['#1a1a2e', '#16213e', '#0f3460', '#533483'] : ['#667eea', '#764ba2', '#f093fb', '#f5576c']}
         style={styles.animatedBackground}
         start={{x: 0, y: 0}}
         end={{x: 1, y: 1}}
@@ -250,8 +258,8 @@ const Login = () => {
 
                 <Animated.View
                   style={[styles.textContainer, {opacity: fadeAnim}]}>
-                  <Text style={styles.welcomeTitle}>{t('Welcome Back')}</Text>
-                  <Text style={styles.welcomeSubtitle}>
+                  <Text style={[styles.welcomeTitle, {color: colors.text}]}>{t('Welcome Back')}</Text>
+                  <Text style={[styles.welcomeSubtitle, {color: colors.textSecondary}]}>
                     {t('Sign in to continue')}
                   </Text>
                 </Animated.View>
@@ -260,7 +268,7 @@ const Login = () => {
               {/* Login Form */}
               <Animated.View style={[styles.formSection, {opacity: fadeAnim}]}>
                 <LinearGradient
-                  colors={['rgba(255,255,255,0.95)', 'rgba(255,255,255,0.9)']}
+                  colors={isDarkMode ? ['rgba(28,28,30,0.95)', 'rgba(28,28,30,0.9)'] : ['rgba(255,255,255,0.95)', 'rgba(255,255,255,0.9)']}
                   style={styles.formCard}
                   start={{x: 0, y: 0}}
                   end={{x: 1, y: 1}}>
@@ -269,20 +277,24 @@ const Login = () => {
                     <View
                       style={[
                         styles.inputContainer,
+                        {
+                          backgroundColor: isDarkMode ? '#2C2C2E' : '#f8f9fa',
+                          borderColor: badUserName ? colors.error : 'transparent',
+                        },
                         badUserName ? styles.inputError : null,
                       ]}>
                       <Icon
                         name="person-circle-outline"
                         size={24}
-                        color={badUserName ? ERROR_COLOR : THEME_COLOR}
+                        color={badUserName ? colors.error : colors.primary}
                         style={styles.inputIcon}
                       />
                       <TextInput
                         placeholder={t('Username or Email')}
                         value={userName}
                         onChangeText={setUserName}
-                        style={styles.input}
-                        placeholderTextColor="rgba(0,0,0,0.5)"
+                        style={[styles.input, {color: isDarkMode ? '#FFFFFF' : '#000000'}]}
+                        placeholderTextColor={isDarkMode ? '#8E8E93' : 'rgba(0,0,0,0.5)'}
                       />
                     </View>
                     {!!badUserName && (
@@ -291,9 +303,9 @@ const Login = () => {
                         <Icon
                           name="alert-circle"
                           size={16}
-                          color={ERROR_COLOR}
+                          color={colors.error}
                         />
-                        <Text style={styles.errorText}>{badUserName}</Text>
+                        <Text style={[styles.errorText, {color: colors.error}]}>{badUserName}</Text>
                       </Animated.View>
                     )}
                   </View>
@@ -303,12 +315,16 @@ const Login = () => {
                     <View
                       style={[
                         styles.inputContainer,
+                        {
+                          backgroundColor: isDarkMode ? '#2C2C2E' : '#f8f9fa',
+                          borderColor: badPassword ? colors.error : 'transparent',
+                        },
                         badPassword ? styles.inputError : null,
                       ]}>
                       <Icon
                         name="lock-closed"
                         size={24}
-                        color={badPassword ? ERROR_COLOR : THEME_COLOR}
+                        color={badPassword ? colors.error : colors.primary}
                         style={styles.inputIcon}
                       />
                       <TextInput
@@ -316,8 +332,8 @@ const Login = () => {
                         value={password}
                         onChangeText={setPassword}
                         secureTextEntry={!secury}
-                        style={styles.input}
-                        placeholderTextColor="rgba(0,0,0,0.5)"
+                        style={[styles.input, {color: isDarkMode ? '#FFFFFF' : '#000000'}]}
+                        placeholderTextColor={isDarkMode ? '#8E8E93' : 'rgba(0,0,0,0.5)'}
                       />
                       <TouchableOpacity
                         style={styles.eyeButton}
@@ -326,7 +342,7 @@ const Login = () => {
                         <Icon
                           name={secury ? 'eye' : 'eye-off'}
                           size={20}
-                          color={THEME_COLOR}
+                          color={colors.primary}
                         />
                       </TouchableOpacity>
                     </View>
@@ -336,9 +352,9 @@ const Login = () => {
                         <Icon
                           name="alert-circle"
                           size={16}
-                          color={ERROR_COLOR}
+                          color={colors.error}
                         />
-                        <Text style={styles.errorText}>{badPassword}</Text>
+                        <Text style={[styles.errorText, {color: colors.error}]}>{badPassword}</Text>
                       </Animated.View>
                     )}
 
@@ -348,10 +364,10 @@ const Login = () => {
                         disabled={false}
                         value={savePass}
                         onValueChange={newValue => setSavePass(newValue)}
-                        tintColors={{true: THEME_COLOR, false: '#ccc'}}
+                        tintColors={{true: colors.primary, false: colors.border}}
                         style={styles.checkbox}
                       />
-                      <Text style={styles.optionText}>{t('Save Login')}</Text>
+                      <Text style={[styles.optionText, {color: colors.text}]}>{t('Save Login')}</Text>
                     </View>
                   </View>
 
@@ -368,7 +384,7 @@ const Login = () => {
                       colors={
                         visible
                           ? ['#ccc', '#ccc']
-                          : [THEME_COLOR, THEME_COLOR_2]
+                          : isDarkMode ? [colors.primary, colors.primary2] : [THEME_COLOR, THEME_COLOR_2]
                       }
                       style={styles.loginButtonGradient}
                       start={{x: 0, y: 0}}
@@ -401,7 +417,7 @@ const Login = () => {
                     style={styles.forgotPasswordButton}
                     onPress={() => navigation.navigate('Forget')}
                     activeOpacity={0.7}>
-                    <Text style={styles.forgotPasswordText}>
+                    <Text style={[styles.forgotPasswordText, {color: colors.primary}]}>
                       {t('Forgot Password?')}
                     </Text>
                   </TouchableOpacity>
@@ -420,7 +436,6 @@ export default Login;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000',
   },
   animatedBackground: {
     position: 'absolute',
@@ -531,10 +546,8 @@ const styles = StyleSheet.create({
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#f8f9fa',
     borderRadius: 16,
     borderWidth: 2,
-    borderColor: 'transparent',
     paddingHorizontal: 16,
     height: 56,
     shadowColor: '#000',
@@ -626,8 +639,17 @@ const styles = StyleSheet.create({
   },
   forgotPasswordText: {
     fontSize: 16,
-    color: THEME_COLOR_2,
     fontWeight: '600',
     textDecorationLine: 'underline',
+  },
+  darkModeToggleContainer: {
+    position: 'absolute',
+    top: 50,
+    right: 20,
+    zIndex: 1000,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    borderRadius: 20,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
   },
 });

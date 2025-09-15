@@ -14,18 +14,15 @@ import {useTranslation} from 'react-i18next';
 import i18next from '../../services/i18next';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import LinearGradient from 'react-native-linear-gradient';
-import {
-  BG_COLOR,
-  TEXT_COLOR,
-  THEME_COLOR,
-  THEME_COLOR_2,
-} from '../utils/Colors';
+import {useTheme} from '../hooks/useTheme';
+import {DarkModeToggle} from '../components';
 
 const Setting = () => {
   const [selectedLocale, setSelectedLocale] = useState('en');
 
   const {t} = useTranslation();
   const navigation = useNavigation();
+  const {colors, isDarkMode} = useTheme();
 
   const getLanguage = async () => {
     try {
@@ -74,6 +71,10 @@ const Setting = () => {
       <TouchableOpacity
         style={[
           styles.languageItem,
+          {
+            backgroundColor: colors.surface,
+            borderColor: selectedLocale === item.id ? colors.primary : colors.border,
+          },
           selectedLocale === item.id && styles.selectedLanguageItem,
         ]}
         onPress={() => onSelectLocale(item.id)}
@@ -82,28 +83,31 @@ const Setting = () => {
         <Text
           style={[
             styles.languageText,
+            {
+              color: selectedLocale === item.id ? colors.primary : colors.text,
+            },
             selectedLocale === item.id && styles.selectedLanguageText,
           ]}>
           {item.label || 'Unknown'}
         </Text>
         {selectedLocale === item.id && (
-          <Icon name="check" size={20} color={THEME_COLOR} />
+          <Icon name="check" size={20} color={colors.primary} />
         )}
       </TouchableOpacity>
     );
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, {backgroundColor: colors.background}]}>
       <StatusBar
-        barStyle="light-content"
+        barStyle={isDarkMode ? "light-content" : "dark-content"}
         backgroundColor="transparent"
         translucent
       />
 
       {/* Modern Header with Gradient */}
       <LinearGradient
-        colors={['#667eea', '#764ba2']}
+        colors={isDarkMode ? ['#1a1a2e', '#16213e'] : ['#667eea', '#764ba2']}
         start={{x: 0, y: 0}}
         end={{x: 1, y: 1}}
         style={styles.headerGradient}>
@@ -119,9 +123,21 @@ const Setting = () => {
       </LinearGradient>
 
       <View style={styles.content}>
-        <View style={styles.sectionHeader}>
-          <Icon name="translate" size={24} color={THEME_COLOR} />
-          <Text style={styles.sectionTitle}>{t('language', 'Language')}</Text>
+        {/* Dark Mode Toggle Section */}
+        <View style={[styles.sectionHeader, {borderBottomColor: colors.border}]}>
+          <Icon name="theme-light-dark" size={24} color={colors.primary} />
+          <Text style={[styles.sectionTitle, {color: colors.text}]}>
+            {t('theme', 'Theme')}
+          </Text>
+        </View>
+        
+        <View style={[styles.settingItem, {backgroundColor: colors.surface, borderColor: colors.border}]}>
+          <DarkModeToggle size="large" />
+        </View>
+
+        <View style={[styles.sectionHeader, {borderBottomColor: colors.border}]}>
+          <Icon name="translate" size={24} color={colors.primary} />
+          <Text style={[styles.sectionTitle, {color: colors.text}]}>{t('language', 'Language')}</Text>
         </View>
 
         <FlatList
@@ -134,7 +150,7 @@ const Setting = () => {
         />
 
         <TouchableOpacity
-          style={styles.applyButton}
+          style={[styles.applyButton, {backgroundColor: colors.primary}]}
           onPress={() => navigation.goBack()}>
           <Icon
             name="check"
@@ -152,7 +168,6 @@ const Setting = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8fafc',
   },
   headerGradient: {
     paddingTop: (StatusBar.currentHeight || 44) + 10,
@@ -192,13 +207,26 @@ const styles = StyleSheet.create({
     marginBottom: 24,
     paddingBottom: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#e0e6ed',
   },
   sectionTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: TEXT_COLOR,
     marginLeft: 12,
+  },
+  settingItem: {
+    backgroundColor: '#ffffff',
+    borderRadius: 12,
+    padding: 16,
+    marginVertical: 6,
+    borderWidth: 1,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   listContainer: {
     paddingVertical: 8,
@@ -222,7 +250,6 @@ const styles = StyleSheet.create({
     borderColor: '#f0f4f8',
   },
   selectedLanguageItem: {
-    borderColor: THEME_COLOR,
     borderWidth: 2,
     backgroundColor: '#f8f9ff',
   },
@@ -233,18 +260,15 @@ const styles = StyleSheet.create({
   languageText: {
     flex: 1,
     fontSize: 16,
-    color: TEXT_COLOR,
     fontWeight: '500',
   },
   selectedLanguageText: {
-    color: THEME_COLOR,
     fontWeight: 'bold',
   },
   applyButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: THEME_COLOR_2,
     borderRadius: 12,
     paddingVertical: 16,
     marginTop: 24,

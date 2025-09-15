@@ -65,6 +65,7 @@ import IconFA from 'react-native-vector-icons/FontAwesome';
 import {useNavigation} from '@react-navigation/native';
 import moment from 'moment';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import {useThemeContext} from '../context/ThemeContext';
 
 const extractFirstUrl = text => {
   if (!text) return null;
@@ -117,7 +118,11 @@ const ChatScreen = ({route}) => {
   const {t} = useTranslation();
   const authData = useSelector(state => state.auth);
   const USER_INFOR = authData?.data?.data;
+  const {isDarkMode} = useThemeContext();
   const [isLoading, setIsloading] = useState(false);
+  
+  // Create styles based on theme
+  const styles = createStyles(isDarkMode);
   const flatListRef = useRef(null);
   const [showOptions, setShowOptions] = useState(false);
   const [selectedMessageId, setSelectedMessageId] = useState(null);
@@ -134,6 +139,8 @@ const ChatScreen = ({route}) => {
   const [isTranslating, setIsTranslating] = useState(false);
   const [linkPreviews, setLinkPreviews] = useState({});
   const [selectedMedia, setSelectedMedia] = useState(null);
+  const [isTyping, setIsTyping] = useState(false);
+  const [typingTimeout, setTypingTimeout] = useState(null);
 
   const showMessage = (msg, type, dur) => {
     setMessageModalVisible(true);
@@ -360,6 +367,9 @@ const ChatScreen = ({route}) => {
 
     return () => {
       socket.off(`${conversationId}`, handleNewMessage);
+      if (typingTimeout) {
+        clearTimeout(typingTimeout);
+      }
     };
   }, [conversationId]);
 
@@ -390,8 +400,9 @@ const ChatScreen = ({route}) => {
           <View style={styles.dateLabelContainer}>
             <Text
               style={{
-                color: '#888',
-                fontSize: 13,
+                color: isDarkMode ? '#8E8E93' : '#8E8E93',
+                fontSize: 12,
+                fontWeight: '500',
                 overflow: 'hidden',
               }}>
               {item.label === 'today' || item.label === 'yesterday'
@@ -522,6 +533,33 @@ const ChatScreen = ({route}) => {
 
   const handleFocusInput = () => {
     textInputRef.current?.focus();
+  };
+
+  const handleTextChange = (text) => {
+    setMessage(text);
+    
+    // Typing indicator logic
+    if (text.trim().length > 0) {
+      setIsTyping(true);
+      
+      // Clear existing timeout
+      if (typingTimeout) {
+        clearTimeout(typingTimeout);
+      }
+      
+      // Set new timeout to stop typing indicator
+      const timeout = setTimeout(() => {
+        setIsTyping(false);
+      }, 2000);
+      
+      setTypingTimeout(timeout);
+    } else {
+      setIsTyping(false);
+      if (typingTimeout) {
+        clearTimeout(typingTimeout);
+        setTypingTimeout(null);
+      }
+    }
   };
 
   const handleTranslateMessage = async messageId => {
@@ -918,14 +956,14 @@ const ChatScreen = ({route}) => {
         style={styles.container}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
         <TouchableWithoutFeedback onPress={handleOutsidePress}>
-          <SafeAreaView style={styles.container}>
+          <View style={styles.container}>
             <StatusBar
               barStyle="light-content"
               backgroundColor="transparent"
               translucent
             />
             <LinearGradient
-              colors={['#4A90E2', '#357ABD', '#1E3A8A']}
+              colors={['#667eea', '#764ba2', '#f093fb']}
               start={{x: 0, y: 0}}
               end={{x: 1, y: 1}}
               style={styles.headerContainer}>
@@ -933,19 +971,24 @@ const ChatScreen = ({route}) => {
                 <TouchableOpacity
                   style={styles.headerBackBtn}
                   onPress={() => navigation.goBack()}>
-                  <IconFA name="arrow-left" size={20} color="#fff" />
+                  <IconFA name="arrow-left" size={22} color="#fff" />
                 </TouchableOpacity>
 
                 <View style={styles.userInfoContainer}>
-                  <Image
-                    source={friendAvatar ? {uri: friendAvatar} : defaultAvatar}
-                    style={styles.userAvatar}
-                  />
+                  <View style={styles.avatarContainer}>
+                    <Image
+                      source={friendAvatar ? {uri: friendAvatar} : defaultAvatar}
+                      style={styles.userAvatar}
+                    />
+                    <View style={styles.onlineIndicator} />
+                  </View>
                   <View style={styles.userDetails}>
                     <Text style={styles.userName} numberOfLines={1}>
                       {friendName}
                     </Text>
-                    <View style={styles.encryptedMessageContainer}>
+                    <View style={styles.statusContainer}>
+                      <View style={styles.statusDot} />
+                      <Text style={styles.statusText}>Online</Text>
                       <Icon
                         name="lock-closed-sharp"
                         size={12}
@@ -958,14 +1001,17 @@ const ChatScreen = ({route}) => {
 
                 <View style={styles.headerActionsCompact}>
                   <TouchableOpacity style={styles.headerActionBtnCompact}>
-                    <Icon name="call" color="#fff" size={18} />
+                    <Icon name="call" color="#fff" size={20} />
                   </TouchableOpacity>
                   <TouchableOpacity style={styles.headerActionBtnCompact}>
-                    <Icon name="videocam" color="#fff" size={18} />
+                    <Icon name="videocam" color="#fff" size={20} />
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.headerActionBtnCompact}>
+                    <Icon name="ellipsis-vertical" color="#fff" size={20} />
                   </TouchableOpacity>
                 </View>
               </View>
-            </LinearGradient>
+              </LinearGradient>
 
             {messages.length === 0 ? (
               <View style={styles.notMessageContainer}>
@@ -993,9 +1039,23 @@ const ChatScreen = ({route}) => {
                   index,
                 })}
                 ListFooterComponent={
-                  isLoading ? (
-                    <ActivityIndicator size="small" color="#888" />
-                  ) : null
+                  <View>
+                    {isLoading && (
+                      <ActivityIndicator size="small" color="#888" style={{marginVertical: 10}} />
+                    )}
+                    {isTyping && (
+                      <View style={styles.typingIndicator}>
+                        <View style={styles.typingBubble}>
+                          <View style={styles.typingDots}>
+                            <View style={[styles.typingDot, styles.typingDot1]} />
+                            <View style={[styles.typingDot, styles.typingDot2]} />
+                            <View style={[styles.typingDot, styles.typingDot3]} />
+                          </View>
+                        </View>
+                        <Text style={styles.typingText}>{friendName} is typing...</Text>
+                      </View>
+                    )}
+                  </View>
                 }
               />
             )}
@@ -1023,31 +1083,43 @@ const ChatScreen = ({route}) => {
             )}
 
             <View style={styles.inputContainer}>
-              <TouchableOpacity
-                style={styles.iconButton}
-                onPress={handleToggleEmojiPicker}>
-                <Icon name="happy-outline" color={THEME_COLOR} size={24} />
-              </TouchableOpacity>
+              <View style={styles.inputWrapper}>
+                <TouchableOpacity
+                  style={styles.iconButton}
+                  onPress={handleToggleEmojiPicker}>
+                  <Icon name="happy-outline" color={isDarkMode ? "#8E8E93" : "#8E8E93"} size={24} />
+                </TouchableOpacity>
 
-              <TouchableOpacity
-                style={styles.iconButton}
-                onPress={handleImagePicker}>
-                <Icon name="images-outline" color={THEME_COLOR} size={24} />
-              </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.iconButton}
+                  onPress={handleImagePicker}>
+                  <Icon name="images-outline" color={isDarkMode ? "#8E8E93" : "#8E8E93"} size={24} />
+                </TouchableOpacity>
 
-              <TextInput
-                ref={textInputRef}
-                style={styles.textInput}
-                value={message}
-                onChangeText={setMessage}
-                placeholder={safeTranslate('tymess', 'Type your message...')}
-                placeholderTextColor="#999"
-                onFocus={handleFocusInput}
-              />
+                <View style={styles.textInputContainer}>
+                  <TextInput
+                    ref={textInputRef}
+                    style={styles.textInput}
+                    value={message}
+                    onChangeText={handleTextChange}
+                    placeholder={safeTranslate('tymess', 'Type your message...')}
+                    placeholderTextColor={isDarkMode ? "#8E8E93" : "#8E8E93"}
+                    onFocus={handleFocusInput}
+                    multiline
+                    maxLength={1000}
+                  />
+                </View>
 
-              <TouchableOpacity onPress={handleSend} style={styles.sendButton}>
-                <Icon name="send" color="#FFF" size={24} />
-              </TouchableOpacity>
+                <TouchableOpacity 
+                  onPress={handleSend} 
+                  style={[
+                    styles.sendButton,
+                    {opacity: message.trim() ? 1 : 0.5}
+                  ]}
+                  disabled={!message.trim()}>
+                  <Icon name="send" color="#FFF" size={20} />
+                </TouchableOpacity>
+              </View>
             </View>
 
             {showEmojiPicker && (
@@ -1079,35 +1151,50 @@ const ChatScreen = ({route}) => {
               mediaType={selectedMedia?.type}
               postInfo={selectedMedia?.postInfo}
             />
-          </SafeAreaView>
+          </View>
         </TouchableWithoutFeedback>
       </KeyboardAvoidingView>
     </React.Fragment>
   );
 };
 
-const styles = StyleSheet.create({
+// Dynamic styles based on theme
+const createStyles = (isDarkMode) => StyleSheet.create({
   userMessageContainer: {
     alignSelf: 'flex-end',
-    backgroundColor: COLORS.primary,
-    borderRadius: SIZES.radius * 2,
-    marginVertical: 4,
-    padding: 12,
-    maxWidth: '75%',
-    marginRight: 10,
+    backgroundColor: '#007AFF',
+    borderRadius: 20,
+    marginVertical: 3,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    maxWidth: '80%',
+    marginRight: 16,
     position: 'relative',
-    ...SHADOWS.light,
+    shadowColor: '#007AFF',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3,
+    borderBottomRightRadius: 6,
   },
   otherMessageContainer: {
     alignSelf: 'flex-start',
-    backgroundColor: COLORS.lightGray1,
-    borderRadius: SIZES.radius * 2,
-    marginVertical: 4,
-    padding: 12,
-    maxWidth: '75%',
-    marginLeft: 10,
+    backgroundColor: isDarkMode ? '#1C1C1E' : '#FFFFFF',
+    borderRadius: 20,
+    marginVertical: 3,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    maxWidth: '80%',
+    marginLeft: 16,
     position: 'relative',
-    ...SHADOWS.light,
+    shadowColor: isDarkMode ? '#000' : '#000',
+    shadowOffset: {width: 0, height: 1},
+    shadowOpacity: isDarkMode ? 0.3 : 0.1,
+    shadowRadius: 3,
+    elevation: 2,
+    borderBottomLeftRadius: 6,
+    borderWidth: 0.5,
+    borderColor: isDarkMode ? '#2C2C2E' : '#E5E5EA',
   },
   mediaMessageContainer: {
     alignSelf: 'flex-start',
@@ -1154,7 +1241,10 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: isDarkMode ? '#000000' : '#F2F2F7',
+  },
+  headerSafeArea: {
+    backgroundColor: 'transparent',
   },
   messageContainer: {
     padding: 5,
@@ -1203,14 +1293,14 @@ const styles = StyleSheet.create({
     marginRight: 4,
   },
   headerContainer: {
-    paddingTop: (StatusBar.currentHeight || 44) + 10,
-    paddingBottom: 15,
+    paddingTop: Platform.OS === 'ios' ? 50 : 15,
+    paddingBottom: 20,
     paddingHorizontal: 20,
     shadowColor: '#000',
-    shadowOffset: {width: 0, height: 2},
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 5,
+    shadowOffset: {width: 0, height: 4},
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 8,
     zIndex: 100,
   },
   headerContent: {
@@ -1219,62 +1309,106 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   headerBackBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255,255,255,0.2)',
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(255,255,255,0.15)',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 15,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   userInfoContainer: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
   },
-  userAvatar: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: '#F2F2F7',
-    borderWidth: 2,
-    borderColor: 'rgba(255,255,255,0.3)',
+  avatarContainer: {
+    position: 'relative',
     marginRight: 12,
+  },
+  userAvatar: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#F2F2F7',
+    borderWidth: 3,
+    borderColor: 'rgba(255,255,255,0.4)',
+  },
+  onlineIndicator: {
+    position: 'absolute',
+    bottom: 2,
+    right: 2,
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    backgroundColor: '#4CAF50',
+    borderWidth: 2,
+    borderColor: '#fff',
   },
   userDetails: {
     flex: 1,
   },
   userName: {
-    fontSize: 18,
-    fontWeight: 'bold',
+    fontSize: 19,
+    fontWeight: '700',
     color: '#fff',
-    marginBottom: 2,
+    marginBottom: 4,
+    textShadowColor: 'rgba(0,0,0,0.3)',
+    textShadowOffset: {width: 0, height: 1},
+    textShadowRadius: 2,
+  },
+  statusContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  statusDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#4CAF50',
+    marginRight: 6,
+  },
+  statusText: {
+    fontSize: 13,
+    color: 'rgba(255,255,255,0.9)',
+    marginRight: 8,
+    fontWeight: '500',
   },
   headerActionsCompact: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   headerActionBtnCompact: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: 'rgba(255,255,255,0.2)',
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255,255,255,0.15)',
     justifyContent: 'center',
     alignItems: 'center',
     marginLeft: 8,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 2,
   },
   imageStyle: {
-    width: 200,
-    height: 200,
-    borderRadius: 8,
+    width: 220,
+    height: 220,
+    borderRadius: 12,
     alignSelf: 'center',
     marginVertical: 0,
     backgroundColor: 'transparent',
   },
   videoStyle: {
-    width: 250,
-    height: 150,
-    borderRadius: 8,
+    width: 240,
+    height: 160,
+    borderRadius: 12,
     backgroundColor: 'transparent',
   },
   mediaWrapper: {
@@ -1291,43 +1425,75 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   inputContainer: {
+    backgroundColor: isDarkMode ? '#000000' : '#F2F2F7',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderTopWidth: 0.5,
+    borderTopColor: isDarkMode ? '#2C2C2E' : '#E5E5EA',
+  },
+  inputWrapper: {
     flexDirection: 'row',
-    alignItems: 'center',
-    padding: 10,
-    borderTopWidth: 1,
-    borderTopColor: '#E0E0E0',
-    backgroundColor: '#FFFFFF',
+    alignItems: 'flex-end',
+    backgroundColor: isDarkMode ? '#1C1C1E' : '#FFFFFF',
+    borderRadius: 25,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 1},
+    shadowOpacity: isDarkMode ? 0.3 : 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+    borderWidth: 0.5,
+    borderColor: isDarkMode ? '#2C2C2E' : '#E5E5EA',
   },
   iconButton: {
-    paddingHorizontal: 10,
+    paddingHorizontal: 8,
+    paddingVertical: 8,
+    borderRadius: 20,
+    marginRight: 4,
+  },
+  textInputContainer: {
+    flex: 1,
+    marginHorizontal: 8,
+    maxHeight: 100,
   },
   textInput: {
-    flex: 1,
-    borderRadius: 25,
-    paddingVertical: 10,
-    paddingHorizontal: 15,
-    marginHorizontal: 10,
-    backgroundColor: '#E9E9E9',
     fontSize: 16,
-    color: '#003366',
+    color: isDarkMode ? '#FFFFFF' : '#000000',
+    paddingVertical: 8,
+    paddingHorizontal: 0,
+    textAlignVertical: 'top',
+    minHeight: 20,
+    maxHeight: 80,
   },
   sendButton: {
-    backgroundColor: THEME_COLOR,
-    borderRadius: 25,
-    padding: 10,
+    backgroundColor: '#007AFF',
+    borderRadius: 20,
+    width: 36,
+    height: 36,
     justifyContent: 'center',
     alignItems: 'center',
-    elevation: 2,
+    shadowColor: '#007AFF',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 3,
   },
   messagesList: {
     paddingHorizontal: 16,
     paddingVertical: 10,
   },
   userMessageText: {
-    color: COLORS.white,
+    color: '#FFFFFF',
+    fontSize: 16,
+    lineHeight: 22,
+    fontWeight: '400',
   },
   otherMessageText: {
-    color: COLORS.text,
+    color: isDarkMode ? '#FFFFFF' : '#000000',
+    fontSize: 16,
+    lineHeight: 22,
+    fontWeight: '400',
   },
   notMessageContainer: {
     flex: 1,
@@ -1337,13 +1503,19 @@ const styles = StyleSheet.create({
   },
   notMessageText: {
     fontSize: 18,
-    color: '#777',
+    color: isDarkMode ? '#8E8E93' : '#777',
   },
   showEmojiTab: {
-    height: 250,
-    backgroundColor: 'white',
+    height: 280,
+    backgroundColor: isDarkMode ? '#1C1C1E' : '#F2F2F7',
     zIndex: 1000,
-    elevation: 4,
+    elevation: 8,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: -2},
+    shadowOpacity: isDarkMode ? 0.3 : 0.1,
+    shadowRadius: 8,
   },
   linkPreviewBox: {
     flexDirection: 'row',
@@ -1488,8 +1660,63 @@ const styles = StyleSheet.create({
   },
   dateLabelContainer: {
     alignItems: 'center',
-    marginVertical: 10,
+    marginVertical: 15,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    backgroundColor: isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
+    borderRadius: 12,
+    alignSelf: 'center',
+    marginHorizontal: 20,
+  },
+  typingIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 8,
+    marginLeft: 16,
+  },
+  typingBubble: {
+    backgroundColor: isDarkMode ? '#1C1C1E' : '#FFFFFF',
+    borderRadius: 20,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    marginRight: 8,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 1},
+    shadowOpacity: isDarkMode ? 0.3 : 0.1,
+    shadowRadius: 3,
+    elevation: 2,
+    borderWidth: 0.5,
+    borderColor: isDarkMode ? '#2C2C2E' : '#E5E5EA',
+    borderBottomLeftRadius: 6,
+  },
+  typingDots: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  typingDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#8E8E93',
+    marginHorizontal: 2,
+  },
+  typingDot1: {
+    animation: 'typing1 1.4s infinite ease-in-out',
+  },
+  typingDot2: {
+    animation: 'typing2 1.4s infinite ease-in-out',
+  },
+  typingDot3: {
+    animation: 'typing3 1.4s infinite ease-in-out',
+  },
+  typingText: {
+    fontSize: 12,
+    color: '#8E8E93',
+    fontStyle: 'italic',
   },
 });
+
+// Create default styles for export
+const defaultStyles = createStyles(false);
 
 export default ChatScreen;

@@ -8,33 +8,45 @@ import {
   StatusBar,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import IconFA from 'react-native-vector-icons/FontAwesome5';
 import LinearGradient from 'react-native-linear-gradient';
-import {THEME_COLOR, THEME_COLOR_2} from '../../utils/Colors';
+import {useTheme} from '../../hooks/useTheme';
 
-const Header = ({title, onBack, right}) => (
-  <LinearGradient
-    colors={[THEME_COLOR, THEME_COLOR_2]}
-    start={{x: 0, y: 0}}
-    end={{x: 1, y: 1}}
-    style={styles.headerGradient}>
-    <View style={styles.headerContent}>
-      {onBack ? (
-        <TouchableOpacity
-          onPress={onBack}
-          style={styles.backButton}
-          hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}>
-          <Icon name="arrow-left" size={20} color="#fff" />
-        </TouchableOpacity>
-      ) : (
-        <View style={{width: 32}} />
-      )}
-      <Text style={styles.headerTitle} numberOfLines={1} ellipsizeMode="tail">
-        {title}
-      </Text>
-      {right ? right : <View style={{width: 32}} />}
-    </View>
-  </LinearGradient>
-);
+const Header = ({title, onBack, right}) => {
+  const {colors} = useTheme();
+  
+  return (
+    <>
+      <StatusBar
+        barStyle={colors.isDark ? 'light-content' : 'dark-content'}
+        backgroundColor="transparent"
+        translucent
+      />
+      <LinearGradient
+        colors={[colors.primary, colors.primary2]}
+        start={{x: 0, y: 0}}
+        end={{x: 1, y: 1}}
+        style={styles.headerGradient}>
+        <View style={styles.headerContent}>
+          {onBack ? (
+            <TouchableOpacity
+              onPress={onBack}
+              style={[styles.backButton, {backgroundColor: 'rgba(255,255,255,0.2)'}]}
+              hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}>
+              <IconFA name="arrow-left" size={18} color="#fff" />
+            </TouchableOpacity>
+          ) : (
+            <View style={{width: 32}} />
+          )}
+          <Text style={styles.headerTitle} numberOfLines={1} ellipsizeMode="tail">
+            {title}
+          </Text>
+          {right ? right : <View style={{width: 32}} />}
+        </View>
+      </LinearGradient>
+    </>
+  );
+};
 
 const styles = StyleSheet.create({
   headerGradient: {
@@ -54,11 +66,15 @@ const styles = StyleSheet.create({
     paddingTop: 5,
   },
   backButton: {
-    padding: 6,
-    borderRadius: 16,
-    backgroundColor: 'rgba(255,255,255,0.2)',
+    padding: 8,
+    borderRadius: 20,
     justifyContent: 'center',
     alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
   },
   headerTitle: {
     fontSize: 18,

@@ -7,20 +7,25 @@ import {
   StyleSheet,
   StatusBar,
   Switch,
-  useColorScheme,
+  ScrollView,
+  Animated,
+  Easing,
+  TouchableOpacity,
 } from 'react-native';
 import React, {useEffect, useState} from 'react';
 import axios from 'axios';
 import {useNavigation} from '@react-navigation/native';
-import {TEXT_COLOR, THEME_COLOR, THEME_COLOR_2} from '../utils/Colors';
 import Loader from '../components/Loader';
 import moment from 'moment';
 import Icon from 'react-native-vector-icons/FontAwesome';
+import IconFA from 'react-native-vector-icons/FontAwesome5';
 import {useSelector} from 'react-redux';
 import {useTranslation} from 'react-i18next';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import i18next from '../../services/i18next';
 import Header from '../components/common/Header';
+import LinearGradient from 'react-native-linear-gradient';
+import {useTheme} from '../hooks/useTheme';
 
 import {
   API,
@@ -51,6 +56,7 @@ const weekDays = [
 
 const Report = () => {
   const {t} = useTranslation();
+  const {colors, sizes, fonts, shadows, isDarkMode} = useTheme();
   const authData = useSelector(state => state.auth);
   const navigation = useNavigation();
   const [dataInventory, setDataInventory] = useState([]);
@@ -65,7 +71,11 @@ const Report = () => {
   const [productValue, setProductValue] = useState('');
   const [compareShift, setCompareShift] = useState(false);
   const [dailyReports, setDailyReports] = useState([]);
-  const isDarkMode = useColorScheme() === 'dark';
+  
+  // Animation values
+  const fadeAnim = useState(new Animated.Value(0))[0];
+  const slideAnim = useState(new Animated.Value(50))[0];
+  const scaleAnim = useState(new Animated.Value(0.9))[0];
 
   const getLanguage = async () => {
     return await AsyncStorage.getItem('Language');
@@ -178,6 +188,27 @@ const Report = () => {
     if (shiftValue) {
       setCompareShift(false);
     }
+    
+    // Start animations
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 800,
+        useNativeDriver: true,
+      }),
+      Animated.timing(slideAnim, {
+        toValue: 0,
+        duration: 600,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: true,
+      }),
+      Animated.timing(scaleAnim, {
+        toValue: 1,
+        duration: 600,
+        easing: Easing.out(Easing.back(1.1)),
+        useNativeDriver: true,
+      }),
+    ]).start();
     // eslint-disable-next-line
   }, [shiftValue, productValue]);
 
@@ -185,19 +216,19 @@ const Report = () => {
   const height = Dimensions.get('screen').height * 0.3;
 
   const chartConfig = {
-    backgroundGradientFrom: '#fff',
+    backgroundGradientFrom: colors.surface,
     backgroundGradientFromOpacity: 0,
-    backgroundGradientTo: '#fff',
+    backgroundGradientTo: colors.surface,
     backgroundGradientToOpacity: 0.5,
-    color: (opacity = 1) => `rgba(100, 100, 146, ${opacity})`,
-    strokeWidth: 2,
-    barPercentage: 0.5,
+    color: (opacity = 1) => `${colors.primary}${Math.floor(opacity * 255).toString(16).padStart(2, '0')}`,
+    strokeWidth: 3,
+    barPercentage: 0.6,
     useShadowColorFromDataset: false,
     decimalPlaces: 0,
     propsForDots: {
-      r: '4',
-      strokeWidth: '2',
-      stroke: '#fff',
+      r: '5',
+      strokeWidth: '3',
+      stroke: colors.primary,
     },
   };
 
@@ -306,7 +337,7 @@ const Report = () => {
   }
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <StatusBar
         barStyle={isDarkMode ? 'light-content' : 'dark-content'}
         backgroundColor="transparent"
@@ -317,180 +348,245 @@ const Report = () => {
         onBack={() => navigation.goBack()}
       />
       <Loader visible={isLoading} />
-      {/* Inventory Card */}
-      <View style={styles.card}>
-        <View style={styles.sectionHeader}>
-          <Icon
-            name="pie-chart"
-            size={22}
-            color={THEME_COLOR}
-            style={{marginRight: 8}}
-          />
-          <Text style={styles.sectionTitle}>{t('inventory')}</Text>
-        </View>
-        {dataInventory && dataInventory.length > 0 ? (
-          <PieChart
-            data={dataInventory}
-            width={width}
-            height={height}
-            chartConfig={chartConfig}
-            accessor={'population'}
-            backgroundColor={'transparent'}
-            paddingLeft={'20'}
-            center={[10, -10]}
-            absolute
-          />
-        ) : (
-          <Text style={styles.emptyText}>{t('no_data')}</Text>
-        )}
-      </View>
-      {/* Daily Report Card */}
-      <View style={styles.card}>
-        <View style={styles.sectionHeader}>
-          <Icon
-            name="bar-chart"
-            size={22}
-            color={THEME_COLOR}
-            style={{marginRight: 8}}
-          />
-          <Text style={styles.sectionTitle}>{t('Dai')}</Text>
-        </View>
-        <View style={styles.filterRow}>
-          <View style={styles.filterItem}>
-            <DropDownPicker
-              open={open}
-              value={value}
-              setValue={val => setValue(val)}
-              setOpen={() => setOpen(!open)}
-              items={shiftValueList}
-              maxHeight={300}
-              autoScroll
-              onChangeValue={item => handleSetShift(item)}
-              placeholder={t('S')}
-              placeholderStyle={{color: TEXT_COLOR}}
-              zIndexInverse={1}
-              dropDownContainerStyle={styles.dropdown}
-              style={styles.dropdown}
-              ArrowDownIconComponent={() => (
-                <Icon name="chevron-down" size={16} color={THEME_COLOR_2} />
-              )}
-            />
-          </View>
-          <View style={styles.filterItem}>
-            <DropDownPicker
-              open={proOpen}
-              value={productVal}
-              setValue={val => setProductVal(val)}
-              setOpen={() => setProOpen(!proOpen)}
-              items={productValueList}
-              maxHeight={300}
-              onChangeValue={item => handleSetPro(item)}
-              placeholder={t('product')}
-              placeholderStyle={{color: TEXT_COLOR}}
-              zIndexInverse={1}
-              dropDownContainerStyle={styles.dropdown}
-              style={styles.dropdown}
-              ArrowDownIconComponent={() => (
-                <Icon name="chevron-down" size={16} color={THEME_COLOR_2} />
-              )}
-            />
-          </View>
-          <View
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              marginBottom: 8,
-            }}>
-            <Switch
-              value={compareShift}
-              onValueChange={setCompareShift}
-              disabled={!!shiftValue || !!productValue}
-              trackColor={{false: '#767577', true: '#27ae60'}}
-              thumbColor={compareShift ? '#fff' : '#f4f3f4'}
-              ios_backgroundColor="#3e3e3e"
-            />
-            <Text style={{marginLeft: 8, color: '#333'}}>
-              {t('compare_shift', 'So sánh ca')}
-            </Text>
-          </View>
-        </View>
-        <View style={styles.chartBody}>
-          {lineData.datasets.length > 0 ? (
-            <LineChart
-              data={lineData}
-              width={width}
-              height={240}
-              chartConfig={chartConfig}
-              bezier
-              style={{
-                borderRadius: 16,
-                backgroundColor: '#fff',
-                marginBottom: 8,
-                paddingRight: 8,
-              }}
-              verticalLabelRotation={30}
-              fromZero
-              withDots
-              withShadow={false}
-              withInnerLines
-              withOuterLines
-              renderDotContent={({x, y, index, indexData, datasetIndex}) => {
-                const dataset = lineData.datasets[datasetIndex];
-                return (
-                  <View
-                    key={`dot-${dataset?.datasetIndex || 0}-${index}`}
-                    style={{
-                      position: 'absolute',
-                      top: y + 12,
-                      left: x - 12,
-                      backgroundColor: 'rgba(255, 255, 255, 0.9)',
-                      padding: 1,
-                      borderRadius: 2,
-                      borderWidth: 1,
-                      borderColor: '#ddd',
-                    }}>
-                    <Text style={{fontSize: 8, color: '#333'}}>
-                      {Math.round(indexData)}
-                    </Text>
-                  </View>
-                );
-              }}
-            />
-          ) : (
-            <Text style={styles.emptyText}>{t('no_data')}</Text>
-          )}
-          {/* Chú thích màu sắc */}
-          <View
-            style={{
-              flexDirection: 'row',
-              justifyContent: 'center',
-              marginTop: 10,
-            }}>
-            {lineData.datasets.map((dataset, index) => (
-              <View
-                key={index}
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  marginRight: 16,
-                }}>
-                <View
-                  style={{
-                    width: 16,
-                    height: 4,
-                    backgroundColor: dataset.color(),
-                    marginRight: 6,
-                    borderRadius: 2,
-                  }}
+      
+      <ScrollView 
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollViewContent}
+        showsVerticalScrollIndicator={false}>
+        
+        {/* Inventory Card */}
+        <Animated.View 
+          style={[
+            styles.card,
+            {
+              opacity: fadeAnim,
+              transform: [
+                { translateY: slideAnim },
+                { scale: scaleAnim }
+              ]
+            }
+          ]}>
+          <LinearGradient
+            colors={isDarkMode ? [colors.surface, colors.surfaceSecondary] : [colors.white, colors.backgroundSecondary]}
+            style={styles.cardGradient}>
+            <View style={styles.sectionHeader}>
+              <View style={[styles.iconContainer, { backgroundColor: colors.primary + '20' }]}>
+                <Icon
+                  name="pie-chart"
+                  size={24}
+                  color={colors.primary}
                 />
-                <Text style={{color: '#3498db', fontWeight: 'bold'}}>
-                  {lineData.legend[index]}
+              </View>
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>
+                {t('inventory')}
+              </Text>
+            </View>
+            {dataInventory && dataInventory.length > 0 ? (
+              <View style={styles.chartContainer}>
+                <PieChart
+                  data={dataInventory}
+                  width={width}
+                  height={height}
+                  chartConfig={chartConfig}
+                  accessor={'population'}
+                  backgroundColor={'transparent'}
+                  paddingLeft={'20'}
+                  center={[10, -10]}
+                  absolute
+                />
+              </View>
+            ) : (
+              <View style={styles.emptyContainer}>
+                <IconFA name="chart-pie" size={48} color={colors.placeholder} />
+                <Text style={[styles.emptyText, { color: colors.placeholder }]}>
+                  {t('no_data')}
                 </Text>
               </View>
-            ))}
-          </View>
-        </View>
-      </View>
+            )}
+          </LinearGradient>
+        </Animated.View>
+        {/* Daily Report Card */}
+        <Animated.View 
+          style={[
+            styles.card,
+            {
+              opacity: fadeAnim,
+              transform: [
+                { translateY: slideAnim },
+                { scale: scaleAnim }
+              ]
+            }
+          ]}>
+          <LinearGradient
+            colors={isDarkMode ? [colors.surface, colors.surfaceSecondary] : [colors.white, colors.backgroundSecondary]}
+            style={styles.cardGradient}>
+            <View style={styles.sectionHeader}>
+              <View style={[styles.iconContainer, { backgroundColor: colors.success + '20' }]}>
+                <Icon
+                  name="bar-chart"
+                  size={24}
+                  color={colors.success}
+                />
+              </View>
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>
+                {t('Dai')}
+              </Text>
+            </View>
+            
+            <View style={styles.filterRow}>
+              <View style={styles.filterItem}>
+                <View style={styles.filterLabel}>
+                  <IconFA name="clock" size={14} color={colors.primary} />
+                  <Text style={[styles.filterLabelText, { color: colors.textSecondary }]}>
+                    {t('S')}
+                  </Text>
+                </View>
+                <DropDownPicker
+                  open={open}
+                  value={value}
+                  setValue={val => setValue(val)}
+                  setOpen={() => setOpen(!open)}
+                  items={shiftValueList}
+                  maxHeight={300}
+                  autoScroll
+                  onChangeValue={item => handleSetShift(item)}
+                  placeholder={t('S')}
+                  placeholderStyle={{color: colors.placeholder}}
+                  zIndexInverse={1}
+                  dropDownContainerStyle={[styles.dropdown, { 
+                    backgroundColor: colors.surface,
+                    borderColor: colors.border 
+                  }]}
+                  style={[styles.dropdown, { 
+                    backgroundColor: colors.backgroundSecondary,
+                    borderColor: colors.border 
+                  }]}
+                  ArrowDownIconComponent={() => (
+                    <Icon name="chevron-down" size={16} color={colors.primary} />
+                  )}
+                />
+              </View>
+              <View style={styles.filterItem}>
+                <View style={styles.filterLabel}>
+                  <IconFA name="box" size={14} color={colors.primary} />
+                  <Text style={[styles.filterLabelText, { color: colors.textSecondary }]}>
+                    {t('product')}
+                  </Text>
+                </View>
+                <DropDownPicker
+                  open={proOpen}
+                  value={productVal}
+                  setValue={val => setProductVal(val)}
+                  setOpen={() => setProOpen(!proOpen)}
+                  items={productValueList}
+                  maxHeight={300}
+                  onChangeValue={item => handleSetPro(item)}
+                  placeholder={t('product')}
+                  placeholderStyle={{color: colors.placeholder}}
+                  zIndexInverse={1}
+                  dropDownContainerStyle={[styles.dropdown, { 
+                    backgroundColor: colors.surface,
+                    borderColor: colors.border 
+                  }]}
+                  style={[styles.dropdown, { 
+                    backgroundColor: colors.backgroundSecondary,
+                    borderColor: colors.border 
+                  }]}
+                  ArrowDownIconComponent={() => (
+                    <Icon name="chevron-down" size={16} color={colors.primary} />
+                  )}
+                />
+              </View>
+            </View>
+            
+            <View style={styles.chartBody}>
+              {lineData.datasets.length > 0 ? (
+                <View style={styles.chartWrapper}>
+                  <LineChart
+                    data={lineData}
+                    width={width}
+                    height={240}
+                    chartConfig={chartConfig}
+                    bezier
+                    style={[styles.chartStyle, { backgroundColor: colors.surface }]}
+                    verticalLabelRotation={30}
+                    fromZero
+                    withDots
+                    withShadow={false}
+                    withInnerLines
+                    withOuterLines
+                    renderDotContent={({x, y, index, indexData, datasetIndex}) => {
+                      const dataset = lineData.datasets[datasetIndex];
+                      return (
+                        <View
+                          key={`dot-${dataset?.datasetIndex || 0}-${index}`}
+                          style={[styles.dotContainer, { 
+                            backgroundColor: colors.surface,
+                            borderColor: colors.border 
+                          }]}>
+                          <Text style={[styles.dotText, { color: colors.text }]}>
+                            {Math.round(indexData)}
+                          </Text>
+                        </View>
+                      );
+                    }}
+                  />
+                </View>
+              ) : (
+                <View style={styles.emptyContainer}>
+                  <IconFA name="chart-line" size={48} color={colors.placeholder} />
+                  <Text style={[styles.emptyText, { color: colors.placeholder }]}>
+                    {t('no_data')}
+                  </Text>
+                </View>
+              )}
+              
+              {/* Legend */}
+              {lineData.datasets.length > 0 && (
+                <View style={styles.legendContainer}>
+                  {lineData.datasets.map((dataset, index) => (
+                    <View key={index} style={styles.legendItem}>
+                      <View
+                        style={[
+                          styles.legendColor,
+                          { backgroundColor: dataset.color() }
+                        ]}
+                      />
+                      <Text style={[styles.legendText, { color: colors.text }]}>
+                        {lineData.legend[index]}
+                      </Text>
+                    </View>
+                  ))}
+                </View>
+              )}
+            </View>
+            
+            {/* Floating Compare Button */}
+            <TouchableOpacity
+              style={[
+                styles.floatingButton,
+                { 
+                  backgroundColor: compareShift ? colors.success : colors.primary,
+                  opacity: (!!shiftValue || !!productValue) ? 0.5 : 1
+                }
+              ]}
+              onPress={() => {
+                if (!shiftValue && !productValue) {
+                  setCompareShift(!compareShift);
+                }
+              }}
+              disabled={!!shiftValue || !!productValue}
+              activeOpacity={0.7}>
+              <IconFA 
+                name="exchange-alt" 
+                size={12} 
+                color="#fff" 
+              />
+            </TouchableOpacity>
+          </LinearGradient>
+        </Animated.View>
+        
+      </ScrollView>
     </View>
   );
 };
@@ -498,56 +594,151 @@ const Report = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f7f8fa',
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollViewContent: {
+    padding: 20,
+    paddingBottom: 40,
   },
   card: {
-    backgroundColor: '#fff',
-    borderRadius: 18,
-    marginVertical: 12,
-    padding: 16,
+    borderRadius: 20,
+    marginBottom: 20,
+    overflow: 'hidden',
     shadowColor: '#000',
-    shadowOffset: {width: 0, height: 2},
-    shadowOpacity: 0.08,
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.1,
     shadowRadius: 8,
-    elevation: 4,
+    elevation: 8,
+  },
+  cardGradient: {
+    padding: 24,
   },
   sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: 20,
+  },
+  iconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
   },
   sectionTitle: {
-    fontSize: 19,
+    fontSize: 20,
     fontWeight: 'bold',
-    color: THEME_COLOR,
-    letterSpacing: 0.2,
+    flex: 1,
+  },
+  chartContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  emptyContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 40,
+  },
+  emptyText: {
+    fontSize: 16,
+    textAlign: 'center',
+    marginTop: 12,
+    fontWeight: '500',
   },
   filterRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 10,
-    gap: 10,
+    marginBottom: 20,
+    gap: 12,
   },
   filterItem: {
     flex: 1,
-    marginHorizontal: 2,
+  },
+  filterLabel: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  filterLabelText: {
+    fontSize: 14,
+    fontWeight: '600',
+    marginLeft: 6,
   },
   dropdown: {
-    borderRadius: 12,
-    borderColor: THEME_COLOR_2,
-    backgroundColor: '#f4f6fa',
-    minHeight: 44,
+    borderRadius: 16,
+    minHeight: 48,
+    borderWidth: 1.5,
+  },
+  floatingButton: {
+    position: 'absolute',
+    bottom: 16,
+    right: 16,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 3,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
+    elevation: 6,
   },
   chartBody: {
-    minHeight: 220,
+    minHeight: 280,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  emptyText: {
-    color: '#aaa',
-    fontSize: 16,
-    textAlign: 'center',
-    marginVertical: 30,
+  chartWrapper: {
+    borderRadius: 16,
+    overflow: 'hidden',
+    marginBottom: 16,
+  },
+  chartStyle: {
+    borderRadius: 16,
+    marginBottom: 8,
+    paddingRight: 8,
+  },
+  dotContainer: {
+    position: 'absolute',
+    padding: 4,
+    borderRadius: 4,
+    borderWidth: 1,
+  },
+  dotText: {
+    fontSize: 10,
+    fontWeight: 'bold',
+  },
+  legendContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    flexWrap: 'wrap',
+    marginTop: 16,
+  },
+  legendItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginRight: 16,
+    marginBottom: 8,
+  },
+  legendColor: {
+    width: 16,
+    height: 4,
+    marginRight: 8,
+    borderRadius: 2,
+  },
+  legendText: {
+    fontSize: 12,
+    fontWeight: 'bold',
   },
 });
 

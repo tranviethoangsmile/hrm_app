@@ -18,6 +18,7 @@ import HomeTab from '../components/tabs/HomeTab';
 import FeatureTab from '../components/tabs/FeatureTab';
 import {useNavigation} from '@react-navigation/native';
 import LinearGradient from 'react-native-linear-gradient';
+import {useTheme} from '../hooks/useTheme';
 import axios from 'axios';
 import {
   BASE_URL,
@@ -32,6 +33,7 @@ import {
 const Main = () => {
   const authData = useSelector(state => state.auth);
   const navigation = useNavigation();
+  const {colors, isDarkMode} = useTheme();
   const [selectedTab, setSelectedTab] = useState(0);
   const [notificationCount, setNotificationCount] = useState(0);
   const userInfo = authData?.data?.data;
@@ -117,22 +119,22 @@ const Main = () => {
       activeOpacity={0.7}>
       {selected ? (
         <LinearGradient
-          colors={['#667eea', '#764ba2']}
+          colors={isDarkMode ? ['#0A84FF', '#5E5CE6'] : ['#667eea', '#764ba2']}
           style={styles.selectedTabGradient}>
           <Icon name={iconFilled || iconName} size={24} color="#fff" />
         </LinearGradient>
       ) : (
         <View style={styles.unselectedTab}>
-          <Icon name={iconName} size={24} color="#94a3b8" />
+          <Icon name={iconName} size={24} color={isDarkMode ? colors.textSecondary : "#94a3b8"} />
         </View>
       )}
     </TouchableOpacity>
   );
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, {backgroundColor: colors.background}]}>
       <StatusBar
-        barStyle="light-content"
+        barStyle={isDarkMode ? "light-content" : "dark-content"}
         backgroundColor="transparent"
         translucent={true}
       />
@@ -147,10 +149,12 @@ const Main = () => {
           styles.bottomNav,
           {
             transform: [{translateY: bottomNavTranslateY}],
+            backgroundColor: colors.surface,
+            borderTopColor: colors.border,
           },
         ]}>
         <LinearGradient
-          colors={['rgba(255,255,255,0.95)', 'rgba(255,255,255,1)']}
+          colors={isDarkMode ? ['rgba(28,28,30,0.95)', 'rgba(28,28,30,1)'] : ['rgba(255,255,255,0.95)', 'rgba(255,255,255,1)']}
           style={styles.bottomNavGradient}>
           <TabButton
             selected={selectedTab === 0}
@@ -165,7 +169,7 @@ const Main = () => {
             onPress={() => navigation.navigate('Message')}
             activeOpacity={0.7}>
             <View style={styles.unselectedTab}>
-              <Icon name="chatbubble-outline" size={24} color="#94a3b8" />
+              <Icon name="chatbubble-outline" size={24} color={isDarkMode ? colors.textSecondary : "#94a3b8"} />
             </View>
           </TouchableOpacity>
 
@@ -174,7 +178,7 @@ const Main = () => {
             onPress={() => navigation.navigate('Checkin')}
             activeOpacity={0.8}>
             <LinearGradient
-              colors={['#4FACFE', '#00F2FE']}
+              colors={isDarkMode ? ['#0A84FF', '#5E5CE6'] : ['#4FACFE', '#00F2FE']}
               style={styles.centerTabGradient}>
               <Icon name="finger-print" size={26} color="#fff" />
             </LinearGradient>
@@ -185,7 +189,7 @@ const Main = () => {
             onPress={handleNotificationPress}
             activeOpacity={0.7}>
             <View style={styles.unselectedTab}>
-              <Icon name="notifications-outline" size={24} color="#94a3b8" />
+              <Icon name="notifications-outline" size={24} color={isDarkMode ? colors.textSecondary : "#94a3b8"} />
               {notificationCount > 0 && (
                 <LinearGradient
                   colors={['#ff6b6b', '#ff8e8e']}

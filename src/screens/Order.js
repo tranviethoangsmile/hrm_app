@@ -14,6 +14,8 @@ import {
   StatusBar,
   SafeAreaView,
   Platform,
+  Animated,
+  Easing,
 } from 'react-native';
 import {ModalMessage} from '../components';
 import {useSelector} from 'react-redux';
@@ -36,11 +38,13 @@ import {useTranslation} from 'react-i18next';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Header from '../components/common/Header';
 import {useNavigation} from '@react-navigation/native';
-import {COLORS, FONTS, SHADOWS} from '../config/theme';
+import {useTheme} from '../hooks/useTheme';
 import Icon from 'react-native-vector-icons/Ionicons';
+import IconFA from 'react-native-vector-icons/FontAwesome5';
 
 const Order = () => {
   const {t} = useTranslation();
+  const {colors, sizes, fonts, shadows, isDarkMode} = useTheme();
 
   // Memoize getLanguage function to prevent recreating on each render
   const getLanguage = useCallback(async () => {
@@ -48,6 +52,11 @@ const Order = () => {
   }, []);
 
   const authData = useSelector(state => state.auth);
+  
+  // Animation values
+  const fadeAnim = useState(new Animated.Value(0))[0];
+  const slideAnim = useState(new Animated.Value(50))[0];
+  const scaleAnim = useState(new Animated.Value(0.9))[0];
 
   // Initialize states with proper default values
   const [yearlyDates, setYearlyDates] = useState([]);
@@ -188,6 +197,27 @@ const Order = () => {
 
           setYearlyDates(yearDays);
           await getUserOrders();
+          
+          // Start animations
+          Animated.parallel([
+            Animated.timing(fadeAnim, {
+              toValue: 1,
+              duration: 800,
+              useNativeDriver: true,
+            }),
+            Animated.timing(slideAnim, {
+              toValue: 0,
+              duration: 600,
+              easing: Easing.out(Easing.cubic),
+              useNativeDriver: true,
+            }),
+            Animated.timing(scaleAnim, {
+              toValue: 1,
+              duration: 600,
+              easing: Easing.out(Easing.back(1.1)),
+              useNativeDriver: true,
+            }),
+          ]).start();
         }
       } catch (error) {
         console.error('Error initializing data:', error);
@@ -331,58 +361,102 @@ const Order = () => {
   const renderedDates = useMemo(() => {
     return yearlyDates.map((date, index) => {
       const isOffDay = isWeekendOrHoliday(date);
+      const isSelected = selectedMap[date.format('YYYY-MM-DD')];
+      const isOrdered = check_ordered(date, 'DAY') || check_ordered(date, 'NIGHT');
+      
       return (
-        <View
+        <Animated.View
           key={`${date.format('YYYY-MM-DD')}-${index}`}
-          style={styles.dayCard}>
+          style={[
+            styles.dayCard,
+            {
+              opacity: fadeAnim,
+              transform: [
+                { translateY: slideAnim },
+                { scale: scaleAnim }
+              ]
+            }
+          ]}>
           <LinearGradient
-            colors={isOffDay ? ['#e53935', '#d32f2f'] : ['#667eea', '#764ba2']}
+            colors={isOffDay ? [colors.danger, '#d32f2f'] : [colors.primary, colors.primary2]}
             start={{x: 0, y: 0}}
             end={{x: 1, y: 1}}
             style={styles.dayHeader}>
             <View style={styles.dayInfo}>
-              <Text style={[styles.dayName, isOffDay && styles.weekendText]}>
-                {t(getWeekdayKey(date))}
-              </Text>
-              <Text style={[styles.dayDate, isOffDay && styles.weekendText]}>
-                {date.format('DD/MM')}
-              </Text>
+              <View style={styles.dayInfoLeft}>
+                <IconFA 
+                  name={isOffDay ? "calendar-times" : "calendar-day"} 
+                  size={16} 
+                  color="rgba(255,255,255,0.9)" 
+                />
+                <Text style={[styles.dayName, isOffDay && styles.weekendText]}>
+                  {t(getWeekdayKey(date))}
+                </Text>
+              </View>
+              <View style={styles.dayInfoRight}>
+                <Text style={[styles.dayDate, isOffDay && styles.weekendText]}>
+                  {date.format('DD/MM')}
+                </Text>
+                {isOrdered && (
+                  <View style={styles.orderedBadge}>
+                    <Icon name="checkmark-circle" size={14} color="#fff" />
+                  </View>
+                )}
+              </View>
             </View>
           </LinearGradient>
 
           {isOffDay ? (
-            <View style={styles.noMealContainer}>
-              <Text style={styles.noMealText}>{t('no.meal.today')}</Text>
+            <View style={[styles.noMealContainer, { backgroundColor: colors.surface }]}>
+              <IconFA name="utensils" size={32} color={colors.placeholder} />
+              <Text style={[styles.noMealText, { color: colors.danger }]}>
+                {t('no.meal.today')}
+              </Text>
             </View>
           ) : (
-            <View style={styles.shiftContainer}>
-              {['DAY', 'NIGHT'].map(shift => (
-                <TouchableOpacity
-                  key={shift}
-                  disabled={disable_ordered_btn(date)}
-                  style={[
-                    styles.shiftButton,
-                    (selectedMap[date.format('YYYY-MM-DD')] === shift ||
-                      check_ordered(date, shift)) &&
-                      styles.shiftButtonSelected,
-                    disable_ordered_btn(date) && styles.shiftButtonDisabled,
-                  ]}
-                  onPress={() => handleCheckBoxPress(date, shift)}>
-                  <Text
+            <View style={[styles.shiftContainer, { backgroundColor: colors.surface }]}>
+              {['DAY', 'NIGHT'].map(shift => {
+                const isShiftSelected = selectedMap[date.format('YYYY-MM-DD')] === shift || check_ordered(date, shift);
+                const isDisabled = disable_ordered_btn(date);
+                
+                return (
+                  <TouchableOpacity
+                    key={shift}
+                    disabled={isDisabled}
                     style={[
-                      styles.shiftText,
-                      (selectedMap[date.format('YYYY-MM-DD')] === shift ||
-                        check_ordered(date, shift)) &&
-                        styles.shiftTextSelected,
-                      disable_ordered_btn(date) && styles.shiftTextDisabled,
-                    ]}>
-                    {shift === 'DAY' ? t('dd') : t('nn')}
-                  </Text>
-                </TouchableOpacity>
-              ))}
+                      styles.shiftButton,
+                      { 
+                        borderColor: isShiftSelected ? colors.success : colors.primary,
+                        backgroundColor: isShiftSelected ? colors.success : colors.surface
+                      },
+                      isDisabled && styles.shiftButtonDisabled,
+                    ]}
+                    onPress={() => handleCheckBoxPress(date, shift)}
+                    activeOpacity={0.7}>
+                    <View style={styles.shiftButtonContent}>
+                      <IconFA 
+                        name={shift === 'DAY' ? "sun" : "moon"} 
+                        size={14} 
+                        color={isShiftSelected ? '#fff' : colors.primary} 
+                      />
+                      <Text
+                        style={[
+                          styles.shiftText,
+                          { 
+                            color: isShiftSelected ? '#fff' : colors.primary,
+                            fontWeight: isShiftSelected ? 'bold' : '600'
+                          },
+                          isDisabled && styles.shiftTextDisabled,
+                        ]}>
+                        {shift === 'DAY' ? t('dd') : t('nn')}
+                      </Text>
+                    </View>
+                  </TouchableOpacity>
+                );
+              })}
             </View>
           )}
-        </View>
+        </Animated.View>
       );
     });
   }, [
@@ -394,12 +468,16 @@ const Order = () => {
     selectedMap,
     check_ordered,
     handleCheckBoxPress,
+    colors,
+    fadeAnim,
+    slideAnim,
+    scaleAnim,
   ]);
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <StatusBar
-        barStyle="light-content"
+        barStyle={isDarkMode ? "light-content" : "dark-content"}
         backgroundColor="transparent"
         translucent
       />
@@ -410,16 +488,30 @@ const Order = () => {
         {renderedDates}
       </ScrollView>
 
-      <View style={styles.orderSummaryContainer}>
+      <Animated.View 
+        style={[
+          styles.orderSummaryContainer,
+          {
+            opacity: fadeAnim,
+            transform: [
+              { translateY: slideAnim },
+              { scale: scaleAnim }
+            ]
+          }
+        ]}>
         <LinearGradient
-          colors={['#667eea', '#764ba2']}
+          colors={[colors.primary, colors.primary2]}
           start={{x: 0, y: 0}}
           end={{x: 1, y: 1}}
           style={styles.orderSummary}>
           <View style={styles.summaryContent}>
-            <Text style={styles.summaryMonth}>{month}</Text>
+            <View style={styles.summaryLeft}>
+              <IconFA name="calendar-alt" size={16} color="rgba(255,255,255,0.9)" />
+              <Text style={styles.summaryMonth}>{month}</Text>
+            </View>
             <View style={styles.summaryStats}>
               <View style={styles.statItem}>
+                <IconFA name="clipboard-list" size={14} color="rgba(255,255,255,0.9)" />
                 <Text style={styles.summaryText}>{t('ord')}</Text>
                 <Text style={styles.summaryNumber}>
                   {ordered ? ordered.length : 0}
@@ -427,6 +519,7 @@ const Order = () => {
               </View>
               <View style={styles.statDivider} />
               <View style={styles.statItem}>
+                <IconFA name="check-circle" size={14} color="rgba(255,255,255,0.9)" />
                 <Text style={styles.summaryText}>{t('pid')}</Text>
                 <Text style={styles.summaryNumber}>{picked || 0}</Text>
               </View>
@@ -439,7 +532,7 @@ const Order = () => {
           activeOpacity={1}
           onPress={() => setIsVisible(true)}
         />
-      </View>
+      </Animated.View>
 
       <OrderModal
         visible={isVisible}
@@ -469,7 +562,6 @@ const Order = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8fafc',
   },
   headerContainer: {
     backgroundColor: 'transparent',
@@ -478,89 +570,118 @@ const styles = StyleSheet.create({
     paddingTop: Platform.OS === 'ios' ? 44 : StatusBar.currentHeight,
   },
   scrollViewContent: {
-    padding: 16,
-    paddingBottom: 100,
+    padding: 20,
+    paddingBottom: 120,
   },
   dayCard: {
-    backgroundColor: COLORS.white,
-    borderRadius: 20,
-    marginBottom: 16,
+    borderRadius: 24,
+    marginBottom: 20,
     overflow: 'hidden',
     shadowColor: '#000',
-    shadowOffset: {width: 0, height: 2},
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
     shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowRadius: 8,
+    elevation: 8,
   },
   dayHeader: {
-    padding: 16,
+    padding: 20,
   },
   dayInfo: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
   },
+  dayInfoLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  dayInfoRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
   dayName: {
     fontSize: 18,
-    fontWeight: '600',
-    color: COLORS.white,
+    fontWeight: 'bold',
+    color: '#fff',
     letterSpacing: 0.5,
+    marginLeft: 8,
   },
   dayDate: {
     fontSize: 16,
     color: 'rgba(255,255,255,0.9)',
-    fontWeight: '500',
+    fontWeight: '600',
+  },
+  orderedBadge: {
+    marginLeft: 8,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    borderRadius: 12,
+    padding: 4,
   },
   weekendText: {
-    color: COLORS.white,
+    color: '#fff',
     opacity: 0.9,
   },
   shiftContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 16,
-    gap: 12,
-    backgroundColor: COLORS.white,
+    padding: 20,
+    gap: 16,
   },
   shiftButton: {
     flex: 1,
-    borderRadius: 25,
-    borderWidth: 1,
-    borderColor: '#667eea',
-    padding: 12,
+    borderRadius: 20,
+    borderWidth: 2,
+    padding: 16,
     alignItems: 'center',
-    backgroundColor: 'white',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  shiftButtonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
   shiftButtonSelected: {
-    backgroundColor: '#667eea',
-    borderColor: '#667eea',
+    shadowOpacity: 0.2,
+    elevation: 6,
   },
   shiftButtonDisabled: {
     borderColor: '#e0e0e0',
     backgroundColor: '#f5f5f5',
+    shadowOpacity: 0.05,
+    elevation: 1,
   },
   shiftText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#667eea',
   },
   shiftTextSelected: {
-    color: COLORS.white,
+    color: '#fff',
   },
   shiftTextDisabled: {
     color: '#9e9e9e',
   },
   noMealContainer: {
-    padding: 20,
+    padding: 32,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: COLORS.white,
   },
   noMealText: {
     fontSize: 16,
-    color: '#e53935',
     fontStyle: 'italic',
+    marginTop: 12,
+    fontWeight: '500',
   },
   orderSummaryContainer: {
     position: 'absolute',
@@ -570,13 +691,13 @@ const styles = StyleSheet.create({
     zIndex: 10,
   },
   orderSummary: {
-    paddingVertical: 16,
-    paddingHorizontal: 20,
+    paddingVertical: 20,
+    paddingHorizontal: 24,
     shadowColor: '#000',
-    shadowOffset: {width: 0, height: -4},
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 5,
+    shadowOffset: {width: 0, height: -6},
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 8,
   },
   touchOverlay: {
     position: 'absolute',
@@ -592,11 +713,16 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
   },
+  summaryLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
   summaryMonth: {
     fontSize: 16,
-    fontWeight: '600',
-    color: COLORS.white,
+    fontWeight: 'bold',
+    color: '#fff',
     letterSpacing: 0.5,
+    marginLeft: 8,
   },
   summaryStats: {
     flexDirection: 'row',
@@ -605,22 +731,25 @@ const styles = StyleSheet.create({
   statItem: {
     alignItems: 'center',
     paddingHorizontal: 16,
+    flexDirection: 'row',
+    gap: 6,
   },
   statDivider: {
     width: 1,
     height: '70%',
-    backgroundColor: COLORS.white,
-    opacity: 0.2,
+    backgroundColor: 'rgba(255,255,255,0.3)',
   },
   summaryText: {
     fontSize: 12,
     color: 'rgba(255,255,255,0.9)',
-    marginBottom: 4,
+    marginBottom: 2,
+    fontWeight: '500',
   },
   summaryNumber: {
     fontSize: 16,
-    fontWeight: '600',
-    color: COLORS.white,
+    fontWeight: 'bold',
+    color: '#fff',
+    marginLeft: 4,
   },
 });
 

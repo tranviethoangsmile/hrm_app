@@ -30,6 +30,7 @@ import {
 } from '../utils/constans';
 import Loader from '../components/Loader';
 import {COLORS, SIZES, FONTS, SHADOWS} from '../config/theme';
+import {useThemeContext} from '../context/ThemeContext';
 
 const {width: SCREEN_WIDTH} = Dimensions.get('window');
 
@@ -42,6 +43,7 @@ const Notifications = ({navigation}) => {
   const [expandedId, setExpandedId] = useState(null);
   const authData = useSelector(state => state.auth);
   const userInfo = authData?.data?.data;
+  const {isDarkMode} = useThemeContext();
 
   const getNotifications = useCallback(async () => {
     try {
@@ -177,7 +179,7 @@ const Notifications = ({navigation}) => {
 
   const renderModernHeader = () => (
     <LinearGradient
-      colors={['#667eea', '#764ba2']}
+      colors={['#667eea', '#764ba2', '#f093fb']}
       start={{x: 0, y: 0}}
       end={{x: 1, y: 1}}
       style={styles.headerGradient}>
@@ -187,7 +189,7 @@ const Notifications = ({navigation}) => {
           <TouchableOpacity
             onPress={() => navigation.goBack()}
             style={styles.headerIconContainer}>
-            <Icon name="arrow-back" size={24} color="#ffffff" />
+            <Icon name="arrow-back" size={22} color="#ffffff" />
           </TouchableOpacity>
         </View>
 
@@ -195,13 +197,16 @@ const Notifications = ({navigation}) => {
           <Text style={styles.headerTitle}>
             {t('notifications_title', 'Thông báo')}
           </Text>
+          <Text style={styles.headerSubtitle}>
+            {notifications.length} thông báo
+          </Text>
         </View>
 
         <View style={styles.headerRight}>
           <TouchableOpacity
             style={styles.headerIconContainer}
             onPress={markAllAsRead}>
-            <Icon name="checkmark-done" size={24} color="#ffffff" />
+            <Icon name="checkmark-done" size={22} color="#ffffff" />
           </TouchableOpacity>
         </View>
       </View>
@@ -216,7 +221,7 @@ const Notifications = ({navigation}) => {
         <Icon
           name="notifications"
           size={18}
-          color={activeTab === 'all' ? '#667eea' : '#94a3b8'}
+          color={activeTab === 'all' ? '#667eea' : (isDarkMode ? '#6C6C70' : '#94a3b8')}
         />
         <Text
           style={[styles.tabText, activeTab === 'all' && styles.activeTabText]}>
@@ -229,7 +234,7 @@ const Notifications = ({navigation}) => {
         <Icon
           name="settings"
           size={18}
-          color={activeTab === 'system' ? '#667eea' : '#94a3b8'}
+          color={activeTab === 'system' ? '#667eea' : (isDarkMode ? '#6C6C70' : '#94a3b8')}
         />
         <Text
           style={[
@@ -251,17 +256,18 @@ const Notifications = ({navigation}) => {
     return (
       <TouchableOpacity
         style={[styles.notificationItem, isUnread && styles.unreadItem]}
-        onPress={() => handle_notification_click(item)}>
+        onPress={() => handle_notification_click(item)}
+        activeOpacity={0.7}>
         <View style={styles.notificationCard}>
           <View style={styles.notificationHeader}>
             <View
               style={[
                 styles.iconContainer,
-                {backgroundColor: notificationColor + '15'},
+                {backgroundColor: notificationColor + '20'},
               ]}>
               <Icon
                 name={getNotificationIcon(item.type)}
-                size={20}
+                size={22}
                 color={notificationColor}
               />
               {isUnread && (
@@ -280,7 +286,7 @@ const Notifications = ({navigation}) => {
                   numberOfLines={isExpanded ? undefined : 2}>
                   {item.title}
                 </Text>
-                <View style={styles.typeChip}>
+                <View style={[styles.typeChip, {backgroundColor: notificationColor + '15'}]}>
                   <Text style={[styles.typeText, {color: notificationColor}]}>
                     {item.type?.toUpperCase()}
                   </Text>
@@ -292,9 +298,12 @@ const Notifications = ({navigation}) => {
                 {item.message}
               </Text>
               <View style={styles.footerContainer}>
-                <Text style={styles.time}>
-                  {moment(item.created_at).format('DD/MM/YYYY HH:mm')}
-                </Text>
+                <View style={styles.timeContainer}>
+                  <Icon name="time-outline" size={14} color={isDarkMode ? "#6C6C70" : "#94a3b8"} />
+                  <Text style={styles.time}>
+                    {moment(item.created_at).format('DD/MM/YYYY HH:mm')}
+                  </Text>
+                </View>
                 {isSystemNotification && (
                   <TouchableOpacity
                     onPress={e => {
@@ -325,7 +334,11 @@ const Notifications = ({navigation}) => {
   const renderEmptyState = () => (
     <View style={styles.emptyContainer}>
       <View style={styles.emptyIconContainer}>
-        <IconMCI name="bell-off" size={80} color="#e2e8f0" />
+        <LinearGradient
+          colors={['#667eea', '#764ba2']}
+          style={styles.emptyIconGradient}>
+          <IconMCI name="bell-off" size={60} color="#ffffff" />
+        </LinearGradient>
       </View>
       <Text style={styles.emptyTitle}>
         {t('notification_empty_title', 'Không có thông báo')}
@@ -333,17 +346,20 @@ const Notifications = ({navigation}) => {
       <Text style={styles.emptyDescription}>
         {t(
           'notification_empty_description',
-          'Thông báo của bạn sẽ xuất hiện ở đây',
+          'Thông báo của bạn sẽ xuất hiện ở đây khi có cập nhật mới',
         )}
       </Text>
       <TouchableOpacity style={styles.refreshButton} onPress={onRefresh}>
-        <Icon name="refresh" size={18} color="#667eea" />
+        <Icon name="refresh" size={18} color="#ffffff" />
         <Text style={styles.refreshButtonText}>
           {t('notification_refresh', 'Làm mới')}
         </Text>
       </TouchableOpacity>
     </View>
   );
+
+  // Create dynamic styles based on theme
+  const styles = createStyles(isDarkMode);
 
   return (
     <View style={styles.container}>
@@ -376,13 +392,14 @@ const Notifications = ({navigation}) => {
   );
 };
 
-const styles = StyleSheet.create({
+// Dynamic styles based on theme
+const createStyles = (isDarkMode) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8fafc',
+    backgroundColor: isDarkMode ? '#000000' : '#f8fafc',
   },
   headerGradient: {
-    paddingTop: Platform.OS === 'ios' ? 44 : 20,
+    paddingTop: Platform.OS === 'ios' ? 50 : 20,
     shadowColor: '#667eea',
     shadowOffset: {width: 0, height: 4},
     shadowOpacity: 0.3,
@@ -415,12 +432,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   headerTitle: {
-    fontSize: 22,
+    fontSize: 24,
     fontWeight: '700',
     color: '#ffffff',
     textShadowColor: 'rgba(0,0,0,0.3)',
     textShadowOffset: {width: 0, height: 1},
     textShadowRadius: 3,
+  },
+  headerSubtitle: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: 'rgba(255,255,255,0.8)',
+    marginTop: 2,
   },
   headerRight: {
     flexDirection: 'row',
@@ -446,21 +469,25 @@ const styles = StyleSheet.create({
   },
   notificationItem: {
     marginHorizontal: 16,
-    marginVertical: 6,
-    borderRadius: 12,
-    backgroundColor: '#fff',
+    marginVertical: 8,
+    borderRadius: 16,
+    backgroundColor: isDarkMode ? '#1C1C1E' : '#fff',
     ...SHADOWS.light,
+    borderWidth: 1,
+    borderColor: isDarkMode ? '#2C2C2E' : '#f1f5f9',
   },
   unreadItem: {
     ...SHADOWS.dark,
+    borderColor: '#667eea',
+    borderWidth: 1.5,
   },
   tabContainer: {
     flexDirection: 'row',
-    backgroundColor: '#fff',
+    backgroundColor: isDarkMode ? '#1C1C1E' : '#fff',
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#e2e8f0',
+    borderBottomColor: isDarkMode ? '#2C2C2E' : '#e2e8f0',
     ...SHADOWS.light,
   },
   tab: {
@@ -472,9 +499,9 @@ const styles = StyleSheet.create({
     marginHorizontal: 4,
     flexDirection: 'row',
     justifyContent: 'center',
-    backgroundColor: '#f7fafc',
+    backgroundColor: isDarkMode ? '#2C2C2E' : '#f7fafc',
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: isDarkMode ? '#3C3C3E' : '#e2e8f0',
   },
   activeTab: {
     backgroundColor: '#667eea',
@@ -482,7 +509,7 @@ const styles = StyleSheet.create({
   },
   tabText: {
     ...FONTS.body4,
-    color: '#64748b',
+    color: isDarkMode ? '#8E8E93' : '#64748b',
     fontWeight: '600',
     marginLeft: 6,
   },
@@ -491,19 +518,24 @@ const styles = StyleSheet.create({
   },
   title: {
     ...FONTS.h4,
-    color: '#1e293b',
+    color: isDarkMode ? '#FFFFFF' : '#1e293b',
     fontWeight: '600',
     marginBottom: 4,
   },
   message: {
     ...FONTS.body3,
-    color: '#64748b',
+    color: isDarkMode ? '#8E8E93' : '#64748b',
     lineHeight: 20,
     marginBottom: 6,
   },
   time: {
     ...FONTS.body4,
-    color: '#94a3b8',
+    color: isDarkMode ? '#6C6C70' : '#94a3b8',
+    marginLeft: 4,
+  },
+  timeContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   emptyContainer: {
     flex: 1,
@@ -530,7 +562,7 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     paddingHorizontal: 8,
     borderRadius: 6,
-    backgroundColor: '#f1f5f9',
+    backgroundColor: isDarkMode ? '#2C2C2E' : '#f1f5f9',
   },
   unreadDot: {
     position: 'absolute',
@@ -543,7 +575,7 @@ const styles = StyleSheet.create({
   notificationCard: {
     borderRadius: 12,
     overflow: 'hidden',
-    backgroundColor: '#fff',
+    backgroundColor: isDarkMode ? '#1C1C1E' : '#fff',
     ...SHADOWS.light,
   },
   notificationHeader: {
@@ -551,13 +583,18 @@ const styles = StyleSheet.create({
     padding: 12,
   },
   iconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#f1f5f9',
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: isDarkMode ? '#2C2C2E' : '#f1f5f9',
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 12,
+    marginRight: 16,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
   },
   textContainer: {
     flex: 1,
@@ -571,12 +608,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 12,
-    backgroundColor: '#f1f5f9',
+    backgroundColor: isDarkMode ? '#2C2C2E' : '#f1f5f9',
   },
   typeText: {
     fontSize: 11,
     fontWeight: '600',
-    color: '#64748b',
+    color: isDarkMode ? '#8E8E93' : '#64748b',
   },
   expandButtonText: {
     fontSize: 14,
@@ -585,31 +622,48 @@ const styles = StyleSheet.create({
     marginRight: 4,
   },
   emptyIconContainer: {
-    marginBottom: 20,
+    marginBottom: 24,
+  },
+  emptyIconGradient: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#667eea',
+    shadowOffset: {width: 0, height: 8},
+    shadowOpacity: 0.3,
+    shadowRadius: 16,
+    elevation: 8,
   },
   emptyTitle: {
     fontSize: 20,
     fontWeight: '600',
-    color: '#1e293b',
+    color: isDarkMode ? '#FFFFFF' : '#1e293b',
     marginBottom: 8,
     textAlign: 'center',
   },
   emptyDescription: {
     fontSize: 16,
-    color: '#64748b',
+    color: isDarkMode ? '#8E8E93' : '#64748b',
     textAlign: 'center',
     lineHeight: 24,
     marginBottom: 24,
   },
   refreshButton: {
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderRadius: 24,
+    paddingVertical: 14,
+    paddingHorizontal: 24,
+    borderRadius: 28,
     backgroundColor: '#667eea',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     ...SHADOWS.light,
+    shadowColor: '#667eea',
+    shadowOffset: {width: 0, height: 4},
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
   },
   refreshButtonText: {
     fontSize: 14,

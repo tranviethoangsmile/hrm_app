@@ -26,6 +26,7 @@ import {useTranslation} from 'react-i18next';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Icon from 'react-native-vector-icons/Ionicons';
 import {useNavigation} from '@react-navigation/native';
+import {useTheme} from '../hooks/useTheme';
 import {
   BASE_URL,
   PORT,
@@ -50,6 +51,7 @@ const {width} = Dimensions.get('window');
 
 const Profile = () => {
   const navigation = useNavigation();
+  const {colors, isDarkMode} = useTheme();
   const getLanguage = async () => {
     return await AsyncStorage.getItem('Language');
   };
@@ -237,7 +239,7 @@ const Profile = () => {
   return (
     <View style={styles.container}>
       <StatusBar
-        barStyle="light-content"
+        barStyle={isDarkMode ? "light-content" : "dark-content"}
         backgroundColor="transparent"
         translucent
       />

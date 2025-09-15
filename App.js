@@ -3,6 +3,7 @@ import {PermissionsAndroid, Platform, LogBox} from 'react-native';
 import {Provider} from 'react-redux';
 import MainNavigator from './src/navigation/MainNavigator';
 import MyStore from './src/redux/MyStore';
+import {ThemeProvider} from './src/context/ThemeContext';
 import {
   NotificationServices,
   requestUserPermission,
@@ -43,7 +44,9 @@ const App = () => {
   }, []);
   return (
     <Provider store={MyStore}>
-      <MainNavigator />
+      <ThemeProvider>
+        <MainNavigator />
+      </ThemeProvider>
     </Provider>
   );
 };

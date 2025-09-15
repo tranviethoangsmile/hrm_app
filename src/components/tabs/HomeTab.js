@@ -1,5 +1,5 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import React, {useEffect, useState, useCallback} from 'react';
+import React, {useEffect, useState, useCallback, useRef} from 'react';
 import {
   View,
   Text,
@@ -15,6 +15,7 @@ import {
   Animated,
   Platform,
   SafeAreaView,
+  Easing,
 } from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import {useSelector} from 'react-redux';
@@ -27,7 +28,9 @@ import i18next from '../../../services/i18next';
 import Video from 'react-native-video';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import MaterialIcon from 'react-native-vector-icons/MaterialCommunityIcons';
+import IconFA from 'react-native-vector-icons/FontAwesome5';
 import LinearGradient from 'react-native-linear-gradient';
+import {useTheme} from '../../hooks/useTheme';
 import PopupEvent from '../PopupEvent';
 import {
   BASE_URL,
@@ -58,6 +61,7 @@ const {width} = Dimensions.get('window');
 const HomeTab = ({onScrollList}) => {
   const navigation = useNavigation();
   const {t} = useTranslation();
+  const {colors} = useTheme();
   const [visibleControl, setVisibleControl] = useState(false);
   const [isVisiblePopup, setIsVisiblePopup] = useState(false);
   const [isVisibleHappy, setIsVisibleHappy] = useState(false);
@@ -81,9 +85,10 @@ const HomeTab = ({onScrollList}) => {
   const [isMessageModalVisible, setMessageModalVisible] = useState(false);
   const [selectedMedia, setSelectedMedia] = useState(null);
 
-  // Animation values - keeping minimal for like button only
-  const fadeAnim = React.useRef(new Animated.Value(1)).current;
-  const slideAnim = React.useRef(new Animated.Value(0)).current;
+  // Animation values - removed to prevent flickering
+  // const fadeAnim = useRef(new Animated.Value(0)).current;
+  // const slideAnim = useRef(new Animated.Value(50)).current;
+  // const scaleAnim = useRef(new Animated.Value(0.95)).current;
 
   const onClose = () => {
     setVisibleControl(false);
@@ -102,7 +107,7 @@ const HomeTab = ({onScrollList}) => {
     return await AsyncStorage.getItem('Language');
   };
 
-  const handleGoToEventScreen = async () => {
+  const handleGoToEventScreen = React.useCallback(async () => {
     try {
       setIsLoading(true);
       const url = `${BASE_URL}${PORT}${API}${VERSION}${V1}${EVENTS}${GET_EVENT_WITH_POSITION}`;
@@ -121,7 +126,7 @@ const HomeTab = ({onScrollList}) => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [userInfo.position, navigation]);
 
   const get_event_detail = async () => {
     try {
@@ -203,12 +208,34 @@ const HomeTab = ({onScrollList}) => {
     return match ? match[0] : null;
   }
 
-  const PostItem = ({item, t, handleGoToEventScreen, index}) => {
+  const PostItem = React.memo(({item, t, handleGoToEventScreen, index}) => {
     const [linkPreview, setLinkPreview] = React.useState(null);
     const [isLiked, setIsLiked] = React.useState(false);
     const isAdmin = item.user.role === 'ADMIN';
 
-    const scaleAnim = React.useRef(new Animated.Value(1)).current;
+    const scaleAnim = useRef(new Animated.Value(1)).current;
+    const fadeAnim = useRef(new Animated.Value(1)).current; // Start with 1 to avoid animation
+    const slideAnim = useRef(new Animated.Value(0)).current; // Start with 0 to avoid animation
+
+    // Remove entrance animation to prevent flickering
+    // React.useEffect(() => {
+    //   Animated.parallel([
+    //     Animated.timing(fadeAnim, {
+    //       toValue: 1,
+    //       duration: 600,
+    //       delay: index * 100,
+    //       easing: Easing.out(Easing.cubic),
+    //       useNativeDriver: true,
+    //     }),
+    //     Animated.timing(slideAnim, {
+    //       toValue: 0,
+    //       duration: 600,
+    //       delay: index * 100,
+    //       easing: Easing.out(Easing.cubic),
+    //       useNativeDriver: true,
+    //     }),
+    //   ]).start();
+    // }, [index]);
 
     React.useEffect(() => {
       const url = extractFirstUrl(item.content);
@@ -261,18 +288,18 @@ const HomeTab = ({onScrollList}) => {
         <LinearGradient
           colors={
             isAdmin
-              ? ['#ffffff', '#fef7f7', '#ffffff']
-              : ['#ffffff', '#fbfcfd', '#ffffff']
+              ? [colors.surface, colors.surfaceSecondary, colors.surface]
+              : [colors.surface, colors.surfaceSecondary, colors.surface]
           }
           start={{x: 0, y: 0}}
           end={{x: 1, y: 1}}
           style={[
             styles.postContent, 
             isAdmin && styles.adminPostContent,
-            {backgroundColor: '#ffffff'}
+            {backgroundColor: colors.surface}
           ]}>
           {/* Glass overlay for modern effect */}
-          <View style={styles.glassOverlay} />
+          <View style={[styles.glassOverlay, {backgroundColor: colors.primary + '05'}]} />
 
           <View style={styles.postHeader}>
             <View style={styles.avatarContainer}>
@@ -281,26 +308,26 @@ const HomeTab = ({onScrollList}) => {
             </View>
             <View style={styles.nameAndDayContainer}>
               <View style={styles.nameRow}>
-                <Text style={styles.nameText}>{item.user.name}</Text>
+                <Text style={[styles.nameText, {color: colors.text}]}>{item.user.name}</Text>
                 {isAdmin && (
                   <LinearGradient
-                    colors={['#667eea', '#764ba2']}
-                    style={[styles.adminBadge, {backgroundColor: '#667eea'}]}>
-                    <MaterialIcon name="shield-crown" size={12} color="#fff" />
+                    colors={[colors.primary, colors.primary2]}
+                    style={[styles.adminBadge, {backgroundColor: colors.primary}]}>
+                    <IconFA name="crown" size={12} color="#fff" />
                     <Text style={styles.adminBadgeText}>Admin</Text>
                   </LinearGradient>
                 )}
               </View>
-              <Text style={styles.dateText}>
-                {moment(item.date).format('DD/MM/YYYY • HH:mm')}
+              <Text style={[styles.dateText, {color: colors.textSecondary}]}>
+                {moment(item.date).format('DD/MM/YYYY')}
               </Text>
             </View>
           </View>
 
-          {item.title && <Text style={styles.postTitleText}>{item.title}</Text>}
+          {item.title && <Text style={[styles.postTitleText, {color: colors.text}]}>{item.title}</Text>}
 
           <Text
-            style={styles.postContentText}
+            style={[styles.postContentText, {color: colors.textSecondary}]}
             numberOfLines={3}
             ellipsizeMode="tail">
             {item.content}
@@ -317,7 +344,7 @@ const HomeTab = ({onScrollList}) => {
                 }
               }}>
               <LinearGradient
-                colors={['#667eea', '#764ba2']}
+                colors={[colors.primary, colors.primary2]}
                 style={styles.linkPreviewGradient}>
                 {linkPreview.image && (
                   <Image
@@ -348,10 +375,10 @@ const HomeTab = ({onScrollList}) => {
                 Alert.alert(item.title || t('Detail'), item.content)
               }>
               <LinearGradient
-                colors={['#667eea', '#764ba2']}
+                colors={[colors.primary, colors.primary2]}
                 style={styles.moreButton}>
                 <Text style={styles.moreText}>{t('more')}</Text>
-                <MaterialIcon name="chevron-right" size={16} color="#fff" />
+                <IconFA name="chevron-right" size={14} color="#fff" />
               </LinearGradient>
             </TouchableOpacity>
           )}
@@ -382,7 +409,7 @@ const HomeTab = ({onScrollList}) => {
                   posterResizeMode="cover"
                 />
                 <View style={styles.playIcon}>
-                  <MaterialIcon
+                  <IconFA
                     name="play-circle"
                     size={60}
                     color="rgba(255,255,255,0.9)"
@@ -408,19 +435,20 @@ const HomeTab = ({onScrollList}) => {
               </TouchableOpacity>
             ))}
 
-          <View style={styles.postMetaContainer}>
+          <View style={[styles.postMetaContainer, {borderTopColor: colors.border}]}>
             <View style={styles.postActionsGroup}>
               <Animated.View style={{transform: [{scale: scaleAnim}]}}>
                 <TouchableOpacity
                   onPress={handleLike}
                   style={[styles.actionButton, isLiked && styles.likedButton]}>
-                  <MaterialIcon
-                    name={isLiked ? 'heart' : 'heart-outline'}
-                    size={20}
-                    color={isLiked ? '#ff6b6b' : '#94a3b8'}
+                  <IconFA
+                    name={isLiked ? 'heart' : 'heart'}
+                    size={18}
+                    color={isLiked ? colors.danger : colors.gray400}
+                    solid={isLiked}
                   />
                   <Text
-                    style={[styles.actionText, isLiked && styles.likedText]}>
+                    style={[styles.actionText, isLiked && styles.likedText, {color: colors.textSecondary}]}>
                     {isLiked ? 'Liked' : 'Like'}
                   </Text>
                 </TouchableOpacity>
@@ -429,25 +457,25 @@ const HomeTab = ({onScrollList}) => {
               <TouchableOpacity
                 onPress={handleComment}
                 style={styles.actionButton}>
-                <MaterialIcon
-                  name="comment-outline"
-                  size={20}
-                  color="#94a3b8"
+                <IconFA
+                  name="comment"
+                  size={18}
+                  color={colors.gray400}
                 />
-                <Text style={styles.actionText}>Comment</Text>
+                <Text style={[styles.actionText, {color: colors.textSecondary}]}>Comment</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
                 onPress={handleShare}
                 style={styles.actionButton}>
-                <MaterialIcon name="share-outline" size={20} color="#94a3b8" />
-                <Text style={styles.actionText}>Share</Text>
+                <IconFA name="share" size={18} color={colors.gray400} />
+                <Text style={[styles.actionText, {color: colors.textSecondary}]}>Share</Text>
               </TouchableOpacity>
             </View>
 
             <View style={styles.viewCountContainer}>
-              <MaterialIcon name="eye" size={16} color="#94a3b8" />
-              <Text style={styles.metaText}>
+              <IconFA name="eye" size={14} color={colors.gray400} />
+              <Text style={[styles.metaText, {color: colors.gray400}]}>
                 {formattedViewCount} {t('views')}
               </Text>
             </View>
@@ -458,9 +486,9 @@ const HomeTab = ({onScrollList}) => {
               style={styles.eventButton}
               onPress={handleGoToEventScreen}>
               <LinearGradient
-                colors={['#667eea', '#764ba2']}
-                style={[styles.eventButtonGradient, {backgroundColor: '#667eea'}]}>
-                <MaterialIcon name="calendar-check" size={18} color="#fff" />
+                colors={[colors.primary, colors.primary2]}
+                style={[styles.eventButtonGradient, {backgroundColor: colors.primary}]}>
+                <IconFA name="calendar-check" size={18} color="#fff" />
                 <Text style={styles.eventButtonText}>{t('confirm.c')}</Text>
               </LinearGradient>
             </TouchableOpacity>
@@ -468,7 +496,7 @@ const HomeTab = ({onScrollList}) => {
         </LinearGradient>
       </View>
     );
-  };
+  });
 
   const handleControl = () => {
     setVisibleControl(!visibleControl);
@@ -490,6 +518,28 @@ const HomeTab = ({onScrollList}) => {
     };
 
     fetchData();
+
+    // Removed entrance animations to prevent flickering
+    // Animated.parallel([
+    //   Animated.timing(fadeAnim, {
+    //     toValue: 1,
+    //     duration: 800,
+    //     easing: Easing.out(Easing.cubic),
+    //     useNativeDriver: true,
+    //   }),
+    //   Animated.timing(slideAnim, {
+    //     toValue: 0,
+    //     duration: 800,
+    //     easing: Easing.out(Easing.cubic),
+    //     useNativeDriver: true,
+    //   }),
+    //   Animated.spring(scaleAnim, {
+    //     toValue: 1,
+    //     friction: 8,
+    //     tension: 100,
+    //     useNativeDriver: true,
+    //   }),
+    // ]).start();
   }, []);
 
   useEffect(() => {
@@ -560,7 +610,7 @@ const HomeTab = ({onScrollList}) => {
     }, 10000);
   };
 
-  const renderPosts = () => {
+  const renderPosts = React.useCallback(() => {
     const displayPosts = showAllPosts ? posts : posts.slice(0, 5);
 
     return (
@@ -580,60 +630,62 @@ const HomeTab = ({onScrollList}) => {
             style={styles.viewMoreButton}
             onPress={() => setShowAllPosts(true)}>
             <LinearGradient
-              colors={['#667eea', '#764ba2']}
+              colors={[colors.primary, colors.primary2]}
               style={styles.viewMoreGradient}>
-              <MaterialIcon name="chevron-down" size={20} color="#fff" />
+              <IconFA name="chevron-down" size={18} color="#fff" />
               <Text style={styles.viewMoreText}>{t('viewMore')}</Text>
-              <MaterialIcon name="chevron-down" size={20} color="#fff" />
+              <IconFA name="chevron-down" size={18} color="#fff" />
             </LinearGradient>
           </TouchableOpacity>
         )}
       </>
     );
-  };
+  }, [showAllPosts, posts, t, colors.primary, colors.primary2, handleGoToEventScreen]);
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, {backgroundColor: colors.background}]}>
       <Loader visible={isLoading} />
 
-      {/* Simple Clean Header */}
-      <LinearGradient
-        colors={['#667eea', '#764ba2']}
-        start={{x: 0, y: 0}}
-        end={{x: 1, y: 1}}
-        style={styles.header}>
-        <View style={styles.headerContent}>
-          <View style={styles.headerLeft}>
-            <TouchableOpacity
-              onPress={handleControl}
-              style={styles.headerIconContainer}>
-              <MaterialIcon name="menu" size={24} color="#ffffff" />
-            </TouchableOpacity>
-          </View>
+      {/* Modern Header with Theme Support */}
+      <View style={styles.headerContainer}>
+        <LinearGradient
+          colors={[colors.primary, colors.primary2]}
+          start={{x: 0, y: 0}}
+          end={{x: 1, y: 1}}
+          style={styles.header}>
+          <View style={styles.headerContent}>
+            <View style={styles.headerLeft}>
+              <TouchableOpacity
+                onPress={handleControl}
+                style={styles.headerIconContainer}>
+                <IconFA name="bars" size={20} color="#ffffff" />
+              </TouchableOpacity>
+            </View>
 
-          <View style={styles.headerTitleContainer}>
-            <Text style={styles.headerTitle}>{t('info')}</Text>
-          </View>
+            <View style={styles.headerTitleContainer}>
+              <Text style={styles.headerTitle}>{t('info')}</Text>
+            </View>
 
-          <View style={styles.headerRight}>
-            <TouchableOpacity
-              onPress={() => {
-                navigation.navigate('Profile');
-              }}
-              style={styles.profileContainer}>
-              <Image
-                source={
-                  userInfo.avatar
-                    ? {uri: userInfo.avatar}
-                    : require('../../assets/images/avatar.jpg')
-                }
-                style={styles.headerAvatar}
-              />
-              <View style={styles.avatarRing} />
-            </TouchableOpacity>
+            <View style={styles.headerRight}>
+              <TouchableOpacity
+                onPress={() => {
+                  navigation.navigate('Profile');
+                }}
+                style={styles.profileContainer}>
+                <Image
+                  source={
+                    userInfo.avatar
+                      ? {uri: userInfo.avatar}
+                      : require('../../assets/images/avatar.jpg')
+                  }
+                  style={styles.headerAvatar}
+                />
+                <View style={styles.avatarRing} />
+              </TouchableOpacity>
+            </View>
           </View>
-        </View>
-      </LinearGradient>
+        </LinearGradient>
+      </View>
 
       <Control visible={visibleControl} t={t} onClose={onClose} />
       <Notifications
@@ -643,21 +695,26 @@ const HomeTab = ({onScrollList}) => {
         onNotificationClick={handle_notification_click}
       />
 
-      <View style={styles.feedContainer}>
-        {err ? <Text style={styles.errorText}>{err}</Text> : null}
+      <View style={[styles.feedContainer, {backgroundColor: colors.background}]}>
+        {err ? <Text style={[styles.errorText, {color: colors.danger}]}>{err}</Text> : null}
         <ScrollView
           onScroll={onScrollList}
-          scrollEventThrottle={16}
+          scrollEventThrottle={32}
           refreshControl={
             <RefreshControl
               refreshing={refreshing}
               onRefresh={onRefresh}
-              colors={['#667eea', '#764ba2']}
-              tintColor="#667eea"
+              colors={[colors.primary, colors.primary2]}
+              tintColor={colors.primary}
             />
           }
           contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}>
+          showsVerticalScrollIndicator={false}
+          removeClippedSubviews={true}
+          maxToRenderPerBatch={5}
+          updateCellsBatchingPeriod={50}
+          initialNumToRender={3}
+          windowSize={10}>
           {renderPosts()}
         </ScrollView>
       </View>
@@ -720,11 +777,17 @@ const HomeTab = ({onScrollList}) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8fafc',
+  },
+  headerContainer: {
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 4},
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 8,
   },
   header: {
     paddingTop: Platform.OS === 'ios' ? 50 : 30,
-    paddingBottom: 16,
+    paddingBottom: 20,
     paddingHorizontal: 20,
   },
   headerContent: {
@@ -737,12 +800,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   headerIconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     backgroundColor: 'rgba(255,255,255,0.2)',
     alignItems: 'center',
     justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
   },
   headerTitleContainer: {
     flex: 1,
@@ -808,22 +876,21 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   postContent: {
-    borderRadius: 20,
-    padding: 20,
+    borderRadius: 24,
+    padding: 24,
     shadowColor: '#000',
-    shadowOffset: {width: 0, height: 4},
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-    elevation: 6,
+    shadowOffset: {width: 0, height: 6},
+    shadowOpacity: 0.12,
+    shadowRadius: 16,
+    elevation: 8,
     overflow: 'hidden',
   },
   adminPostContent: {
     borderWidth: 3,
-    borderColor: '#667eea',
-    shadowColor: '#667eea',
-    shadowOpacity: 0.4,
-    shadowRadius: 16,
-    elevation: 10,
+    shadowColor: '#000',
+    shadowOpacity: 0.2,
+    shadowRadius: 20,
+    elevation: 12,
   },
   glassOverlay: {
     position: 'absolute',
@@ -831,8 +898,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(255,255,255,0.05)',
-    borderRadius: 20,
+    borderRadius: 24,
   },
   postHeader: {
     flexDirection: 'row',
