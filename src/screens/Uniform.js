@@ -25,6 +25,7 @@ import Header from '../components/common/Header';
 import GuideModal from '../components/common/GuideModal';
 import {useNavigation} from '@react-navigation/native';
 import {COLORS, SIZES, FONTS, SHADOWS, LAYOUT} from '../config/theme';
+import {useTheme} from '../hooks/useTheme';
 
 const {width} = Dimensions.get('window');
 const TAB_WIDTH = width / 3;
@@ -47,48 +48,49 @@ const TabIndicator = ({scrollX}) => {
   );
 };
 
-const TabButton = ({icon, title, selected, onPress}) => {
+const TabButton = ({icon, title, selected, onPress, isDarkMode, colors}) => {
   const scaleAnim = useRef(new Animated.Value(1)).current;
-  const fadeAnim = useRef(new Animated.Value(selected ? 1 : 0.6)).current;
+  const fadeAnim = useRef(new Animated.Value(selected ? 1 : 0.7)).current;
 
   useEffect(() => {
     Animated.parallel([
-      Animated.sequence([
-        Animated.timing(scaleAnim, {
-          toValue: selected ? 1.2 : 1,
-          duration: 200,
-          useNativeDriver: true,
-        }),
-        Animated.spring(scaleAnim, {
-          toValue: 1,
-          friction: 4,
-          useNativeDriver: true,
-        }),
-      ]),
+      Animated.spring(scaleAnim, {
+        toValue: selected ? 1.05 : 1,
+        tension: 300,
+        friction: 10,
+        useNativeDriver: true,
+      }),
       Animated.timing(fadeAnim, {
-        toValue: selected ? 1 : 0.6,
-        duration: 200,
+        toValue: selected ? 1 : 0.7,
+        duration: 300,
         useNativeDriver: true,
       }),
     ]).start();
   }, [selected, scaleAnim, fadeAnim]);
 
   return (
-    <TouchableOpacity style={styles.tab} onPress={onPress} activeOpacity={0.7}>
+    <TouchableOpacity style={styles.tab} onPress={onPress} activeOpacity={0.8}>
       <Animated.View
         style={[
           styles.tabContent,
           {
             transform: [{scale: scaleAnim}],
             opacity: fadeAnim,
+            backgroundColor: selected ? COLORS.primary + '15' : 'transparent',
           },
         ]}>
-        <Icon
-          name={icon}
-          size={24}
-          color={selected ? COLORS.primary : COLORS.gray400}
-        />
-        <Text style={[styles.tabText, selected && styles.selectedText]}>
+        <View style={styles.iconContainer}>
+          <Icon
+            name={icon}
+            size={22}
+            color={selected ? colors.primary : colors.textSecondary}
+          />
+        </View>
+        <Text style={[
+          styles.tabText, 
+          selected && styles.selectedText,
+          {color: selected ? colors.primary : colors.textSecondary}
+        ]}>
           {title}
         </Text>
       </Animated.View>
@@ -162,7 +164,7 @@ const TabContent = ({component, index, selectedTab, fadeAnim}) => {
 const Uniform = ({route}) => {
   const {t} = useTranslation();
   const {USER_INFOR} = route.params;
-  const isDarkMode = useColorScheme() === 'dark';
+  const {colors, isDarkMode} = useTheme();
   const [selectedTab, setSelectedTab] = useState(0);
   const [isGuideVisible, setIsGuideVisible] = useState(false);
   const navigation = useNavigation();
@@ -173,17 +175,17 @@ const Uniform = ({route}) => {
     {
       icon: 'shopping-bag',
       title: t('select.product'),
-      component: <SelectProductTab USER_INFOR={USER_INFOR} />,
+      component: <SelectProductTab USER_INFOR={USER_INFOR} isDarkMode={isDarkMode} colors={colors} />,
     },
     {
       icon: 'pending',
       title: t('processing.product'),
-      component: <ProcessingOrdersTab USER_INFOR={USER_INFOR} />,
+      component: <ProcessingOrdersTab USER_INFOR={USER_INFOR} isDarkMode={isDarkMode} colors={colors} />,
     },
     {
       icon: 'check-circle',
       title: t('completed.product'),
-      component: <CompletedOrdersTab USER_INFOR={USER_INFOR} />,
+      component: <CompletedOrdersTab USER_INFOR={USER_INFOR} isDarkMode={isDarkMode} colors={colors} />,
     },
   ];
 
@@ -209,7 +211,7 @@ const Uniform = ({route}) => {
   );
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, {backgroundColor: colors.background}]}>
       <StatusBar
         barStyle={isDarkMode ? 'light-content' : 'dark-content'}
         backgroundColor="transparent"
@@ -217,7 +219,14 @@ const Uniform = ({route}) => {
       />
       <Header title={t('uniform.title')} onBack={() => navigation.goBack()} />
       <View style={styles.content}>
-        <Animated.View style={[styles.tabBar, {elevation: 4}]}>
+        <Animated.View style={[
+          styles.tabBar, 
+          {
+            backgroundColor: colors.surface,
+            elevation: 4,
+            shadowColor: isDarkMode ? '#000' : colors.primary,
+          }
+        ]}>
           {tabs.map((tab, index) => (
             <TabButton
               key={index}
@@ -225,6 +234,8 @@ const Uniform = ({route}) => {
               title={tab.title}
               selected={selectedTab === index}
               onPress={() => handleTabPress(index)}
+              isDarkMode={isDarkMode}
+              colors={colors}
             />
           ))}
           <TabIndicator scrollX={scrollX} />
@@ -256,49 +267,63 @@ const Uniform = ({route}) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
   },
   content: {
     flex: 1,
   },
   tabBar: {
     flexDirection: 'row',
-    backgroundColor: COLORS.white,
-    height: 60,
-    ...SHADOWS.medium,
+    height: 70,
+    ...SHADOWS.large,
     position: 'relative',
     marginBottom: SIZES.base,
-    borderRadius: SIZES.radius,
-    marginHorizontal: SIZES.base,
-    marginTop: SIZES.base,
+    borderRadius: SIZES.radius * 2,
+    marginHorizontal: SIZES.padding,
+    marginTop: SIZES.padding,
+    elevation: 8,
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
   },
   tab: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    paddingVertical: SIZES.base,
   },
   tabContent: {
     flex: 1,
     position: 'relative',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: SIZES.radius,
+    paddingHorizontal: SIZES.base,
+    paddingVertical: SIZES.base / 2,
+  },
+  iconContainer: {
+    marginBottom: SIZES.base / 2,
   },
   indicator: {
     position: 'absolute',
     bottom: 0,
-    height: 3,
-    width: TAB_WIDTH,
+    height: 4,
+    width: TAB_WIDTH - 20,
     backgroundColor: COLORS.primary,
-    borderTopLeftRadius: 3,
-    borderTopRightRadius: 3,
+    borderRadius: 2,
+    alignSelf: 'center',
   },
   tabText: {
-    ...FONTS.body5,
-    color: COLORS.gray400,
-    marginTop: SIZES.base / 2,
+    ...FONTS.body4,
     textAlign: 'center',
+    fontSize: 12,
+    fontWeight: '500',
   },
   selectedText: {
     color: COLORS.primary,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   tabPage: {
     width,
@@ -321,7 +346,6 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: COLORS.background,
   },
 });
 

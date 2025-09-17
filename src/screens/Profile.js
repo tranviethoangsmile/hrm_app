@@ -170,11 +170,11 @@ const Profile = () => {
 
           <View style={styles.timeSection}>
             <View style={styles.timeRow}>
-              <Icon name="log-in-outline" size={16} color="#666" />
+              <Icon name="log-in-outline" size={16} color={colors.textSecondary} />
               <Text style={styles.timeText}>{item.time_in || '--:--'}</Text>
             </View>
             <View style={styles.timeRow}>
-              <Icon name="log-out-outline" size={16} color="#666" />
+              <Icon name="log-out-outline" size={16} color={colors.textSecondary} />
               <Text style={styles.timeText}>{item.time_out || '--:--'}</Text>
             </View>
           </View>
@@ -235,6 +235,8 @@ const Profile = () => {
     checkLanguage();
     // eslint-disable-next-line
   }, []);
+
+  const styles = createStyles(colors, isDarkMode);
 
   return (
     <View style={styles.container}>
@@ -449,14 +451,11 @@ const Profile = () => {
         <View style={styles.historyContainer}>
           <View style={styles.historyHeader}>
             <View style={styles.historyTitleContainer}>
-              <Icon name="list-outline" size={24} color="#667eea" />
+              <Icon name="list-outline" size={24} color={colors.primary} />
               <Text style={styles.historyTitle}>
                 {t('c-i-h', 'Check-in History')}
               </Text>
             </View>
-            <Text style={styles.historyCount}>
-              {userCheckin.length} {t('records', 'records')}
-            </Text>
           </View>
 
           {error ? (
@@ -473,14 +472,14 @@ const Profile = () => {
           {isLoading ? (
             <View style={styles.messageContainer}>
               <View style={styles.loadingContainer}>
-                <ActivityIndicator size="large" color="#667eea" />
+                <ActivityIndicator size="large" color={colors.primary} />
                 <Text style={styles.loadingText}>Loading...</Text>
               </View>
             </View>
           ) : userCheckin.length === 0 ? (
             <View style={styles.messageContainer}>
               <View style={styles.emptyContainer}>
-                <Icon name="calendar-outline" size={64} color="#E0E0E0" />
+                <Icon name="calendar-outline" size={64} color={colors.textTertiary} />
                 <Text style={styles.emptyText}>
                   {t('not.data', 'No data available')}
                 </Text>
@@ -522,14 +521,15 @@ const Profile = () => {
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (colors, isDarkMode) => StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: colors.background,
   },
   headerGradient: {
     paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight || 24 : 44,
     paddingBottom: 12,
-    shadowColor: '#667eea',
+    shadowColor: colors.shadow,
     shadowOffset: {width: 0, height: 4},
     shadowOpacity: 0.3,
     shadowRadius: 12,
@@ -564,12 +564,13 @@ const styles = StyleSheet.create({
   scrollContainer: {
     flex: 1,
     marginTop: -5,
+    backgroundColor: colors.background,
   },
   employeeCard: {
     marginHorizontal: 0,
     marginTop: 0,
-    backgroundColor: '#667eea',
-    shadowColor: '#000',
+    backgroundColor: colors.primary,
+    shadowColor: colors.shadow,
     shadowOffset: {width: 0, height: 8},
     shadowOpacity: 0.25,
     shadowRadius: 16,
@@ -669,7 +670,7 @@ const styles = StyleSheet.create({
   },
   statsContainer: {
     marginTop: 1,
-    backgroundColor: '#fff',
+    backgroundColor: colors.surface,
   },
   monthSelector: {
     marginBottom: 12,
@@ -731,8 +732,8 @@ const styles = StyleSheet.create({
   },
   historyContainer: {
     marginTop: 1,
-    backgroundColor: '#fff',
-    shadowColor: '#000',
+    backgroundColor: colors.surface,
+    shadowColor: colors.shadow,
     shadowOffset: {width: 0, height: 8},
     shadowOpacity: 0.15,
     shadowRadius: 16,
@@ -745,7 +746,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#f1f5f9',
+    borderBottomColor: colors.border,
   },
   historyTitleContainer: {
     flexDirection: 'row',
@@ -754,13 +755,13 @@ const styles = StyleSheet.create({
   historyTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#1a202c',
+    color: colors.text,
     marginLeft: 10,
     letterSpacing: 0.5,
   },
   historyCount: {
     fontSize: 14,
-    color: '#667eea',
+    color: colors.primary,
     fontWeight: '600',
   },
   messageContainer: {
@@ -783,7 +784,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   loadingText: {
-    color: '#667eea',
+    color: colors.primary,
     marginTop: 12,
     fontSize: 16,
     fontWeight: '600',
@@ -792,13 +793,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   emptyText: {
-    color: '#94a3b8',
+    color: colors.textSecondary,
     fontSize: 18,
     fontWeight: '600',
     marginTop: 16,
   },
   emptySubText: {
-    color: '#cbd5e1',
+    color: colors.textTertiary,
     fontSize: 14,
     marginTop: 4,
   },
@@ -812,25 +813,25 @@ const styles = StyleSheet.create({
     marginHorizontal: 16,
     marginVertical: 6,
     borderRadius: 16,
-    backgroundColor: '#fff',
-    shadowColor: '#000',
+    backgroundColor: colors.surface,
+    shadowColor: colors.shadow,
     shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.08,
     shadowRadius: 8,
     elevation: 4,
   },
   paidLeaveRow: {
-    backgroundColor: '#f0fdfa',
+    backgroundColor: isDarkMode ? 'rgba(16, 185, 129, 0.1)' : '#f0fdfa',
     borderLeftWidth: 4,
     borderLeftColor: '#00D4AA',
   },
   weekendRow: {
-    backgroundColor: '#fef2f2',
+    backgroundColor: isDarkMode ? 'rgba(239, 68, 68, 0.1)' : '#fef2f2',
     borderLeftWidth: 4,
     borderLeftColor: '#FF6B6B',
   },
   nightShiftRow: {
-    backgroundColor: '#f8faff',
+    backgroundColor: isDarkMode ? 'rgba(161, 138, 255, 0.1)' : '#f8faff',
     borderLeftWidth: 4,
     borderLeftColor: '#A18AFF',
   },
@@ -847,12 +848,12 @@ const styles = StyleSheet.create({
   dateText: {
     fontSize: 20,
     fontWeight: '800',
-    color: '#1a202c',
+    color: colors.text,
     letterSpacing: 0.5,
   },
   dayText: {
     fontSize: 12,
-    color: '#64748b',
+    color: colors.textSecondary,
     fontWeight: '600',
     marginTop: 2,
   },
@@ -867,7 +868,7 @@ const styles = StyleSheet.create({
   },
   timeText: {
     fontSize: 14,
-    color: '#475569',
+    color: colors.textSecondary,
     fontWeight: '600',
     marginLeft: 8,
   },
@@ -879,7 +880,7 @@ const styles = StyleSheet.create({
   hoursText: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#667eea',
+    color: colors.primary,
   },
   overtimeText: {
     fontSize: 12,

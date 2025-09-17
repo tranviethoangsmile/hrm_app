@@ -9,6 +9,8 @@ import {
   StatusBar,
   StyleSheet,
   SafeAreaView,
+  Modal,
+  ScrollView,
 } from 'react-native';
 import {CameraScreen} from 'react-native-camera-kit';
 import moment from 'moment';
@@ -32,6 +34,7 @@ import {useTranslation} from 'react-i18next';
 import i18next from '../../services/i18next';
 import LinearGradient from 'react-native-linear-gradient';
 import Icon from 'react-native-vector-icons/Ionicons';
+import Clipboard from '@react-native-clipboard/clipboard';
 
 const {width: SCREEN_WIDTH, height: SCREEN_HEIGHT} = Dimensions.get('screen');
 
@@ -45,6 +48,8 @@ const Checkin = () => {
   const [isScanned, setScanned] = useState(false);
   const [isVisible, setVisible] = useState(false);
   const [timeCheckin, setTimeCheckin] = useState('');
+  const [qrContentModal, setQrContentModal] = useState(false);
+  const [qrContent, setQrContent] = useState('');
 
   const authData = useSelector(state => state.auth);
   const today = moment();
@@ -54,6 +59,29 @@ const Checkin = () => {
     setMessageModal(msg);
     setMessageType(type);
     setDuration(dur);
+  };
+
+  const copyToClipboard = async () => {
+    try {
+      await Clipboard.setString(qrContent);
+      // Hiển thị thông báo ngắn gọn mà không đóng modal
+      setMessageModalVisible(true);
+      setMessageModal('copied_to_clipboard');
+      setMessageType('success');
+      setDuration(1500);
+    } catch (error) {
+      setMessageModalVisible(true);
+      setMessageModal('copy_failed');
+      setMessageType('error');
+      setDuration(1500);
+    }
+  };
+
+  const closeQrContentModal = () => {
+    console.log('Closing QR content modal');
+    setQrContentModal(false);
+    setQrContent('');
+    setScanned(false); // Reset isScanned để có thể scan lại
   };
 
   const getLanguage = async () => {
@@ -70,6 +98,11 @@ const Checkin = () => {
     checkLanguage();
   });
 
+  // Debug effect for QR modal
+  useEffect(() => {
+    console.log('QR Modal state changed:', qrContentModal, 'Content:', qrContent);
+  }, [qrContentModal, qrContent]);
+
   const closeModal = () => {
     setVisible(!isVisible);
   };
@@ -85,11 +118,20 @@ const Checkin = () => {
   const handleQRCodeScanner = value => {
     if (!isScanned) {
       const qrValue = value.nativeEvent.codeStringValue;
+      console.log('QR Code scanned in scanner:', qrValue);
       handleCheckin(qrValue);
       setScanned(true);
-      setTimeout(() => {
-        setScanned(false);
-      }, 10000);
+      // Chỉ reset isScanned nếu không phải là QR content modal
+      if (qrValue !== 'checkin' && qrValue !== 'picked') {
+        // Không reset isScanned ngay lập tức cho QR content modal
+        setTimeout(() => {
+          setScanned(false);
+        }, 3000);
+      } else {
+        setTimeout(() => {
+          setScanned(false);
+        }, 10000);
+      }
     }
   };
 
@@ -177,18 +219,23 @@ const Checkin = () => {
   };
 
   const handleCheckin = qrValue => {
-    if (isValidQRCode(qrValue)) {
-      if (qrValue === 'picked') {
-        handleScannerQRCodePicked();
-      } else if (qrValue === 'checkin') {
-        if (authData?.data?.data?.is_officer) {
-          handleCheckinForOfficer();
-        } else {
-          setVisible(true);
-        }
+    console.log('QR Code scanned:', qrValue);
+    // Kiểm tra các trường hợp đặc biệt trước
+    if (qrValue === 'picked') {
+      console.log('Processing picked QR code');
+      handleScannerQRCodePicked();
+    } else if (qrValue === 'checkin') {
+      console.log('Processing checkin QR code');
+      if (authData?.data?.data?.is_officer) {
+        handleCheckinForOfficer();
+      } else {
+        setVisible(true);
       }
     } else {
-      showMessage('QR not avaiable', 'error', 1000);
+      // Hiển thị nội dung QR code cho tất cả các trường hợp khác
+      console.log('Showing QR content modal for:', qrValue);
+      setQrContent(qrValue);
+      setQrContentModal(true);
     }
   };
 
@@ -235,7 +282,7 @@ const Checkin = () => {
       <LinearGradient
         colors={['transparent', 'rgba(0,0,0,0.8)']}
         style={styles.bottomOverlay}>
-        {isScanned ? (
+        {isScanned && !qrContentModal ? (
           <View style={styles.statusContainer}>
             <TouchableOpacity
               style={styles.retryButton}
@@ -283,6 +330,57 @@ const Checkin = () => {
         t={t}
         duration={duration}
       />
+
+      {/* QR Content Modal */}
+      {qrContentModal && (
+        <View style={styles.modalOverlay}>
+          <View style={styles.qrContentModal}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>
+                {t('qr_code_content', 'QR Code Content')}
+              </Text>
+              <TouchableOpacity
+                style={styles.closeButton}
+                onPress={closeQrContentModal}>
+                <Icon name="close" size={24} color="#666" />
+              </TouchableOpacity>
+            </View>
+            
+            <ScrollView style={styles.contentContainer}>
+              <View style={styles.qrContentBox}>
+                <Text style={styles.qrContentText}>
+                  {qrContent || 'No content available'}
+                </Text>
+              </View>
+            </ScrollView>
+            
+            <View style={styles.modalActions}>
+              <TouchableOpacity
+                style={styles.copyButton}
+                onPress={copyToClipboard}
+                activeOpacity={0.8}>
+                <LinearGradient
+                  colors={['#4FACFE', '#00F2FE']}
+                  style={styles.copyGradient}>
+                  <Icon name="copy-outline" size={20} color="#fff" />
+                  <Text style={styles.copyButtonText}>
+                    {t('copy', 'Copy')}
+                  </Text>
+                </LinearGradient>
+              </TouchableOpacity>
+              
+              <TouchableOpacity
+                style={styles.closeModalButton}
+                onPress={closeQrContentModal}
+                activeOpacity={0.8}>
+                <Text style={styles.closeModalButtonText}>
+                  {t('close', 'Close')}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      )}
     </SafeAreaView>
   );
 };
@@ -308,7 +406,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: StatusBar.currentHeight || 44,
     paddingBottom: 20,
-    zIndex: 10,
+    zIndex: 5,
   },
   backButton: {
     width: 40,
@@ -335,7 +433,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     alignItems: 'center',
     justifyContent: 'center',
-    zIndex: 5,
+    zIndex: 1,
   },
   scanFrame: {
     width: 250,
@@ -405,7 +503,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingBottom: 40,
     paddingTop: 60,
-    zIndex: 10,
+    zIndex: 5,
   },
   statusContainer: {
     alignItems: 'center',
@@ -455,6 +553,128 @@ const styles = StyleSheet.create({
     color: '#fff',
     marginTop: 12,
     fontWeight: '600',
+  },
+  // QR Content Modal Styles
+  modalOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.9)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    zIndex: 9999,
+    elevation: 9999,
+    width: '100%',
+    height: '100%',
+  },
+  qrContentModal: {
+    backgroundColor: '#fff',
+    borderRadius: 20,
+    width: '100%',
+    maxHeight: '90%',
+    overflow: 'hidden',
+    elevation: 10000,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 8,
+    },
+    shadowOpacity: 0.8,
+    shadowRadius: 16,
+    zIndex: 10000,
+    minHeight: 300,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#333',
+    flex: 1,
+  },
+  closeButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#f5f5f5',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  contentContainer: {
+    flex: 1,
+    paddingHorizontal: 20,
+    paddingVertical: 20,
+    maxHeight: 400,
+  },
+  qrContentBox: {
+    backgroundColor: '#f8f9fa',
+    borderRadius: 12,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: '#e9ecef',
+    minHeight: 200,
+    maxHeight: 350,
+  },
+  qrContentText: {
+    fontSize: 16,
+    color: '#333',
+    lineHeight: 26,
+    fontFamily: 'monospace',
+    textAlign: 'left',
+    flexWrap: 'wrap',
+    flex: 1,
+  },
+  modalActions: {
+    flexDirection: 'row',
+    paddingHorizontal: 20,
+    paddingVertical: 20,
+    gap: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#f0f0f0',
+  },
+  copyButton: {
+    flex: 1,
+    borderRadius: 12,
+    overflow: 'hidden',
+  },
+  copyGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+  },
+  copyButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#fff',
+    marginLeft: 8,
+  },
+  closeModalButton: {
+    flex: 1,
+    backgroundColor: '#f8f9fa',
+    borderRadius: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#e9ecef',
+  },
+  closeModalButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#666',
   },
 });
 

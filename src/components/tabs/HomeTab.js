@@ -300,6 +300,18 @@ const HomeTab = ({onScrollList}) => {
           ]}>
           {/* Glass overlay for modern effect */}
           <View style={[styles.glassOverlay, {backgroundColor: colors.primary + '05'}]} />
+          
+          {/* Admin indicator overlay */}
+          {isAdmin && (
+            <View style={styles.adminIndicatorOverlay}>
+              <LinearGradient
+                colors={['rgba(10, 132, 255, 0.1)', 'rgba(10, 132, 255, 0.05)']}
+                style={styles.adminIndicatorGradient}
+                start={{x: 0, y: 0}}
+                end={{x: 1, y: 1}}
+              />
+            </View>
+          )}
 
           <View style={styles.postHeader}>
             <View style={styles.avatarContainer}>
@@ -324,7 +336,15 @@ const HomeTab = ({onScrollList}) => {
             </View>
           </View>
 
-          {item.title && <Text style={[styles.postTitleText, {color: colors.text}]}>{item.title}</Text>}
+          {item.title && (
+            <Text style={[
+              styles.postTitleText, 
+              {color: colors.text},
+              isAdmin && styles.adminTitleText
+            ]}>
+              {item.title}
+            </Text>
+          )}
 
           <Text
             style={[styles.postContentText, {color: colors.textSecondary}]}
@@ -872,25 +892,35 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   postItemContainer: {
-    marginHorizontal: 16,
-    marginBottom: 8,
+    marginHorizontal: 0,
+    marginBottom: 1,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(0,0,0,0.1)',
   },
   postContent: {
-    borderRadius: 24,
-    padding: 24,
-    shadowColor: '#000',
-    shadowOffset: {width: 0, height: 6},
-    shadowOpacity: 0.12,
-    shadowRadius: 16,
-    elevation: 8,
+    borderRadius: 0,
+    padding: 20,
+    shadowColor: 'transparent',
+    shadowOffset: {width: 0, height: 0},
+    shadowOpacity: 0,
+    shadowRadius: 0,
+    elevation: 0,
     overflow: 'hidden',
   },
   adminPostContent: {
-    borderWidth: 3,
-    shadowColor: '#000',
-    shadowOpacity: 0.2,
-    shadowRadius: 20,
-    elevation: 12,
+    borderLeftWidth: 6,
+    borderLeftColor: '#0A84FF',
+    backgroundColor: 'rgba(10, 132, 255, 0.08)',
+    shadowColor: '#0A84FF',
+    shadowOffset: {width: 0, height: 4},
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 8,
+    marginVertical: 2,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(10, 132, 255, 0.2)',
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(10, 132, 255, 0.2)',
   },
   glassOverlay: {
     position: 'absolute',
@@ -898,7 +928,19 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    borderRadius: 24,
+    borderRadius: 0,
+  },
+  adminIndicatorOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 1,
+  },
+  adminIndicatorGradient: {
+    flex: 1,
+    borderRadius: 0,
   },
   postHeader: {
     flexDirection: 'row',
@@ -949,15 +991,25 @@ const styles = StyleSheet.create({
   adminBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
-    gap: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 16,
+    gap: 6,
+    shadowColor: '#0A84FF',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 4,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.3)',
   },
   adminBadgeText: {
     color: '#ffffff',
-    fontSize: 11,
-    fontWeight: '700',
+    fontSize: 12,
+    fontWeight: '800',
+    textShadowColor: 'rgba(0,0,0,0.3)',
+    textShadowOffset: {width: 0, height: 1},
+    textShadowRadius: 2,
   },
   postTitleText: {
     fontSize: 19,
@@ -965,6 +1017,14 @@ const styles = StyleSheet.create({
     color: '#1e293b',
     marginBottom: 12,
     lineHeight: 26,
+  },
+  adminTitleText: {
+    fontSize: 20,
+    fontWeight: '800',
+    color: '#0A84FF',
+    textShadowColor: 'rgba(10, 132, 255, 0.3)',
+    textShadowOffset: {width: 0, height: 1},
+    textShadowRadius: 2,
   },
   postContentText: {
     fontSize: 16,

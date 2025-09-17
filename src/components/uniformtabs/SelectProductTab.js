@@ -29,7 +29,7 @@ import axios from 'axios';
 
 import {uniformProducts} from '../../utils/uniform/uniform';
 
-const SelectProductTab = ({USER_INFOR}) => {
+const SelectProductTab = ({USER_INFOR, isDarkMode, colors}) => {
   const {t} = useTranslation();
   const [selectedSize, setSelectedSize] = useState({});
   const [qty, setQuantity] = useState({});
@@ -42,7 +42,7 @@ const SelectProductTab = ({USER_INFOR}) => {
   const [isChecked, setIsChecked] = useState(false);
   const [notes, setNotes] = useState('');
 
-  const showMessage = (msg, type, dur) => {
+  const showMessage = (msg, type, dur = 2000) => {
     setMessage(msg);
     setMessageType(type);
     setDuration(dur);
@@ -100,18 +100,20 @@ const SelectProductTab = ({USER_INFOR}) => {
       const uniformOrder = await axios.post(URL, {
         ...value,
       });
-      setIsChecked(false);
-      setNotes('');
-      if (!uniformOrder?.data.success) {
+      
+      if (uniformOrder?.data.success) {
+        // Thành công
+        setIsChecked(false);
+        setNotes('');
+        setCart([]);
+        setModalVisible(false);
+        showMessage('success', 'success', 1500);
+      } else {
+        // Thất bại
         showMessage('not.success', 'warning', 1500);
       }
-      setCart([]);
-      showMessage('success', 'success', 1000);
     } catch (error) {
-      setMessageModalVisible(true);
       showMessage('err', 'error', 2000);
-    } finally {
-      setModalVisible(false);
     }
   };
 
@@ -123,18 +125,18 @@ const SelectProductTab = ({USER_INFOR}) => {
     const product = uniformProducts.find(p => p.id === item.itemId);
 
     return (
-      <Animated.View style={styles.cartItem}>
+      <Animated.View style={[styles.cartItem, {backgroundColor: colors.background}]}>
         <Image source={product.image} style={styles.cartImage} />
         <View style={styles.cartDetails}>
-          <Text style={styles.cartName}>{t(item.uniform_type)}</Text>
+          <Text style={[styles.cartName, {color: colors.text}]}>{t(item.uniform_type)}</Text>
           <View style={styles.cartInfo}>
-            <Text style={styles.cartText}>
+            <Text style={[styles.cartText, {color: colors.textSecondary}]}>
               {t('size')}:{' '}
-              <Text style={styles.cartTextBold}>{item.uniform_size}</Text>
+              <Text style={[styles.cartTextBold, {color: colors.text}]}>{item.uniform_size}</Text>
             </Text>
-            <Text style={styles.cartText}>
+            <Text style={[styles.cartText, {color: colors.textSecondary}]}>
               {t('qty')}:{' '}
-              <Text style={styles.cartTextBold}>{item.quantity}</Text>
+              <Text style={[styles.cartTextBold, {color: colors.text}]}>{item.quantity}</Text>
             </Text>
           </View>
         </View>
@@ -148,48 +150,88 @@ const SelectProductTab = ({USER_INFOR}) => {
   };
 
   const renderItem = ({item}) => (
-    <View style={styles.itemContainer}>
-      <Image source={item.image} style={styles.image} />
+    <View style={[styles.itemContainer, {backgroundColor: colors.surface}]}>
+      <View style={styles.imageContainer}>
+        <Image source={item.image} style={styles.image} />
+        <View style={styles.imageOverlay}>
+          <View style={styles.badge}>
+            <Text style={styles.badgeText}>{t('new')}</Text>
+          </View>
+        </View>
+      </View>
       <View style={styles.detailsContainer}>
-        <Text style={styles.name}>{t(item.type)}</Text>
-
-        <Text style={styles.label}>{t('size')}:</Text>
-        <View style={styles.sizePicker}>
-          {item.sizes.map(size => (
-            <TouchableOpacity
-              key={size}
-              style={[
-                styles.sizeOption,
-                selectedSize[item.id] === size && styles.selectedSize,
-              ]}
-              onPress={() =>
-                setSelectedSize({...selectedSize, [item.id]: size})
-              }>
-              <Text
-                style={[
-                  styles.sizeText,
-                  selectedSize[item.id] === size && styles.selectedSizeText,
-                ]}>
-                {size}
-              </Text>
-            </TouchableOpacity>
-          ))}
+        <View style={styles.headerSection}>
+            <Text style={[styles.name, {color: colors.text}]}>{t(item.type)}</Text>
+          <View style={styles.priceContainer}>
+            <Text style={[styles.priceLabel, {color: colors.textSecondary}]}>{t('price')}:</Text>
+            <Text style={[styles.price, {color: COLORS.success}]}>Free</Text>
+          </View>
         </View>
 
-        <Text style={styles.label}>{t('qty')}:</Text>
-        <TextInput
-          style={styles.quantityInput}
-          keyboardType="numeric"
-          value={qty[item.id]?.toString() || '1'}
-          onChangeText={value =>
-            setQuantity({...qty, [item.id]: parseInt(value) || 1})
-          }
-          placeholderTextColor={COLORS.placeholder}
-        />
+        <View style={styles.section}>
+          <Text style={[styles.label, {color: colors.textSecondary}]}>{t('size')}:</Text>
+          <View style={styles.sizePicker}>
+            {item.sizes.map(size => (
+              <TouchableOpacity
+                key={size}
+                style={[
+                  styles.sizeOption,
+                  {backgroundColor: colors.surface, borderColor: colors.borderColor},
+                  selectedSize[item.id] === size && styles.selectedSize,
+                ]}
+                onPress={() =>
+                  setSelectedSize({...selectedSize, [item.id]: size})
+                }>
+                <Text
+                  style={[
+                    styles.sizeText,
+                    {color: colors.text},
+                    selectedSize[item.id] === size && styles.selectedSizeText,
+                  ]}>
+                  {size}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+
+        <View style={styles.section}>
+          <Text style={[styles.label, {color: colors.textSecondary}]}>{t('qty')}:</Text>
+          <View style={[styles.quantityContainer, {backgroundColor: colors.background}]}>
+            <TouchableOpacity
+              style={styles.quantityButton}
+              onPress={() => {
+                const currentQty = qty[item.id] || 1;
+                if (currentQty > 1) {
+                  setQuantity({...qty, [item.id]: currentQty - 1});
+                }
+              }}>
+              <Icon name="remove" size={16} color={COLORS.primary} />
+            </TouchableOpacity>
+            <TextInput
+              style={[styles.quantityInput, {color: colors.text}]}
+              keyboardType="numeric"
+              value={qty[item.id]?.toString() || '1'}
+              onChangeText={value =>
+                setQuantity({...qty, [item.id]: parseInt(value) || 1})
+              }
+              placeholderTextColor={colors.placeholder}
+            />
+            <TouchableOpacity
+              style={styles.quantityButton}
+              onPress={() => {
+                const currentQty = qty[item.id] || 1;
+                setQuantity({...qty, [item.id]: currentQty + 1});
+              }}>
+              <Icon name="add" size={16} color={COLORS.primary} />
+            </TouchableOpacity>
+          </View>
+        </View>
 
         <TouchableOpacity
           style={styles.addButton}
           onPress={() => handleAddToCart(item.id)}>
+          <Icon name="add" size={18} color={COLORS.white} />
           <Text style={styles.addButtonText}>{t('add_cart')}</Text>
         </TouchableOpacity>
       </View>
@@ -197,7 +239,7 @@ const SelectProductTab = ({USER_INFOR}) => {
   );
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, {backgroundColor: colors.background}]}>
       <FlatList
         data={uniformProducts}
         renderItem={renderItem}
@@ -215,13 +257,13 @@ const SelectProductTab = ({USER_INFOR}) => {
 
       <Modal visible={isModalVisible} transparent={true} animationType="slide">
         <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
+          <View style={[styles.modalContent, {backgroundColor: colors.surface}]}>
             <TouchableOpacity
               style={styles.closeIcon}
               onPress={() => setModalVisible(false)}>
-              <Icon name="close" size={24} color={COLORS.dark} />
+              <Icon name="close" size={24} color={colors.text} />
             </TouchableOpacity>
-            <Text style={styles.modalTitle}>{t('cart')}</Text>
+            <Text style={[styles.modalTitle, {color: colors.text}]}>{t('cart')}</Text>
 
             <FlatList
               data={cart}
@@ -229,7 +271,7 @@ const SelectProductTab = ({USER_INFOR}) => {
               keyExtractor={(item, index) => index.toString()}
               style={styles.cartList}
               ListEmptyComponent={
-                <Text style={styles.emptyCartText}>{t('cart_empty')}</Text>
+                <Text style={[styles.emptyCartText, {color: colors.textSecondary}]}>{t('cart_empty')}</Text>
               }
             />
 
@@ -240,17 +282,17 @@ const SelectProductTab = ({USER_INFOR}) => {
                   value={isChecked}
                   onValueChange={newValue => setIsChecked(newValue)}
                 />
-                <Text style={styles.checkboxLabel}>{t('note')}</Text>
+                <Text style={[styles.checkboxLabel, {color: colors.text}]}>{t('note')}</Text>
               </View>
             )}
 
             {isChecked && (
               <TextInput
-                style={styles.noteInput}
+                style={[styles.noteInput, {color: colors.text, borderColor: colors.borderColor}]}
                 placeholder={t('enter_note')}
                 value={notes}
                 onChangeText={text => setNotes(text)}
-                placeholderTextColor={COLORS.placeholder}
+                placeholderTextColor={colors.placeholder}
                 multiline
               />
             )}
@@ -267,7 +309,7 @@ const SelectProductTab = ({USER_INFOR}) => {
       </Modal>
 
       <ModalMessage
-        visible={isMessageModalVisible}
+        isVisible={isMessageModalVisible}
         message={message}
         type={messageType}
         duration={duration}
@@ -281,83 +323,151 @@ const SelectProductTab = ({USER_INFOR}) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.background,
   },
   list: {
     padding: SIZES.padding,
   },
   itemContainer: {
-    backgroundColor: COLORS.white,
-    borderRadius: SIZES.radius,
-    marginBottom: SIZES.base * 2,
-    ...SHADOWS.medium,
+    borderRadius: SIZES.radius * 2,
+    marginBottom: SIZES.padding,
+    ...SHADOWS.large,
     overflow: 'hidden',
+    elevation: 6,
+    shadowColor: COLORS.primary,
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+  },
+  imageContainer: {
+    position: 'relative',
   },
   image: {
     width: '100%',
-    height: 200,
+    height: 220,
     resizeMode: 'cover',
+  },
+  imageOverlay: {
+    position: 'absolute',
+    top: SIZES.base,
+    right: SIZES.base,
+  },
+  badge: {
+    backgroundColor: COLORS.success,
+    paddingHorizontal: SIZES.base,
+    paddingVertical: SIZES.base / 2,
+    borderRadius: SIZES.radius,
+  },
+  badgeText: {
+    ...FONTS.body5,
+    color: COLORS.white,
+    fontWeight: '600',
   },
   detailsContainer: {
     padding: SIZES.padding,
   },
+  headerSection: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: SIZES.base,
+  },
   name: {
     ...FONTS.h2,
-    color: COLORS.text,
+    flex: 1,
+  },
+  priceContainer: {
+    alignItems: 'flex-end',
+  },
+  priceLabel: {
+    ...FONTS.body5,
+  },
+  price: {
+    ...FONTS.h3,
+    color: COLORS.success,
+    fontWeight: '700',
+  },
+  section: {
     marginBottom: SIZES.base,
   },
   label: {
     ...FONTS.body4,
-    color: COLORS.textSecondary,
     marginBottom: SIZES.base / 2,
+    fontWeight: '600',
   },
   sizePicker: {
     flexDirection: 'row',
     flexWrap: 'wrap',
+    gap: SIZES.base / 2,
     marginBottom: SIZES.base,
   },
   sizeOption: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: COLORS.borderColor,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    borderWidth: 2,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: SIZES.base,
-    marginBottom: SIZES.base,
+    minHeight: 48,
   },
   selectedSize: {
     backgroundColor: COLORS.primary,
     borderColor: COLORS.primary,
+    ...SHADOWS.medium,
   },
   sizeText: {
     ...FONTS.body4,
-    color: COLORS.text,
+    fontWeight: '600',
+    fontSize: 14,
   },
   selectedSizeText: {
     color: COLORS.white,
   },
-  quantityInput: {
-    height: SIZES.inputHeight,
-    borderWidth: 1,
-    borderColor: COLORS.borderColor,
+  quantityContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
     borderRadius: SIZES.radius,
-    paddingHorizontal: SIZES.inputPaddingHorizontal,
-    marginBottom: SIZES.base,
-    color: COLORS.text,
+    padding: SIZES.base / 2,
+    minHeight: 44,
+  },
+  quantityButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: COLORS.white,
+    justifyContent: 'center',
+    alignItems: 'center',
+    ...SHADOWS.light,
+  },
+  quantityInput: {
+    flex: 1,
+    height: 36,
+    textAlign: 'center',
     ...FONTS.body4,
+    fontWeight: '600',
+    marginHorizontal: SIZES.base,
+    paddingVertical: 0,
+    paddingHorizontal: SIZES.base / 2,
+    fontSize: 16,
+    includeFontPadding: false,
+    textAlignVertical: 'center',
   },
   addButton: {
     backgroundColor: COLORS.primary,
-    height: SIZES.inputHeight,
+    height: 48,
     borderRadius: SIZES.radius,
     justifyContent: 'center',
     alignItems: 'center',
+    flexDirection: 'row',
+    ...SHADOWS.medium,
   },
   addButtonText: {
     color: COLORS.white,
     ...FONTS.h4,
+    marginLeft: SIZES.base / 2,
+    fontWeight: '600',
   },
   cartButton: {
     position: 'absolute',
@@ -366,12 +476,16 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.primary,
     paddingHorizontal: SIZES.padding,
     paddingVertical: SIZES.base,
-    borderRadius: SIZES.radius,
-    ...SHADOWS.medium,
+    borderRadius: SIZES.radius * 2,
+    ...SHADOWS.large,
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   cartButtonText: {
     color: COLORS.white,
     ...FONTS.h4,
+    marginLeft: SIZES.base / 2,
+    fontWeight: '600',
   },
   modalContainer: {
     flex: 1,
@@ -379,9 +493,8 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   modalContent: {
-    backgroundColor: COLORS.white,
-    borderTopLeftRadius: SIZES.radius * 2,
-    borderTopRightRadius: SIZES.radius * 2,
+    borderTopLeftRadius: SIZES.radius * 3,
+    borderTopRightRadius: SIZES.radius * 3,
     paddingHorizontal: SIZES.padding,
     paddingBottom: SIZES.padding,
     maxHeight: '80%',
@@ -393,16 +506,15 @@ const styles = StyleSheet.create({
   },
   modalTitle: {
     ...FONTS.h2,
-    color: COLORS.text,
     marginBottom: SIZES.padding,
     textAlign: 'center',
+    fontWeight: '700',
   },
   cartList: {
     marginBottom: SIZES.padding,
   },
   cartItem: {
     flexDirection: 'row',
-    backgroundColor: COLORS.white,
     borderRadius: SIZES.radius,
     marginBottom: SIZES.base,
     padding: SIZES.base,
@@ -419,8 +531,8 @@ const styles = StyleSheet.create({
   },
   cartName: {
     ...FONTS.h4,
-    color: COLORS.text,
     marginBottom: SIZES.base / 2,
+    fontWeight: '600',
   },
   cartInfo: {
     flexDirection: 'row',
@@ -428,11 +540,10 @@ const styles = StyleSheet.create({
   },
   cartText: {
     ...FONTS.body4,
-    color: COLORS.textSecondary,
   },
   cartTextBold: {
     ...FONTS.h4,
-    color: COLORS.text,
+    fontWeight: '600',
   },
   deleteButton: {
     width: 36,
@@ -450,17 +561,15 @@ const styles = StyleSheet.create({
   },
   checkboxLabel: {
     ...FONTS.body4,
-    color: COLORS.text,
     marginLeft: SIZES.base,
+    fontWeight: '600',
   },
   noteInput: {
     height: SIZES.inputHeight * 2,
     borderWidth: 1,
-    borderColor: COLORS.borderColor,
     borderRadius: SIZES.radius,
     paddingHorizontal: SIZES.inputPaddingHorizontal,
     marginBottom: SIZES.padding,
-    color: COLORS.text,
     ...FONTS.body4,
     textAlignVertical: 'top',
   },
@@ -471,14 +580,15 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginTop: SIZES.base,
+    ...SHADOWS.medium,
   },
   checkoutButtonText: {
     color: COLORS.white,
     ...FONTS.h4,
+    fontWeight: '600',
   },
   emptyCartText: {
     ...FONTS.body3,
-    color: COLORS.textSecondary,
     textAlign: 'center',
     marginTop: SIZES.padding,
   },

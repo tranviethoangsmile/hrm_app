@@ -463,23 +463,24 @@ const createStyles = (isDarkMode) => StyleSheet.create({
   },
   content: {
     flex: 1,
+    backgroundColor: isDarkMode ? '#000000' : '#f8fafc',
   },
   notificationsList: {
-    paddingVertical: 8,
+    paddingVertical: 0,
+    paddingTop: 8,
+    paddingBottom: 8,
   },
   notificationItem: {
-    marginHorizontal: 16,
-    marginVertical: 8,
-    borderRadius: 16,
+    marginHorizontal: 0,
+    marginVertical: 0,
     backgroundColor: isDarkMode ? '#1C1C1E' : '#fff',
-    ...SHADOWS.light,
-    borderWidth: 1,
-    borderColor: isDarkMode ? '#2C2C2E' : '#f1f5f9',
+    borderBottomWidth: 1,
+    borderBottomColor: isDarkMode ? '#2C2C2E' : '#e2e8f0',
   },
   unreadItem: {
-    ...SHADOWS.dark,
-    borderColor: '#667eea',
-    borderWidth: 1.5,
+    borderLeftWidth: 4,
+    borderLeftColor: '#667eea',
+    backgroundColor: isDarkMode ? '#1a1a2e' : '#f8faff',
   },
   tabContainer: {
     flexDirection: 'row',
@@ -573,14 +574,11 @@ const createStyles = (isDarkMode) => StyleSheet.create({
     top: -2,
   },
   notificationCard: {
-    borderRadius: 12,
-    overflow: 'hidden',
-    backgroundColor: isDarkMode ? '#1C1C1E' : '#fff',
-    ...SHADOWS.light,
+    backgroundColor: 'transparent',
   },
   notificationHeader: {
     flexDirection: 'row',
-    padding: 12,
+    padding: 16,
   },
   iconContainer: {
     width: 48,

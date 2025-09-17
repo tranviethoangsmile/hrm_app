@@ -7,10 +7,11 @@ import {
   StatusBar,
   Image,
   TouchableOpacity,
-  Alert,
   Modal,
   ActivityIndicator,
   Platform,
+  Dimensions,
+  Animated,
 } from 'react-native';
 import moment from 'moment';
 import {useSelector} from 'react-redux';
@@ -31,6 +32,9 @@ import {
 } from '../utils/constans';
 import LinearGradient from 'react-native-linear-gradient';
 import SelectDate from '../components/SelectDate';
+import {useTheme} from '../hooks/useTheme';
+
+const {width: screenWidth} = Dimensions.get('window');
 
 const Salary = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -40,8 +44,12 @@ const Salary = () => {
   );
   const [payrollData, setPayrollData] = useState({});
   const [isExpanded, setIsExpanded] = useState(false);
+  const [fadeAnim] = useState(new Animated.Value(0));
+  const [slideAnim] = useState(new Animated.Value(50));
+  
   const navigation = useNavigation();
   const {t} = useTranslation();
+  const theme = useTheme();
   const authData = useSelector(state => state.auth);
   const userInfor = authData?.data?.data;
 
@@ -56,13 +64,11 @@ const Salary = () => {
         },
       );
       if (!res?.data?.success) {
-        Alert.alert(t('noti'), t('not.data'));
         setPayrollData({});
       } else {
         setPayrollData(res?.data?.data);
       }
     } catch (error) {
-      Alert.alert(t('noti'), t('contactAdmin'));
       setPayrollData({});
     } finally {
       setIsLoading(false);
@@ -71,153 +77,198 @@ const Salary = () => {
 
   useEffect(() => {
     console.log('userInfor', userInfor);
+    console.log('userInfor.name type:', typeof userInfor?.name, userInfor?.name);
+    console.log('userInfor.avatar:', userInfor?.avatar);
     getPayrollOfUser();
   }, [payrollMonth, getPayrollOfUser]);
 
-  const payrollItems = [
-    {label: t('wt'), value: payrollData?.work_time, icon: 'time-outline'},
-    {label: t('ot'), value: payrollData?.over_time, icon: 'flash-outline'},
+  useEffect(() => {
+    // Animate content on load
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 800,
+        useNativeDriver: true,
+      }),
+      Animated.timing(slideAnim, {
+        toValue: 0,
+        duration: 600,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, []);
+
+  // Format currency values
+  const formatCurrency = (value) => {
+    if (!value || value === 0) return '---';
+    // Handle object with name property
+    if (typeof value === 'object' && value.name) {
+      return safeRender(value.name);
+    }
+    if (typeof value !== 'number') return '---';
+    return `$${Number(value).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  };
+
+  // Format time values
+  const formatTime = (value) => {
+    if (!value || value === 0) return '---';
+    // Handle object with name property
+    if (typeof value === 'object' && value.name) {
+      return safeRender(value.name);
+    }
+    if (typeof value !== 'number') return '---';
+    return `${value}h`;
+  };
+
+  // Format days
+  const formatDays = (value) => {
+    if (!value || value === 0) return '---';
+    // Handle object with name property
+    if (typeof value === 'object' && value.name) {
+      return safeRender(value.name);
+    }
+    if (typeof value !== 'number') return '---';
+    return `${value} days`;
+  };
+
+  // Helper function to safely get translation strings
+  const getTranslation = (key, fallback = '') => {
+    const translation = t(key);
+    // Ensure we always return a string, not an object
+    if (typeof translation === 'string') {
+      return translation;
+    }
+    return fallback || key;
+  };
+
+  // Helper function to safely render any value as string
+  const safeRender = (value, fallback = '---') => {
+    if (value === null || value === undefined) {
+      return fallback;
+    }
+    if (typeof value === 'string' || typeof value === 'number') {
+      return String(value);
+    }
+    if (typeof value === 'object') {
+      // Try to extract name property if it exists
+      if (value.name && typeof value.name === 'string') {
+        return value.name;
+      }
+      // Try to extract other common string properties
+      if (value.value && typeof value.value === 'string') {
+        return value.value;
+      }
+      if (value.label && typeof value.label === 'string') {
+        return value.label;
+      }
+      // If it's an array, join it
+      if (Array.isArray(value)) {
+        return value.join(', ');
+      }
+      // Convert object to string representation
+      return JSON.stringify(value);
+    }
+    return fallback;
+  };
+
+  // Helper function to safely get payroll data
+  const getPayrollValue = (key) => {
+    const value = payrollData?.[key];
+    return safeRender(value);
+  };
+
+  const payrollSections = [
     {
-      label: t('pvd'),
-      value: payrollData?.paid_vacation_days,
-      icon: 'calendar-outline',
+      title: getTranslation('salary.workTime', 'Work Time'),
+      items: [
+        {label: getTranslation('wt', 'Work Time'), value: getPayrollValue('work_time'), icon: 'time-outline', formatter: formatTime},
+        {label: getTranslation('ot', 'Over Time'), value: getPayrollValue('over_time'), icon: 'flash-outline', formatter: formatTime},
+        {label: getTranslation('nSTime', 'Night Shift'), value: getPayrollValue('shift_night'), icon: 'moon-outline', formatter: formatTime},
+        {label: getTranslation('wend', 'Weekend'), value: getPayrollValue('weekend_time'), icon: 'calendar-number-outline', formatter: formatTime},
+        {label: getTranslation('pvd', 'Paid Vacation Days'), value: getPayrollValue('paid_vacation_days'), icon: 'calendar-outline', formatter: formatDays},
+      ]
     },
     {
-      label: t('wend'),
-      value: payrollData?.weekend_time,
-      icon: 'calendar-number-outline',
+      title: getTranslation('salary.earnings', 'Earnings'),
+      items: [
+        {label: getTranslation('wsalary', 'Work Salary'), value: getPayrollValue('work_salary'), icon: 'cash-outline', formatter: formatCurrency},
+        {label: getTranslation('ot.salary', 'Over Time Salary'), value: getPayrollValue('over_time_salary'), icon: 'flash-outline', formatter: formatCurrency},
+        {label: getTranslation('ns.salary', 'Night Shift Salary'), value: getPayrollValue('shift_night_salary'), icon: 'moon-outline', formatter: formatCurrency},
+        {label: getTranslation('w.end.salary', 'Weekend Salary'), value: getPayrollValue('weekend_salary'), icon: 'calendar-outline', formatter: formatCurrency},
+        {label: getTranslation('pvp', 'Paid Vacation Pay'), value: getPayrollValue('paid_vacation_pay'), icon: 'wallet-outline', formatter: formatCurrency},
+        {label: getTranslation('bonus', 'Bonus Pay'), value: getPayrollValue('bonus_pay'), icon: 'gift-outline', formatter: formatCurrency},
+        {label: getTranslation('oth.pay', 'Other Pay'), value: getPayrollValue('other_pay'), icon: 'add-circle-outline', formatter: formatCurrency},
+        {label: getTranslation('R.Money', 'Refund Money'), value: getPayrollValue('refund_money'), icon: 'return-up-back-outline', formatter: formatCurrency},
+      ]
     },
     {
-      label: t('pvp'),
-      value: payrollData?.paid_vacation_pay,
-      icon: 'wallet-outline',
+      title: getTranslation('salary.allowances', 'Allowances'),
+      items: [
+        {label: getTranslation('AAP', 'Attendance Allowance'), value: getPayrollValue('attendance_allowance_pay'), icon: 'checkmark-circle-outline', formatter: formatCurrency},
+        {label: getTranslation('TAP', 'Travel Allowance'), value: getPayrollValue('travel_allowance_pay'), icon: 'car-outline', formatter: formatCurrency},
+      ]
     },
     {
-      label: t('wsalary'),
-      value: payrollData?.work_salary,
-      icon: 'cash-outline',
-    },
-    {
-      label: t('ns.salary'),
-      value: payrollData?.shift_night_salary,
-      icon: 'moon-outline',
-    },
-    {
-      label: t('ot.salary'),
-      value: payrollData?.over_time_salary,
-      icon: 'flash-outline',
-    },
-    {label: t('nSTime'), value: payrollData?.shift_night, icon: 'moon-outline'},
-    {
-      label: t('R.Money'),
-      value: payrollData?.refund_money,
-      icon: 'return-up-back-outline',
-    },
-    {
-      label: t('oth.pay'),
-      value: payrollData?.other_pay,
-      icon: 'add-circle-outline',
-    },
-    {
-      label: t('w.end.salary'),
-      value: payrollData?.weekend_salary,
-      icon: 'calendar-outline',
-    },
-    {
-      label: t('AAP'),
-      value: payrollData?.attendance_allowance_pay,
-      icon: 'checkmark-circle-outline',
-    },
-    {
-      label: t('TAP'),
-      value: payrollData?.travel_allowance_pay,
-      icon: 'car-outline',
-    },
-    {label: t('bonus'), value: payrollData?.bonus_pay, icon: 'gift-outline'},
-    {
-      label: t('G.Salary'),
-      value: payrollData?.gross_salary,
-      icon: 'calculator-outline',
-    },
-    {
-      label: t('I.TAX'),
-      value: payrollData?.income_tax,
-      icon: 'receipt-outline',
-    },
-    {
-      label: t('SI'),
-      value: payrollData?.social_insurance,
-      icon: 'shield-checkmark-outline',
-    },
-    {
-      label: t('H.I'),
-      value: payrollData?.health_insurance,
-      icon: 'medkit-outline',
-    },
-    {
-      label: t('UDM'),
-      value: payrollData?.uniform_deduction,
-      icon: 'shirt-outline',
-    },
-    {
-      label: t('AI'),
-      value: payrollData?.accident_insurance,
-      icon: 'shield-outline',
-    },
-    {label: t('C.FEE'), value: payrollData?.club_fee, icon: 'people-outline'},
-    {label: t('Rent'), value: payrollData?.rent_home, icon: 'home-outline'},
-    {
-      label: t('col'),
-      value: payrollData?.cost_of_living,
-      icon: 'restaurant-outline',
-    },
-    {
-      label: t('oth.d'),
-      value: payrollData?.other_deduction,
-      icon: 'remove-circle-outline',
-    },
-    {
-      label: t('N.Salary'),
-      value: payrollData?.net_salary,
-      icon: 'wallet-outline',
-    },
+      title: getTranslation('salary.deductions', 'Deductions'),
+      items: [
+        {label: getTranslation('I.TAX', 'Income Tax'), value: getPayrollValue('income_tax'), icon: 'receipt-outline', formatter: formatCurrency},
+        {label: getTranslation('SI', 'Social Insurance'), value: getPayrollValue('social_insurance'), icon: 'shield-checkmark-outline', formatter: formatCurrency},
+        {label: getTranslation('H.I', 'Health Insurance'), value: getPayrollValue('health_insurance'), icon: 'medkit-outline', formatter: formatCurrency},
+        {label: getTranslation('AI', 'Accident Insurance'), value: getPayrollValue('accident_insurance'), icon: 'shield-outline', formatter: formatCurrency},
+        {label: getTranslation('UDM', 'Uniform Deduction'), value: getPayrollValue('uniform_deduction'), icon: 'shirt-outline', formatter: formatCurrency},
+        {label: getTranslation('C.FEE', 'Club Fee'), value: getPayrollValue('club_fee'), icon: 'people-outline', formatter: formatCurrency},
+        {label: getTranslation('Rent', 'Rent Home'), value: getPayrollValue('rent_home'), icon: 'home-outline', formatter: formatCurrency},
+        {label: getTranslation('col', 'Cost of Living'), value: getPayrollValue('cost_of_living'), icon: 'restaurant-outline', formatter: formatCurrency},
+        {label: getTranslation('oth.d', 'Other Deduction'), value: getPayrollValue('other_deduction'), icon: 'remove-circle-outline', formatter: formatCurrency},
+      ]
+    }
   ];
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, {backgroundColor: theme.colors.background}]}>
       <StatusBar
-        barStyle="light-content"
+        barStyle={theme.isDarkMode ? "light-content" : "dark-content"}
         backgroundColor="transparent"
         translucent
       />
 
-      {/* Standard Header with Gradient */}
+      {/* Modern Header with Theme Support */}
       <LinearGradient
-        colors={['#667eea', '#764ba2']}
+        colors={theme.isDarkMode ? ['#1a1a2e', '#16213e'] : ['#667eea', '#764ba2']}
         start={{x: 0, y: 0}}
         end={{x: 1, y: 1}}
         style={styles.headerGradient}>
         <View style={styles.headerContent}>
           <TouchableOpacity
             onPress={() => navigation.goBack()}
-            style={styles.backButton}
+            style={[styles.backButton, {backgroundColor: theme.isDarkMode ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.2)'}]}
             hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}>
             <Icon name="arrow-back" size={20} color="#fff" />
           </TouchableOpacity>
           <Text style={styles.headerTitle} numberOfLines={1} ellipsizeMode="tail">
-            {t('salary.title', 'Salary')}
+            {getTranslation('salary.title', 'Salary')}
           </Text>
           <View style={styles.headerSpacer} />
         </View>
       </LinearGradient>
 
-      <ScrollView
-        style={styles.scrollContainer}
-        showsVerticalScrollIndicator={false}>
-        {/* Employee Card */}
-        <View style={styles.employeeCard}>
+      <Animated.ScrollView
+        style={[styles.scrollContainer, {backgroundColor: theme.colors.background}]}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{paddingBottom: 20}}>
+        
+        {/* Modern Employee Card with Theme Support */}
+        <Animated.View 
+          style={[
+            styles.employeeCard,
+            {
+              opacity: fadeAnim,
+              transform: [{translateY: slideAnim}],
+              backgroundColor: theme.colors.surface
+            }
+          ]}>
           <LinearGradient
-            colors={['#667eea', '#764ba2']}
+            colors={theme.isDarkMode ? ['#1a1a2e', '#16213e'] : ['#667eea', '#764ba2']}
             start={{x: 0, y: 0}}
             end={{x: 1, y: 1}}
             style={styles.cardGradient}>
@@ -233,24 +284,37 @@ const Salary = () => {
               activeOpacity={0.7}>
               <View style={styles.avatarContainer}>
                 <Image
-                  source={require('../assets/images/avatar.jpg')}
+                  source={
+                    userInfor?.avatar && userInfor.avatar !== '' 
+                      ? {uri: userInfor.avatar}
+                      : require('../assets/images/avatar.jpg')
+                  }
                   style={styles.employeeAvatar}
+                  defaultSource={require('../assets/images/avatar.jpg')}
+                  onError={() => {
+                    console.log('Avatar load error, using default');
+                  }}
+                  resizeMode="cover"
                 />
+                <View style={[styles.statusIndicator, {backgroundColor: '#10b981'}]} />
               </View>
 
               <View style={styles.employeeDetails}>
                 <Text style={styles.employeeName}>
-                  {userInfor.name || '---'}
+                  {safeRender(userInfor?.name, '---')}
                 </Text>
                 <Text style={styles.employeePosition}>
-                  {userInfor.position || 'Employee'}
+                  {safeRender(userInfor?.position, getTranslation('salary.employee', 'Employee'))}
+                </Text>
+                <Text style={styles.employeeDepartment}>
+                  {safeRender(userInfor?.department, getTranslation('salary.production', 'Production'))}
                 </Text>
               </View>
 
               <View style={styles.employeeIdSection}>
                 <Text style={styles.idLabel}>ID</Text>
                 <Text style={styles.employeeId}>
-                  {userInfor.employee_id || '---'}
+                  {safeRender(userInfor?.employee_id, '---')}
                 </Text>
               </View>
 
@@ -261,114 +325,142 @@ const Salary = () => {
               />
             </TouchableOpacity>
           </LinearGradient>
-        </View>
+        </Animated.View>
 
-        {/* Beautiful Month Selector with Gradient */}
-        <View style={styles.monthSelectorContainer}>
+        {/* Compact Month Selector with Full Width - Sát card thông tin người dùng */}
+        <Animated.View 
+          style={[
+            styles.monthSelectorContainer,
+            {
+              opacity: fadeAnim,
+              transform: [{translateY: slideAnim}]
+            }
+          ]}>
           <TouchableOpacity
-            style={styles.monthSelector}
+            style={[styles.monthSelector, {backgroundColor: theme.colors.surface}]}
             onPress={() => setIsModalVisible(true)}
             activeOpacity={0.8}>
             <LinearGradient
-              colors={['#4FACFE', '#00F2FE']}
+              colors={theme.isDarkMode ? ['#374151', '#4b5563'] : ['#4FACFE', '#00F2FE']}
               start={{x: 0, y: 0}}
               end={{x: 1, y: 1}}
               style={styles.monthCard}>
-              <View style={styles.monthHeader}>
-                <Icon name="calendar-outline" size={24} color="#ffffff" />
-                <Text style={styles.monthTitle}>Payroll Period</Text>
-              </View>
               <View style={styles.monthContent}>
+                <Icon name="calendar-outline" size={20} color="#ffffff" />
                 <Text style={styles.monthText}>
                   {moment(payrollMonth).format('MMMM YYYY')}
                 </Text>
-                <Icon name="chevron-down" size={20} color="#ffffff" />
+                <Icon name="chevron-down" size={18} color="#ffffff" />
               </View>
             </LinearGradient>
           </TouchableOpacity>
-        </View>
+        </Animated.View>
 
-        {/* Beautiful Salary Summary with Gradients */}
+        {/* Modern Salary Summary with Theme Support */}
         {Object.keys(payrollData).length > 0 && (
-          <View style={styles.summaryContainer}>
-            <View style={styles.summaryCard}>
+          <Animated.View 
+            style={[
+              styles.summaryContainer,
+              {
+                opacity: fadeAnim,
+                transform: [{translateY: slideAnim}]
+              }
+            ]}>
+            <View style={[styles.summaryCard, {backgroundColor: theme.colors.surface}]}>
               <LinearGradient
-                colors={['#10b981', '#059669']}
+                colors={theme.isDarkMode ? ['#059669', '#047857'] : ['#10b981', '#059669']}
                 start={{x: 0, y: 0}}
                 end={{x: 1, y: 1}}
                 style={styles.summaryGradient}>
                 <View style={styles.summaryContent}>
                   <Icon name="wallet" size={24} color="#ffffff" />
                   <View style={styles.summaryText}>
-                    <Text style={styles.summaryLabel}>Net Salary</Text>
+                    <Text style={styles.summaryLabel}>{getTranslation('salary.netSalary', 'Net Salary')}</Text>
                     <Text style={styles.summaryValue}>
-                      {payrollData?.net_salary ? `$${payrollData.net_salary}` : '---'}
+                      {formatCurrency(getPayrollValue('net_salary'))}
                     </Text>
                   </View>
                 </View>
               </LinearGradient>
             </View>
-            <View style={styles.summaryCard}>
+            <View style={[styles.summaryCard, {backgroundColor: theme.colors.surface}]}>
               <LinearGradient
-                colors={['#3b82f6', '#2563eb']}
+                colors={theme.isDarkMode ? ['#1e40af', '#1e3a8a'] : ['#3b82f6', '#2563eb']}
                 start={{x: 0, y: 0}}
                 end={{x: 1, y: 1}}
                 style={styles.summaryGradient}>
                 <View style={styles.summaryContent}>
                   <Icon name="calculator" size={24} color="#ffffff" />
                   <View style={styles.summaryText}>
-                    <Text style={styles.summaryLabel}>Gross Salary</Text>
+                    <Text style={styles.summaryLabel}>{getTranslation('salary.grossSalary', 'Gross Salary')}</Text>
                     <Text style={styles.summaryValue}>
-                      {payrollData?.gross_salary ? `$${payrollData.gross_salary}` : '---'}
+                      {formatCurrency(getPayrollValue('gross_salary'))}
                     </Text>
                   </View>
                 </View>
               </LinearGradient>
             </View>
-          </View>
+          </Animated.View>
         )}
 
-        {/* Clean Payroll Details */}
-        <View style={styles.payrollContainer}>
-          <View style={styles.payrollHeader}>
-            <Text style={styles.payrollTitle}>Payroll Details</Text>
-            <TouchableOpacity style={styles.filterButton}>
-              <Icon name="filter" size={18} color="#64748b" />
+        {/* Modern Payroll Details with Organized Sections */}
+        <Animated.View 
+          style={[
+            styles.payrollContainer,
+            {
+              opacity: fadeAnim,
+              transform: [{translateY: slideAnim}],
+              backgroundColor: theme.colors.surface
+            }
+          ]}>
+          <View style={[styles.payrollHeader, {borderBottomColor: theme.colors.border}]}>
+            <Text style={[styles.payrollTitle, {color: theme.colors.text}]}>{getTranslation('salary.payrollDetails', 'Payroll Details')}</Text>
+            <TouchableOpacity style={[styles.filterButton, {backgroundColor: theme.colors.surfaceSecondary}]}>
+              <Icon name="filter" size={18} color={theme.colors.textSecondary} />
             </TouchableOpacity>
           </View>
 
           {isLoading ? (
             <View style={styles.loadingContainer}>
-              <ActivityIndicator size="large" color="#3b82f6" />
-              <Text style={styles.loadingText}>Loading...</Text>
+              <ActivityIndicator size="large" color={theme.colors.primary} />
+              <Text style={[styles.loadingText, {color: theme.colors.text}]}>{getTranslation('salary.loading', 'Loading...')}</Text>
             </View>
           ) : Object.keys(payrollData).length === 0 ? (
             <View style={styles.emptyContainer}>
-              <Icon name="document" size={48} color="#d1d5db" />
-              <Text style={styles.emptyText}>No data available</Text>
-              <Text style={styles.emptySubtext}>
-                Select a different month to view details
+              <Icon name="document" size={48} color={theme.isDarkMode ? theme.colors.textSecondary : theme.colors.textTertiary} />
+              <Text style={[styles.emptyText, {color: theme.isDarkMode ? theme.colors.text : theme.colors.textSecondary}]}>{getTranslation('salary.noDataAvailable', 'No data available')}</Text>
+              <Text style={[styles.emptySubtext, {color: theme.isDarkMode ? theme.colors.textSecondary : theme.colors.textTertiary}]}>
+                {getTranslation('salary.selectDifferentMonth', 'Select a different month to view details')}
               </Text>
             </View>
           ) : (
             <View style={styles.payrollList}>
-              {payrollItems.map((item, index) => (
-                <View key={index} style={styles.payrollItem}>
-                  <View style={styles.itemIcon}>
-                    <Icon name={item.icon} size={18} color="#64748b" />
-                  </View>
-                  <View style={styles.itemContent}>
-                    <Text style={styles.itemLabel}>{item.label}</Text>
-                    <Text style={styles.itemValue}>
-                      {item.value ? `$${item.value}` : '---'}
-                    </Text>
-                  </View>
+              {payrollSections.map((section, sectionIndex) => (
+                <View key={sectionIndex} style={styles.sectionContainer}>
+                  <Text style={[styles.sectionTitle, {color: theme.isDarkMode ? theme.colors.primary : theme.colors.text}]}>
+                    {section.title}
+                  </Text>
+                  {section.items.map((item, itemIndex) => (
+                    <View key={itemIndex} style={[styles.payrollItem, {borderBottomColor: theme.colors.border}]}>
+                      <View style={[styles.itemIcon, {backgroundColor: theme.isDarkMode ? theme.colors.surfaceSecondary : '#f0f9ff'}]}>
+                        <Icon name={item.icon} size={18} color={theme.colors.primary} />
+                      </View>
+                      <View style={styles.itemContent}>
+                        <Text style={[styles.itemLabel, {color: theme.colors.textSecondary}]}>
+                          {item.label}
+                        </Text>
+                        <Text style={[styles.itemValue, {color: theme.colors.text}]}>
+                          {item.formatter ? item.formatter(item.value) : safeRender(item.value)}
+                        </Text>
+                      </View>
+                    </View>
+                  ))}
                 </View>
               ))}
             </View>
           )}
-        </View>
-      </ScrollView>
+        </Animated.View>
+      </Animated.ScrollView>
 
       <SelectDate
         visible={isModalVisible}
@@ -383,7 +475,6 @@ const Salary = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8fafc',
   },
   headerGradient: {
     paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight || 24 : 44,
@@ -404,7 +495,6 @@ const styles = StyleSheet.create({
   backButton: {
     padding: 8,
     borderRadius: 20,
-    backgroundColor: 'rgba(255,255,255,0.2)',
   },
   headerTitle: {
     fontSize: 18,
@@ -418,11 +508,11 @@ const styles = StyleSheet.create({
   },
   scrollContainer: {
     flex: 1,
-    backgroundColor: '#f8fafc',
     marginTop: -10,
   },
   employeeCard: {
     marginTop: 0,
+    marginHorizontal: 0,
     borderRadius: 0,
     shadowColor: '#667eea',
     shadowOffset: {width: 0, height: 8},
@@ -432,7 +522,8 @@ const styles = StyleSheet.create({
   },
   cardGradient: {
     borderRadius: 0,
-    padding: 20,
+    paddingHorizontal: 20,
+    paddingVertical: 20,
   },
   cardHeader: {
     alignItems: 'center',
@@ -459,6 +550,16 @@ const styles = StyleSheet.create({
     borderWidth: 3,
     borderColor: 'rgba(255,255,255,0.3)',
   },
+  statusIndicator: {
+    position: 'absolute',
+    bottom: 2,
+    right: 2,
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    borderWidth: 2,
+    borderColor: '#ffffff',
+  },
   employeeDetails: {
     flex: 1,
   },
@@ -472,7 +573,12 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: 'rgba(255,255,255,0.85)',
     fontWeight: '600',
-    marginBottom: 6,
+    marginBottom: 2,
+  },
+  employeeDepartment: {
+    fontSize: 12,
+    color: 'rgba(255,255,255,0.7)',
+    fontWeight: '500',
   },
   employeeIdSection: {
     alignItems: 'center',
@@ -490,31 +596,23 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   monthSelectorContainer: {
-    marginHorizontal: 20,
-    marginTop: 20,
+    marginHorizontal: 0,
+    marginTop: 0,
+    alignSelf: 'stretch',
   },
   monthSelector: {
-    borderRadius: 20,
+    borderRadius: 0,
     shadowColor: '#4FACFE',
-    shadowOffset: {width: 0, height: 8},
-    shadowOpacity: 0.3,
-    shadowRadius: 20,
-    elevation: 15,
+    shadowOffset: {width: 0, height: 4},
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 8,
+    width: '100%',
   },
   monthCard: {
-    padding: 24,
-    borderRadius: 20,
-  },
-  monthHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  monthTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: 'rgba(255,255,255,0.9)',
-    marginLeft: 12,
+    padding: 16,
+    borderRadius: 0,
+    width: '100%',
   },
   monthContent: {
     flexDirection: 'row',
@@ -522,10 +620,13 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   monthText: {
-    fontSize: 22,
-    fontWeight: '800',
+    fontSize: 18,
+    fontWeight: '700',
     color: '#ffffff',
     letterSpacing: 0.3,
+    flex: 1,
+    textAlign: 'center',
+    marginHorizontal: 12,
   },
   summaryContainer: {
     flexDirection: 'row',
@@ -570,7 +671,6 @@ const styles = StyleSheet.create({
     marginHorizontal: 20,
     marginTop: 20,
     marginBottom: 20,
-    backgroundColor: '#ffffff',
     borderRadius: 20,
     shadowColor: '#000',
     shadowOffset: {width: 0, height: 8},
@@ -584,25 +684,21 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     padding: 24,
     borderBottomWidth: 1,
-    borderBottomColor: '#f1f5f9',
   },
   payrollTitle: {
     fontSize: 20,
     fontWeight: '800',
-    color: '#1a202c',
     letterSpacing: 0.5,
   },
   filterButton: {
     padding: 10,
     borderRadius: 25,
-    backgroundColor: '#f8fafc',
   },
   loadingContainer: {
     padding: 60,
     alignItems: 'center',
   },
   loadingText: {
-    color: '#667eea',
     marginTop: 16,
     fontSize: 16,
     fontWeight: '600',
@@ -612,14 +708,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   emptyText: {
-    color: '#94a3b8',
     fontSize: 18,
     fontWeight: '700',
     marginTop: 16,
     textAlign: 'center',
   },
   emptySubtext: {
-    color: '#cbd5e1',
     fontSize: 14,
     fontWeight: '500',
     marginTop: 8,
@@ -628,18 +722,27 @@ const styles = StyleSheet.create({
   payrollList: {
     padding: 16,
   },
+  sectionContainer: {
+    marginBottom: 24,
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    marginBottom: 12,
+    paddingHorizontal: 4,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
   payrollItem: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#f1f5f9',
   },
   itemIcon: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#f0f9ff',
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 16,
@@ -652,13 +755,11 @@ const styles = StyleSheet.create({
   },
   itemLabel: {
     fontSize: 14,
-    color: '#64748b',
     fontWeight: '600',
     flex: 1,
   },
   itemValue: {
     fontSize: 16,
-    color: '#1a202c',
     fontWeight: '700',
   },
 });

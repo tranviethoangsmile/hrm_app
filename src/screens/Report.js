@@ -12,7 +12,7 @@ import {
   Easing,
   TouchableOpacity,
 } from 'react-native';
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useState, useRef} from 'react';
 import axios from 'axios';
 import {useNavigation} from '@react-navigation/native';
 import Loader from '../components/Loader';
@@ -73,9 +73,9 @@ const Report = () => {
   const [dailyReports, setDailyReports] = useState([]);
   
   // Animation values
-  const fadeAnim = useState(new Animated.Value(0))[0];
-  const slideAnim = useState(new Animated.Value(50))[0];
-  const scaleAnim = useState(new Animated.Value(0.9))[0];
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(50)).current;
+  const scaleAnim = useRef(new Animated.Value(0.9)).current;
 
   const getLanguage = async () => {
     return await AsyncStorage.getItem('Language');
@@ -517,15 +517,39 @@ const Report = () => {
                     withOuterLines
                     renderDotContent={({x, y, index, indexData, datasetIndex}) => {
                       const dataset = lineData.datasets[datasetIndex];
+                      const value = indexData || 0;
+                      const displayValue = Number.isInteger(value) ? value.toString() : value.toFixed(1);
+                      
+                      // Điều chỉnh vị trí để tránh che khuất
+                      const adjustedY = y < 30 ? y + 30 : y - 25;
+                      const adjustedX = x < 20 ? x + 10 : x > width - 50 ? x - 20 : x - 15;
+                      
                       return (
                         <View
                           key={`dot-${dataset?.datasetIndex || 0}-${index}`}
-                          style={[styles.dotContainer, { 
-                            backgroundColor: colors.surface,
-                            borderColor: colors.border 
-                          }]}>
-                          <Text style={[styles.dotText, { color: colors.text }]}>
-                            {Math.round(indexData)}
+                          style={[
+                            styles.dotContainer, 
+                            { 
+                              backgroundColor: colors.surface,
+                              borderColor: dataset?.color() || colors.primary,
+                              left: adjustedX,
+                              top: adjustedY,
+                              shadowColor: dataset?.color() || colors.primary,
+                              shadowOffset: { width: 0, height: 2 },
+                              shadowOpacity: 0.3,
+                              shadowRadius: 4,
+                              elevation: 4,
+                            }
+                          ]}>
+                          <Text style={[
+                            styles.dotText, 
+                            { 
+                              color: colors.text,
+                              fontWeight: '700',
+                              fontSize: 11
+                            }
+                          ]}>
+                            {displayValue}
                           </Text>
                         </View>
                       );
@@ -599,24 +623,26 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollViewContent: {
-    padding: 20,
+    padding: 0,
     paddingBottom: 40,
   },
   card: {
-    borderRadius: 20,
-    marginBottom: 20,
+    borderRadius: 0,
+    marginBottom: 1,
     overflow: 'hidden',
-    shadowColor: '#000',
+    shadowColor: 'transparent',
     shadowOffset: {
       width: 0,
-      height: 4,
+      height: 0,
     },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 8,
+    shadowOpacity: 0,
+    shadowRadius: 0,
+    elevation: 0,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(0,0,0,0.1)',
   },
   cardGradient: {
-    padding: 24,
+    padding: 20,
   },
   sectionHeader: {
     flexDirection: 'row',
@@ -710,13 +736,18 @@ const styles = StyleSheet.create({
   },
   dotContainer: {
     position: 'absolute',
-    padding: 4,
-    borderRadius: 4,
-    borderWidth: 1,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    borderWidth: 2,
+    minWidth: 30,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   dotText: {
     fontSize: 10,
     fontWeight: 'bold',
+    textAlign: 'center',
   },
   legendContainer: {
     flexDirection: 'row',
