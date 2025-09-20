@@ -39,7 +39,7 @@ import {
   CREATE,
   DELETE,
 } from '../utils/constans';
-import Loader from '../components/Loader';
+import OptimizedLoader from '../components/OptimizedLoader';
 import {UserModal, ModalMessage} from '../components';
 import defaultAvatar from '../assets/images/avatar.jpg';
 import {decrypt} from '../services';
@@ -653,7 +653,7 @@ const Message = () => {
       </Animated.View>
 
       {/* Loading */}
-      <Loader visible={isLoading} />
+      <OptimizedLoader visible={isLoading} />
 
       {/* Modals */}
       {modalVisible && (

@@ -37,7 +37,7 @@ import Header from '../components/common/Header';
 import {useNavigation} from '@react-navigation/native';
 import {launchImageLibrary} from 'react-native-image-picker';
 import BeautifulModal from '../components/BeautifulModal';
-import Loader from '../components/Loader';
+import OptimizedLoader from '../components/OptimizedLoader';
 
 // Tạo component ReportForm giống PostInput
 const defaultForm = {
@@ -640,7 +640,7 @@ const Important = ({route}) => {
   );
 
   if (isLoading) {
-    return <Loader visible={true} />;
+    return <OptimizedLoader visible={true} />;
   }
 
   return (
@@ -747,7 +747,7 @@ const Important = ({route}) => {
             {...(isEdit ? {editFields: ['title', 'content', 'solution']} : {})}
             onShowMessage={showMessage}
           />
-          <Loader visible={isLoading} />
+          <OptimizedLoader visible={isLoading} />
         </BeautifulModal>
         {/* ModalMessage */}
         <ModalMessage

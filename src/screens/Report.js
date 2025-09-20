@@ -15,7 +15,7 @@ import {
 import React, {useEffect, useState, useRef} from 'react';
 import axios from 'axios';
 import {useNavigation} from '@react-navigation/native';
-import Loader from '../components/Loader';
+import OptimizedLoader from '../components/OptimizedLoader';
 import moment from 'moment';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import IconFA from 'react-native-vector-icons/FontAwesome5';
@@ -347,7 +347,7 @@ const Report = () => {
         title={t('report.title', 'Báo cáo')}
         onBack={() => navigation.goBack()}
       />
-      <Loader visible={isLoading} />
+      <OptimizedLoader visible={isLoading} />
       
       <ScrollView 
         style={styles.scrollView}

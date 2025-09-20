@@ -42,7 +42,7 @@ import {
   ERROR_COLOR,
 } from '../utils/Colors';
 
-import Loader from '../components/Loader';
+import OptimizedLoader from '../components/OptimizedLoader';
 import {DarkModeToggle} from '../components';
 import {useTheme} from '../hooks/useTheme';
 import {COLORS, SIZES, FONTS, SHADOWS} from '../config/theme';
@@ -391,7 +391,7 @@ const Login = () => {
                       end={{x: 1, y: 0}}>
                       {visible ? (
                         <View style={styles.loadingContainer}>
-                          <Loader visible={visible} />
+                          <OptimizedLoader visible={visible} />
                           <Text style={styles.loginButtonText}>
                             {t('Signing in...')}
                           </Text>

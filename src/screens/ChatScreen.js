@@ -54,7 +54,7 @@ import {
   CREATE,
 } from '../utils/constans';
 import socket from '../socket.io/socket.io';
-import {Loader} from '../components';
+import OptimizedLoader from '../components/OptimizedLoader';
 import {encrypt, decrypt} from '../services';
 import {ModalMessage} from '../components';
 import MediaViewer from '../components/common/MediaViewer';

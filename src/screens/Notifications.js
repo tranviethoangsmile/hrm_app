@@ -28,7 +28,7 @@ import {
   SEARCH_BY_ID,
   UPDATE,
 } from '../utils/constans';
-import Loader from '../components/Loader';
+import OptimizedLoader from '../components/OptimizedLoader';
 import {COLORS, SIZES, FONTS, SHADOWS} from '../config/theme';
 import {useThemeContext} from '../context/ThemeContext';
 
@@ -373,7 +373,7 @@ const Notifications = ({navigation}) => {
 
       <View style={styles.content}>
         {loading && notifications.length === 0 ? (
-          <Loader />
+          <OptimizedLoader visible={true} />
         ) : (
           <FlatList
             data={filteredNotifications()}

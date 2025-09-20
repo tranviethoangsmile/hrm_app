@@ -47,7 +47,7 @@ import {
   UPDATE,
   GET_EVENT_WITH_POSITION,
 } from '../../utils/constans';
-import Loader from '../Loader';
+import OptimizedLoader from '../OptimizedLoader';
 import HappyModal from '../HappyModal';
 import moment from 'moment';
 import LinkPreview from 'react-native-link-preview';
@@ -130,30 +130,46 @@ const HomeTab = ({onScrollList}) => {
 
   const get_event_detail = async () => {
     try {
+      if (!userInfo?.position) return; // Early return if no position
+      
       const url = `${BASE_URL}${PORT}${API}${VERSION}${V1}${EVENTS}${GET_EVENTS_WITH_POSITION}`;
 
       const events = await axios.post(url, {
         position: userInfo.position,
       });
-      if (events?.data?.success) {
+      
+      if (events?.data?.success && events?.data?.data?.length > 0) {
         setEvent(events?.data.data[0]);
-        setTimeout(() => {
-          setIsVisiblePopup(true);
-        }, 3000);
+        // Use requestAnimationFrame for better performance
+        requestAnimationFrame(() => {
+          setTimeout(() => {
+            setIsVisiblePopup(true);
+          }, 3000);
+        });
       }
     } catch (error) {
+      console.error('Error getting event detail:', error);
       showMessage('not.event', 'warning', 500);
     }
   };
 
   const get_all_information = async () => {
     try {
-      setIsLoading(true);
+      // Don't set loading here as it's handled in the main useEffect
       const userInforString = await AsyncStorage.getItem('userInfor');
+      if (!userInforString) {
+        setError('User information not found');
+        return;
+      }
+      
       const userInfor = JSON.parse(userInforString);
+      if (!userInfor?.position) {
+        setError('User position not found');
+        return;
+      }
 
       const field = {
-        position: userInfor?.position,
+        position: userInfor.position,
         is_public: true,
       };
 
@@ -161,21 +177,20 @@ const HomeTab = ({onScrollList}) => {
       const informations = await axios.post(url, {field});
 
       if (informations?.data?.success) {
-        setIsLoading(false);
         setError('');
-        const sortedPosts = informations.data.data.sort(
-          (a, b) => new Date(b.date) - new Date(a.date),
-        );
-        setPosts(sortedPosts);
+        // Use requestAnimationFrame for better performance when sorting
+        requestAnimationFrame(() => {
+          const sortedPosts = informations.data.data.sort(
+            (a, b) => new Date(b.date) - new Date(a.date),
+          );
+          setPosts(sortedPosts);
+        });
       } else {
-        setIsLoading(false);
         setError('Not have information here');
       }
     } catch (error) {
-      setIsLoading(false);
-      setError(error.message);
-    } finally {
-      setIsLoading(false);
+      console.error('Error getting all information:', error);
+      setError(error.message || 'Failed to load information');
     }
   };
 
@@ -529,12 +544,30 @@ const HomeTab = ({onScrollList}) => {
 
   useEffect(() => {
     const fetchData = async () => {
-      const lang = await getLanguage();
-      if (lang != null) {
-        i18next.changeLanguage(lang);
+      try {
+        setIsLoading(true); // Show loading immediately
+        
+        // Run language check and API calls in parallel for better performance
+        const [lang] = await Promise.all([
+          getLanguage(),
+        ]);
+        
+        if (lang != null) {
+          i18next.changeLanguage(lang);
+        }
+        
+        // Run API calls in parallel instead of sequential
+        await Promise.all([
+          get_all_information(),
+          get_event_detail(),
+        ]);
+        
+      } catch (error) {
+        console.error('Error fetching data:', error);
+        setError('Failed to load data');
+      } finally {
+        setIsLoading(false); // Hide loading when done
       }
-      await get_all_information();
-      await get_event_detail();
     };
 
     fetchData();
@@ -564,7 +597,10 @@ const HomeTab = ({onScrollList}) => {
 
   useEffect(() => {
     if (userInfo) {
-      checkSpecialDays();
+      // Use setTimeout to prevent blocking the main thread
+      setTimeout(() => {
+        checkSpecialDays();
+      }, 100);
     }
   }, [userInfo]);
 
@@ -630,41 +666,11 @@ const HomeTab = ({onScrollList}) => {
     }, 10000);
   };
 
-  const renderPosts = React.useCallback(() => {
-    const displayPosts = showAllPosts ? posts : posts.slice(0, 5);
-
-    return (
-      <>
-        {displayPosts.map((item, index) => (
-          <PostItem
-            key={item.id}
-            item={item}
-            index={index}
-            t={t}
-            handleGoToEventScreen={handleGoToEventScreen}
-          />
-        ))}
-
-        {!showAllPosts && posts.length > 5 && (
-          <TouchableOpacity
-            style={styles.viewMoreButton}
-            onPress={() => setShowAllPosts(true)}>
-            <LinearGradient
-              colors={[colors.primary, colors.primary2]}
-              style={styles.viewMoreGradient}>
-              <IconFA name="chevron-down" size={18} color="#fff" />
-              <Text style={styles.viewMoreText}>{t('viewMore')}</Text>
-              <IconFA name="chevron-down" size={18} color="#fff" />
-            </LinearGradient>
-          </TouchableOpacity>
-        )}
-      </>
-    );
-  }, [showAllPosts, posts, t, colors.primary, colors.primary2, handleGoToEventScreen]);
+  // Removed renderPosts function - now using FlatList directly
 
   return (
     <View style={[styles.container, {backgroundColor: colors.background}]}>
-      <Loader visible={isLoading} />
+      <OptimizedLoader visible={isLoading} />
 
       {/* Modern Header with Theme Support */}
       <View style={styles.headerContainer}>
@@ -717,7 +723,18 @@ const HomeTab = ({onScrollList}) => {
 
       <View style={[styles.feedContainer, {backgroundColor: colors.background}]}>
         {err ? <Text style={[styles.errorText, {color: colors.danger}]}>{err}</Text> : null}
-        <ScrollView
+        <FlatList
+          data={showAllPosts ? posts : posts.slice(0, 5)}
+          renderItem={({item, index}) => (
+            <PostItem
+              key={item.id}
+              item={item}
+              t={t}
+              handleGoToEventScreen={handleGoToEventScreen}
+              index={index}
+            />
+          )}
+          keyExtractor={(item, index) => item.id?.toString() || index.toString()}
           onScroll={onScrollList}
           scrollEventThrottle={32}
           refreshControl={
@@ -731,12 +748,37 @@ const HomeTab = ({onScrollList}) => {
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
           removeClippedSubviews={true}
-          maxToRenderPerBatch={5}
-          updateCellsBatchingPeriod={50}
-          initialNumToRender={3}
-          windowSize={10}>
-          {renderPosts()}
-        </ScrollView>
+          maxToRenderPerBatch={3}
+          windowSize={5}
+          initialNumToRender={2}
+          getItemLayout={(data, index) => ({
+            length: 200, // Approximate height of each item
+            offset: 200 * index,
+            index,
+          })}
+          ListEmptyComponent={
+            <View style={styles.emptyContainer}>
+              <Text style={[styles.emptyText, {color: colors.textSecondary}]}>
+                {t('no_posts', 'No posts available')}
+              </Text>
+            </View>
+          }
+          ListFooterComponent={
+            !showAllPosts && posts.length > 5 ? (
+              <TouchableOpacity
+                style={styles.viewMoreButton}
+                onPress={() => setShowAllPosts(true)}>
+                <LinearGradient
+                  colors={[colors.primary, colors.primary2]}
+                  style={styles.viewMoreGradient}>
+                  <IconFA name="chevron-down" size={18} color="#fff" />
+                  <Text style={styles.viewMoreText}>{t('viewMore')}</Text>
+                  <IconFA name="chevron-down" size={18} color="#fff" />
+                </LinearGradient>
+              </TouchableOpacity>
+            ) : null
+          }
+        />
       </View>
 
       <PopupEvent
@@ -890,6 +932,17 @@ const styles = StyleSheet.create({
     marginVertical: 20,
     fontSize: 16,
     fontWeight: '500',
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 40,
+  },
+  emptyText: {
+    fontSize: 16,
+    textAlign: 'center',
+    opacity: 0.7,
   },
   postItemContainer: {
     marginHorizontal: 0,

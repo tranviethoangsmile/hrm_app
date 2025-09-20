@@ -1,6 +1,6 @@
 /* eslint-disable react-native/no-inline-styles */
 /* eslint-disable react-hooks/exhaustive-deps */
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useState, useRef} from 'react';
 import {
   View,
   Text,
@@ -20,6 +20,7 @@ import {
   ActivityIndicator,
   FlatList,
   Image,
+  Animated,
 } from 'react-native';
 import DropDownPicker from 'react-native-dropdown-picker';
 import i18next from '../../services/i18next';
@@ -46,16 +47,18 @@ import {
 import axios from 'axios';
 import {TEXT_COLOR, THEME_COLOR, THEME_COLOR_2} from '../utils/Colors';
 import CheckBox from '@react-native-community/checkbox';
-import Loader from '../components/Loader';
+import OptimizedLoader from '../components/OptimizedLoader';
 import {SwipeListView} from 'react-native-swipe-list-view';
 import ModalMessage from '../components/ModalMessage';
 import Header from '../components/common/Header';
 import {useNavigation} from '@react-navigation/native';
+import {useTheme} from '../hooks/useTheme';
 
 const Leave = () => {
   const {t} = useTranslation();
   const authData = useSelector(state => state.auth);
   const navigation = useNavigation();
+  const {colors, isDarkMode} = useTheme();
   const [activeTab, setActiveTab] = useState(0);
 
   const getLanguage = async () => {
@@ -72,6 +75,8 @@ const Leave = () => {
   const [open, setOpen] = useState(false);
   const [value, setValue] = useState(null);
   const [reason, setReason] = useState('');
+  const [selectedReasonType, setSelectedReasonType] = useState(null);
+  const [customReason, setCustomReason] = useState('');
   const [isSelectToModal, setIsSelectToModal] = useState(false);
   const [is_paid, setIs_paid] = useState(true);
   const [is_half, setIs_half] = useState(false);
@@ -89,6 +94,19 @@ const Leave = () => {
   const [errorDayOff, setErrorDayOff] = useState(false);
   const [editLeave, setEditLeave] = useState(null);
   const [openMenuId, setOpenMenuId] = useState(null);
+  const [reasonDropdownOpen, setReasonDropdownOpen] = useState(false);
+  
+  // Animation values for modal
+  const modalScale = useRef(new Animated.Value(0)).current;
+  const modalOpacity = useRef(new Animated.Value(0)).current;
+
+  // Reason types for dropdown
+  const reasonTypes = [
+    { label: t('leave_reason_personal', 'Có việc riêng'), value: 'personal' },
+    { label: t('leave_reason_sick', 'Ốm'), value: 'sick' },
+    { label: t('leave_reason_regulation', 'Nghỉ theo quy định'), value: 'regulation' },
+    { label: t('leave_reason_other', 'Khác'), value: 'other' },
+  ];
 
   const getValueRequestLeave = async () => {
     try {
@@ -134,6 +152,10 @@ const Leave = () => {
           label: leader.name,
           value: leader.id,
         }));
+        console.log('=== LEADER LIST LOADED ===');
+        console.log('Raw leader data:', listUser?.data?.data);
+        console.log('Formatted leader list:', formattedList);
+        console.log('==========================');
         setLeaderList(formattedList);
       } else {
         throw new Error('contactAdmin');
@@ -150,9 +172,28 @@ const Leave = () => {
   const handleRequestDayOffPaid = async () => {
     // Validate
     let hasError = false;
-    if (!reason.trim()) {
+    const finalReason = selectedReasonType === 'other' ? customReason : reason;
+    
+    // Debug log
+    console.log('Debug - selectedReasonType:', selectedReasonType);
+    console.log('Debug - reason:', reason);
+    console.log('Debug - customReason:', customReason);
+    console.log('Debug - finalReason:', finalReason);
+    console.log('Debug - leaderValue:', leaderValue);
+    console.log('Debug - value (dropdown):', value);
+    
+    if (!finalReason.trim()) {
       setErrorReason(true);
       hasError = true;
+      // Show specific error message for custom reason
+      if (selectedReasonType === 'other') {
+        setModalMessage({
+          visible: true,
+          type: 'error',
+          message: t('leave_reason_enter_custom_required', 'Vui lòng nhập lý do cụ thể'),
+        });
+        return;
+      }
     } else {
       setErrorReason(false);
     }
@@ -161,6 +202,14 @@ const Leave = () => {
       hasError = true;
     } else {
       setErrorDayOff(false);
+    }
+    if (!leaderValue) {
+      setModalMessage({
+        visible: true,
+        type: 'error',
+        message: t('select_leader_required', 'Vui lòng chọn người duyệt'),
+      });
+      return;
     }
     if (hasError) {
       setModalMessage({
@@ -176,7 +225,7 @@ const Leave = () => {
     try {
       const field = {
         user_id: authData?.data?.data.id,
-        reason: reason,
+        reason: finalReason,
         leader_id: leaderValue,
         date_request: moment(today).format('YYYY-MM-DD'),
         is_paid: is_paid,
@@ -184,12 +233,26 @@ const Leave = () => {
         position: authData?.data?.data.position,
         is_half: is_half,
       };
+      
+      // Log dữ liệu gửi lên server
+      console.log('=== DỮ LIỆU GỬI LÊN SERVER ===');
+      console.log('Field data:', JSON.stringify(field, null, 2));
+      console.log('API URL:', `${BASE_URL}${PORT}${API}${VERSION}${V1}${PAID_LEAVE}${CREATE}`);
+      console.log('================================');
+      
       const paidleave = await axios.post(
         `${BASE_URL}${PORT}${API}${VERSION}${V1}${PAID_LEAVE}${CREATE}`,
         {
           ...field,
         },
       );
+      
+      // Log response từ server
+      console.log('=== RESPONSE TỪ SERVER ===');
+      console.log('Status:', paidleave?.status);
+      console.log('Response data:', JSON.stringify(paidleave?.data, null, 2));
+      console.log('==========================');
+      
       if (paidleave?.data?.success) {
         onRefresh();
         setIsLoading(false);
@@ -209,6 +272,13 @@ const Leave = () => {
         });
       }
     } catch (error) {
+      console.error('=== ERROR KHI GỬI DỮ LIỆU ===');
+      console.error('Error:', error);
+      console.error('Error message:', error?.message);
+      console.error('Error response:', error?.response?.data);
+      console.error('Error status:', error?.response?.status);
+      console.error('==============================');
+      
       setModal(false);
       setIsLoading(false);
       setModalMessage({
@@ -230,21 +300,143 @@ const Leave = () => {
     getLeaderList();
     getValueRequestLeave();
   }, []); // Add empty dependency array to avoid warning
+
+  // Reset animation values when modal closes
+  useEffect(() => {
+    if (!modal) {
+      modalScale.setValue(0);
+      modalOpacity.setValue(0);
+    }
+  }, [modal, modalScale, modalOpacity]);
   const handleSelectLeader = value => {
+    console.log('=== LEADER SELECTION ===');
+    console.log('Selected leader value:', value);
+    console.log('Leader value before:', leaderValue);
     setLeaderValue(value);
+    setValue(value); // Also update the dropdown value
+    console.log('Leader value after:', value);
+    console.log('========================');
+  };
+
+  const handleLeaderDropdownToggle = (isOpen) => {
+    setOpen(isOpen);
+    if (isOpen) {
+      setReasonDropdownOpen(false); // Close reason dropdown when opening leader dropdown
+    }
+  };
+
+  const handleReasonTypeSelect = (reasonType) => {
+    if (reasonType) {
+      setSelectedReasonType(reasonType);
+      if (reasonType === 'other') {
+        setReason('');
+        setCustomReason('');
+      } else {
+        // Set predefined reason based on type
+        const reasonText = getReasonText(reasonType);
+        setReason(reasonText);
+        setCustomReason('');
+      }
+      // Close dropdown immediately after selection
+      setReasonDropdownOpen(false);
+    }
+  };
+
+  const handleReasonDropdownToggle = (isOpen) => {
+    setReasonDropdownOpen(isOpen);
+    if (isOpen) {
+      setOpen(false); // Close leader dropdown when opening reason dropdown
+    }
+  };
+
+  const getReasonText = (reasonType) => {
+    switch (reasonType) {
+      case 'personal':
+        return t('leave_reason_personal', 'Có việc riêng');
+      case 'sick':
+        return t('leave_reason_sick', 'Ốm');
+      case 'regulation':
+        return t('leave_reason_regulation', 'Nghỉ theo quy định');
+      default:
+        return '';
+    }
   };
   const showHandleButtonModal = () => {
+    setEditLeave(null);
+    setReason('');
+    setSelectedReasonType(null);
+    setCustomReason('');
+    setDayOff(moment().add(1, 'day').toDate());
+    setIs_paid(true);
+    setIs_half(false);
+    setLeaderValue('');
+    setOpen(false); // Close leader dropdown
+    setReasonDropdownOpen(false); // Close reason dropdown
     setModal(true);
+    // Animate modal in
+    Animated.parallel([
+      Animated.timing(modalOpacity, {
+        toValue: 1,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+      Animated.spring(modalScale, {
+        toValue: 1,
+        tension: 100,
+        friction: 8,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  };
+
+  const hideModal = () => {
+    // Close all dropdowns
+    setReasonDropdownOpen(false);
+    setOpen(false);
+    
+    // Animate modal out
+    Animated.parallel([
+      Animated.timing(modalOpacity, {
+        toValue: 0,
+        duration: 200,
+        useNativeDriver: true,
+      }),
+      Animated.timing(modalScale, {
+        toValue: 0,
+        duration: 200,
+        useNativeDriver: true,
+      }),
+    ]).start(() => {
+      setModal(false);
+    });
   };
 
   const openEditModal = item => {
     setEditLeave(item);
     setReason(item.reason || '');
+    setSelectedReasonType(null);
+    setCustomReason('');
     setDayOff(moment(item.date_leave).toDate());
     setIs_paid(item.is_paid);
     setIs_half(item.is_half);
     setLeaderValue(item.leader_id || '');
+    setOpen(false); // Close leader dropdown
+    setReasonDropdownOpen(false); // Close reason dropdown
     setModal(true);
+    // Animate modal in
+    Animated.parallel([
+      Animated.timing(modalOpacity, {
+        toValue: 1,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+      Animated.spring(modalScale, {
+        toValue: 1,
+        tension: 100,
+        friction: 8,
+        useNativeDriver: true,
+      }),
+    ]).start();
   };
   const handleDeleteLeaveRequest = async id => {
     setOpenMenuId(null);
@@ -316,24 +508,40 @@ const Leave = () => {
       .length;
   };
 
-  const TabButton = ({title, isActive, onPress, count}) => (
+  const TabButton = ({title, isActive, onPress, count, colors}) => (
     <TouchableOpacity
-      style={[styles.tabButton, isActive && styles.activeTabButton]}
+      style={[
+        styles.tabButton, 
+        {backgroundColor: isActive ? colors.primary : colors.background},
+        isActive && styles.activeTabButton
+      ]}
       onPress={onPress}>
       <Text
-        style={[styles.tabButtonText, isActive && styles.activeTabButtonText]}>
+        style={[
+          styles.tabButtonText, 
+          {color: isActive ? '#fff' : colors.textSecondary},
+          isActive && styles.activeTabButtonText
+        ]}>
         {title}
       </Text>
-      <View style={[styles.tabBadge, isActive && styles.activeTabBadge]}>
+      <View style={[
+        styles.tabBadge, 
+        {backgroundColor: isActive ? 'rgba(255,255,255,0.2)' : colors.surface},
+        isActive && styles.activeTabBadge
+      ]}>
         <Text
-          style={[styles.tabBadgeText, isActive && styles.activeTabBadgeText]}>
+          style={[
+            styles.tabBadgeText, 
+            {color: isActive ? '#fff' : colors.textSecondary},
+            isActive && styles.activeTabBadgeText
+          ]}>
           {count}
         </Text>
       </View>
     </TouchableOpacity>
   );
 
-  const renderLeaveCard = ({item}) => {
+  const renderLeaveCard = ({item, colors}) => {
     const statusColor = item.is_approve
       ? '#2ecc71'
       : item.feedback
@@ -346,18 +554,29 @@ const Leave = () => {
       : t('awaiting');
 
     return (
-      <View style={styles.leaveCard}>
+      <View style={[
+        styles.leaveCard, 
+        {
+          backgroundColor: item.is_paid 
+            ? (isDarkMode ? '#1a3d1a' : '#f8fff8')  // Dark/light green background for paid
+            : (isDarkMode ? '#3d2a1a' : '#fff8f0'), // Dark/light orange background for unpaid
+          borderLeftWidth: 4,
+          borderLeftColor: item.is_paid 
+            ? '#27ae60'  // Green border for paid
+            : '#e67e22'  // Orange border for unpaid
+        }
+      ]}>
         <View style={styles.leaveCardHeader}>
           <View style={styles.leaveCardDateContainer}>
-            <Icon name="calendar" size={16} color={THEME_COLOR_2} />
-            <Text style={styles.leaveCardDate}>
+            <Icon name="calendar" size={16} color={colors.primary} />
+            <Text style={[styles.leaveCardDate, {color: colors.textSecondary}]}>
               {moment(item.date_leave).format('DD/MM/YYYY')}
             </Text>
           </View>
           <TouchableOpacity
-            style={styles.menuBtnModern}
+            style={[styles.menuBtnModern, {backgroundColor: colors.background}]}
             onPress={() => setOpenMenuId(item.id)}>
-            <Icon name="ellipsis-h" size={18} color="#b0b3b8" />
+            <Icon name="ellipsis-h" size={18} color={colors.textSecondary} />
           </TouchableOpacity>
         </View>
 
@@ -366,17 +585,20 @@ const Leave = () => {
             <Icon
               name={item.is_paid ? 'money' : 'clock-o'}
               size={14}
-              color={THEME_COLOR_2}
+              color={item.is_paid ? '#27ae60' : '#e67e22'}
             />
-            <Text style={styles.leaveTypeText}>
+            <Text style={[
+              styles.leaveTypeText, 
+              {color: item.is_paid ? '#27ae60' : '#e67e22'}
+            ]}>
               {item.is_paid ? t('paid') : t('unpaid')}
             </Text>
           </View>
 
           {item.reason && (
             <View style={styles.leaveReasonContainer}>
-              <Icon name="file-text-o" size={14} color="#666" />
-              <Text style={styles.leaveReasonText}>{item.reason}</Text>
+              <Icon name="file-text-o" size={14} color={colors.textSecondary} />
+              <Text style={[styles.leaveReasonText, {color: colors.text}]}>{item.reason}</Text>
             </View>
           )}
 
@@ -392,9 +614,9 @@ const Leave = () => {
           </View>
 
           {item.feedback && (
-            <View style={styles.feedbackContainer}>
-              <Icon name="comment-o" size={14} color="#666" />
-              <Text style={styles.feedbackText}>{item.feedback}</Text>
+            <View style={[styles.feedbackContainer, {backgroundColor: colors.background}]}>
+              <Icon name="comment-o" size={14} color={colors.textSecondary} />
+              <Text style={[styles.feedbackText, {color: colors.text}]}>{item.feedback}</Text>
             </View>
           )}
         </View>
@@ -406,28 +628,37 @@ const Leave = () => {
               activeOpacity={1}
               onPressOut={() => setOpenMenuId(null)}
             />
-            <View style={styles.menuModern}>
+            <View style={[styles.menuModern, {backgroundColor: colors.surface}]}>
               <TouchableOpacity
-                style={styles.menuItemModern}
+                style={[styles.menuItemModern, {opacity: 0.5}]}
+                disabled={true}
                 onPress={() => {
                   setOpenMenuId(null);
-                  openEditModal(item);
+                  // openEditModal(item); // Disabled - API not ready
                 }}>
-                <Icon name="edit" size={16} color={THEME_COLOR_2} />
-                <Text style={styles.menuTextModern}>{t('edit')}</Text>
+                <Icon name="edit" size={16} color={colors.textSecondary} />
+                <Text style={[styles.menuTextModern, {color: colors.textSecondary}]}>{t('edit')}</Text>
               </TouchableOpacity>
-              <View style={styles.menuDivider} />
+              <View style={[styles.menuDivider, {backgroundColor: colors.border}]} />
               <TouchableOpacity
-                style={styles.menuItemModern}
+                style={[styles.menuItemModern, {opacity: 0.5}]}
+                disabled={true}
                 onPress={() => {
                   setOpenMenuId(null);
-                  handleDeleteLeaveRequest(item.id);
+                  // handleDeleteLeaveRequest(item.id); // Disabled - API not ready
                 }}>
-                <Icon name="trash" size={16} color="#e74c3c" />
-                <Text style={[styles.menuTextModern, {color: '#e74c3c'}]}>
+                <Icon name="trash" size={16} color={colors.textSecondary} />
+                <Text style={[styles.menuTextModern, {color: colors.textSecondary}]}>
                   {t('delete')}
                 </Text>
               </TouchableOpacity>
+              <View style={[styles.menuDivider, {backgroundColor: colors.border}]} />
+              <View style={[styles.menuItemModern, {opacity: 0.7, paddingVertical: 8}]}>
+                <Icon name="info-circle" size={14} color={colors.textSecondary} />
+                <Text style={[styles.menuTextModern, {color: colors.textSecondary, fontSize: 12}]}>
+                  {t('feature_coming_soon', 'Tính năng đang phát triển')}
+                </Text>
+              </View>
             </View>
           </>
         )}
@@ -436,386 +667,499 @@ const Leave = () => {
   };
 
   return (
-    <KeyboardAvoidingView
-      keyboardVerticalOffset={100}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      style={styles.container}>
-      <StatusBar
-        barStyle="dark-content"
-        backgroundColor="transparent"
-        translucent
-      />
+    <View style={[styles.container, {backgroundColor: colors.background}]}>
       <Header
         title={t('leave.title', 'Đơn nghỉ phép')}
         onBack={() => navigation.goBack()}
       />
-      <Loader visible={isLoading} />
-      {err ? <Text style={styles.errorText}>{err}</Text> : null}
+      <KeyboardAvoidingView
+        keyboardVerticalOffset={100}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={styles.keyboardView}>
+        <OptimizedLoader visible={isLoading} />
+        {err ? <Text style={[styles.errorText, {color: colors.error}]}>{err}</Text> : null}
 
-      <View style={styles.tabContainer}>
-        <TabButton
-          title={t('pending')}
-          isActive={activeTab === 0}
-          onPress={() => setActiveTab(0)}
-          count={getPendingCount()}
-        />
-        <TabButton
-          title={t('approved')}
-          isActive={activeTab === 1}
-          onPress={() => setActiveTab(1)}
-          count={getApprovedCount()}
-        />
-        <TabButton
-          title={t('rejected')}
-          isActive={activeTab === 2}
-          onPress={() => setActiveTab(2)}
-          count={getRejectedCount()}
-        />
-      </View>
+        <View style={[styles.tabContainer, {backgroundColor: colors.surface}]}>
+          <TabButton
+            title={t('pending')}
+            isActive={activeTab === 0}
+            onPress={() => setActiveTab(0)}
+            count={getPendingCount()}
+            colors={colors}
+          />
+          <TabButton
+            title={t('approved')}
+            isActive={activeTab === 1}
+            onPress={() => setActiveTab(1)}
+            count={getApprovedCount()}
+            colors={colors}
+          />
+          <TabButton
+            title={t('rejected')}
+            isActive={activeTab === 2}
+            onPress={() => setActiveTab(2)}
+            count={getRejectedCount()}
+            colors={colors}
+          />
+        </View>
 
-      <FlatList
-        data={filterLeavesByStatus()}
-        keyExtractor={item => item.id?.toString()}
-        renderItem={renderLeaveCard}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-        }
-        contentContainerStyle={styles.listContainer}
-        ListEmptyComponent={
-          isLoading ? (
-            <ActivityIndicator color={THEME_COLOR} style={styles.loader} />
-          ) : (
-            <View style={styles.emptyContainer}>
-              <Icon name="calendar-o" size={48} color="#ddd" />
-              <Text style={styles.emptyText}>
-                {t('no_leaves', 'Chưa có đơn nghỉ nào')}
-              </Text>
-            </View>
-          )
-        }
-      />
-
-      <TouchableOpacity
-        style={styles.fabButton}
-        onPress={() => {
-          setEditLeave(null);
-          setReason('');
-          setDayOff(moment().add(1, 'day').toDate());
-          setIs_paid(true);
-          setIs_half(false);
-          setLeaderValue('');
-          setModal(true);
-        }}>
-        <Icon name="plus" size={24} color="#fff" />
-      </TouchableOpacity>
-
-      <Modal visible={modal} transparent animationType="fade">
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          style={{flex: 1}}>
-          <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
-            <View style={styles.leaveModalOverlayModern}>
-              <View style={styles.leaveModalContentModern}>
-                <TouchableOpacity
-                  style={styles.leaveModalCloseBtnModern}
-                  onPress={() => setModal(false)}>
-                  <Icon name="close" size={22} color="#888" />
-                </TouchableOpacity>
-                <Text style={styles.leaveModalTitleModern}>
-                  {editLeave ? t('edit_leave') : t('request_leave')}
+        <FlatList
+          data={filterLeavesByStatus()}
+          keyExtractor={item => item.id?.toString()}
+          renderItem={({item}) => renderLeaveCard({item, colors})}
+          refreshControl={
+            <RefreshControl 
+              refreshing={refreshing} 
+              onRefresh={onRefresh}
+              colors={[colors.primary, colors.primary2]}
+              tintColor={colors.primary}
+            />
+          }
+          contentContainerStyle={styles.listContainer}
+          ListEmptyComponent={
+            isLoading ? (
+              <ActivityIndicator color={colors.primary} style={styles.loader} />
+            ) : (
+              <View style={styles.emptyContainer}>
+                <Icon name="calendar-o" size={48} color={colors.textSecondary} />
+                <Text style={[styles.emptyText, {color: colors.textSecondary}]}>
+                  {t('no_leaves', 'Chưa có đơn nghỉ nào')}
                 </Text>
-                <TouchableOpacity
-                  style={[
-                    styles.leaveInputModern,
-                    errorDayOff && styles.inputErrorModern,
-                  ]}
-                  onPress={() => setIsSelectToModal(true)}>
-                  <Icon
-                    name="calendar"
-                    size={18}
-                    color={THEME_COLOR_2}
-                    style={{marginRight: 8}}
-                  />
-                  <Text style={{color: dayOff ? '#222' : '#b0b3b8'}}>
-                    {moment(dayOff).format('YYYY-MM-DD')}
-                  </Text>
-                </TouchableOpacity>
-                <Modal
-                  visible={isSelectToModal}
-                  transparent={true}
-                  animationType="slide"
-                  onRequestClose={() => setIsSelectToModal(false)}>
-                  <View style={styles.leaveModalOverlayModern}>
-                    <View style={styles.leaveModalContentSmallModern}>
-                      <DatePicker
-                        date={dayOff}
-                        mode="date"
-                        onDateChange={handleSelectToDate}
-                        textColor={TEXT_COLOR}
-                        dayTextColor="#333"
-                        monthTextColor="#333"
-                        yearTextColor="#333"
-                      />
-                      <TouchableOpacity
-                        style={styles.leaveModalDateCloseBtnModern}
-                        onPress={() => setIsSelectToModal(false)}>
-                        <Text
-                          style={{color: THEME_COLOR_2, fontWeight: 'bold'}}>
-                          {t('close')}
-                        </Text>
-                      </TouchableOpacity>
-                    </View>
-                  </View>
-                </Modal>
-                <TextInput
-                  style={[
-                    styles.leaveInputModern,
-                    errorReason && styles.inputErrorModern,
-                  ]}
-                  placeholder={t('enterR')}
-                  placeholderTextColor="#b0b3b8"
-                  value={reason}
-                  onChangeText={text => {
-                    setReason(text);
-                    if (errorReason && text.trim()) setErrorReason(false);
-                  }}
-                  multiline
-                  maxLength={300}
-                />
-                <View style={styles.leaveCheckboxRowModern}>
-                  <TouchableOpacity
-                    style={[
-                      styles.leaveCheckboxBtnModern,
-                      is_paid && styles.leaveCheckboxBtnActiveModern,
-                    ]}
-                    onPress={() => setIs_paid(!is_paid)}>
-                    <Icon
-                      name={is_paid ? 'check-square' : 'square-o'}
-                      size={18}
-                      color={is_paid ? THEME_COLOR_2 : '#b0b3b8'}
-                    />
-                    <Text style={styles.leaveCheckboxLabelModern}>
-                      {t('paid')}
-                    </Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={[
-                      styles.leaveCheckboxBtnModern,
-                      is_half && styles.leaveCheckboxBtnActiveModern,
-                    ]}
-                    onPress={() => setIs_half(!is_half)}>
-                    <Icon
-                      name={is_half ? 'check-square' : 'square-o'}
-                      size={18}
-                      color={is_half ? THEME_COLOR_2 : '#b0b3b8'}
-                    />
-                    <Text style={styles.leaveCheckboxLabelModern}>
-                      {t('half.d')}
-                    </Text>
-                  </TouchableOpacity>
-                </View>
-                <DropDownPicker
-                  open={open}
-                  value={value}
-                  setValue={val => setValue(val)}
-                  setOpen={() => setOpen(!open)}
-                  items={leaderList}
-                  maxHeight={300}
-                  autoScroll
-                  onChangeValue={item => handleSelectLeader(item)}
-                  placeholder={t('selectName')}
-                  placeholderStyle={{color: '#b0b3b8'}}
-                  zIndexInverse={1000}
-                  dropDownContainerStyle={{backgroundColor: '#f5f6fa'}}
-                  style={styles.leaveInputModern}
-                />
-                <View style={styles.submitButtonContainer}>
-                  <TouchableOpacity
-                    style={styles.submitButtonModern}
-                    onPress={handleRequestDayOffPaid}
-                    disabled={isLoading}>
-                    {isLoading ? (
-                      <ActivityIndicator color="#fff" size="small" />
-                    ) : (
-                      <Text style={styles.submitButtonTextModern}>
-                        {editLeave ? t('update') : t('submit')}
-                      </Text>
-                    )}
-                  </TouchableOpacity>
-                </View>
               </View>
-            </View>
-          </TouchableWithoutFeedback>
-        </KeyboardAvoidingView>
-      </Modal>
-      <ModalMessage
-        isVisible={modalMessage.visible}
-        type={modalMessage.type}
-        message={modalMessage.message}
-        onClose={() => setModalMessage({...modalMessage, visible: false})}
-        duration={1800}
-        t={t}
-      />
-    </KeyboardAvoidingView>
+            )
+          }
+        />
+
+        <TouchableOpacity
+          style={[styles.fabButton, {backgroundColor: colors.primary}]}
+          onPress={showHandleButtonModal}>
+          <Icon name="plus" size={24} color="#fff" />
+        </TouchableOpacity>
+
+        <Modal visible={modal} transparent animationType="none">
+          <KeyboardAvoidingView
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            style={{flex: 1}}>
+            <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
+              <Animated.View style={[
+                styles.leaveModalOverlayModern, 
+                {backgroundColor: 'rgba(0,0,0,0.5)', opacity: modalOpacity}
+              ]}>
+                <TouchableWithoutFeedback onPress={hideModal}>
+                  <View style={styles.modalBackdrop} />
+                </TouchableWithoutFeedback>
+                <Animated.View style={[
+                  styles.leaveModalContentModern, 
+                  {backgroundColor: colors.surface},
+                  {transform: [{scale: modalScale}]}
+                ]}>
+                  <TouchableOpacity
+                    style={[styles.leaveModalCloseBtnModern, {backgroundColor: colors.background}]}
+                    onPress={hideModal}>
+                    <Icon name="close" size={22} color={colors.textSecondary} />
+                  </TouchableOpacity>
+                  <Text style={[styles.leaveModalTitleModern, {color: colors.text}]}>
+                    {editLeave ? t('edit_leave') : t('request_leave')}
+                  </Text>
+                  <TouchableOpacity
+                    style={[
+                      styles.leaveInputModern,
+                      {backgroundColor: colors.background, borderColor: colors.border},
+                      errorDayOff && styles.inputErrorModern,
+                    ]}
+                    onPress={() => setIsSelectToModal(true)}>
+                    <Icon
+                      name="calendar"
+                      size={18}
+                      color={colors.primary}
+                      style={{marginRight: 8}}
+                    />
+                    <Text style={{color: dayOff ? colors.text : colors.textSecondary}}>
+                      {moment(dayOff).format('YYYY-MM-DD')}
+                    </Text>
+                  </TouchableOpacity>
+                  <Modal
+                    visible={isSelectToModal}
+                    transparent={true}
+                    animationType="fade"
+                    onRequestClose={() => setIsSelectToModal(false)}>
+                    <View style={[styles.leaveModalOverlayModern, {backgroundColor: 'rgba(0,0,0,0.5)'}]}>
+                      <TouchableWithoutFeedback onPress={() => setIsSelectToModal(false)}>
+                        <View style={styles.modalBackdrop} />
+                      </TouchableWithoutFeedback>
+                      <View style={[styles.leaveModalContentSmallModern, {backgroundColor: colors.surface}]}>
+                        <DatePicker
+                          date={dayOff}
+                          mode="date"
+                          onDateChange={handleSelectToDate}
+                          textColor={colors.text}
+                          dayTextColor={colors.text}
+                          monthTextColor={colors.text}
+                          yearTextColor={colors.text}
+                        />
+                        <TouchableOpacity
+                          style={styles.leaveModalDateCloseBtnModern}
+                          onPress={() => setIsSelectToModal(false)}>
+                          <Text
+                            style={{color: colors.primary, fontWeight: 'bold'}}>
+                            {t('close')}
+                          </Text>
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+                  </Modal>
+                  {/* Reason Type Dropdown */}
+                  <Text style={[styles.inputLabel, {color: colors.text}]}>
+                    {t('leave_reason_type', 'Loại lý do')}
+                  </Text>
+                  <View style={styles.dropdownWrapper}>
+                    <TouchableOpacity
+                      style={[styles.leaveInputModern, {backgroundColor: colors.background, borderColor: colors.border}]}
+                      onPress={() => {
+                        setReasonDropdownOpen(!reasonDropdownOpen);
+                        if (!reasonDropdownOpen) {
+                          setOpen(false);
+                        }
+                      }}
+                      activeOpacity={0.7}>
+                      <Text style={[styles.dropdownText, {color: selectedReasonType ? colors.text : colors.textSecondary}]}>
+                        {selectedReasonType ? reasonTypes.find(item => item.value === selectedReasonType)?.label : t('leave_reason_select_type', 'Chọn loại lý do')}
+                      </Text>
+                      <Icon 
+                        name={reasonDropdownOpen ? "chevron-up" : "chevron-down"} 
+                        size={20} 
+                        color={colors.textSecondary} 
+                      />
+                    </TouchableOpacity>
+                    
+                    {reasonDropdownOpen && (
+                      <>
+                        <TouchableWithoutFeedback onPress={() => setReasonDropdownOpen(false)}>
+                          <View style={styles.dropdownOverlay} />
+                        </TouchableWithoutFeedback>
+                        <View style={[styles.dropdownContainer, {backgroundColor: colors.surface, borderColor: colors.border}]}>
+                          {reasonTypes.map((item, index) => (
+                            <TouchableOpacity
+                              key={item.value}
+                              style={[
+                                styles.dropdownItem,
+                                {backgroundColor: colors.surface},
+                                selectedReasonType === item.value && {backgroundColor: colors.primary + '20'}
+                              ]}
+                              onPress={() => {
+                                handleReasonTypeSelect(item.value);
+                              }}>
+                              <Text style={[
+                                styles.dropdownItemText,
+                                {color: colors.text},
+                                selectedReasonType === item.value && {color: colors.primary, fontWeight: '600'}
+                              ]}>
+                                {item.label}
+                              </Text>
+                            </TouchableOpacity>
+                          ))}
+                        </View>
+                      </>
+                    )}
+                  </View>
+
+                  {/* Custom Reason Input - Only show when "Other" is selected */}
+                  {selectedReasonType === 'other' && (
+                    <>
+                      <Text style={[styles.inputLabel, {color: colors.text}]}>
+                        {t('leave_reason_custom', 'Lý do cụ thể')}
+                      </Text>
+                      <TextInput
+                        style={[
+                          styles.leaveInputModern,
+                          {backgroundColor: colors.background, borderColor: colors.border, color: colors.text},
+                          errorReason && styles.inputErrorModern,
+                        ]}
+                        placeholder={t('leave_reason_enter_custom', 'Nhập lý do cụ thể')}
+                        placeholderTextColor={colors.textSecondary}
+                        value={customReason}
+                        onChangeText={text => {
+                          setCustomReason(text);
+                          if (errorReason && text.trim()) setErrorReason(false);
+                        }}
+                        multiline
+                        maxLength={300}
+                      />
+                    </>
+                  )}
+                  <View style={styles.leaveCheckboxRowModern}>
+                    <TouchableOpacity
+                      style={[
+                        styles.leaveCheckboxBtnModern,
+                        {backgroundColor: colors.background},
+                        is_paid && styles.leaveCheckboxBtnActiveModern,
+                        is_paid && {backgroundColor: colors.primary + '20', borderColor: colors.primary},
+                      ]}
+                      onPress={() => setIs_paid(!is_paid)}>
+                      <Icon
+                        name={is_paid ? 'check-square' : 'square-o'}
+                        size={18}
+                        color={is_paid ? colors.primary : colors.textSecondary}
+                      />
+                      <Text style={[styles.leaveCheckboxLabelModern, {color: colors.text}]}>
+                        {t('paid')}
+                      </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[
+                        styles.leaveCheckboxBtnModern,
+                        {backgroundColor: colors.background},
+                        is_half && styles.leaveCheckboxBtnActiveModern,
+                        is_half && {backgroundColor: colors.primary + '20', borderColor: colors.primary},
+                      ]}
+                      onPress={() => setIs_half(!is_half)}>
+                      <Icon
+                        name={is_half ? 'check-square' : 'square-o'}
+                        size={18}
+                        color={is_half ? colors.primary : colors.textSecondary}
+                      />
+                      <Text style={[styles.leaveCheckboxLabelModern, {color: colors.text}]}>
+                        {t('half.d')}
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                  <DropDownPicker
+                    open={open}
+                    value={value}
+                    setValue={val => setValue(val)}
+                    setOpen={handleLeaderDropdownToggle}
+                    items={leaderList}
+                    maxHeight={300}
+                    autoScroll
+                    onChangeValue={item => handleSelectLeader(item)}
+                    placeholder={t('selectName')}
+                    placeholderStyle={{color: colors.textSecondary}}
+                    zIndex={4000}
+                    zIndexInverse={3000}
+                    dropDownContainerStyle={{backgroundColor: colors.surface}}
+                    style={[styles.leaveInputModern, {backgroundColor: colors.background, borderColor: colors.border}]}
+                    textStyle={{color: colors.text}}
+                    listMode="SCROLLVIEW"
+                    scrollViewProps={{
+                      nestedScrollEnabled: true,
+                    }}
+                  />
+                  <View style={styles.submitButtonContainer}>
+                    <TouchableOpacity
+                      style={[styles.submitButtonModern, {backgroundColor: colors.primary}]}
+                      onPress={handleRequestDayOffPaid}
+                      disabled={isLoading}>
+                      {isLoading ? (
+                        <ActivityIndicator color="#fff" size="small" />
+                      ) : (
+                        <Text style={styles.submitButtonTextModern}>
+                          {editLeave ? t('update') : t('submit')}
+                        </Text>
+                      )}
+                    </TouchableOpacity>
+                  </View>
+                </Animated.View>
+              </Animated.View>
+            </TouchableWithoutFeedback>
+          </KeyboardAvoidingView>
+        </Modal>
+        <ModalMessage
+          isVisible={modalMessage.visible}
+          type={modalMessage.type}
+          message={modalMessage.message}
+          onClose={() => setModalMessage({...modalMessage, visible: false})}
+          duration={1800}
+          t={t}
+        />
+      </KeyboardAvoidingView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
+  },
+  keyboardView: {
+    flex: 1,
   },
   errorText: {
-    color: '#e74c3c',
     textAlign: 'center',
     marginTop: 8,
     fontSize: 14,
   },
   tabContainer: {
     flexDirection: 'row',
-    backgroundColor: '#fff',
-    paddingHorizontal: 12,
-    paddingVertical: 12,
-    marginBottom: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+    marginHorizontal: 16,
+    marginBottom: 20,
+    borderRadius: 16,
     shadowColor: '#000',
-    shadowOffset: {width: 0, height: 2},
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 3,
+    shadowOffset: {width: 0, height: 4},
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 6,
   },
   tabButton: {
     flex: 1,
     flexDirection: 'row',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 12,
-    marginHorizontal: 4,
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    borderRadius: 14,
+    marginHorizontal: 6,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#f5f6fa',
-  },
-  activeTabButton: {
-    backgroundColor: THEME_COLOR,
-  },
-  tabButtonText: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#666',
-  },
-  activeTabButtonText: {
-    color: '#fff',
-  },
-  tabBadge: {
-    backgroundColor: '#fff',
-    borderRadius: 10,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    marginLeft: 6,
-  },
-  activeTabBadge: {
-    backgroundColor: 'rgba(255,255,255,0.2)',
-  },
-  tabBadgeText: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: '#666',
-  },
-  activeTabBadgeText: {
-    color: '#fff',
-  },
-  listContainer: {
-    paddingHorizontal: 16,
-    paddingBottom: 80,
-    paddingTop: 8,
-  },
-  leaveCard: {
-    backgroundColor: '#fff',
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 12,
     shadowColor: '#000',
     shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.05,
-    shadowRadius: 8,
+    shadowRadius: 4,
     elevation: 2,
+  },
+  activeTabButton: {
+    // Dynamic styling handled in component
+  },
+  tabButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+    letterSpacing: 0.3,
+  },
+  activeTabButtonText: {
+    // Dynamic styling handled in component
+  },
+  tabBadge: {
+    borderRadius: 12,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    marginLeft: 8,
+    minWidth: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  activeTabBadge: {
+    // Dynamic styling handled in component
+  },
+  tabBadgeText: {
+    fontSize: 12,
+    fontWeight: '700',
+    letterSpacing: 0.2,
+  },
+  activeTabBadgeText: {
+    // Dynamic styling handled in component
+  },
+  listContainer: {
+    paddingHorizontal: 16,
+    paddingBottom: 30,
+    paddingTop: 8,
+  },
+  leaveCard: {
+    borderRadius: 20,
+    padding: 20,
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 4},
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 6,
   },
   leaveCardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 16,
   },
   leaveCardDateContainer: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   leaveCardDate: {
-    fontSize: 14,
-    color: '#666',
-    marginLeft: 8,
-    fontWeight: '500',
+    fontSize: 15,
+    marginLeft: 10,
+    fontWeight: '600',
+    letterSpacing: 0.3,
   },
   menuBtnModern: {
-    padding: 8,
-    borderRadius: 20,
-    backgroundColor: '#f5f6fa',
+    padding: 10,
+    borderRadius: 24,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
   },
   leaveCardContent: {
-    gap: 12,
+    gap: 16,
   },
   leaveTypeContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 10,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 12,
+    backgroundColor: 'rgba(0,0,0,0.03)',
   },
   leaveTypeText: {
-    fontSize: 15,
-    color: THEME_COLOR_2,
-    fontWeight: '600',
+    fontSize: 16,
+    fontWeight: '700',
+    letterSpacing: 0.3,
   },
   leaveReasonContainer: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    gap: 8,
-    paddingTop: 4,
+    gap: 10,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 12,
+    backgroundColor: 'rgba(0,0,0,0.02)',
   },
   leaveReasonText: {
     flex: 1,
-    fontSize: 14,
-    color: '#444',
-    lineHeight: 20,
+    fontSize: 15,
+    lineHeight: 22,
+    fontWeight: '500',
   },
   leaveStatusContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     alignSelf: 'flex-start',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20,
-    gap: 6,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 24,
+    gap: 8,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
   },
   statusDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
   },
   leaveStatusText: {
-    fontSize: 13,
-    fontWeight: '600',
+    fontSize: 14,
+    fontWeight: '700',
+    letterSpacing: 0.3,
   },
   feedbackContainer: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    backgroundColor: '#fff9ec',
-    padding: 12,
-    borderRadius: 12,
-    gap: 8,
+    padding: 16,
+    borderRadius: 16,
+    gap: 10,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
   },
   feedbackText: {
     flex: 1,
-    fontSize: 13,
-    color: '#666',
-    lineHeight: 18,
+    fontSize: 14,
+    lineHeight: 20,
+    fontWeight: '500',
   },
   menuOverlayModern: {
     position: 'absolute',
@@ -823,125 +1167,182 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(0,0,0,0.15)',
-    borderRadius: 16,
+    backgroundColor: 'rgba(0,0,0,0.2)',
+    borderRadius: 20,
   },
   menuModern: {
     position: 'absolute',
-    top: 48,
-    right: 16,
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    paddingVertical: 6,
-    width: 140,
+    top: 56,
+    right: 20,
+    borderRadius: 16,
+    paddingVertical: 12,
+    width: 160,
     shadowColor: '#000',
-    shadowOffset: {width: 0, height: 4},
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-    elevation: 4,
+    shadowOffset: {width: 0, height: 6},
+    shadowOpacity: 0.2,
+    shadowRadius: 16,
+    elevation: 8,
   },
   menuItemModern: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    gap: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    gap: 14,
   },
   menuDivider: {
     height: 1,
-    backgroundColor: '#f5f6fa',
     marginVertical: 4,
   },
   menuTextModern: {
-    fontSize: 14,
-    color: '#444',
-    fontWeight: '500',
+    fontSize: 15,
+    fontWeight: '600',
+    letterSpacing: 0.3,
   },
   emptyContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 40,
-    gap: 16,
+    paddingVertical: 60,
+    gap: 20,
   },
   emptyText: {
-    fontSize: 15,
-    color: '#999',
+    fontSize: 16,
     textAlign: 'center',
+    fontWeight: '500',
+    letterSpacing: 0.3,
   },
   loader: {
     marginTop: 40,
   },
   fabButton: {
     position: 'absolute',
-    bottom: 24,
+    bottom: 30,
     right: 24,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: THEME_COLOR,
+    width: 64,
+    height: 64,
+    borderRadius: 32,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: THEME_COLOR,
-    shadowOffset: {width: 0, height: 4},
-    shadowOpacity: 0.25,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 6},
+    shadowOpacity: 0.4,
     shadowRadius: 12,
-    elevation: 6,
+    elevation: 12,
   },
   leaveModalOverlayModern: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.18)',
     justifyContent: 'center',
     alignItems: 'center',
   },
+  modalBackdrop: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+  },
   leaveModalContentModern: {
-    backgroundColor: '#fff',
-    borderRadius: 18,
-    padding: 22,
-    width: '92%',
+    borderRadius: 20,
+    padding: 24,
+    width: '90%',
+    maxWidth: 400,
     shadowColor: '#000',
-    shadowOffset: {width: 0, height: 2},
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    elevation: 4,
+    shadowOffset: {width: 0, height: 8},
+    shadowOpacity: 0.25,
+    shadowRadius: 20,
+    elevation: 8,
     position: 'relative',
     alignItems: 'stretch',
+    transform: [{scale: 1}],
   },
   leaveModalContentSmallModern: {
-    backgroundColor: '#fff',
-    borderRadius: 16,
-    padding: 18,
-    width: 320,
+    borderRadius: 20,
+    padding: 20,
+    width: '85%',
+    maxWidth: 350,
     alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 8},
+    shadowOpacity: 0.25,
+    shadowRadius: 20,
+    elevation: 8,
   },
   leaveModalCloseBtnModern: {
     position: 'absolute',
-    top: 12,
-    right: 12,
+    top: 16,
+    right: 16,
     zIndex: 2,
-    padding: 4,
-    borderRadius: 16,
-    backgroundColor: '#f5f6fa',
+    padding: 8,
+    borderRadius: 20,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
   },
   leaveModalTitleModern: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#222',
     marginBottom: 18,
     textAlign: 'center',
     marginTop: 8,
   },
   leaveInputModern: {
     minHeight: 44,
-    backgroundColor: '#f5f6fa',
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: '#e4e6eb',
     paddingHorizontal: 14,
     fontSize: 15,
-    color: '#222',
     marginBottom: 12,
     flexDirection: 'row',
     alignItems: 'center',
+  },
+  inputLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    marginBottom: 8,
+    marginTop: 4,
+  },
+  dropdownWrapper: {
+    position: 'relative',
+    zIndex: 9999,
+  },
+  dropdownOverlay: {
+    position: 'absolute',
+    top: -1000,
+    left: -1000,
+    right: 1000,
+    bottom: -1000,
+    zIndex: 99998,
+    backgroundColor: 'transparent',
+  },
+  dropdownText: {
+    fontSize: 15,
+    flex: 1,
+  },
+  dropdownContainer: {
+    position: 'absolute',
+    top: '100%',
+    left: 0,
+    right: 0,
+    zIndex: 99999,
+    borderRadius: 10,
+    borderWidth: 1,
+    marginTop: 4,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 4},
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 9999,
+  },
+  dropdownItem: {
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(0,0,0,0.1)',
+  },
+  dropdownItemText: {
+    fontSize: 15,
   },
   inputErrorModern: {
     borderColor: '#e74c3c',
@@ -956,20 +1357,16 @@ const styles = StyleSheet.create({
   leaveCheckboxBtnModern: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#f5f6fa',
     borderRadius: 8,
     paddingVertical: 8,
     paddingHorizontal: 14,
     marginRight: 10,
   },
   leaveCheckboxBtnActiveModern: {
-    backgroundColor: '#eafaf1',
-    borderColor: THEME_COLOR_2,
     borderWidth: 1.2,
   },
   leaveCheckboxLabelModern: {
     fontSize: 15,
-    color: '#222',
     marginLeft: 8,
   },
   submitButtonContainer: {
@@ -977,13 +1374,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   submitButtonModern: {
-    backgroundColor: THEME_COLOR,
     borderRadius: 12,
     paddingVertical: 14,
     paddingHorizontal: 40,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: THEME_COLOR,
     shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.15,
     shadowRadius: 8,

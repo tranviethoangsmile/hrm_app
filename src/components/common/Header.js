@@ -6,6 +6,7 @@ import {
   StyleSheet,
   Platform,
   StatusBar,
+  SafeAreaView,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import IconFA from 'react-native-vector-icons/FontAwesome5';
@@ -13,12 +14,12 @@ import LinearGradient from 'react-native-linear-gradient';
 import {useTheme} from '../../hooks/useTheme';
 
 const Header = ({title, onBack, right}) => {
-  const {colors} = useTheme();
+  const {colors, isDarkMode} = useTheme();
   
   return (
     <>
       <StatusBar
-        barStyle={colors.isDark ? 'light-content' : 'dark-content'}
+        barStyle={isDarkMode ? 'light-content' : 'dark-content'}
         backgroundColor="transparent"
         translucent
       />
@@ -27,22 +28,24 @@ const Header = ({title, onBack, right}) => {
         start={{x: 0, y: 0}}
         end={{x: 1, y: 1}}
         style={styles.headerGradient}>
-        <View style={styles.headerContent}>
-          {onBack ? (
-            <TouchableOpacity
-              onPress={onBack}
-              style={[styles.backButton, {backgroundColor: 'rgba(255,255,255,0.2)'}]}
-              hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}>
-              <IconFA name="arrow-left" size={18} color="#fff" />
-            </TouchableOpacity>
-          ) : (
-            <View style={{width: 32}} />
-          )}
-          <Text style={styles.headerTitle} numberOfLines={1} ellipsizeMode="tail">
-            {title}
-          </Text>
-          {right ? right : <View style={{width: 32}} />}
-        </View>
+        <SafeAreaView style={styles.safeArea}>
+          <View style={styles.headerContent}>
+            {onBack ? (
+              <TouchableOpacity
+                onPress={onBack}
+                style={[styles.backButton, {backgroundColor: 'rgba(255,255,255,0.2)'}]}
+                hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}>
+                <IconFA name="arrow-left" size={18} color="#fff" />
+              </TouchableOpacity>
+            ) : (
+              <View style={{width: 32}} />
+            )}
+            <Text style={styles.headerTitle} numberOfLines={1} ellipsizeMode="tail">
+              {title}
+            </Text>
+            {right ? right : <View style={{width: 32}} />}
+          </View>
+        </SafeAreaView>
       </LinearGradient>
     </>
   );
@@ -50,7 +53,7 @@ const Header = ({title, onBack, right}) => {
 
 const styles = StyleSheet.create({
   headerGradient: {
-    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight || 24 : 44,
+    // Remove paddingTop since SafeAreaView handles it
     paddingBottom: 12,
     shadowColor: '#667eea',
     shadowOffset: {width: 0, height: 4},
@@ -58,12 +61,16 @@ const styles = StyleSheet.create({
     shadowRadius: 12,
     elevation: 8,
   },
+  safeArea: {
+    // SafeAreaView handles the status bar area
+  },
   headerContent: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 12,
-    paddingTop: 5,
+    paddingVertical: 12,
+    minHeight: 44, // Ensure minimum touch target height
   },
   backButton: {
     padding: 8,

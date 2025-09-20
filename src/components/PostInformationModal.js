@@ -14,7 +14,7 @@ import {
 import CheckBox from '@react-native-community/checkbox';
 import Video from 'react-native-video';
 import {launchImageLibrary} from 'react-native-image-picker';
-import Loader from './Loader';
+import OptimizedLoader from './OptimizedLoader';
 import moment from 'moment';
 import {
   API,
@@ -208,7 +208,7 @@ const PostInformationModal = ({visible, onClose, t, USER_IF, refresh}) => {
           </View>
         </View>
       </View>
-      <Loader visible={isloading} />
+      <OptimizedLoader visible={isloading} />
     </Modal>
   );
 };

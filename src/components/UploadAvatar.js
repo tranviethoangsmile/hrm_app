@@ -19,7 +19,7 @@ import {
   V1,
   VERSION,
 } from '../utils/constans';
-import Loader from './Loader';
+import OptimizedLoader from './OptimizedLoader';
 import RNFS from 'react-native-fs';
 import {launchImageLibrary} from 'react-native-image-picker';
 import ModalMessage from './ModalMessage';
@@ -158,7 +158,7 @@ const UploadAvatar = ({
             </TouchableOpacity>
           </View>
         </View>
-        <Loader visible={isloading} />
+        <OptimizedLoader visible={isloading} />
         <ModalMessage
           visible={isMessageModalVisible}
           message={messageModal}

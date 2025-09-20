@@ -37,7 +37,7 @@ import i18next from '../../services/i18next';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import IconFA from 'react-native-vector-icons/FontAwesome5';
 import axios from 'axios';
-import Loader from '../components/Loader';
+import OptimizedLoader from '../components/OptimizedLoader';
 import ModalMessage from '../components/ModalMessage';
 import LinearGradient from 'react-native-linear-gradient';
 import Header from '../components/common/Header';
@@ -644,7 +644,7 @@ const Daily = () => {
           style={styles.scrollView}
           contentContainerStyle={styles.scrollViewContent}
           showsVerticalScrollIndicator={false}>
-          <Loader visible={loader} />
+          <OptimizedLoader visible={loader} />
 
           {renderProductCard()}
           {renderProductionCard()}
