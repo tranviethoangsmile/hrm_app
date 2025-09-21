@@ -25,8 +25,11 @@ import {
   ScrollView,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
+import {useTheme} from '../hooks/useTheme';
 
 const BeautifulModal = ({visible, onClose, title, children, actions = []}) => {
+  const {colors, isDarkMode} = useTheme();
+  
   return (
     <Modal
       visible={visible}
@@ -35,16 +38,16 @@ const BeautifulModal = ({visible, onClose, title, children, actions = []}) => {
       onRequestClose={onClose}
       statusBarTranslucent>
       <TouchableWithoutFeedback onPress={onClose}>
-        <View style={styles.overlay}>
+        <View style={[styles.overlay, {backgroundColor: isDarkMode ? 'rgba(0,0,0,0.8)' : 'rgba(0,0,0,0.5)'}]}>
           <TouchableWithoutFeedback>
             <View style={styles.centeredView}>
-              <View style={styles.modalCard}>
+              <View style={[styles.modalCard, {backgroundColor: colors.surface}]}>
                 {/* Close button */}
                 <TouchableOpacity style={styles.closeBtn} onPress={onClose}>
-                  <Icon name="close" size={24} color="#888" />
+                  <Icon name="close" size={24} color={colors.textSecondary} />
                 </TouchableOpacity>
                 {/* Title */}
-                {title ? <Text style={styles.title}>{title}</Text> : null}
+                {title ? <Text style={[styles.title, {color: colors.text}]}>{title}</Text> : null}
                 {/* Content */}
                 <ScrollView
                   contentContainerStyle={styles.content}
@@ -59,6 +62,7 @@ const BeautifulModal = ({visible, onClose, title, children, actions = []}) => {
                       key={action.label + idx}
                       style={[
                         styles.actionBtn,
+                        {backgroundColor: action.style === 'primary' ? colors.primary : action.style === 'danger' ? colors.danger : colors.border},
                         action.style === 'primary' && styles.primaryBtn,
                         action.style === 'cancel' && styles.cancelBtn,
                         action.style === 'danger' && styles.dangerBtn,
@@ -68,6 +72,7 @@ const BeautifulModal = ({visible, onClose, title, children, actions = []}) => {
                       <Text
                         style={[
                           styles.actionText,
+                          {color: action.style === 'primary' || action.style === 'danger' ? '#fff' : colors.text},
                           action.style === 'primary' && styles.primaryText,
                           action.style === 'cancel' && styles.cancelText,
                           action.style === 'danger' && styles.dangerText,
@@ -90,7 +95,6 @@ const BeautifulModal = ({visible, onClose, title, children, actions = []}) => {
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.55)',
     justifyContent: 'center',
     alignItems: 'center',
     padding: 16,
@@ -104,7 +108,6 @@ const styles = StyleSheet.create({
   modalCard: {
     width: '100%',
     maxWidth: 400,
-    backgroundColor: '#fff',
     borderRadius: 22,
     paddingTop: 32,
     paddingBottom: 18,
@@ -131,7 +134,6 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 22,
     fontWeight: '700',
-    color: '#222',
     textAlign: 'center',
     marginBottom: 18,
     letterSpacing: 0.2,
@@ -151,33 +153,31 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 22,
     alignItems: 'center',
-    backgroundColor: '#e2e8f0',
     marginLeft: 8,
   },
   primaryBtn: {
-    backgroundColor: '#667eea',
+    // backgroundColor sẽ được set dynamic
   },
   cancelBtn: {
-    backgroundColor: '#f1f3f6',
+    // backgroundColor sẽ được set dynamic
     borderWidth: 1,
     borderColor: '#e2e8f0',
   },
   dangerBtn: {
-    backgroundColor: '#e74c3c',
+    // backgroundColor sẽ được set dynamic
   },
   actionText: {
-    color: '#222',
     fontWeight: '700',
     fontSize: 16,
   },
   primaryText: {
-    color: '#fff',
+    // color sẽ được set dynamic
   },
   cancelText: {
-    color: '#667eea',
+    // color sẽ được set dynamic
   },
   dangerText: {
-    color: '#fff',
+    // color sẽ được set dynamic
   },
 });
 

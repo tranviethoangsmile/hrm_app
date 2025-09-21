@@ -18,6 +18,7 @@ import Icon from 'react-native-vector-icons/FontAwesome';
 import {useTranslation} from 'react-i18next';
 import {THEME_COLOR_2} from '../utils/Colors';
 import {useSelector} from 'react-redux';
+import {useTheme} from '../hooks/useTheme';
 import axios from 'axios';
 import moment from 'moment';
 import 'moment/locale/ja';
@@ -37,6 +38,7 @@ import {ModalMessage} from '../components';
 
 const OvertimeConfirm = ({navigation}) => {
   const {t, i18n} = useTranslation();
+  const {colors, isDarkMode} = useTheme();
   const [showGuide, setShowGuide] = useState(false);
   const [overtimeRequests, setOvertimeRequests] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -143,7 +145,7 @@ const OvertimeConfirm = ({navigation}) => {
   const renderDescription = useCallback(
     (description, id) => {
       if (!description) {
-        return <Text style={styles.description}>-</Text>;
+        return <Text style={[styles.description, {color: colors.text}]}>-</Text>;
       }
 
       const isExpanded = expandedItems[id];
@@ -155,7 +157,7 @@ const OvertimeConfirm = ({navigation}) => {
 
       return (
         <View style={styles.descriptionWrapper}>
-          <Text style={styles.description}>{displayText}</Text>
+          <Text style={[styles.description, {color: colors.text}]}>{displayText}</Text>
           {shouldShowExpandButton && (
             <TouchableOpacity
               style={styles.expandButton}
@@ -163,7 +165,7 @@ const OvertimeConfirm = ({navigation}) => {
               <Icon
                 name={isExpanded ? 'chevron-up' : 'chevron-down'}
                 size={14}
-                color={THEME_COLOR_2}
+                color={colors.primary}
                 style={styles.expandIcon}
               />
             </TouchableOpacity>
@@ -171,12 +173,12 @@ const OvertimeConfirm = ({navigation}) => {
         </View>
       );
     },
-    [expandedItems, toggleExpand],
+    [expandedItems, toggleExpand, colors],
   );
 
   const renderItem = ({item}) => (
-    <View style={styles.requestCard}>
-      <View style={styles.cardHeader}>
+    <View style={[styles.requestCard, {backgroundColor: colors.surface}]}>
+      <View style={[styles.cardHeader, {borderBottomColor: colors.border}]}>
         <View style={styles.statusContainer}>
           <View
             style={[
@@ -186,28 +188,28 @@ const OvertimeConfirm = ({navigation}) => {
               },
             ]}
           />
-          <Text style={styles.statusText}>
+          <Text style={[styles.statusText, {color: colors.textSecondary}]}>
             {item.is_confirm ? t('overtime.approved') : t('overtime.pending')}
           </Text>
         </View>
         <View style={styles.requestDateContainer}>
-          <Icon name="clock-o" size={14} color="#666" style={styles.dateIcon} />
-          <Text style={styles.dateText}>{formatDate(item.created_at)}</Text>
+          <Icon name="clock-o" size={14} color={colors.textSecondary} style={styles.dateIcon} />
+          <Text style={[styles.dateText, {color: colors.textSecondary}]}>{formatDate(item.created_at)}</Text>
         </View>
       </View>
 
       <View style={styles.cardBody}>
         <View style={styles.infoRow}>
-          <Icon name="building" size={18} color={THEME_COLOR_2} />
-          <Text style={styles.label}>{t('overtime.work_area')}:</Text>
-          <Text style={styles.value}>{item.departmentDetail?.name || '-'}</Text>
+          <Icon name="building" size={18} color={colors.primary} />
+          <Text style={[styles.label, {color: colors.textSecondary}]}>{t('overtime.work_area')}:</Text>
+          <Text style={[styles.value, {color: colors.text}]}>{item.departmentDetail?.name || '-'}</Text>
         </View>
 
         <View style={styles.infoRow}>
-          <Icon name="user" size={18} color={THEME_COLOR_2} />
-          <Text style={styles.label}>{t('overtime.requester')}:</Text>
+          <Icon name="user" size={18} color={colors.primary} />
+          <Text style={[styles.label, {color: colors.textSecondary}]}>{t('overtime.requester')}:</Text>
           <View style={styles.requesterContainer}>
-            <Text style={styles.value}>{item.leaderDetail?.name || '-'}</Text>
+            <Text style={[styles.value, {color: colors.text}]}>{item.leaderDetail?.name || '-'}</Text>
             {item.leaderDetail?.avatar && (
               <Image
                 source={{
@@ -221,24 +223,24 @@ const OvertimeConfirm = ({navigation}) => {
           </View>
         </View>
 
-        <View style={styles.contentContainer}>
+        <View style={[styles.contentContainer, {backgroundColor: colors.background}]}>
           <View style={styles.infoRow}>
-            <Icon name="file-text" size={18} color={THEME_COLOR_2} />
-            <Text style={styles.label}>{t('overtime.work_content')}:</Text>
+            <Icon name="file-text" size={18} color={colors.primary} />
+            <Text style={[styles.label, {color: colors.textSecondary}]}>{t('overtime.work_content')}:</Text>
           </View>
           {renderDescription(item.description, item.id)}
         </View>
 
-        <View style={styles.dateContainer}>
+        <View style={[styles.dateContainer, {backgroundColor: colors.background}]}>
           <View style={styles.infoRow}>
-            <Icon name="calendar" size={18} color={THEME_COLOR_2} />
-            <Text style={styles.label}>{t('overtime.work_date')}:</Text>
-            <Text style={styles.value}>{formatDate(item.date)}</Text>
+            <Icon name="calendar" size={18} color={colors.primary} />
+            <Text style={[styles.label, {color: colors.textSecondary}]}>{t('overtime.work_date')}:</Text>
+            <Text style={[styles.value, {color: colors.text}]}>{formatDate(item.date)}</Text>
           </View>
         </View>
 
         {!item.is_confirm && (
-          <View style={styles.actionContainer}>
+          <View style={[styles.actionContainer, {borderTopColor: colors.border}]}>
             <TouchableOpacity
               style={[styles.actionButton, styles.actionConfirmButton]}
               onPress={() => handleConfirm(item.id)}>
@@ -252,15 +254,15 @@ const OvertimeConfirm = ({navigation}) => {
   );
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, {backgroundColor: colors.background}]}>
       <StatusBar
-        barStyle="light-content"
+        barStyle={isDarkMode ? "light-content" : "dark-content"}
         backgroundColor="transparent"
         translucent
       />
       
       <LinearGradient
-        colors={['#667eea', '#764ba2']}
+        colors={isDarkMode ? ['#1a1a2e', '#16213e'] : ['#667eea', '#764ba2']}
         start={{x: 0, y: 0}}
         end={{x: 1, y: 1}}
         style={styles.headerGradient}>
@@ -285,13 +287,13 @@ const OvertimeConfirm = ({navigation}) => {
         </View>
       </LinearGradient>
 
-      <View style={styles.content}>
+      <View style={[styles.content, {backgroundColor: colors.background}]}>
         {isLoading ? (
-          <ActivityIndicator size="large" color={THEME_COLOR_2} />
+          <ActivityIndicator size="large" color={colors.primary} />
         ) : error ? (
-          <Text style={styles.errorText}>{error}</Text>
+          <Text style={[styles.errorText, {color: colors.error}]}>{error}</Text>
         ) : overtimeRequests.length === 0 ? (
-          <Text style={styles.emptyText}>{t('not.data')}</Text>
+          <Text style={[styles.emptyText, {color: colors.textSecondary}]}>{t('not.data')}</Text>
         ) : (
           <FlatList
             data={overtimeRequests}
@@ -311,15 +313,15 @@ const OvertimeConfirm = ({navigation}) => {
           style={styles.modalOverlay}
           activeOpacity={1}
           onPress={() => setShowGuide(false)}>
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>{t('overtime.guide_title')}</Text>
+          <View style={[styles.modalContent, {backgroundColor: colors.surface}]}>
+            <View style={[styles.modalHeader, {borderBottomColor: colors.border}]}>
+              <Text style={[styles.modalTitle, {color: colors.text}]}>{t('overtime.guide_title')}</Text>
               <TouchableOpacity onPress={() => setShowGuide(false)}>
-                <Icon name="times" size={20} color="#666" />
+                <Icon name="times" size={20} color={colors.textSecondary} />
               </TouchableOpacity>
             </View>
             <ScrollView style={styles.modalBody}>
-              <Text style={styles.guideText}>
+              <Text style={[styles.guideText, {color: colors.text}]}>
                 {t('overtime.guide_content')}
               </Text>
             </ScrollView>
@@ -342,7 +344,6 @@ const OvertimeConfirm = ({navigation}) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8fafc',
   },
   headerGradient: {
     paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight || 24 : 44,
@@ -382,7 +383,6 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   requestCard: {
-    backgroundColor: '#fff',
     borderRadius: 12,
     marginBottom: 16,
     shadowColor: '#000',
@@ -397,7 +397,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
   },
   statusContainer: {
     flexDirection: 'row',
@@ -412,7 +411,6 @@ const styles = StyleSheet.create({
   statusText: {
     fontSize: 14,
     fontWeight: '500',
-    color: '#666',
   },
   requestDateContainer: {
     flexDirection: 'row',
@@ -423,7 +421,6 @@ const styles = StyleSheet.create({
   },
   dateText: {
     fontSize: 13,
-    color: '#666',
   },
   cardBody: {
     padding: 12,
@@ -435,7 +432,6 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 14,
-    color: '#666',
     marginLeft: 8,
     marginRight: 8,
     minWidth: 100,
@@ -443,7 +439,6 @@ const styles = StyleSheet.create({
   value: {
     flex: 1,
     fontSize: 14,
-    color: '#333',
     fontWeight: '500',
   },
   requesterContainer: {
@@ -459,7 +454,6 @@ const styles = StyleSheet.create({
     marginLeft: 8,
   },
   contentContainer: {
-    backgroundColor: '#f8f9fa',
     padding: 12,
     borderRadius: 8,
     marginVertical: 8,
@@ -469,11 +463,9 @@ const styles = StyleSheet.create({
   },
   description: {
     fontSize: 14,
-    color: '#333',
     lineHeight: 20,
   },
   dateContainer: {
-    backgroundColor: '#f8f9fa',
     padding: 12,
     borderRadius: 8,
     marginTop: 8,
@@ -484,7 +476,6 @@ const styles = StyleSheet.create({
     marginTop: 16,
     paddingTop: 16,
     borderTopWidth: 1,
-    borderTopColor: '#f0f0f0',
   },
   actionButton: {
     flex: 1,
@@ -508,14 +499,12 @@ const styles = StyleSheet.create({
     paddingBottom: 16,
   },
   errorText: {
-    color: '#e74c3c',
     textAlign: 'center',
     fontSize: 16,
   },
   emptyText: {
     textAlign: 'center',
     fontSize: 16,
-    color: '#666',
   },
   expandButton: {
     padding: 4,
@@ -531,7 +520,6 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   modalContent: {
-    backgroundColor: '#fff',
     borderRadius: 12,
     width: '100%',
     maxHeight: '80%',
@@ -547,12 +535,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 15,
     borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
   },
   modalTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: THEME_COLOR_2,
   },
   modalBody: {
     padding: 15,
@@ -560,7 +546,6 @@ const styles = StyleSheet.create({
   guideText: {
     fontSize: 16,
     lineHeight: 24,
-    color: '#333',
   },
   alertTitle: {
     fontSize: 18,

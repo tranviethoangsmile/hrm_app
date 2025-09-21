@@ -39,7 +39,7 @@ const Main = () => {
   const userInfo = authData?.data?.data;
 
   const lastScrollY = useRef(0);
-  const bottomNavHeight = 75; // Simple clean height
+  const bottomNavHeight = 90; // Increased height to accommodate checkin button
   const bottomNavTranslateY = useRef(new Animated.Value(0)).current;
   const [isBottomNavVisible, setIsBottomNavVisible] = useState(true);
 
@@ -224,7 +224,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    height: 75,
+    height: 90,
     borderTopWidth: 1,
     shadowColor: '#000',
     shadowOffset: {width: 0, height: -2},
@@ -264,7 +264,7 @@ const styles = StyleSheet.create({
   centerTabItem: {
     alignItems: 'center',
     flex: 1.2,
-    marginTop: -15,
+    marginTop: -5,
     shadowColor: '#4FACFE',
     shadowOffset: {width: 0, height: 3},
     shadowOpacity: 0.3,

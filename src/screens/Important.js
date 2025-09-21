@@ -35,6 +35,7 @@ import {
 import {TEXT_COLOR} from '../utils/Colors';
 import Header from '../components/common/Header';
 import {useNavigation} from '@react-navigation/native';
+import {useTheme} from '../hooks/useTheme';
 import {launchImageLibrary} from 'react-native-image-picker';
 import BeautifulModal from '../components/BeautifulModal';
 import OptimizedLoader from '../components/OptimizedLoader';
@@ -57,6 +58,7 @@ const ReportForm = ({
   isEdit,
   editFields = ['title', 'content', 'solution', 'media_path', 'customTitle'],
   onShowMessage,
+  colors,
 }) => {
   const [form, setForm] = useState(initialData);
   const [showTitleMenu, setShowTitleMenu] = useState(false);
@@ -89,14 +91,14 @@ const ReportForm = ({
       onShowMessage && onShowMessage('fill_required', 'error', 1500);
       return;
     }
-    onSubmit(form, undefined, () => setForm(defaultForm));
+    onSubmit(form, null, () => setForm(defaultForm));
   };
 
   return (
     <View>
       <View style={{zIndex: 1000, marginBottom: 12, position: 'relative'}}>
         <View style={styles.formGroupRedesignModernized}>
-          <Text style={styles.inputLabelRedesignModernized}>{t('til')}</Text>
+          <Text style={[styles.inputLabelRedesignModernized, {color: colors.text}]}>{t('til')}</Text>
           <TouchableOpacity
             style={[
               styles.inputRedesignModernized,
@@ -105,6 +107,8 @@ const ReportForm = ({
                 alignItems: 'center',
                 justifyContent: 'space-between',
                 paddingVertical: 14,
+                backgroundColor: colors.background,
+                borderColor: colors.border,
               },
             ]}
             activeOpacity={
@@ -118,7 +122,7 @@ const ReportForm = ({
             disabled={isEdit && !editFields.includes('title')}>
             <Text
               style={{
-                color: form.title ? '#222' : '#aaa',
+                color: form.title ? colors.text : colors.textSecondary,
                 fontSize: 17,
               }}>
               {form.title || t('choose_title')}
@@ -126,7 +130,7 @@ const ReportForm = ({
             <Icon
               name={showTitleMenu ? 'chevron-up' : 'chevron-down'}
               size={20}
-              color="#888"
+              color={colors.textSecondary}
             />
           </TouchableOpacity>
           {showTitleMenu && (
@@ -160,6 +164,8 @@ const ReportForm = ({
                     right: 0,
                     zIndex: 1001,
                     marginTop: 0,
+                    backgroundColor: colors.surface,
+                    borderColor: colors.border,
                   },
                 ]}>
                 {titleOptions.map(option => (
@@ -170,7 +176,7 @@ const ReportForm = ({
                       setForm(prev => ({...prev, title: option}));
                       setShowTitleMenu(false);
                     }}>
-                    <Text style={styles.menuTextCustom}>{option}</Text>
+                    <Text style={[styles.menuTextCustom, {color: colors.text}]}>{option}</Text>
                   </TouchableOpacity>
                 ))}
               </View>
@@ -178,9 +184,17 @@ const ReportForm = ({
           )}
           {form.title === t('other', 'Khác') && (
             <TextInput
-              style={[styles.inputRedesignModernized, {marginTop: 8}]}
+              style={[
+                styles.inputRedesignModernized, 
+                {
+                  marginTop: 8,
+                  backgroundColor: colors.background,
+                  borderColor: colors.border,
+                  color: colors.text
+                }
+              ]}
               placeholder={t('til')}
-              placeholderTextColor={TEXT_COLOR}
+              placeholderTextColor={colors.textSecondary}
               value={form.customTitle || ''}
               onChangeText={text =>
                 setForm(prev => ({...prev, customTitle: text}))
@@ -199,16 +213,21 @@ const ReportForm = ({
         contentContainerStyle={{paddingBottom: 8}}
         style={{zIndex: 1}}>
         <View style={styles.formGroupRedesignModernized}>
-          <Text style={styles.inputLabelRedesignModernized}>
+          <Text style={[styles.inputLabelRedesignModernized, {color: colors.text}]}>
             {t('enter_note')}
           </Text>
           <TextInput
             style={[
               styles.inputRedesignModernized,
               styles.textAreaRedesignModernized,
+              {
+                backgroundColor: colors.background,
+                borderColor: colors.border,
+                color: colors.text
+              }
             ]}
             placeholder={t('enter_note')}
-            placeholderTextColor={TEXT_COLOR}
+            placeholderTextColor={colors.textSecondary}
             value={form.content}
             onChangeText={text => setForm(prev => ({...prev, content: text}))}
             multiline
@@ -219,13 +238,20 @@ const ReportForm = ({
           />
         </View>
         <View style={styles.formGroupRedesignModernized}>
-          <Text style={styles.inputLabelRedesignModernized}>
+          <Text style={[styles.inputLabelRedesignModernized, {color: colors.text}]}>
             {t('solution')}
           </Text>
           <TextInput
-            style={styles.inputRedesignModernized}
+            style={[
+              styles.inputRedesignModernized,
+              {
+                backgroundColor: colors.background,
+                borderColor: colors.border,
+                color: colors.text
+              }
+            ]}
             placeholder={t('solution')}
-            placeholderTextColor={TEXT_COLOR}
+            placeholderTextColor={colors.textSecondary}
             value={form.solution}
             onChangeText={text => setForm(prev => ({...prev, solution: text}))}
             returnKeyType="done"
@@ -235,11 +261,17 @@ const ReportForm = ({
           />
         </View>
         <View style={styles.formGroupRedesignModernized}>
-          <Text style={styles.inputLabelRedesignModernized}>
+          <Text style={[styles.inputLabelRedesignModernized, {color: colors.text}]}>
             {t('attach_image')}
           </Text>
           <TouchableOpacity
-            style={styles.imagePickerBtnRedesignModernized}
+            style={[
+              styles.imagePickerBtnRedesignModernized,
+              {
+                backgroundColor: colors.primary + '20',
+                borderColor: colors.primary,
+              }
+            ]}
             onPress={
               !isEdit || (isEdit && editFields.includes('media_path'))
                 ? handlePickImage
@@ -248,7 +280,7 @@ const ReportForm = ({
             disabled={isEdit && !editFields.includes('media_path')}
             accessibilityLabel={t('attach_image')}
             accessibilityHint={t('attach_image_hint') || ''}>
-            <Text style={styles.imagePickerTextRedesignModernized}>
+            <Text style={[styles.imagePickerTextRedesignModernized, {color: colors.primary}]}>
               {form.media_path ? t('change_image') : t('attach_image')}
             </Text>
           </TouchableOpacity>
@@ -281,17 +313,24 @@ const ReportForm = ({
             style={[
               styles.actionBtnRedesignModernized,
               styles.cancelBtnRedesignModernized,
+              {
+                backgroundColor: colors.border,
+                borderColor: colors.border,
+              }
             ]}
             onPress={() => {
               setForm(defaultForm);
               onCancel && onCancel();
             }}
             disabled={loading}>
-            <Text style={styles.cancelBtnTextRedesignModernized}>{t('c')}</Text>
+            <Text style={[styles.cancelBtnTextRedesignModernized, {color: colors.text}]}>{t('c')}</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={[
               styles.actionBtnRedesignModernized,
+              {
+                backgroundColor: isEdit ? colors.warning : colors.primary,
+              },
               isEdit
                 ? styles.editBtnRedesignModernized
                 : styles.createBtnRedesignModernized,
@@ -301,7 +340,7 @@ const ReportForm = ({
             {loading ? (
               <ActivityIndicator color="#fff" />
             ) : (
-              <Text style={styles.actionBtnTextRedesignModernized}>
+              <Text style={[styles.actionBtnTextRedesignModernized, {color: '#fff'}]}>
                 {isEdit ? t('Save') : t('create')}
               </Text>
             )}
@@ -322,9 +361,10 @@ const STATUS_COLORS = {
 
 const Important = ({route}) => {
   const {t, i18n} = useTranslation();
+  const {isDarkMode, colors} = useTheme();
   const {USER_INFOR} = route.params;
   const [data, setData] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [isEdit, setIsEdit] = useState(false);
   const [editForm, setEditForm] = useState(null);
@@ -355,6 +395,7 @@ const Important = ({route}) => {
     async userId => {
       const today = moment().format('YYYY-MM-DD');
       try {
+        setIsLoading(true);
         const result = await axios.post(
           `${BASE_URL}${PORT}${API}${VERSION}${V1}${SAFETY_REPORT}${GET_ALL_BY_USER_ID}`,
           {user_id: userId, date: today},
@@ -418,7 +459,8 @@ const Important = ({route}) => {
         showMessage('success', 'success', 1500);
       }
     } catch (error) {
-      setModal({visible: true, type: 'error', message: t('unSuccess')});
+      console.error('Error creating safety report:', error);
+      showMessage('unSuccess', 'error', 1500);
     } finally {
       setIsLoading(false);
     }
@@ -465,7 +507,8 @@ const Important = ({route}) => {
         showMessage('success', 'success', 1500);
       }
     } catch (error) {
-      setModal({visible: true, type: 'error', message: t('unSuccess')});
+      console.error('Error updating safety report:', error);
+      showMessage('unSuccess', 'error', 1500);
       setIsEdit(false);
     } finally {
       setIsLoading(false);
@@ -476,9 +519,9 @@ const Important = ({route}) => {
   // Hàm submit quyết định gọi create hay update
   const handleSubmitReport = (form, setModal, resetForm) => {
     if (isEdit && idReportEdit) {
-      updateSafetyReport(form, setModal, resetForm);
+      updateSafetyReport(form, null, resetForm);
     } else {
-      createSafetyReport(form, setModal, resetForm);
+      createSafetyReport(form, null, resetForm);
     }
   };
 
@@ -552,11 +595,11 @@ const Important = ({route}) => {
   };
 
   const renderCard = ({item}) => (
-    <View style={styles.leaveCard}>
+    <View style={[styles.leaveCard, {backgroundColor: colors.surface}]}>
       <View style={styles.leaveCardHeader}>
         <View style={styles.leaveCardDateContainer}>
           <IconFA name="calendar" size={16} color="#1976d2" />
-          <Text style={styles.leaveCardDate}>
+          <Text style={[styles.leaveCardDate, {color: colors.text}]}>
             {moment(item.date).format(
               i18n.language === 'ja' ? 'YYYY-MM-DD' : 'DD-MM-YYYY',
             )}
@@ -573,14 +616,14 @@ const Important = ({route}) => {
       <View style={styles.leaveCardContent}>
         <View style={styles.leaveTypeContainer}>
           <IconFA name="file-text-o" size={14} color="#1976d2" />
-          <Text style={styles.leaveTypeText}>{item.title}</Text>
+          <Text style={[styles.leaveTypeText, {color: colors.primary}]}>{item.title}</Text>
         </View>
         {item.media_path ? (
           <Image source={{uri: item.media_path}} style={styles.cardImage} />
         ) : null}
         <View style={styles.leaveReasonContainer}>
           <IconFA name="commenting-o" size={14} color="#666" />
-          <Text style={styles.leaveReasonText}>{item.content}</Text>
+          <Text style={[styles.leaveReasonText, {color: colors.text}]}>{item.content}</Text>
         </View>
         <View style={styles.leaveReasonContainer}>
           <IconFA name="lightbulb-o" size={14} color="#388e3c" />
@@ -645,22 +688,24 @@ const Important = ({route}) => {
 
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
-      <View style={styles.container}>
+      <View style={[styles.container, {backgroundColor: colors.background}]}>
         <Header
           title={t('important.title', 'Báo cáo quan trọng')}
           onBack={() => navigation.goBack()}
         />
         {/* Tab Bar dạng Leave.js */}
-        <View style={styles.tabContainer}>
+        <View style={[styles.tabContainer, {backgroundColor: colors.surface}]}>
           <TouchableOpacity
             style={[
               styles.tabButton,
+              {backgroundColor: activeTab === 0 ? colors.primary : colors.card},
               activeTab === 0 && styles.activeTabButton,
             ]}
             onPress={() => setActiveTab(0)}>
             <Text
               style={[
                 styles.tabButtonText,
+                {color: activeTab === 0 ? '#fff' : colors.text},
                 activeTab === 0 && styles.activeTabButtonText,
               ]}>
               {t('pending', 'Chưa xác nhận')}
@@ -668,11 +713,13 @@ const Important = ({route}) => {
             <View
               style={[
                 styles.tabBadge,
+                {backgroundColor: activeTab === 0 ? 'rgba(255,255,255,0.2)' : '#fff'},
                 activeTab === 0 && styles.activeTabBadge,
               ]}>
               <Text
                 style={[
                   styles.tabBadgeText,
+                  {color: activeTab === 0 ? '#fff' : colors.text},
                   activeTab === 0 && styles.activeTabBadgeText,
                 ]}>
                 {getPendingCount()}
@@ -682,12 +729,14 @@ const Important = ({route}) => {
           <TouchableOpacity
             style={[
               styles.tabButton,
+              {backgroundColor: activeTab === 1 ? colors.primary : colors.card},
               activeTab === 1 && styles.activeTabButton,
             ]}
             onPress={() => setActiveTab(1)}>
             <Text
               style={[
                 styles.tabButtonText,
+                {color: activeTab === 1 ? '#fff' : colors.text},
                 activeTab === 1 && styles.activeTabButtonText,
               ]}>
               {t('completed', 'Đã xác nhận')}
@@ -695,11 +744,13 @@ const Important = ({route}) => {
             <View
               style={[
                 styles.tabBadge,
+                {backgroundColor: activeTab === 1 ? 'rgba(255,255,255,0.2)' : '#fff'},
                 activeTab === 1 && styles.activeTabBadge,
               ]}>
               <Text
                 style={[
                   styles.tabBadgeText,
+                  {color: activeTab === 1 ? '#fff' : colors.text},
                   activeTab === 1 && styles.activeTabBadgeText,
                 ]}>
                 {getConfirmedCount()}
@@ -715,14 +766,14 @@ const Important = ({route}) => {
           contentContainerStyle={styles.listContainer}
           ListEmptyComponent={
             <View style={styles.emptyContainer}>
-              <IconFA name="calendar-o" size={48} color="#ddd" />
-              <Text style={styles.emptyText}>{t('not.data')}</Text>
+              <IconFA name="calendar-o" size={48} color={colors.border} />
+              <Text style={[styles.emptyText, {color: colors.textSecondary}]}>{t('not.data')}</Text>
             </View>
           }
         />
         {/* Nút tạo báo cáo */}
         <TouchableOpacity
-          style={styles.fabButton}
+          style={[styles.fabButton, {backgroundColor: colors.primary}]}
           onPress={() => {
             setEditForm(defaultForm);
             setIsEdit(false);
@@ -746,6 +797,7 @@ const Important = ({route}) => {
             isEdit={isEdit}
             {...(isEdit ? {editFields: ['title', 'content', 'solution']} : {})}
             onShowMessage={showMessage}
+            colors={colors}
           />
           <OptimizedLoader visible={isLoading} />
         </BeautifulModal>
@@ -815,7 +867,6 @@ export default Important;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
   },
   header: {
     fontSize: 24,
@@ -886,7 +937,6 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 16,
-    color: '#777',
   },
   imagePickerBtn: {
     backgroundColor: '#667eea',
@@ -1193,20 +1243,16 @@ const styles = StyleSheet.create({
   },
   inputLabelRedesignModernized: {
     fontSize: 16,
-    color: '#2d3748',
     fontWeight: '700',
     marginBottom: 7,
     marginLeft: 2,
   },
   inputRedesignModernized: {
-    backgroundColor: '#f7f7fa',
     borderRadius: 14,
     borderWidth: 1.5,
-    borderColor: '#e2e8f0',
     paddingHorizontal: 18,
     paddingVertical: 14,
     fontSize: 17,
-    color: '#222',
     marginBottom: 2,
   },
   textAreaRedesignModernized: {
@@ -1216,15 +1262,14 @@ const styles = StyleSheet.create({
   imagePickerBtnRedesignModernized: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#EAF1FB',
     borderRadius: 10,
     paddingVertical: 10,
     paddingHorizontal: 18,
     marginRight: 10,
     marginTop: 2,
+    borderWidth: 1,
   },
   imagePickerTextRedesignModernized: {
-    color: '#007AFF',
     fontWeight: '700',
     fontSize: 16,
     marginLeft: 6,
@@ -1273,12 +1318,10 @@ const styles = StyleSheet.create({
     borderColor: '#e2e8f0',
   },
   actionBtnTextRedesignModernized: {
-    color: '#fff',
     fontWeight: '800',
     fontSize: 17,
   },
   cancelBtnTextRedesignModernized: {
-    color: '#007AFF',
     fontWeight: '800',
     fontSize: 17,
   },
@@ -1289,7 +1332,6 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 20,
     right: 20,
-    backgroundColor: '#28a745',
     borderRadius: 30,
     width: 60,
     height: 60,
@@ -1325,7 +1367,6 @@ const styles = StyleSheet.create({
   },
   menuTextCustom: {
     fontSize: 16,
-    color: '#333',
   },
   // Thêm style cho tab bar và indicator giống Uniform.js
   tabBar: {
@@ -1370,7 +1411,6 @@ const styles = StyleSheet.create({
   },
   tabContainer: {
     flexDirection: 'row',
-    backgroundColor: '#fff',
     paddingHorizontal: 12,
     paddingVertical: 12,
     marginBottom: 12,
@@ -1389,21 +1429,18 @@ const styles = StyleSheet.create({
     marginHorizontal: 4,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#f5f6fa',
   },
   activeTabButton: {
-    backgroundColor: '#1976d2',
+    // backgroundColor sẽ được set dynamic
   },
   tabButtonText: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#666',
   },
   activeTabButtonText: {
     color: '#fff',
   },
   tabBadge: {
-    backgroundColor: '#fff',
     borderRadius: 10,
     paddingHorizontal: 6,
     paddingVertical: 2,
@@ -1415,7 +1452,6 @@ const styles = StyleSheet.create({
   tabBadgeText: {
     fontSize: 11,
     fontWeight: '600',
-    color: '#666',
   },
   activeTabBadgeText: {
     color: '#fff',
@@ -1426,7 +1462,6 @@ const styles = StyleSheet.create({
     paddingTop: 8,
   },
   leaveCard: {
-    backgroundColor: '#fff',
     borderRadius: 16,
     padding: 16,
     marginBottom: 12,
@@ -1448,7 +1483,6 @@ const styles = StyleSheet.create({
   },
   leaveCardDate: {
     fontSize: 14,
-    color: '#666',
     marginLeft: 8,
     fontWeight: '500',
   },
@@ -1467,7 +1501,6 @@ const styles = StyleSheet.create({
   },
   leaveTypeText: {
     fontSize: 15,
-    color: '#1976d2',
     fontWeight: '600',
   },
   leaveReasonContainer: {
@@ -1479,7 +1512,6 @@ const styles = StyleSheet.create({
   leaveReasonText: {
     flex: 1,
     fontSize: 14,
-    color: '#444',
     lineHeight: 20,
   },
   leaveStatusContainer: {

@@ -26,8 +26,10 @@ import {
   THEME_COLOR_2,
 } from '../utils/Colors';
 import {useSelector} from 'react-redux';
+import {useTheme} from '../hooks/useTheme';
 import moment from 'moment';
 import axios from 'axios';
+import ModalMessage from '../components/ModalMessage';
 import {
   API,
   BASE_URL,
@@ -74,6 +76,7 @@ const TABS = [
 function Manager() {
   const navigation = useNavigation();
   const {t} = useTranslation();
+  const {colors, isDarkMode} = useTheme();
   const authData = useSelector(state => state.auth);
   const [activeTab, setActiveTab] = useState('leave');
   const [activeLeaveSubTab, setActiveLeaveSubTab] = useState('pending'); // Thêm state cho tab con
@@ -105,6 +108,13 @@ function Manager() {
     leader_id: '',
   });
 
+  // Modal Message State
+  const [showModalMessage, setShowModalMessage] = useState(false);
+  const [modalMessage, setModalMessage] = useState({
+    type: 'success',
+    message: '',
+  });
+
   useEffect(() => {
     const role = authData?.data?.data.role;
     if (role === 'STAFF') {
@@ -126,6 +136,14 @@ function Manager() {
   const showAlert = message => {
     setError(message);
     setTimeout(() => setError(''), 3000);
+  };
+
+  const showModalMessageAlert = (type, message) => {
+    setModalMessage({
+      type,
+      message,
+    });
+    setShowModalMessage(true);
   };
 
   const onRefresh = () => {
@@ -170,12 +188,12 @@ function Manager() {
         setIsLoading(false);
         setShowModalFeedback(false);
         onRefresh();
-        showAlert('success');
+        showModalMessageAlert('success', t('manager.leave.reject_success'));
       } else {
         setShowModalFeedback(false);
         setIsLoading(false);
         onRefresh();
-        showAlert('unSuccess');
+        showModalMessageAlert('error', t('manager.leave.reject_error'));
       }
     } catch (error) {
       showAlert('contactAdmin');
@@ -206,10 +224,10 @@ function Manager() {
         field,
       );
       if (update?.data?.success) {
-        showAlert('success');
+        showModalMessageAlert('success', t('manager.leave.approve_success'));
         onRefresh();
       } else {
-        showAlert('unSuccess');
+        showModalMessageAlert('error', t('manager.leave.approve_error'));
         onRefresh();
       }
     } catch (error) {
@@ -348,10 +366,10 @@ function Manager() {
           leader_id: '',
         });
         setSelectedUser(null);
-        showAlert(t('overtime.success'));
+        showModalMessageAlert('success', t('manager.overtime.create_success'));
       } else {
         setIsLoading(false);
-        showAlert(t('overtime.error'));
+        showModalMessageAlert('error', t('manager.overtime.create_error'));
       }
     } catch (error) {
       setIsLoading(false);
@@ -376,15 +394,21 @@ function Manager() {
 
   const getAllUsers = async () => {
     try {
+      console.log('Getting all users...');
       const response = await axios.get(
-        `${BASE_URL}${PORT}${API}${VERSION}${V1}${USER_URL}${GET_ALL}`,
+        `${BASE_URL}${PORT}${API}${VERSION}${V1}${USER_URL}`,
       );
+      console.log('Users response:', response?.data);
       if (response?.data?.success) {
+        console.log('Users data:', response.data.data);
         setUserList(response.data.data);
+        console.log('UserList state updated');
       } else {
+        console.log('Users API failed:', response?.data);
         showAlert(t('contactAdmin'));
       }
     } catch (error) {
+      console.log('Users API error:', error);
       showAlert(t('contactAdmin'));
     }
   };
@@ -400,6 +424,7 @@ function Manager() {
     setSelectedUser(user);
     handleOvertimeFormChange('user_id', user.id);
     setShowUserSelection(false);
+    console.log('User selected:', user.name);
   };
 
   const initializeOvertimeForm = () => {
@@ -418,7 +443,7 @@ function Manager() {
   };
 
   const renderTabBar = () => (
-    <View style={styles.tabBarContainer}>
+    <View style={[styles.tabBarContainer, {backgroundColor: colors.surface}]}>
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
@@ -428,17 +453,19 @@ function Manager() {
             key={tab.id}
             style={[
               styles.tabButton,
+              {backgroundColor: activeTab === tab.id ? colors.primary : colors.background},
               activeTab === tab.id && styles.activeTabButton,
             ]}
             onPress={() => setActiveTab(tab.id)}>
             <Icon
               name={tab.icon}
               size={20}
-              color={activeTab === tab.id ? '#fff' : '#666'}
+              color={activeTab === tab.id ? '#fff' : colors.textSecondary}
             />
             <Text
               style={[
                 styles.tabButtonText,
+                {color: activeTab === tab.id ? '#fff' : colors.textSecondary},
                 activeTab === tab.id && styles.activeTabButtonText,
               ]}>
               {t(tab.titleKey, tab.title)}
@@ -458,7 +485,7 @@ function Manager() {
     ];
 
     return (
-      <View style={styles.subTabBarContainer}>
+      <View style={[styles.subTabBarContainer, {backgroundColor: colors.surface}]}>
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -470,25 +497,27 @@ function Manager() {
                 key={subTab.id}
                 style={[
                   styles.subTabButton,
+                  {backgroundColor: activeLeaveSubTab === subTab.id ? colors.primary : colors.background},
                   activeLeaveSubTab === subTab.id && styles.activeSubTabButton,
                 ]}
                 onPress={() => setActiveLeaveSubTab(subTab.id)}>
                 <Icon
                   name={subTab.icon}
                   size={16}
-                  color={activeLeaveSubTab === subTab.id ? '#fff' : '#666'}
+                  color={activeLeaveSubTab === subTab.id ? '#fff' : colors.textSecondary}
                 />
                 <Text
                   style={[
                     styles.subTabButtonText,
+                    {color: activeLeaveSubTab === subTab.id ? '#fff' : colors.textSecondary},
                     activeLeaveSubTab === subTab.id &&
                       styles.activeSubTabButtonText,
                   ]}>
                   {getSubTabTitle(subTab.title)}
                 </Text>
                 {count > 0 && (
-                  <View style={styles.subTabBadge}>
-                    <Text style={styles.subTabBadgeText}>{count}</Text>
+                  <View style={[styles.subTabBadge, {backgroundColor: colors.primary}]}>
+                    <Text style={[styles.subTabBadgeText, {color: '#fff'}]}>{count}</Text>
                   </View>
                 )}
               </TouchableOpacity>
@@ -523,9 +552,9 @@ function Manager() {
     }
 
     return (
-      <View style={styles.modernLeaveCard}>
+      <View style={[styles.modernLeaveCard, {backgroundColor: colors.surface}]}>
         {/* Card Header */}
-        <View style={styles.modernCardHeader}>
+        <View style={[styles.modernCardHeader, {borderBottomColor: colors.border}]}>
           <View style={styles.userSection}>
             <View style={styles.avatarContainer}>
               {item.staff.avatar ? (
@@ -539,15 +568,15 @@ function Manager() {
                 />
               ) : (
                 <LinearGradient
-                  colors={[THEME_COLOR, THEME_COLOR_2]}
+                  colors={[colors.primary, colors.primary2]}
                   style={styles.avatarGradient}>
                   <Icon name="account" size={20} color="#fff" />
                 </LinearGradient>
               )}
             </View>
             <View style={styles.userDetails}>
-              <Text style={styles.modernUserName}>{item.staff.name}</Text>
-              <Text style={styles.modernUserPosition}>
+              <Text style={[styles.modernUserName, {color: colors.text}]}>{item.staff.name}</Text>
+              <Text style={[styles.modernUserPosition, {color: colors.textSecondary}]}>
                 {item.staff.position || 'Nhân viên'}
               </Text>
             </View>
@@ -567,32 +596,32 @@ function Manager() {
         <View style={styles.modernCardContent}>
           {/* Date and Type Row */}
           <View style={styles.infoRowModern}>
-            <View style={styles.infoItemModern}>
-              <View style={styles.infoIconContainer}>
-                <Icon name="calendar-today" size={16} color={THEME_COLOR} />
+            <View style={[styles.infoItemModern, {backgroundColor: colors.background}]}>
+              <View style={[styles.infoIconContainer, {backgroundColor: colors.surface}]}>
+                <Icon name="calendar-today" size={16} color={colors.primary} />
               </View>
               <View style={styles.infoTextContainer}>
-                <Text style={styles.infoLabel}>Ngày nghỉ</Text>
-                <Text style={styles.infoValue}>
+                <Text style={[styles.infoLabel, {color: colors.textSecondary}]}>Ngày nghỉ</Text>
+                <Text style={[styles.infoValue, {color: colors.text}]}>
                   {moment(item.date_leave).format('DD/MM/YYYY')}
                 </Text>
               </View>
             </View>
 
-            <View style={styles.infoItemModern}>
-              <View style={styles.infoIconContainer}>
+            <View style={[styles.infoItemModern, {backgroundColor: colors.background}]}>
+              <View style={[styles.infoIconContainer, {backgroundColor: colors.surface}]}>
                 <Icon
                   name={item.is_paid ? 'wallet' : 'wallet-outline'}
                   size={16}
-                  color={item.is_paid ? '#2ecc71' : '#95a5a6'}
+                  color={item.is_paid ? '#2ecc71' : colors.textSecondary}
                 />
               </View>
               <View style={styles.infoTextContainer}>
-                <Text style={styles.infoLabel}>Loại nghỉ</Text>
+                <Text style={[styles.infoLabel, {color: colors.textSecondary}]}>Loại nghỉ</Text>
                 <Text
                   style={[
                     styles.infoValue,
-                    {color: item.is_paid ? '#2ecc71' : '#95a5a6'},
+                    {color: item.is_paid ? '#2ecc71' : colors.textSecondary},
                   ]}>
                   {item.is_paid ? 'Có lương' : 'Không lương'}
                 </Text>
@@ -601,23 +630,25 @@ function Manager() {
           </View>
 
           {/* Reason Section */}
-          <View style={styles.reasonSection}>
-            <View style={styles.reasonHeader}>
-              <Icon name="text-box-outline" size={16} color="#7f8c8d" />
-              <Text style={styles.reasonLabel}>Lý do nghỉ</Text>
+          <View style={[styles.infoItemModern, {backgroundColor: colors.background}]}>
+            <View style={[styles.infoIconContainer, {backgroundColor: colors.surface}]}>
+              <Icon name="text-box-outline" size={16} color={colors.primary} />
             </View>
-            <Text style={styles.modernReasonText}>{item.reason}</Text>
+            <View style={styles.infoTextContainer}>
+              <Text style={[styles.infoLabel, {color: colors.textSecondary}]}>Lý do nghỉ</Text>
+              <Text style={[styles.infoValue, {color: colors.text}]}>{item.reason}</Text>
+            </View>
           </View>
 
           {/* Feedback Section */}
           {item.feedback && (
-            <View style={styles.feedbackSection}>
+            <View style={[styles.feedbackSection, {backgroundColor: colors.background}]}>
               <View style={styles.feedbackHeader}>
                 <Icon name="message-text-outline" size={16} color="#e67e22" />
-                <Text style={styles.feedbackLabel}>Phản hồi</Text>
+                <Text style={[styles.feedbackLabel, {color: colors.textSecondary}]}>Phản hồi</Text>
               </View>
-              <View style={styles.feedbackBubble}>
-                <Text style={styles.modernFeedbackText}>{item.feedback}</Text>
+              <View style={[styles.feedbackBubble, {backgroundColor: colors.surface}]}>
+                <Text style={[styles.modernFeedbackText, {color: colors.text}]}>{item.feedback}</Text>
               </View>
             </View>
           )}
@@ -625,7 +656,7 @@ function Manager() {
 
         {/* Action Buttons */}
         {!item.is_approve && !item.feedback && (
-          <View style={styles.modernActionButtons}>
+          <View style={[styles.modernActionButtons, {borderTopColor: colors.border}]}>
             <TouchableOpacity
               style={styles.modernRejectButton}
               onPress={() => {
@@ -660,7 +691,7 @@ function Manager() {
   };
 
   const renderLeaveManagement = () => (
-    <View style={styles.leaveManagementContainer}>
+    <View style={[styles.leaveManagementContainer, {backgroundColor: colors.background}]}>
       <FlatList
         data={getFilteredLeaveData()}
         renderItem={renderItem}
@@ -669,8 +700,8 @@ function Manager() {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            colors={[THEME_COLOR]}
-            tintColor={THEME_COLOR}
+            colors={[colors.primary]}
+            tintColor={colors.primary}
           />
         }
         contentContainerStyle={[
@@ -678,21 +709,21 @@ function Manager() {
           getFilteredLeaveData().length === 0 && styles.emptyListContainer,
         ]}
         showsVerticalScrollIndicator={false}
-        ItemSeparatorComponent={() => <View style={styles.cardSeparator} />}
+        ItemSeparatorComponent={() => <View style={[styles.cardSeparator, {backgroundColor: colors.border}]} />}
         ListEmptyComponent={
           isLoading ? (
             <View style={styles.modernLoadingContainer}>
-              <ActivityIndicator size="large" color={THEME_COLOR} />
-              <Text style={styles.loadingText}>Đang tải dữ liệu...</Text>
+              <ActivityIndicator size="large" color={colors.primary} />
+              <Text style={[styles.loadingText, {color: colors.text}]}>Đang tải dữ liệu...</Text>
             </View>
           ) : (
             <View style={styles.modernEmptyContainer}>
               <LinearGradient
-                colors={[THEME_COLOR + '20', THEME_COLOR + '10']}
+                colors={[colors.primary + '20', colors.primary + '10']}
                 style={styles.emptyIconContainer}>
-                <Icon name="calendar-check" size={64} color={THEME_COLOR} />
+                <Icon name="calendar-check" size={64} color={colors.primary} />
               </LinearGradient>
-              <Text style={styles.modernEmptyTitle}>
+              <Text style={[styles.modernEmptyTitle, {color: colors.text}]}>
                 {activeLeaveSubTab === 'pending' &&
                   'Không có đơn nghỉ chờ duyệt'}
                 {activeLeaveSubTab === 'approved' &&
@@ -700,7 +731,7 @@ function Manager() {
                 {activeLeaveSubTab === 'rejected' &&
                   'Không có đơn nghỉ bị từ chối'}
               </Text>
-              <Text style={styles.modernEmptySubtitle}>
+              <Text style={[styles.modernEmptySubtitle, {color: colors.textSecondary}]}>
                 {activeLeaveSubTab === 'pending' &&
                   'Hiện tại chưa có đơn xin nghỉ phép nào cần được duyệt'}
                 {activeLeaveSubTab === 'approved' &&
@@ -726,18 +757,18 @@ function Manager() {
   );
 
   const renderOvertimeManagement = () => (
-    <View style={styles.tabContent}>
+    <View style={[styles.tabContent, {backgroundColor: colors.background}]}>
       <View style={styles.emptyStateContainer}>
-        <Icon name="clock-plus" size={64} color="#ddd" />
-        <Text style={styles.emptyStateTitle}>{t('manager.tabs.overtime')}</Text>
-        <Text style={styles.emptyStateText}>
+        <Icon name="clock-plus" size={64} color={colors.textSecondary} />
+        <Text style={[styles.emptyStateTitle, {color: colors.text}]}>{t('manager.tabs.overtime')}</Text>
+        <Text style={[styles.emptyStateText, {color: colors.textSecondary}]}>
           Create and manage overtime requests
         </Text>
       </View>
 
       {/* Floating Add Button */}
       <TouchableOpacity
-        style={styles.floatingButton}
+        style={[styles.floatingButton, {backgroundColor: colors.primary}]}
         onPress={openOvertimeModal}>
         <Icon name="plus" size={24} color="#fff" />
       </TouchableOpacity>
@@ -745,18 +776,18 @@ function Manager() {
   );
 
   const renderEmployeeManagement = () => (
-    <View style={styles.comingSoonContainer}>
-      <Icon name="account-group" size={64} color="#ddd" />
-      <Text style={styles.comingSoonTitle}>Employee Management</Text>
-      <Text style={styles.comingSoonText}>Coming Soon...</Text>
+    <View style={[styles.comingSoonContainer, {backgroundColor: colors.background}]}>
+      <Icon name="account-group" size={64} color={colors.textSecondary} />
+      <Text style={[styles.comingSoonTitle, {color: colors.text}]}>Employee Management</Text>
+      <Text style={[styles.comingSoonText, {color: colors.textSecondary}]}>Coming Soon...</Text>
     </View>
   );
 
   const renderReports = () => (
-    <View style={styles.comingSoonContainer}>
-      <Icon name="chart-line" size={64} color="#ddd" />
-      <Text style={styles.comingSoonTitle}>Reports & Analytics</Text>
-      <Text style={styles.comingSoonText}>Coming Soon...</Text>
+    <View style={[styles.comingSoonContainer, {backgroundColor: colors.background}]}>
+      <Icon name="chart-line" size={64} color={colors.textSecondary} />
+      <Text style={[styles.comingSoonTitle, {color: colors.text}]}>Reports & Analytics</Text>
+      <Text style={[styles.comingSoonText, {color: colors.textSecondary}]}>Coming Soon...</Text>
     </View>
   );
 
@@ -776,16 +807,16 @@ function Manager() {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, {backgroundColor: colors.background}]}>
       <StatusBar
-        barStyle="light-content"
+        barStyle={isDarkMode ? "light-content" : "dark-content"}
         backgroundColor="transparent"
         translucent
       />
 
       {/* Modern Header with Gradient */}
       <LinearGradient
-        colors={['#667eea', '#764ba2']}
+        colors={isDarkMode ? ['#1a1a2e', '#16213e'] : ['#667eea', '#764ba2']}
         start={{x: 0, y: 0}}
         end={{x: 1, y: 1}}
         style={styles.headerGradient}>
@@ -802,9 +833,9 @@ function Manager() {
         </View>
       </LinearGradient>
 
-      {err ? <Text style={styles.errorText}>{err}</Text> : null}
+      {err ? <Text style={[styles.errorText, {color: colors.error}]}>{err}</Text> : null}
 
-      <View style={styles.contentWrapper}>
+      <View style={[styles.contentWrapper, {backgroundColor: colors.background}]}>
         {renderTabBar()}
         {activeTab === 'leave' && renderLeaveSubTabs()}
         {renderTabContent()}
@@ -820,23 +851,24 @@ function Manager() {
           style={styles.modalOverlay}
           activeOpacity={1}
           onPress={onClose}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>{t('feedback')}</Text>
+          <View style={[styles.modalContent, {backgroundColor: colors.surface}]}>
+            <Text style={[styles.modalTitle, {color: colors.text}]}>{t('feedback')}</Text>
             <TextInput
-              style={styles.feedbackInput}
+              style={[styles.feedbackInput, {backgroundColor: colors.background, color: colors.text, borderColor: colors.border}]}
               placeholder={t('enter_feedback')}
+              placeholderTextColor={colors.textSecondary}
               value={feedback}
               onChangeText={setFeedback}
               multiline
             />
             <View style={styles.modalButtons}>
               <TouchableOpacity
-                style={[styles.modalButton, styles.cancelButton]}
+                style={[styles.modalButton, styles.cancelButton, {backgroundColor: colors.background}]}
                 onPress={handleCancelFeedback}>
-                <Text style={styles.cancelButtonText}>{t('cancel')}</Text>
+                <Text style={[styles.cancelButtonText, {color: colors.textSecondary}]}>{t('cancel')}</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[styles.modalButton, styles.submitButton]}
+                style={[styles.modalButton, styles.submitButton, {backgroundColor: colors.primary}]}
                 onPress={handleUnApproveLeaveRequest}>
                 <Text style={styles.submitButtonText}>{t('submit')}</Text>
               </TouchableOpacity>
@@ -855,20 +887,20 @@ function Manager() {
           style={styles.modalOverlay}
           activeOpacity={1}
           onPress={() => setShowConfirmModal(false)}>
-          <View style={[styles.modalContent, styles.confirmModalContent]}>
+          <View style={[styles.modalContent, styles.confirmModalContent, {backgroundColor: colors.surface}]}>
             <View style={styles.confirmIconContainer}>
-              <Icon name="help-circle" size={50} color={THEME_COLOR} />
+              <Icon name="help-circle" size={50} color={colors.primary} />
             </View>
-            <Text style={styles.confirmTitle}>{t('plzcof')}</Text>
-            <Text style={styles.confirmMessage}>{t('confirm_approve')}</Text>
+            <Text style={[styles.confirmTitle, {color: colors.text}]}>{t('plzcof')}</Text>
+            <Text style={[styles.confirmMessage, {color: colors.textSecondary}]}>{t('confirm_approve')}</Text>
             <View style={styles.modalButtons}>
               <TouchableOpacity
-                style={[styles.modalButton, styles.cancelButton]}
+                style={[styles.modalButton, styles.cancelButton, {backgroundColor: colors.background}]}
                 onPress={() => setShowConfirmModal(false)}>
-                <Text style={styles.cancelButtonText}>{t('cancel')}</Text>
+                <Text style={[styles.cancelButtonText, {color: colors.textSecondary}]}>{t('cancel')}</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[styles.modalButton, styles.confirmButton]}
+                style={[styles.modalButton, styles.confirmButton, {backgroundColor: colors.primary}]}
                 onPress={handleConfirmApprove}>
                 <Icon
                   name="check"
@@ -890,11 +922,11 @@ function Manager() {
         visible={showOvertimeModal}
         onRequestClose={handleCancelOvertimeModal}>
         <View style={styles.modalOverlay}>
-          <View style={[styles.modalContent, styles.modernOvertimeModal]}>
+          <View style={[styles.modalContent, styles.modernOvertimeModal, {backgroundColor: colors.surface}]}>
             {/* Modal Header */}
             <View style={styles.modalHeader}>
               <LinearGradient
-                colors={[THEME_COLOR, '#34495e']}
+                colors={[colors.primary, colors.primary2]}
                 style={styles.modalHeaderGradient}>
                 <View style={styles.modalHeaderContent}>
                   <View style={styles.modalIconContainer}>
@@ -917,136 +949,199 @@ function Manager() {
               style={styles.modalBody}
               showsVerticalScrollIndicator={false}>
               {/* User Selection */}
-              <View style={styles.modernInputGroup}>
-                <Text style={styles.modernInputLabel}>
-                  <Icon name="account" size={14} color={THEME_COLOR} />{' '}
+              <View style={[styles.modernInputGroup, {zIndex: 10000, elevation: 10000}]}>
+                <Text style={[styles.modernInputLabel, {color: colors.text}]}>
+                  <Icon name="account" size={14} color={colors.primary} />{' '}
                   {t('overtime.select_user')}
                 </Text>
-                <TouchableOpacity
-                  style={[styles.modernTextInput, styles.modernSelectInput]}
-                  onPress={() => setShowUserSelection(true)}>
-                  <View style={styles.inputIconContainer}>
-                    <Icon
-                      name="account-outline"
-                      size={18}
-                      color={THEME_COLOR}
+                <View style={styles.dropdownWrapper}>
+                  <TouchableOpacity
+                    style={[styles.modernTextInput, styles.modernSelectInput, {backgroundColor: colors.background, borderColor: colors.border}]}
+                    onPress={() => {
+                      console.log('Opening user selection dropdown...');
+                      getAllUsers();
+                      setShowUserSelection(!showUserSelection);
+                    }}>
+                    <View style={styles.inputIconContainer}>
+                      <Icon
+                        name="account-outline"
+                        size={18}
+                        color={colors.primary}
+                      />
+                    </View>
+                    <Text
+                      style={[
+                        selectedUser
+                          ? [styles.modernSelectedText, {color: colors.text}]
+                          : [styles.modernPlaceholderText, {color: colors.textSecondary}]
+                      ]}>
+                      {selectedUser
+                        ? selectedUser.name
+                        : t('overtime.select_user')}
+                    </Text>
+                    <Icon 
+                      name={showUserSelection ? "chevron-up" : "chevron-down"} 
+                      size={20} 
+                      color={colors.primary} 
                     />
-                  </View>
-                  <Text
-                    style={
-                      selectedUser
-                        ? styles.modernSelectedText
-                        : styles.modernPlaceholderText
-                    }>
-                    {selectedUser
-                      ? selectedUser.name
-                      : t('overtime.select_user')}
-                  </Text>
-                  <Icon name="chevron-down" size={20} color={THEME_COLOR} />
-                </TouchableOpacity>
+                  </TouchableOpacity>
+                  
+                  {/* Dropdown List */}
+                  {showUserSelection && (
+                    <View style={[styles.dropdownContainer, {backgroundColor: colors.surface, borderColor: colors.border}]}>
+                      <ScrollView 
+                        style={styles.dropdownScrollView}
+                        showsVerticalScrollIndicator={false}
+                        nestedScrollEnabled={true}>
+                        {userList && userList.length > 0 ? (
+                          userList.map((user, index) => (
+                            <TouchableOpacity
+                              key={user.id}
+                              style={[
+                                styles.dropdownItem,
+                                {backgroundColor: colors.background, borderBottomColor: colors.border},
+                                selectedUser?.id === user.id && {backgroundColor: colors.primary + '20'}
+                              ]}
+                              onPress={() => handleUserSelect(user)}>
+                              <View style={styles.dropdownItemContent}>
+                                <View style={styles.dropdownAvatar}>
+                                  <LinearGradient
+                                    colors={[colors.primary, colors.primary2]}
+                                    style={styles.dropdownAvatarGradient}>
+                                    <Text style={styles.dropdownAvatarText}>
+                                      {user.name.charAt(0).toUpperCase()}
+                                    </Text>
+                                  </LinearGradient>
+                                </View>
+                                <View style={styles.dropdownUserInfo}>
+                                  <Text style={[styles.dropdownUserName, {color: colors.text}]}>
+                                    {user.name}
+                                  </Text>
+                                  <Text style={[styles.dropdownUserPosition, {color: colors.textSecondary}]}>
+                                    {user.position}
+                                  </Text>
+                                </View>
+                                {selectedUser?.id === user.id && (
+                                  <Icon name="check" size={20} color={colors.primary} />
+                                )}
+                              </View>
+                            </TouchableOpacity>
+                          ))
+                        ) : (
+                          <View style={styles.dropdownEmpty}>
+                            <Text style={[styles.dropdownEmptyText, {color: colors.textSecondary}]}>
+                              Không có user nào
+                            </Text>
+                          </View>
+                        )}
+                      </ScrollView>
+                    </View>
+                  )}
+                </View>
               </View>
 
               {/* Date Input */}
               <View style={styles.modernInputGroup}>
-                <Text style={styles.modernInputLabel}>
-                  <Icon name="calendar" size={14} color={THEME_COLOR} />{' '}
+                <Text style={[styles.modernInputLabel, {color: colors.text}]}>
+                  <Icon name="calendar" size={14} color={colors.primary} />{' '}
                   {t('overtime.date')}
                 </Text>
                 <TouchableOpacity
-                  style={[styles.modernTextInput, styles.modernSelectInput]}
+                  style={[styles.modernTextInput, styles.modernSelectInput, {backgroundColor: colors.background, borderColor: colors.border}]}
                   onPress={() => setShowDatePicker(true)}>
                   <View style={styles.inputIconContainer}>
                     <Icon
                       name="calendar-outline"
                       size={18}
-                      color={THEME_COLOR}
+                      color={colors.primary}
                     />
                   </View>
                   <Text
-                    style={
+                    style={[
                       overtimeFormData.date
-                        ? styles.modernSelectedText
-                        : styles.modernPlaceholderText
-                    }>
+                        ? [styles.modernSelectedText, {color: colors.text}]
+                        : [styles.modernPlaceholderText, {color: colors.textSecondary}]
+                    ]}>
                     {overtimeFormData.date || t('overtime.select_date')}
                   </Text>
-                  <Icon name="chevron-down" size={20} color={THEME_COLOR} />
+                  <Icon name="chevron-down" size={20} color={colors.primary} />
                 </TouchableOpacity>
               </View>
 
               {/* Position Input (Auto-filled) */}
               <View style={styles.modernInputGroup}>
-                <Text style={styles.modernInputLabel}>
-                  <Icon name="badge-account" size={14} color={THEME_COLOR} />{' '}
+                <Text style={[styles.modernInputLabel, {color: colors.text}]}>
+                  <Icon name="badge-account" size={14} color={colors.primary} />{' '}
                   {t('overtime.position')}
                 </Text>
                 <View
-                  style={[styles.modernTextInput, styles.modernReadOnlyInput]}>
+                  style={[styles.modernTextInput, styles.modernReadOnlyInput, {backgroundColor: colors.background, borderColor: colors.border}]}>
                   <View style={styles.inputIconContainer}>
                     <Icon
                       name="badge-account-outline"
                       size={18}
-                      color="#95a5a6"
+                      color={colors.textSecondary}
                     />
                   </View>
-                  <Text style={styles.modernReadOnlyText}>
+                  <Text style={[styles.modernReadOnlyText, {color: colors.textSecondary}]}>
                     {overtimeFormData.position || t('overtime.position')}
                   </Text>
-                  <Icon name="lock" size={16} color="#95a5a6" />
+                  <Icon name="lock" size={16} color={colors.textSecondary} />
                 </View>
               </View>
 
               {/* Hours Input */}
               <View style={styles.modernInputGroup}>
-                <Text style={styles.modernInputLabel}>
-                  <Icon name="clock-outline" size={14} color={THEME_COLOR} />{' '}
+                <Text style={[styles.modernInputLabel, {color: colors.text}]}>
+                  <Icon name="clock-outline" size={14} color={colors.primary} />{' '}
                   {t('overtime.hours')}
                 </Text>
                 <View
-                  style={[styles.modernTextInput, styles.modernInputWithIcon]}>
+                  style={[styles.modernTextInput, styles.modernInputWithIcon, {backgroundColor: colors.background, borderColor: colors.border}]}>
                   <View style={styles.inputIconContainer}>
                     <Icon
                       name="clock-time-eight"
                       size={18}
-                      color={THEME_COLOR}
+                      color={colors.primary}
                     />
                   </View>
                   <TextInput
-                    style={styles.modernTextInputField}
+                    style={[styles.modernTextInputField, {color: colors.text}]}
                     placeholder={t('overtime.hours_placeholder')}
-                    placeholderTextColor="#bdc3c7"
+                    placeholderTextColor={colors.textSecondary}
                     value={overtimeFormData.overtime_hours}
                     onChangeText={value =>
                       handleOvertimeFormChange('overtime_hours', value)
                     }
                     keyboardType="numeric"
                   />
-                  <Text style={styles.inputUnit}>giờ</Text>
+                  <Text style={[styles.inputUnit, {color: colors.textSecondary}]}>giờ</Text>
                 </View>
               </View>
 
               {/* Description Input */}
               <View style={styles.modernInputGroup}>
-                <Text style={styles.modernInputLabel}>
-                  <Icon name="text" size={14} color={THEME_COLOR} />{' '}
+                <Text style={[styles.modernInputLabel, {color: colors.text}]}>
+                  <Icon name="text" size={14} color={colors.primary} />{' '}
                   {t('overtime.description')}
                 </Text>
                 <View
                   style={[
                     styles.modernTextInput,
                     styles.modernTextAreaContainer,
+                    {backgroundColor: colors.background, borderColor: colors.border}
                   ]}>
                   <View style={styles.inputIconContainerTop}>
                     <Icon
                       name="text-box-outline"
                       size={18}
-                      color={THEME_COLOR}
+                      color={colors.primary}
                     />
                   </View>
                   <TextInput
-                    style={[styles.modernTextInputField, styles.modernTextArea]}
+                    style={[styles.modernTextInputField, styles.modernTextArea, {color: colors.text}]}
                     placeholder={t('overtime.description_placeholder')}
-                    placeholderTextColor="#bdc3c7"
+                    placeholderTextColor={colors.textSecondary}
                     value={overtimeFormData.description}
                     onChangeText={value =>
                       handleOvertimeFormChange('description', value)
@@ -1060,12 +1155,12 @@ function Manager() {
             </ScrollView>
 
             {/* Modal Footer */}
-            <View style={styles.modalFooter}>
+            <View style={[styles.modalFooter, {borderTopColor: colors.border}]}>
               <TouchableOpacity
-                style={styles.modernCancelButton}
+                style={[styles.modernCancelButton, {backgroundColor: colors.background}]}
                 onPress={handleCancelOvertimeModal}>
                 <Icon name="close-circle-outline" size={18} color="#e74c3c" />
-                <Text style={styles.modernCancelButtonText}>
+                <Text style={[styles.modernCancelButtonText, {color: '#e74c3c'}]}>
                   {t('overtime.cancel')}
                 </Text>
               </TouchableOpacity>
@@ -1075,7 +1170,7 @@ function Manager() {
                 onPress={handleCreateOvertimeRequest}
                 disabled={isLoading}>
                 <LinearGradient
-                  colors={[THEME_COLOR, '#34495e']}
+                  colors={[colors.primary, colors.primary2]}
                   style={styles.submitButtonGradient}>
                   {isLoading ? (
                     <ActivityIndicator size="small" color="#fff" />
@@ -1105,93 +1200,16 @@ function Manager() {
         minimumDate={new Date()}
       />
 
-      {/* User Selection Modal */}
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={showUserSelection}
-        onRequestClose={() => setShowUserSelection(false)}>
-        <View style={styles.modalOverlay}>
-          <View style={[styles.modalContent, styles.modernUserSelectionModal]}>
-            {/* User Selection Header */}
-            <View style={styles.modalHeader}>
-              <LinearGradient
-                colors={[THEME_COLOR, '#34495e']}
-                style={styles.modalHeaderGradient}>
-                <View style={styles.modalHeaderContent}>
-                  <View style={styles.modalIconContainer}>
-                    <Icon name="account-group" size={24} color="#fff" />
-                  </View>
-                  <Text style={styles.modernModalTitle}>
-                    {t('overtime.select_user')}
-                  </Text>
-                  <TouchableOpacity
-                    style={styles.modalCloseButton}
-                    onPress={() => setShowUserSelection(false)}>
-                    <Icon name="close" size={20} color="#fff" />
-                  </TouchableOpacity>
-                </View>
-              </LinearGradient>
-            </View>
+      {/* Modal Message */}
+      <ModalMessage
+        isVisible={showModalMessage}
+        onClose={() => setShowModalMessage(false)}
+        message={modalMessage.message}
+        type={modalMessage.type}
+        t={t}
+        duration={3000}
+      />
 
-            {/* User List */}
-            <ScrollView
-              style={styles.modernUserList}
-              showsVerticalScrollIndicator={false}>
-              {userList.map(user => (
-                <TouchableOpacity
-                  key={user.id}
-                  style={[
-                    styles.modernUserItem,
-                    selectedUser?.id === user.id && styles.selectedUserItem,
-                  ]}
-                  onPress={() => handleUserSelect(user)}>
-                  <View style={styles.userItemContent}>
-                    <View style={styles.userAvatarContainer}>
-                      <LinearGradient
-                        colors={[THEME_COLOR, '#34495e']}
-                        style={styles.userAvatarGradient}>
-                        <Text style={styles.userAvatarText}>
-                          {user.name.charAt(0).toUpperCase()}
-                        </Text>
-                      </LinearGradient>
-                    </View>
-                    <View style={styles.modernOvertimeUserInfo}>
-                      <Text style={styles.modernOvertimeUserName}>
-                        {user.name}
-                      </Text>
-                      <Text style={styles.modernOvertimeUserPosition}>
-                        {user.position}
-                      </Text>
-                    </View>
-                    <View style={styles.selectionIndicator}>
-                      {selectedUser?.id === user.id && (
-                        <View style={styles.checkIconContainer}>
-                          <Icon
-                            name="check-circle"
-                            size={24}
-                            color={THEME_COLOR}
-                          />
-                        </View>
-                      )}
-                    </View>
-                  </View>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-
-            {/* User Selection Footer */}
-            <View style={styles.modalFooter}>
-              <TouchableOpacity
-                style={styles.modernCancelButton}
-                onPress={() => setShowUserSelection(false)}>
-                <Icon name="close-circle-outline" size={18} color="#e74c3c" />
-                <Text style={styles.modernCancelButtonText}>{t('cancel')}</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
     </View>
   );
 }
@@ -1199,7 +1217,6 @@ function Manager() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8fafc',
   },
   headerGradient: {
     paddingTop: (StatusBar.currentHeight || 44) + 6,
@@ -1729,36 +1746,33 @@ const styles = StyleSheet.create({
   },
   // Modern User Selection Modal Styles
   modernUserSelectionModal: {
-    maxHeight: '75%',
-    maxWidth: '95%',
-    width: '95%',
+    height: '80%',
+    width: '90%',
     borderRadius: 20,
     padding: 0,
     overflow: 'hidden',
   },
   modernUserList: {
+    flex: 1,
     paddingHorizontal: 20,
     paddingVertical: 16,
-    maxHeight: 350,
   },
   modernUserItem: {
-    backgroundColor: '#fff',
     borderRadius: 12,
     marginBottom: 12,
-    borderWidth: 2,
-    borderColor: '#ecf0f1',
+    borderWidth: 1,
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
       height: 2,
     },
-    shadowOpacity: 0.05,
+    shadowOpacity: 0.1,
     shadowRadius: 4,
-    elevation: 2,
+    elevation: 3,
   },
   selectedUserItem: {
-    borderColor: THEME_COLOR,
-    backgroundColor: '#f8fafc',
+    borderColor: '#667eea',
+    backgroundColor: '#f0f4ff',
   },
   userItemContent: {
     flexDirection: 'row',
@@ -1793,6 +1807,16 @@ const styles = StyleSheet.create({
   modernOvertimeUserPosition: {
     fontSize: 13,
     color: '#7f8c8d',
+    fontWeight: '500',
+  },
+  emptyUserContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 40,
+    gap: 16,
+  },
+  emptyUserText: {
+    fontSize: 16,
     fontWeight: '500',
   },
   selectionIndicator: {
@@ -1885,20 +1909,21 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   cardSeparator: {
-    height: 16,
+    height: 8,
   },
   modernLeaveCard: {
+    width: '100%',
     backgroundColor: '#fff',
-    borderRadius: 16,
+    borderRadius: 0,
     marginBottom: 0,
-    elevation: 3,
-    shadowColor: '#000',
+    elevation: 0,
+    shadowColor: 'transparent',
     shadowOffset: {
       width: 0,
-      height: 2,
+      height: 0,
     },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
+    shadowOpacity: 0,
+    shadowRadius: 0,
     overflow: 'hidden',
   },
   modernCardHeader: {
@@ -1907,6 +1932,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     padding: 20,
     paddingBottom: 16,
+    paddingHorizontal: 20,
     borderBottomWidth: 1,
     borderBottomColor: '#f0f2f5',
   },
@@ -1983,7 +2009,6 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#f8fafc',
     padding: 12,
     borderRadius: 12,
     marginHorizontal: 4,
@@ -1992,7 +2017,6 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 8,
-    backgroundColor: '#fff',
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 10,
@@ -2002,7 +2026,6 @@ const styles = StyleSheet.create({
   },
   infoLabel: {
     fontSize: 11,
-    color: '#95a5a6',
     fontWeight: '600',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
@@ -2011,7 +2034,6 @@ const styles = StyleSheet.create({
   infoValue: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#2c3e50',
   },
   reasonSection: {
     marginBottom: 16,
@@ -2025,17 +2047,19 @@ const styles = StyleSheet.create({
   reasonLabel: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#7f8c8d',
   },
   modernReasonText: {
     fontSize: 14,
-    color: '#2c3e50',
     lineHeight: 20,
-    backgroundColor: '#f8fafc',
     padding: 12,
     borderRadius: 8,
     borderLeftWidth: 3,
-    borderLeftColor: THEME_COLOR,
+    marginBottom: 16,
+  },
+  reasonText: {
+    fontSize: 14,
+    lineHeight: 20,
+    marginTop: 8,
   },
   feedbackSection: {
     marginTop: 16,
@@ -2236,6 +2260,78 @@ const styles = StyleSheet.create({
   },
   activeTabButtonText: {
     color: '#fff',
+  },
+  // Dropdown Styles
+  dropdownWrapper: {
+    position: 'relative',
+    zIndex: 10000,
+    elevation: 10000,
+  },
+  dropdownContainer: {
+    position: 'absolute',
+    top: '100%',
+    left: 0,
+    right: 0,
+    zIndex: 10001,
+    elevation: 10001,
+    borderRadius: 12,
+    borderWidth: 1,
+    marginTop: 4,
+    maxHeight: 200,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+  },
+  dropdownScrollView: {
+    maxHeight: 200,
+  },
+  dropdownItem: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+  },
+  dropdownItemContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  dropdownAvatar: {
+    marginRight: 12,
+  },
+  dropdownAvatarGradient: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  dropdownAvatarText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#fff',
+  },
+  dropdownUserInfo: {
+    flex: 1,
+  },
+  dropdownUserName: {
+    fontSize: 15,
+    fontWeight: '600',
+    marginBottom: 2,
+  },
+  dropdownUserPosition: {
+    fontSize: 13,
+    color: '#7f8c8d',
+  },
+  dropdownEmpty: {
+    padding: 20,
+    alignItems: 'center',
+  },
+  dropdownEmptyText: {
+    fontSize: 14,
+    fontStyle: 'italic',
   },
 });
 

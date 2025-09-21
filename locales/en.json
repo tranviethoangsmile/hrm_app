@@ -561,5 +561,29 @@
   "order_date": "Order Date",
   "completed_date": "Completed Date",
   "delivery_date": "Delivery Date",
-  "records": "records"
+  "records": "records",
+  "delete_success": "Leave request deleted successfully",
+  "delete_failed": "Failed to delete leave request",
+  "manager": {
+    "title": "Manager",
+    "tabs": {
+      "leave": "Leave",
+      "overtime": "Overtime",
+      "employees": "Employees",
+      "reports": "Reports"
+    },
+    "leave": {
+      "pending": "Pending",
+      "approved": "Approved",
+      "rejected": "Rejected",
+      "approve_success": "Leave request approved successfully",
+      "approve_error": "Failed to approve leave request",
+      "reject_success": "Leave request rejected successfully",
+      "reject_error": "Failed to reject leave request"
+    },
+    "overtime": {
+      "create_success": "Overtime request created successfully",
+      "create_error": "Failed to create overtime request"
+    }
+  }
 }

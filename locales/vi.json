@@ -563,5 +563,27 @@
   "order_date": "Ngày đặt hàng",
   "completed_date": "Ngày hoàn thành",
   "delivery_date": "Ngày giao hàng",
-  "records": "bản ghi"
+  "records": "bản ghi",
+  "manager": {
+    "title": "Quản lý",
+    "tabs": {
+      "leave": "Nghỉ phép",
+      "overtime": "Tăng ca",
+      "employees": "Nhân viên",
+      "reports": "Báo cáo"
+    },
+    "leave": {
+      "pending": "Chưa duyệt",
+      "approved": "Đã duyệt",
+      "rejected": "Từ chối",
+      "approve_success": "Đã duyệt đơn nghỉ phép thành công",
+      "approve_error": "Không thể duyệt đơn nghỉ phép",
+      "reject_success": "Đã từ chối đơn nghỉ phép thành công",
+      "reject_error": "Không thể từ chối đơn nghỉ phép"
+    },
+    "overtime": {
+      "create_success": "Đã tạo yêu cầu làm thêm giờ thành công",
+      "create_error": "Không thể tạo yêu cầu làm thêm giờ"
+    }
+  }
 }

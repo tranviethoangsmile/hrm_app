@@ -9,9 +9,11 @@ import {
 import Icon from 'react-native-vector-icons/Ionicons';
 import {TEXT_COLOR} from '../utils/Colors';
 import {NativeModules} from 'react-native';
+import {useTheme} from '../hooks/useTheme';
 const {height} = Dimensions.get('window');
 const topPosition = height * 0.1;
 const ModalMessage = ({isVisible, onClose, message, type, t, duration}) => {
+  const {colors, isDarkMode} = useTheme();
   const getModalStyles = () => {
     switch (type) {
       case 'success':
@@ -80,13 +82,13 @@ const ModalMessage = ({isVisible, onClose, message, type, t, duration}) => {
 
   return (
     <View style={styles.nonBlockingContainer}>
-      <View style={[getModalStyles(), styles.shadowBox]}>
+      <View style={[getModalStyles(), styles.shadowBox, {backgroundColor: colors.surface}]}>
         {getIcon()}
-        <Text style={styles.modalMessage}>
+        <Text style={[styles.modalMessage, {color: colors.text}]}>
           {message ? t(message) : message}
         </Text>
         <TouchableOpacity style={styles.closeButton} onPress={onClose}>
-          <Icon name={'close'} size={28} color={'#888'} />
+          <Icon name={'close'} size={28} color={colors.textSecondary} />
         </TouchableOpacity>
       </View>
     </View>
@@ -104,7 +106,6 @@ const styles = StyleSheet.create({
   successModalContent: {
     width: '90%',
     padding: 18,
-    backgroundColor: '#eafaf1',
     borderRadius: 16,
     alignItems: 'center',
     marginBottom: 20,
@@ -113,7 +114,6 @@ const styles = StyleSheet.create({
   warningModalContent: {
     width: '90%',
     padding: 18,
-    backgroundColor: '#fffbe6',
     borderRadius: 16,
     alignItems: 'center',
     marginBottom: 20,
@@ -122,7 +122,6 @@ const styles = StyleSheet.create({
   errorModalContent: {
     width: '90%',
     padding: 18,
-    backgroundColor: '#fdecea',
     borderRadius: 16,
     alignItems: 'center',
     marginBottom: 20,
@@ -131,7 +130,6 @@ const styles = StyleSheet.create({
   defaultModalContent: {
     width: '90%',
     padding: 18,
-    backgroundColor: '#f4f8fb',
     borderRadius: 16,
     alignItems: 'center',
     marginBottom: 20,
@@ -141,7 +139,6 @@ const styles = StyleSheet.create({
     fontSize: 17,
     textAlign: 'center',
     marginBottom: 6,
-    color: '#222',
     fontWeight: '600',
     letterSpacing: 0.1,
   },

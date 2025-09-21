@@ -128,8 +128,8 @@
   "copy.not.success": "メッセージのコピーに失敗しました。",
   "qr_code_content": "QRコードの内容",
   "copied_to_clipboard": "クリップボードにコピーしました",
-  "copy_failed": "コピーに失敗しました",
   "close": "閉じる",
+  "copy_failed": "コピーに失敗しました",
   "scan_qr_code": "QRコードをスキャン",
   "waiting_for_qr": "QRコードを待っています...",
   "scan_again": "再スキャン",
@@ -262,7 +262,6 @@
   "manager.leave.pending": "保留中",
   "manager.leave.approved": "承認済み",
   "manager.leave.rejected": "却下",
-  "close": "閉じる",
   "no_leaves": "休暇申請がありません",
   "request_leave": "休暇申請",
   "media.back": "戻る",
@@ -563,5 +562,29 @@
   "order_date": "注文日",
   "completed_date": "完了日",
   "delivery_date": "配送日",
-  "records": "記録"
+  "records": "記録",
+  "delete_success": "休暇申請を正常に削除しました",
+  "delete_failed": "休暇申請の削除に失敗しました",
+  "manager": {
+    "title": "管理",
+    "tabs": {
+      "leave": "休暇",
+      "overtime": "残業",
+      "employees": "従業員",
+      "reports": "レポート"
+    },
+    "leave": {
+      "pending": "未承認",
+      "approved": "承認済み",
+      "rejected": "拒否",
+      "approve_success": "休暇申請を正常に承認しました",
+      "approve_error": "休暇申請の承認に失敗しました",
+      "reject_success": "休暇申請を正常に拒否しました",
+      "reject_error": "休暇申請の拒否に失敗しました"
+    },
+    "overtime": {
+      "create_success": "残業申請を正常に作成しました",
+      "create_error": "残業申請の作成に失敗しました"
+    }
+  }
 }

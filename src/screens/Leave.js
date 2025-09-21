@@ -43,6 +43,7 @@ import {
   PAID_LEAVE,
   CREATE,
   SEARCH,
+  DELETE
 } from '../utils/constans';
 import axios from 'axios';
 import {TEXT_COLOR, THEME_COLOR, THEME_COLOR_2} from '../utils/Colors';
@@ -152,10 +153,6 @@ const Leave = () => {
           label: leader.name,
           value: leader.id,
         }));
-        console.log('=== LEADER LIST LOADED ===');
-        console.log('Raw leader data:', listUser?.data?.data);
-        console.log('Formatted leader list:', formattedList);
-        console.log('==========================');
         setLeaderList(formattedList);
       } else {
         throw new Error('contactAdmin');
@@ -174,13 +171,6 @@ const Leave = () => {
     let hasError = false;
     const finalReason = selectedReasonType === 'other' ? customReason : reason;
     
-    // Debug log
-    console.log('Debug - selectedReasonType:', selectedReasonType);
-    console.log('Debug - reason:', reason);
-    console.log('Debug - customReason:', customReason);
-    console.log('Debug - finalReason:', finalReason);
-    console.log('Debug - leaderValue:', leaderValue);
-    console.log('Debug - value (dropdown):', value);
     
     if (!finalReason.trim()) {
       setErrorReason(true);
@@ -234,11 +224,6 @@ const Leave = () => {
         is_half: is_half,
       };
       
-      // Log dữ liệu gửi lên server
-      console.log('=== DỮ LIỆU GỬI LÊN SERVER ===');
-      console.log('Field data:', JSON.stringify(field, null, 2));
-      console.log('API URL:', `${BASE_URL}${PORT}${API}${VERSION}${V1}${PAID_LEAVE}${CREATE}`);
-      console.log('================================');
       
       const paidleave = await axios.post(
         `${BASE_URL}${PORT}${API}${VERSION}${V1}${PAID_LEAVE}${CREATE}`,
@@ -247,11 +232,6 @@ const Leave = () => {
         },
       );
       
-      // Log response từ server
-      console.log('=== RESPONSE TỪ SERVER ===');
-      console.log('Status:', paidleave?.status);
-      console.log('Response data:', JSON.stringify(paidleave?.data, null, 2));
-      console.log('==========================');
       
       if (paidleave?.data?.success) {
         onRefresh();
@@ -272,12 +252,6 @@ const Leave = () => {
         });
       }
     } catch (error) {
-      console.error('=== ERROR KHI GỬI DỮ LIỆU ===');
-      console.error('Error:', error);
-      console.error('Error message:', error?.message);
-      console.error('Error response:', error?.response?.data);
-      console.error('Error status:', error?.response?.status);
-      console.error('==============================');
       
       setModal(false);
       setIsLoading(false);
@@ -309,13 +283,8 @@ const Leave = () => {
     }
   }, [modal, modalScale, modalOpacity]);
   const handleSelectLeader = value => {
-    console.log('=== LEADER SELECTION ===');
-    console.log('Selected leader value:', value);
-    console.log('Leader value before:', leaderValue);
     setLeaderValue(value);
     setValue(value); // Also update the dropdown value
-    console.log('Leader value after:', value);
-    console.log('========================');
   };
 
   const handleLeaderDropdownToggle = (isOpen) => {
@@ -440,13 +409,36 @@ const Leave = () => {
   };
   const handleDeleteLeaveRequest = async id => {
     setOpenMenuId(null);
-    setModalMessage({
-      visible: true,
-      type: 'success',
-      message: 'Đã xóa đơn nghỉ (giả lập)',
-    });
-    // await ...
-    // onRefresh();
+    try {
+      setIsLoading(true);
+      const response = await axios.post(`${BASE_URL}${PORT}${API}${VERSION}${V1}${PAID_LEAVE}${DELETE}`, {
+        id: id,
+        user_id: authData?.data?.data?.id,
+      });
+       if (response?.data?.success) {
+         setModalMessage({
+           visible: true,
+           type: 'success',
+           message: t('delete_success', 'Đã xóa đơn nghỉ thành công'),
+         });
+         // Refresh the list to reflect changes
+         onRefresh();
+       } else {
+         setModalMessage({
+           visible: true,
+           type: 'error',
+           message: t('delete_failed', 'Xóa đơn nghỉ thất bại'),
+         });
+       }
+    } catch (error) {
+      setModalMessage({
+        visible: true,
+        type: 'error',
+        message: t('delete_failed', 'Xóa đơn nghỉ thất bại'),
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
   const renderItem = ({item, index}) => (
     <View
@@ -573,15 +565,17 @@ const Leave = () => {
               {moment(item.date_leave).format('DD/MM/YYYY')}
             </Text>
           </View>
-          <TouchableOpacity
-            style={[styles.menuBtnModern, {backgroundColor: colors.background}]}
-            onPress={() => setOpenMenuId(item.id)}>
-            <Icon name="ellipsis-h" size={18} color={colors.textSecondary} />
-          </TouchableOpacity>
+          {activeTab === 0 && (
+            <TouchableOpacity
+              style={[styles.menuBtnModern, {backgroundColor: colors.background}]}
+              onPress={() => setOpenMenuId(item.id)}>
+              <Icon name="ellipsis-h" size={18} color={colors.textSecondary} />
+            </TouchableOpacity>
+          )}
         </View>
 
         <View style={styles.leaveCardContent}>
-          <View style={styles.leaveTypeContainer}>
+          <View style={[styles.leaveTypeContainer, {backgroundColor: colors.background}]}>
             <Icon
               name={item.is_paid ? 'money' : 'clock-o'}
               size={14}
@@ -596,7 +590,7 @@ const Leave = () => {
           </View>
 
           {item.reason && (
-            <View style={styles.leaveReasonContainer}>
+            <View style={[styles.leaveReasonContainer, {backgroundColor: colors.background}]}>
               <Icon name="file-text-o" size={14} color={colors.textSecondary} />
               <Text style={[styles.leaveReasonText, {color: colors.text}]}>{item.reason}</Text>
             </View>
@@ -640,19 +634,22 @@ const Leave = () => {
                 <Text style={[styles.menuTextModern, {color: colors.textSecondary}]}>{t('edit')}</Text>
               </TouchableOpacity>
               <View style={[styles.menuDivider, {backgroundColor: colors.border}]} />
-              <TouchableOpacity
-                style={[styles.menuItemModern, {opacity: 0.5}]}
-                disabled={true}
-                onPress={() => {
-                  setOpenMenuId(null);
-                  // handleDeleteLeaveRequest(item.id); // Disabled - API not ready
-                }}>
-                <Icon name="trash" size={16} color={colors.textSecondary} />
-                <Text style={[styles.menuTextModern, {color: colors.textSecondary}]}>
-                  {t('delete')}
-                </Text>
-              </TouchableOpacity>
-              <View style={[styles.menuDivider, {backgroundColor: colors.border}]} />
+              {activeTab === 0 && (
+                <>
+                  <TouchableOpacity
+                    style={[styles.menuItemModern]}
+                    onPress={() => {
+                      setOpenMenuId(null);
+                      handleDeleteLeaveRequest(item.id);
+                    }}>
+                    <Icon name="trash" size={16} color="#e74c3c" />
+                    <Text style={[styles.menuTextModern, {color: '#e74c3c'}]}>
+                      {t('delete')}
+                    </Text>
+                  </TouchableOpacity>
+                  <View style={[styles.menuDivider, {backgroundColor: colors.border}]} />
+                </>
+              )}
               <View style={[styles.menuItemModern, {opacity: 0.7, paddingVertical: 8}]}>
                 <Icon name="info-circle" size={14} color={colors.textSecondary} />
                 <Text style={[styles.menuTextModern, {color: colors.textSecondary, fontSize: 12}]}>
@@ -1053,6 +1050,7 @@ const styles = StyleSheet.create({
     paddingTop: 8,
   },
   leaveCard: {
+    width: '100%',
     borderRadius: 20,
     padding: 20,
     marginBottom: 16,
@@ -1097,7 +1095,6 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     paddingHorizontal: 12,
     borderRadius: 12,
-    backgroundColor: 'rgba(0,0,0,0.03)',
   },
   leaveTypeText: {
     fontSize: 16,
@@ -1111,7 +1108,6 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     paddingHorizontal: 12,
     borderRadius: 12,
-    backgroundColor: 'rgba(0,0,0,0.02)',
   },
   leaveReasonText: {
     flex: 1,

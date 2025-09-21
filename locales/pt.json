@@ -128,8 +128,8 @@
   "copy.not.success": "Falha ao copiar a mensagem.",
   "qr_code_content": "Conteúdo do QR Code",
   "copied_to_clipboard": "Copiado para a área de transferência",
-  "copy_failed": "Falha ao copiar",
   "close": "Fechar",
+  "copy_failed": "Falha ao copiar",
   "scan_qr_code": "Escanear QR Code",
   "waiting_for_qr": "Aguardando QR Code...",
   "scan_again": "Escanear Novamente",
@@ -262,7 +262,6 @@
   "manager.leave.pending": "Pendente",
   "manager.leave.approved": "Aprovado",
   "manager.leave.rejected": "Rejeitado",
-  "close": "Fechar",
   "no_leaves": "Nenhuma solicitação de licença",
   "request_leave": "Solicitar Licença",
   "media.back": "Voltar",
@@ -561,5 +560,29 @@
   "order_date": "Data do Pedido",
   "completed_date": "Data de Conclusão",
   "delivery_date": "Data de Entrega",
-  "records": "registros"
+  "records": "registros",
+  "delete_success": "Solicitação de licença excluída com sucesso",
+  "delete_failed": "Falha ao excluir solicitação de licença",
+  "manager": {
+    "title": "Gerenciador",
+    "tabs": {
+      "leave": "Licença",
+      "overtime": "Horas Extras",
+      "employees": "Funcionários",
+      "reports": "Relatórios"
+    },
+    "leave": {
+      "pending": "Pendente",
+      "approved": "Aprovado",
+      "rejected": "Rejeitado",
+      "approve_success": "Solicitação de licença aprovada com sucesso",
+      "approve_error": "Falha ao aprovar solicitação de licença",
+      "reject_success": "Solicitação de licença rejeitada com sucesso",
+      "reject_error": "Falha ao rejeitar solicitação de licença"
+    },
+    "overtime": {
+      "create_success": "Solicitação de horas extras criada com sucesso",
+      "create_error": "Falha ao criar solicitação de horas extras"
+    }
+  }
 }
