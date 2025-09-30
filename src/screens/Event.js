@@ -26,6 +26,8 @@ import {useNavigation} from '@react-navigation/native';
 import LinearGradient from 'react-native-linear-gradient';
 import Icon from 'react-native-vector-icons/Ionicons';
 import ModalMessage from '../components/ModalMessage';
+import Header from '../components/common/Header';
+import {useTheme} from '../hooks/useTheme';
 import {
   BG_COLOR,
   TEXT_COLOR,
@@ -54,6 +56,7 @@ const Event = () => {
   };
   const {t} = useTranslation();
   const navigation = useNavigation();
+  const {colors, isDarkMode} = useTheme();
   const authData = useSelector(state => state.auth);
   const user_id = authData?.data?.data?.id;
   const [userInfo, setUserInfo] = useState({});
@@ -232,63 +235,43 @@ const Event = () => {
   }, []);
 
   return (
-    <View style={styles.container}>
-      <StatusBar
-        barStyle="light-content"
-        backgroundColor="transparent"
-        translucent
+    <View style={[styles.container, {backgroundColor: colors.background}]}>
+      <Header 
+        title={eventName || t('event.title', 'Event')} 
+        onBack={() => navigation.goBack()} 
       />
-
-      {/* Modern Header */}
-      <LinearGradient
-        colors={[THEME_COLOR, THEME_COLOR_2]}
-        start={{x: 0, y: 0}}
-        end={{x: 1, y: 1}}
-        style={styles.headerGradient}>
-        <View style={styles.headerContent}>
-          <TouchableOpacity
-            onPress={() => navigation.goBack()}
-            style={styles.backButton}>
-            <Icon name="arrow-back" size={24} color="#fff" />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>
-            {eventName || t('event.title', 'Event')}
-          </Text>
-          <View style={styles.headerSpacer} />
-        </View>
-      </LinearGradient>
 
       <ScrollView
         style={styles.scrollContainer}
         showsVerticalScrollIndicator={false}>
         {/* Event Content */}
-        <View style={styles.eventCard}>
-          <Text style={styles.eventDescription}>{eventDescription}</Text>
+        <View style={[styles.eventCard, {backgroundColor: colors.surface}]}>
+          <Text style={[styles.eventDescription, {color: colors.textSecondary}]}>{eventDescription}</Text>
           {isSafetyCheckEvent ? (
             <View style={styles.formContainer}>
-              <View style={styles.section}>
+              <View style={[styles.section, {backgroundColor: colors.surface, borderColor: colors.border}]}>
                 <View style={styles.sectionHeader}>
-                  <Icon name="shield-checkmark" size={20} color={THEME_COLOR} />
-                  <Text style={styles.sectionTitle}>{t('safety.c')}</Text>
+                  <Icon name="shield-checkmark" size={20} color={colors.success} />
+                  <Text style={[styles.sectionTitle, {color: colors.text}]}>{t('safety.c')}</Text>
                 </View>
                 <TouchableOpacity
                   style={styles.checkboxRow}
                   activeOpacity={0.7}>
                   <CheckBox
-                    tintColors={{true: THEME_COLOR, false: '#94a3b8'}}
+                    tintColors={{true: colors.success, false: colors.border}}
                     value={is_safety}
                     onValueChange={handleCheckboxSafety}
                     style={styles.checkbox}
                   />
-                  <Text style={styles.checkboxLabel}>{t('is_safety')}</Text>
+                  <Text style={[styles.checkboxLabel, {color: colors.textSecondary}]}>{t('is_safety')}</Text>
                 </TouchableOpacity>
                 {!is_safety && (
-                  <View style={styles.feedbackContainer}>
-                    <Text style={styles.inputLabel}>{t('s.help')}</Text>
+                  <View style={[styles.feedbackContainer, {borderTopColor: colors.border}]}>
+                    <Text style={[styles.inputLabel, {color: colors.text}]}>{t('s.help')}</Text>
                     <TextInput
-                      style={styles.textInput}
+                      style={[styles.textInput, {backgroundColor: colors.background, borderColor: colors.border, color: colors.text}]}
                       placeholder={t('feedback')}
-                      placeholderTextColor="#94a3b8"
+                      placeholderTextColor={colors.textSecondary}
                       multiline
                       numberOfLines={4}
                       onChangeText={txt => setFeedback(txt)}
@@ -297,81 +280,73 @@ const Event = () => {
                   </View>
                 )}
               </View>
-              <View style={styles.section}>
+              <View style={[styles.section, {backgroundColor: colors.surface, borderColor: colors.border}]}>
                 <View style={styles.sectionHeader}>
-                  <Icon name="home" size={20} color={THEME_COLOR} />
-                  <Text style={styles.sectionTitle}>{t('at_home')}</Text>
+                  <Icon name="home" size={20} color={colors.primary} />
+                  <Text style={[styles.sectionTitle, {color: colors.text}]}>{t('at_home')}</Text>
                 </View>
                 <TouchableOpacity
                   style={styles.checkboxRow}
                   activeOpacity={0.7}>
                   <CheckBox
-                    tintColors={{true: THEME_COLOR, false: '#94a3b8'}}
+                    tintColors={{true: colors.primary, false: colors.border}}
                     value={is_at_home}
                     onValueChange={() => setIs_at_home(!is_at_home)}
                     style={styles.checkbox}
                   />
-                  <Text style={styles.checkboxLabel}>{t('y')}</Text>
+                  <Text style={[styles.checkboxLabel, {color: colors.textSecondary}]}>{t('y')}</Text>
                 </TouchableOpacity>
               </View>
-              <View style={styles.section}>
+              <View style={[styles.section, {backgroundColor: colors.surface, borderColor: colors.border}]}>
                 <View style={styles.sectionHeader}>
-                  <Icon name="briefcase" size={20} color={THEME_COLOR} />
-                  <Text style={styles.sectionTitle}>{t('can_work')}</Text>
+                  <Icon name="briefcase" size={20} color={colors.primary} />
+                  <Text style={[styles.sectionTitle, {color: colors.text}]}>{t('can_work')}</Text>
                 </View>
                 <TouchableOpacity
                   style={styles.checkboxRow}
                   activeOpacity={0.7}>
                   <CheckBox
-                    tintColors={{true: THEME_COLOR, false: '#94a3b8'}}
+                    tintColors={{true: colors.primary, false: colors.border}}
                     value={is_can_work}
                     onValueChange={() => setIs_can_work(!is_can_work)}
                     style={styles.checkbox}
                   />
-                  <Text style={styles.checkboxLabel}>{t('y')}</Text>
+                  <Text style={[styles.checkboxLabel, {color: colors.textSecondary}]}>{t('y')}</Text>
                 </TouchableOpacity>
               </View>
               <TouchableOpacity
                 onPress={handleSafetyConfirm}
-                style={styles.submitButton}
+                style={[styles.submitButton, {backgroundColor: colors.primary}]}
                 activeOpacity={0.8}>
-                <LinearGradient
-                  colors={[THEME_COLOR, THEME_COLOR_2]}
-                  style={styles.submitButtonGradient}>
-                  <Icon name="checkmark-circle" size={20} color="#fff" />
-                  <Text style={styles.submitButtonText}>{t('confirm.c')}</Text>
-                </LinearGradient>
+                <Icon name="checkmark-circle" size={20} color="#fff" />
+                <Text style={styles.submitButtonText}>{t('confirm.c')}</Text>
               </TouchableOpacity>
             </View>
           ) : (
             <View style={styles.formContainer}>
-              <View style={styles.section}>
+              <View style={[styles.section, {backgroundColor: colors.surface, borderColor: colors.border}]}>
                 <View style={styles.sectionHeader}>
-                  <Icon name="checkmark-circle" size={20} color={THEME_COLOR} />
-                  <Text style={styles.sectionTitle}>{t('isConfirm')}</Text>
+                  <Icon name="checkmark-circle" size={20} color={colors.primary} />
+                  <Text style={[styles.sectionTitle, {color: colors.text}]}>{t('isConfirm')}</Text>
                 </View>
                 <TouchableOpacity
                   style={styles.checkboxRow}
                   activeOpacity={0.7}>
                   <CheckBox
-                    tintColors={{true: THEME_COLOR, false: '#94a3b8'}}
+                    tintColors={{true: colors.primary, false: colors.border}}
                     value={is_confirm}
                     onValueChange={() => setIsconfirm(!is_confirm)}
                     style={styles.checkbox}
                   />
-                  <Text style={styles.checkboxLabel}>{t('y')}</Text>
+                  <Text style={[styles.checkboxLabel, {color: colors.textSecondary}]}>{t('y')}</Text>
                 </TouchableOpacity>
               </View>
               <TouchableOpacity
                 onPress={handleConfirmEventCheck}
-                style={styles.submitButton}
+                style={[styles.submitButton, {backgroundColor: colors.primary}]}
                 activeOpacity={0.8}>
-                <LinearGradient
-                  colors={[THEME_COLOR, THEME_COLOR_2]}
-                  style={styles.submitButtonGradient}>
-                  <Icon name="checkmark-circle" size={20} color="#fff" />
-                  <Text style={styles.submitButtonText}>{t('confirm.c')}</Text>
-                </LinearGradient>
+                <Icon name="checkmark-circle" size={20} color="#fff" />
+                <Text style={styles.submitButtonText}>{t('confirm.c')}</Text>
               </TouchableOpacity>
             </View>
           )}
@@ -392,32 +367,6 @@ const Event = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8fafc',
-  },
-  headerGradient: {
-    paddingTop: StatusBar.currentHeight || 44,
-    paddingBottom: 20,
-  },
-  headerContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingTop: 10,
-  },
-  backButton: {
-    padding: 8,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255,255,255,0.2)',
-  },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#fff',
-    letterSpacing: 0.5,
-  },
-  headerSpacer: {
-    width: 40,
   },
   scrollContainer: {
     flex: 1,
@@ -434,12 +383,10 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.15,
     shadowRadius: 12,
     elevation: 8,
-    backgroundColor: '#fff',
     padding: 24,
   },
   eventDescription: {
     fontSize: 16,
-    color: '#475569',
     lineHeight: 22,
     fontWeight: '500',
     marginBottom: 24,
@@ -448,11 +395,9 @@ const styles = StyleSheet.create({
     gap: 20,
   },
   section: {
-    backgroundColor: '#fff',
     borderRadius: 12,
     padding: 16,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
     marginBottom: 16,
   },
   sectionHeader: {
@@ -463,7 +408,6 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#1e293b',
     marginLeft: 10,
   },
   checkboxRow: {
@@ -477,48 +421,39 @@ const styles = StyleSheet.create({
   },
   checkboxLabel: {
     fontSize: 15,
-    color: '#475569',
     fontWeight: '500',
   },
   feedbackContainer: {
     marginTop: 16,
     paddingTop: 16,
     borderTopWidth: 1,
-    borderTopColor: '#e2e8f0',
   },
   inputLabel: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#374151',
     marginBottom: 8,
   },
   textInput: {
     borderWidth: 1,
-    borderColor: '#d1d5db',
     borderRadius: 8,
     padding: 12,
     fontSize: 15,
-    color: '#374151',
-    backgroundColor: '#f9fafb',
     textAlignVertical: 'top',
     minHeight: 80,
   },
   submitButton: {
     marginTop: 8,
     borderRadius: 12,
-    overflow: 'hidden',
-    shadowColor: THEME_COLOR,
-    shadowOffset: {width: 0, height: 4},
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 6,
-  },
-  submitButtonGradient: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 16,
     paddingHorizontal: 24,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 4},
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
   },
   submitButtonText: {
     fontSize: 16,

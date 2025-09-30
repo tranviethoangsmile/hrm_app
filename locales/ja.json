@@ -586,5 +586,16 @@
       "create_success": "残業申請を正常に作成しました",
       "create_error": "残業申請の作成に失敗しました"
     }
-  }
+  },
+  "view_details": "詳細を見る",
+  "new_event_available": "新しいイベントが利用可能",
+  "active": "アクティブ",
+  "event_details": "イベント詳細",
+  "start_date": "開始日",
+  "end_date": "終了日",
+  "maybe_later": "後で",
+  "birthday_subtitle": "お誕生日おめでとう！",
+  "new_year_subtitle": "新年おめでとう！",
+  "birthday_toast_subtitle": "タップしてお祝い！",
+  "new_year_toast_subtitle": "タップしてお祝い！"
 }

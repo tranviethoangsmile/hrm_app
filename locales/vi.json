@@ -585,5 +585,16 @@
       "create_success": "Đã tạo yêu cầu làm thêm giờ thành công",
       "create_error": "Không thể tạo yêu cầu làm thêm giờ"
     }
-  }
+  },
+  "view_details": "Xem chi tiết",
+  "new_event_available": "Sự kiện mới có sẵn",
+  "active": "Hoạt động",
+  "event_details": "Chi tiết sự kiện",
+  "start_date": "Ngày bắt đầu",
+  "end_date": "Ngày kết thúc",
+  "maybe_later": "Để sau",
+  "birthday_subtitle": "Chúc mừng sinh nhật!",
+  "new_year_subtitle": "Chúc mừng năm mới!",
+  "birthday_toast_subtitle": "Nhấn để chúc mừng!",
+  "new_year_toast_subtitle": "Nhấn để chúc mừng!"
 }

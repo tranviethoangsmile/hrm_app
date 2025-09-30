@@ -13,6 +13,7 @@ import LottieView from 'lottie-react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import {useTranslation} from 'react-i18next';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import LinearGradient from 'react-native-linear-gradient';
 
 const {width, height} = Dimensions.get('window');
 
@@ -124,38 +125,75 @@ const HappyModal = ({visible, onClose, userName}) => {
 
   return (
     <Modal transparent visible={visible} animationType="none">
-      <TouchableWithoutFeedback onPress={handleClose}>
-        <View style={styles.containerModal}>
-          <TouchableOpacity style={styles.removeBtn} onPress={handleClose}>
-            <Icon name="times-circle" size={30} color="#fff" />
+      <View style={styles.containerModal}>
+        <TouchableWithoutFeedback onPress={handleClose}>
+          <View style={styles.overlay} />
+        </TouchableWithoutFeedback>
+        
+        <Animated.View
+          style={[
+            styles.contentContainer,
+            {
+              transform: [{scale}],
+              opacity,
+            },
+          ]}>
+          
+          {/* Close Button */}
+          <TouchableOpacity style={styles.closeButton} onPress={handleClose}>
+            <Icon name="times-circle" size={28} color="rgba(255,255,255,0.8)" />
           </TouchableOpacity>
-          <Animated.View
-            style={[
-              styles.contentContainer,
-              {
-                transform: [{scale}],
-                opacity,
-              },
-            ]}>
+          
+          {/* Background Gradient */}
+          <LinearGradient
+            colors={['#FF6B9D', '#C44569', '#F8B500', '#FF6B9D']}
+            start={{x: 0, y: 0}}
+            end={{x: 1, y: 1}}
+            style={styles.gradientBackground}
+          />
+          
+          {/* Animation Container */}
+          <View style={styles.animationContainer}>
             <LottieView
               source={animation}
               style={styles.animation}
               autoPlay
               loop
             />
-            <Text style={styles.birthdayText}>
-              {t('Happy Birthday')} {userName}! 🎉
+          </View>
+          
+          {/* Birthday Content */}
+          <View style={styles.birthdayContent}>
+            <Text style={styles.birthdayTitle}>
+              🎂 {t('Happy Birthday')} 🎂
             </Text>
-            <View style={styles.wishesContainer}>
-              <BirthdayLine text={t('birthday_wish_line1')} delay={0} />
-              <BirthdayLine text={t('birthday_wish_line2')} delay={1000} />
-              <BirthdayLine text={t('birthday_wish_line3')} delay={2000} />
-              <BirthdayLine text={t('birthday_wish_line4')} delay={3000} />
-              <BirthdayLine text={t('birthday_wish_line5')} delay={4000} />
-            </View>
-          </Animated.View>
-        </View>
-      </TouchableWithoutFeedback>
+            <Text style={styles.userNameText}>
+              {userName}!
+            </Text>
+            <Text style={styles.birthdaySubtitle}>
+              {t('birthday_subtitle', 'Chúc mừng sinh nhật!')}
+            </Text>
+          </View>
+          
+          {/* Wishes Container */}
+          <View style={styles.wishesContainer}>
+            <BirthdayLine text={t('birthday_wish_line1')} delay={0} />
+            <BirthdayLine text={t('birthday_wish_line2')} delay={1000} />
+            <BirthdayLine text={t('birthday_wish_line3')} delay={2000} />
+            <BirthdayLine text={t('birthday_wish_line4')} delay={3000} />
+            <BirthdayLine text={t('birthday_wish_line5')} delay={4000} />
+          </View>
+          
+          {/* Decorative Elements */}
+          <View style={styles.decorativeElements}>
+            <Text style={styles.emoji}>🎉</Text>
+            <Text style={styles.emoji}>🎁</Text>
+            <Text style={styles.emoji}>🎈</Text>
+            <Text style={styles.emoji}>🎊</Text>
+          </View>
+          
+        </Animated.View>
+      </View>
     </Modal>
   );
 };
@@ -165,50 +203,122 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.8)',
+  },
+  overlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.7)',
+  },
+  closeButton: {
+    position: 'absolute',
+    top: 20,
+    right: 20,
+    zIndex: 10,
+    padding: 8,
+    borderRadius: 20,
+    backgroundColor: 'rgba(0,0,0,0.3)',
   },
   contentContainer: {
     width: width * 0.9,
-    backgroundColor: 'white',
-    borderRadius: 20,
-    padding: 20,
-    alignItems: 'center',
-    elevation: 5,
+    height: height * 0.8,
+    borderRadius: 25,
+    overflow: 'hidden',
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
-      height: 2,
+      height: 15,
     },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
+    shadowOpacity: 0.3,
+    shadowRadius: 20,
+    elevation: 15,
   },
-  removeBtn: {
+  gradientBackground: {
     position: 'absolute',
-    top: 40,
-    right: 20,
-    zIndex: 1,
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+  },
+  animationContainer: {
+    position: 'absolute',
+    top: 20,
+    left: 0,
+    right: 0,
+    height: 200,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   animation: {
-    width: width * 0.7,
-    height: width * 0.7,
+    width: 180,
+    height: 180,
   },
-  birthdayText: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#FF4B8C',
-    marginTop: 20,
+  birthdayContent: {
+    position: 'absolute',
+    top: 220,
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+    paddingHorizontal: 20,
+  },
+  birthdayTitle: {
+    fontSize: 28,
+    fontWeight: '800',
+    color: '#fff',
     textAlign: 'center',
+    marginBottom: 10,
+    textShadowColor: 'rgba(0,0,0,0.3)',
+    textShadowOffset: {width: 1, height: 1},
+    textShadowRadius: 3,
+  },
+  userNameText: {
+    fontSize: 32,
+    fontWeight: '900',
+    color: '#FFD700',
+    textAlign: 'center',
+    marginBottom: 15,
+    textShadowColor: 'rgba(0,0,0,0.5)',
+    textShadowOffset: {width: 2, height: 2},
+    textShadowRadius: 5,
+  },
+  birthdaySubtitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: 'rgba(255,255,255,0.9)',
+    textAlign: 'center',
+    marginBottom: 20,
   },
   wishesContainer: {
-    marginTop: 20,
+    position: 'absolute',
+    top: 350,
+    left: 0,
+    right: 0,
     alignItems: 'center',
-    paddingHorizontal: 10,
+    paddingHorizontal: 20,
+  },
+  decorativeElements: {
+    position: 'absolute',
+    top: 50,
+    left: 0,
+    right: 0,
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    paddingHorizontal: 20,
+  },
+  emoji: {
+    fontSize: 30,
+    opacity: 0.8,
   },
   wishText: {
     fontSize: 16,
-    color: '#666',
+    color: '#fff',
     marginVertical: 5,
     textAlign: 'center',
+    textShadowColor: 'rgba(0,0,0,0.5)',
+    textShadowOffset: {width: 1, height: 1},
+    textShadowRadius: 2,
     lineHeight: 22,
   },
 });

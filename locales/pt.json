@@ -584,5 +584,16 @@
       "create_success": "Solicitação de horas extras criada com sucesso",
       "create_error": "Falha ao criar solicitação de horas extras"
     }
-  }
+  },
+  "view_details": "Ver Detalhes",
+  "new_event_available": "Novo Evento Disponível",
+  "active": "Ativo",
+  "event_details": "Detalhes do Evento",
+  "start_date": "Data de Início",
+  "end_date": "Data de Fim",
+  "maybe_later": "Talvez Mais Tarde",
+  "birthday_subtitle": "Feliz Aniversário!",
+  "new_year_subtitle": "Feliz Ano Novo!",
+  "birthday_toast_subtitle": "Toque para celebrar!",
+  "new_year_toast_subtitle": "Toque para celebrar!"
 }

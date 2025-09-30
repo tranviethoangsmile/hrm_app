@@ -316,7 +316,7 @@ const HomeTab = ({onScrollList}) => {
           {/* Glass overlay for modern effect */}
           <View style={[styles.glassOverlay, {backgroundColor: colors.primary + '05'}]} />
           
-          {/* Admin indicator overlay */}
+          {/* Admin indicator overlay - only on header area */}
           {isAdmin && (
             <View style={styles.adminIndicatorOverlay}>
               <LinearGradient
@@ -988,7 +988,7 @@ const styles = StyleSheet.create({
     top: 0,
     left: 0,
     right: 0,
-    bottom: 0,
+    height: 80, // Only cover header area
     zIndex: 1,
   },
   adminIndicatorGradient: {
@@ -1106,6 +1106,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     overflow: 'hidden',
     marginBottom: 16,
+    zIndex: 10, // Higher than admin overlay
   },
   mediaImage: {
     width: '100%',

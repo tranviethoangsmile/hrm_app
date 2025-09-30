@@ -585,5 +585,16 @@
       "create_success": "Overtime request created successfully",
       "create_error": "Failed to create overtime request"
     }
-  }
+  },
+  "view_details": "View Details",
+  "new_event_available": "New Event Available",
+  "active": "Active",
+  "event_details": "Event Details",
+  "start_date": "Start Date",
+  "end_date": "End Date",
+  "maybe_later": "Maybe Later",
+  "birthday_subtitle": "Happy Birthday!",
+  "new_year_subtitle": "Happy New Year!",
+  "birthday_toast_subtitle": "Tap to celebrate!",
+  "new_year_toast_subtitle": "Tap to celebrate!"
 }

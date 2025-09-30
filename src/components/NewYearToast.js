@@ -48,11 +48,19 @@ const NewYearToast = ({visible, onClose, onShowModal}) => {
         },
       ]}>
       <Pressable style={styles.content} onPress={handlePress}>
-        <Icon name="star" size={20} color="#FFD700" />
-        <Text style={styles.text}>{t('Happy New Year')}! 🎊</Text>
+        <View style={styles.iconContainer}>
+          <Icon name="star" size={24} color="#FFD700" />
+        </View>
+        <View style={styles.textContainer}>
+          <Text style={styles.title}>{t('Happy New Year')}!</Text>
+          <Text style={styles.subtitle}>🎊 {t('new_year_toast_subtitle', 'Tap to celebrate!')} 🎊</Text>
+        </View>
+        <View style={styles.arrowContainer}>
+          <Icon name="chevron-right" size={16} color="#FFD700" />
+        </View>
       </Pressable>
       <TouchableOpacity style={styles.closeButton} onPress={onClose}>
-        <Icon name="times" size={16} color="#666" />
+        <Icon name="times" size={16} color="rgba(255,255,255,0.8)" />
       </TouchableOpacity>
     </Animated.View>
   );
@@ -64,36 +72,65 @@ const styles = StyleSheet.create({
     top: 0,
     left: 0,
     right: 0,
-    backgroundColor: '#FFF',
-    padding: 12,
+    backgroundColor: '#FFD700',
+    padding: 16,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
-    shadowColor: '#000',
+    shadowColor: '#FFD700',
     shadowOffset: {
       width: 0,
-      height: 2,
+      height: 4,
     },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
     zIndex: 1000,
   },
   content: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
+    gap: 12,
   },
-  text: {
-    fontSize: 16,
-    color: '#333',
+  iconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(0,0,0,0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  textContainer: {
+    flex: 1,
+  },
+  title: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#2D1B69',
+    marginBottom: 2,
+    textShadowColor: 'rgba(255,255,255,0.5)',
+    textShadowOffset: {width: 1, height: 1},
+    textShadowRadius: 2,
+  },
+  subtitle: {
+    fontSize: 14,
     fontWeight: '500',
+    color: 'rgba(45,27,105,0.8)',
+  },
+  arrowContainer: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: 'rgba(0,0,0,0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   closeButton: {
-    padding: 5,
+    padding: 8,
+    borderRadius: 20,
+    backgroundColor: 'rgba(0,0,0,0.1)',
+    marginLeft: 8,
   },
 });
 
