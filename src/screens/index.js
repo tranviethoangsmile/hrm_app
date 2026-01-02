@@ -21,6 +21,7 @@ import Message from './Message';
 import ChatScreen from './ChatScreen';
 import Uniform from './Uniform';
 import OvertimeConfirm from './OvertimeConfirm';
+import Dependent from './Dependent';
 export {
   Checkin,
   Ai,
@@ -45,4 +46,5 @@ export {
   ChatScreen,
   Uniform,
   OvertimeConfirm,
+  Dependent,
 };

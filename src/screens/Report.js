@@ -433,7 +433,7 @@ const Report = () => {
               </Text>
             </View>
             
-            <View style={styles.filterRow}>
+            <View style={[styles.filterRow, { zIndex: 9999 }]}>
               <View style={styles.filterItem}>
                 <View style={styles.filterLabel}>
                   <IconFA name="clock" size={14} color={colors.primary} />
@@ -449,13 +449,17 @@ const Report = () => {
                   items={shiftValueList}
                   maxHeight={300}
                   autoScroll
+                  listMode="SCROLLVIEW"
                   onChangeValue={item => handleSetShift(item)}
                   placeholder={t('S')}
                   placeholderStyle={{color: colors.placeholder}}
-                  zIndexInverse={1}
+                  zIndex={9999}
+                  zIndexInverse={9998}
                   dropDownContainerStyle={[styles.dropdown, { 
                     backgroundColor: colors.surface,
-                    borderColor: colors.border 
+                    borderColor: colors.border,
+                    zIndex: 9999,
+                    elevation: 9999,
                   }]}
                   style={[styles.dropdown, { 
                     backgroundColor: colors.backgroundSecondary,
@@ -483,10 +487,13 @@ const Report = () => {
                   onChangeValue={item => handleSetPro(item)}
                   placeholder={t('product')}
                   placeholderStyle={{color: colors.placeholder}}
-                  zIndexInverse={1}
+                  zIndex={9999}
+                  zIndexInverse={9998}
                   dropDownContainerStyle={[styles.dropdown, { 
                     backgroundColor: colors.surface,
-                    borderColor: colors.border 
+                    borderColor: colors.border,
+                    zIndex: 9999,
+                    elevation: 9999,
                   }]}
                   style={[styles.dropdown, { 
                     backgroundColor: colors.backgroundSecondary,
@@ -685,6 +692,8 @@ const styles = StyleSheet.create({
   },
   filterItem: {
     flex: 1,
+    position: 'relative',
+    zIndex: 9999,
   },
   filterLabel: {
     flexDirection: 'row',

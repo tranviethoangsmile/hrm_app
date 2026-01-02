@@ -248,7 +248,12 @@ const Salary = () => {
           <Text style={styles.headerTitle} numberOfLines={1} ellipsizeMode="tail">
             {getTranslation('salary.title', 'Salary')}
           </Text>
-          <View style={styles.headerSpacer} />
+          <TouchableOpacity
+            onPress={() => navigation.navigate('Dependent')}
+            style={[styles.backButton, {backgroundColor: theme.isDarkMode ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.2)'}]}
+            hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}>
+            <Icon name="people-outline" size={20} color="#fff" />
+          </TouchableOpacity>
         </View>
       </LinearGradient>
 

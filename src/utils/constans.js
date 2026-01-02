@@ -1,4 +1,4 @@
-export const BASE_URL = 'http://54.200.248.63';
+export const BASE_URL = 'http://44.243.93.22';
 export const PORT = ':80';
 // export const BASE_URL = 'http://192.168.1.64';
 // export const PORT = ':4000';
@@ -59,3 +59,5 @@ export const DAY_OFFS = '/dayoffs';
 export const GET_EVENT_WITH_POSITION = '/getwithposition';
 export const OVERTIME_REQUEST = '/overtimerequest';
 export const UPDATE_IS_CONFIRM_OVERTIME_REQUEST = '/updateisconfirm';
+export const TAX_DEPENDENT = '/taxdependent';
+export const UPDATE_STATUS = '/update-status';
