@@ -194,6 +194,8 @@ const Dependent = () => {
   };
 
   const closeModal = () => {
+    setRelationshipOpen(false);
+    setGenderOpen(false);
     setModalVisible(false);
     resetForm();
   };
@@ -608,7 +610,9 @@ const Dependent = () => {
             <ScrollView
               style={styles.modalBody}
               showsVerticalScrollIndicator={false}
-              keyboardShouldPersistTaps="handled">
+              keyboardShouldPersistTaps="handled"
+              nestedScrollEnabled={true}
+              scrollEnabled={!relationshipOpen && !genderOpen}>
               <View style={styles.formGroup}>
                 <Text style={[styles.label, {color: colors.text}]}>
                   {t('dependent.name', 'Tên')} <Text style={styles.required}>*</Text>
@@ -622,7 +626,7 @@ const Dependent = () => {
                 />
               </View>
 
-              <View style={styles.formGroup}>
+              <View style={[styles.formGroup, {zIndex: relationshipOpen ? 10000 : 1}]}>
                 <Text style={[styles.label, {color: colors.text}]}>
                   {t('dependent.relationship', 'Mối quan hệ')} <Text style={styles.required}>*</Text>
                 </Text>
@@ -630,18 +634,75 @@ const Dependent = () => {
                   open={relationshipOpen}
                   value={relationship}
                   items={relationshipOptions}
-                  setOpen={setRelationshipOpen}
+                  setOpen={(open) => {
+                    setRelationshipOpen(open);
+                    if (open) {
+                      setGenderOpen(false);
+                    }
+                  }}
                   setValue={setRelationship}
                   placeholder={t('dependent.relationship_placeholder', 'Chọn mối quan hệ')}
-                  style={[styles.dropdown, {backgroundColor: colors.background}]}
-                  textStyle={{color: colors.text}}
-                  dropDownContainerStyle={{backgroundColor: colors.surface}}
-                  zIndex={3000}
+                  placeholderStyle={{color: colors.textTertiary}}
+                  style={[
+                    styles.dropdown,
+                    {
+                      backgroundColor: colors.background,
+                      borderColor: relationshipOpen ? colors.primary : colors.border,
+                    },
+                  ]}
+                  textStyle={{color: colors.text, fontSize: 16}}
+                  dropDownContainerStyle={{
+                    backgroundColor: isDarkMode ? '#1e293b' : '#ffffff',
+                    borderWidth: 2,
+                    borderColor: colors.primary,
+                    borderRadius: 12,
+                    marginTop: 4,
+                    marginBottom: 4,
+                    paddingVertical: 8,
+                    paddingHorizontal: 4,
+                    shadowColor: '#000',
+                    shadowOffset: {width: 0, height: 6},
+                    shadowOpacity: 0.4,
+                    shadowRadius: 16,
+                    elevation: 25,
+                    maxHeight: 250,
+                  }}
+                  selectedItemLabelStyle={{
+                    color: colors.primary,
+                    fontWeight: '700',
+                  }}
+                  listItemLabelStyle={{
+                    color: colors.text,
+                    fontSize: 16,
+                    paddingVertical: 12,
+                    paddingHorizontal: 16,
+                  }}
+                  itemSeparatorStyle={{
+                    backgroundColor: colors.border,
+                    height: 1,
+                    marginHorizontal: 12,
+                  }}
+                  arrowIconStyle={{tintColor: colors.textSecondary}}
+                  tickIconStyle={{tintColor: colors.primary}}
+                  zIndex={10000}
                   zIndexInverse={1000}
+                  maxHeight={200}
+                  autoScroll
+                  listMode="FLATLIST"
+                  bottomOffset={100}
+                  flatListProps={{
+                    style: {
+                      backgroundColor: isDarkMode ? '#1e293b' : '#ffffff',
+                    },
+                    contentContainerStyle: {
+                      paddingVertical: 4,
+                    },
+                  }}
+                  onClose={() => setRelationshipOpen(false)}
                 />
               </View>
 
-              <View style={styles.formGroup}>
+              <View style={[styles.formGroup, {zIndex: genderOpen ? 10000 : 1}]}>
                 <Text style={[styles.label, {color: colors.text}]}>
                   {t('dependent.gender', 'Giới tính')} <Text style={styles.required}>*</Text>
                 </Text>
@@ -649,14 +710,70 @@ const Dependent = () => {
                   open={genderOpen}
                   value={gender}
                   items={genderOptions}
-                  setOpen={setGenderOpen}
+                  setOpen={(open) => {
+                    setGenderOpen(open);
+                    if (open) {
+                      setRelationshipOpen(false);
+                    }
+                  }}
                   setValue={setGender}
                   placeholder={t('dependent.gender_placeholder', 'Chọn giới tính')}
-                  style={[styles.dropdown, {backgroundColor: colors.background}]}
-                  textStyle={{color: colors.text}}
-                  dropDownContainerStyle={{backgroundColor: colors.surface}}
-                  zIndex={2000}
+                  placeholderStyle={{color: colors.textTertiary}}
+                  style={[
+                    styles.dropdown,
+                    {
+                      backgroundColor: colors.background,
+                      borderColor: genderOpen ? colors.primary : colors.border,
+                    },
+                  ]}
+                  textStyle={{color: colors.text, fontSize: 16}}
+                  dropDownContainerStyle={{
+                    backgroundColor: isDarkMode ? '#1e293b' : '#ffffff',
+                    borderWidth: 2,
+                    borderColor: colors.primary,
+                    borderRadius: 12,
+                    marginTop: 1,
+                    marginBottom: 1,
+                    paddingVertical: 8,
+                    paddingHorizontal: 4,
+                    shadowColor: '#000',
+                    shadowOffset: {width: 0, height: 6},
+                    shadowOpacity: 0.4,
+                    shadowRadius: 16,
+                    elevation: 25,
+                    maxHeight: 250,
+                  }}
+                  selectedItemLabelStyle={{
+                    color: colors.primary,
+                    fontWeight: '700',
+                  }}
+                  listItemLabelStyle={{
+                    color: colors.text,
+                    fontSize: 16,
+                    paddingVertical: 6,
+                    paddingHorizontal: 16,
+                  }}
+                  itemSeparatorStyle={{
+                    backgroundColor: colors.border,
+                    height: 1,
+                    marginHorizontal: 12,
+                  }}
+                  arrowIconStyle={{tintColor: colors.textSecondary}}
+                  tickIconStyle={{tintColor: colors.primary}}
+                  zIndex={10000}
                   zIndexInverse={2000}
+                  maxHeight={250}
+                  autoScroll
+                  listMode="FLATLIST"
+                  flatListProps={{
+                    style: {
+                      backgroundColor: isDarkMode ? '#1e293b' : '#ffffff',
+                    },
+                    contentContainerStyle: {
+                      paddingVertical: 4,
+                    },
+                  }}
+                  onClose={() => setGenderOpen(false)}
                 />
               </View>
 
@@ -821,7 +938,7 @@ const Dependent = () => {
                     <ActivityIndicator size="small" color="#fff" />
                   ) : (
                     <Text style={styles.saveButtonText}>
-                      {t('save', 'Lưu')}
+                      {t('Save', 'Lưu')}
                     </Text>
                   )}
                 </LinearGradient>
@@ -1061,11 +1178,13 @@ const createStyles = (colors, isDarkMode) =>
     },
     modalBody: {
       padding: 16,
-      maxHeight: 500,
+      paddingBottom: 20,
+      maxHeight: 450,
     },
     formGroup: {
       marginBottom: 16,
       zIndex: 1,
+      position: 'relative',
     },
     label: {
       fontSize: 14,
@@ -1088,10 +1207,11 @@ const createStyles = (colors, isDarkMode) =>
       textAlignVertical: 'top',
     },
     dropdown: {
-      borderWidth: 1,
-      borderColor: colors.border,
+      borderWidth: 1.5,
       borderRadius: 12,
-      minHeight: 50,
+      minHeight: 52,
+      paddingHorizontal: 16,
+      paddingVertical: 4,
     },
     dateButton: {
       flexDirection: 'row',
@@ -1154,6 +1274,9 @@ const createStyles = (colors, isDarkMode) =>
       gap: 12,
       borderTopWidth: 1,
       borderTopColor: colors.border,
+      zIndex: 10001,
+      elevation: 10001,
+      backgroundColor: colors.surface,
     },
     cancelButton: {
       flex: 1,

@@ -349,7 +349,7 @@ const Splash = () => {
       </View>
       
       <View style={styles.versionTextView}>
-        <Text style={styles.text}>V.02.01.26</Text>
+        <Text style={styles.text}>V.03.01.26</Text>
       </View>
     </View>
   );
