@@ -26,6 +26,7 @@ import {
   Uniform,
   OvertimeConfirm,
   Dependent,
+  DependentSupportAmount,
 } from '../screens';
 const Stack = createStackNavigator();
 const MainNavigator = () => {
@@ -146,6 +147,11 @@ const MainNavigator = () => {
         <Stack.Screen
           name="Dependent"
           component={Dependent}
+          options={{headerShown: false}}
+        />
+        <Stack.Screen
+          name="DependentSupportAmount"
+          component={DependentSupportAmount}
           options={{headerShown: false}}
         />
       </Stack.Navigator>

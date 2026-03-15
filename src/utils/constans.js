@@ -1,6 +1,6 @@
-export const BASE_URL = 'http://44.243.93.22';
+export const BASE_URL = 'http://35.163.204.45';
 export const PORT = ':80';
-// export const BASE_URL = 'http://192.168.1.64';
+// export const BASE_URL = 'http://192.168.10.3';
 // export const PORT = ':4000';
 export const API = '/api';
 export const VERSION = '/version';
@@ -61,3 +61,7 @@ export const OVERTIME_REQUEST = '/overtimerequest';
 export const UPDATE_IS_CONFIRM_OVERTIME_REQUEST = '/updateisconfirm';
 export const TAX_DEPENDENT = '/taxdependent';
 export const UPDATE_STATUS = '/update-status';
+export const DEPENDENT_SUPPORT_AMOUNT = '/dependent-support-amount';
+export const GET_BY_ID = '/getbyid';
+export const GET_BY_TAX_DEPENDENT_ID = '/getbytaxdependentid';
+export const GET_BY_TAX_DEPENDENT_ID_AND_YEAR = '/getbytaxdependentidandyear';

@@ -22,6 +22,7 @@ import ChatScreen from './ChatScreen';
 import Uniform from './Uniform';
 import OvertimeConfirm from './OvertimeConfirm';
 import Dependent from './Dependent';
+import DependentSupportAmount from './DependentSupportAmount';
 export {
   Checkin,
   Ai,
@@ -47,4 +48,5 @@ export {
   Uniform,
   OvertimeConfirm,
   Dependent,
+  DependentSupportAmount,
 };

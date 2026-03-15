@@ -33,21 +33,17 @@ import {
   NotificationServices,
   requestUserPermission,
 } from '../utils/notification/PushNotifications';
-import {
-  TEXT_COLOR,
-  THEME_COLOR,
-  THEME_COLOR_2,
-  BACKGROUND_COLOR,
-  LIGHT_GRAY,
-  ERROR_COLOR,
-} from '../utils/Colors';
 
 import OptimizedLoader from '../components/OptimizedLoader';
 import {DarkModeToggle} from '../components';
 import {useTheme} from '../hooks/useTheme';
-import {COLORS, SIZES, FONTS, SHADOWS} from '../config/theme';
+import {SIZES} from '../config/theme';
 
 const {width, height} = Dimensions.get('window');
+
+// Đồng bộ với Splash / DependentSupportAmount
+const LIGHT_GRADIENT = ['#667eea', '#764ba2'];
+const DARK_GRADIENT = ['#1a1a2e', '#2d1b4e', '#16213e'];
 
 const Login = () => {
   const {t} = useTranslation();
@@ -200,7 +196,7 @@ const Login = () => {
   return (
     <SafeAreaView style={[styles.container, {backgroundColor: colors.background}]}>
       <StatusBar
-        barStyle={isDarkMode ? "light-content" : "dark-content"}
+        barStyle="light-content"
         backgroundColor="transparent"
         translucent
       />
@@ -210,18 +206,13 @@ const Login = () => {
         <DarkModeToggle size="small" showLabel={false} />
       </View>
 
-      {/* Animated Background */}
+      {/* Background gradient - đồng bộ với Splash */}
       <LinearGradient
-        colors={isDarkMode ? ['#1a1a2e', '#16213e', '#0f3460', '#533483'] : ['#667eea', '#764ba2', '#f093fb', '#f5576c']}
+        colors={isDarkMode ? DARK_GRADIENT : LIGHT_GRADIENT}
         style={styles.animatedBackground}
         start={{x: 0, y: 0}}
         end={{x: 1, y: 1}}
       />
-
-      {/* Floating Orbs */}
-      <Animated.View style={[styles.orb1, {opacity: fadeAnim}]} />
-      <Animated.View style={[styles.orb2, {opacity: fadeAnim}]} />
-      <Animated.View style={[styles.orb3, {opacity: fadeAnim}]} />
 
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -243,23 +234,19 @@ const Login = () => {
               <View style={styles.headerSection}>
                 <Animated.View
                   style={[styles.logoContainer, {opacity: fadeAnim}]}>
-                  <LinearGradient
-                    colors={['rgba(255,255,255,0.2)', 'rgba(255,255,255,0.1)']}
-                    style={styles.logoGradient}
-                    start={{x: 0, y: 0}}
-                    end={{x: 1, y: 1}}>
+                  <View style={styles.logoWrap}>
                     <Image
                       source={require('../assets/images/daihatsu-metal-logo.jpg')}
                       style={styles.logo}
                       resizeMode="contain"
                     />
-                  </LinearGradient>
+                  </View>
                 </Animated.View>
 
                 <Animated.View
                   style={[styles.textContainer, {opacity: fadeAnim}]}>
-                  <Text style={[styles.welcomeTitle, {color: colors.text}]}>{t('Welcome Back')}</Text>
-                  <Text style={[styles.welcomeSubtitle, {color: colors.textSecondary}]}>
+                  <Text style={styles.welcomeTitle}>{t('Welcome Back')}</Text>
+                  <Text style={styles.welcomeSubtitle}>
                     {t('Sign in to continue')}
                   </Text>
                 </Animated.View>
@@ -267,19 +254,15 @@ const Login = () => {
 
               {/* Login Form */}
               <Animated.View style={[styles.formSection, {opacity: fadeAnim}]}>
-                <LinearGradient
-                  colors={isDarkMode ? ['rgba(28,28,30,0.95)', 'rgba(28,28,30,0.9)'] : ['rgba(255,255,255,0.95)', 'rgba(255,255,255,0.9)']}
-                  style={styles.formCard}
-                  start={{x: 0, y: 0}}
-                  end={{x: 1, y: 1}}>
+                <View style={[styles.formCard, {backgroundColor: colors.surface}]}>
                   {/* Username Input */}
                   <View style={styles.inputGroup}>
                     <View
                       style={[
                         styles.inputContainer,
                         {
-                          backgroundColor: isDarkMode ? '#2C2C2E' : '#f8f9fa',
-                          borderColor: badUserName ? colors.error : 'transparent',
+                          backgroundColor: colors.backgroundSecondary,
+                          borderColor: badUserName ? colors.error : colors.border,
                         },
                         badUserName ? styles.inputError : null,
                       ]}>
@@ -293,8 +276,8 @@ const Login = () => {
                         placeholder={t('Username or Email')}
                         value={userName}
                         onChangeText={setUserName}
-                        style={[styles.input, {color: isDarkMode ? '#FFFFFF' : '#000000'}]}
-                        placeholderTextColor={isDarkMode ? '#8E8E93' : 'rgba(0,0,0,0.5)'}
+                        style={[styles.input, {color: colors.text}]}
+                        placeholderTextColor={colors.placeholder}
                       />
                     </View>
                     {!!badUserName && (
@@ -316,8 +299,8 @@ const Login = () => {
                       style={[
                         styles.inputContainer,
                         {
-                          backgroundColor: isDarkMode ? '#2C2C2E' : '#f8f9fa',
-                          borderColor: badPassword ? colors.error : 'transparent',
+                          backgroundColor: colors.backgroundSecondary,
+                          borderColor: badPassword ? colors.error : colors.border,
                         },
                         badPassword ? styles.inputError : null,
                       ]}>
@@ -332,8 +315,8 @@ const Login = () => {
                         value={password}
                         onChangeText={setPassword}
                         secureTextEntry={!secury}
-                        style={[styles.input, {color: isDarkMode ? '#FFFFFF' : '#000000'}]}
-                        placeholderTextColor={isDarkMode ? '#8E8E93' : 'rgba(0,0,0,0.5)'}
+                        style={[styles.input, {color: colors.text}]}
+                        placeholderTextColor={colors.placeholder}
                       />
                       <TouchableOpacity
                         style={styles.eyeButton}
@@ -383,8 +366,8 @@ const Login = () => {
                     <LinearGradient
                       colors={
                         visible
-                          ? ['#ccc', '#ccc']
-                          : isDarkMode ? [colors.primary, colors.primary2] : [THEME_COLOR, THEME_COLOR_2]
+                          ? [colors.border, colors.border]
+                          : isDarkMode ? [colors.primary, colors.primary2] : LIGHT_GRADIENT
                       }
                       style={styles.loginButtonGradient}
                       start={{x: 0, y: 0}}
@@ -421,7 +404,7 @@ const Login = () => {
                       {t('Forgot Password?')}
                     </Text>
                   </TouchableOpacity>
-                </LinearGradient>
+                </View>
               </Animated.View>
             </Animated.View>
           </ScrollView>
@@ -444,33 +427,6 @@ const styles = StyleSheet.create({
     top: 0,
     bottom: 0,
   },
-  orb1: {
-    position: 'absolute',
-    width: 200,
-    height: 200,
-    borderRadius: 100,
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    top: -50,
-    right: -50,
-  },
-  orb2: {
-    position: 'absolute',
-    width: 150,
-    height: 150,
-    borderRadius: 75,
-    backgroundColor: 'rgba(255,255,255,0.05)',
-    bottom: 100,
-    left: -30,
-  },
-  orb3: {
-    position: 'absolute',
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: 'rgba(255,255,255,0.08)',
-    top: height * 0.3,
-    right: 50,
-  },
   keyboardAvoidingView: {
     flex: 1,
   },
@@ -489,41 +445,35 @@ const styles = StyleSheet.create({
     marginBottom: 40,
   },
   logoContainer: {
-    marginBottom: 24,
+    marginBottom: 20,
   },
-  logoGradient: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: {width: 0, height: 10},
-    shadowOpacity: 0.3,
-    shadowRadius: 20,
-    elevation: 10,
-  },
-  logo: {
+  logoWrap: {
     width: 100,
     height: 100,
     borderRadius: 50,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    overflow: 'hidden',
+  },
+  logo: {
+    width: 88,
+    height: 88,
+    borderRadius: 44,
   },
   textContainer: {
     alignItems: 'center',
   },
   welcomeTitle: {
-    fontSize: 32,
+    fontSize: 26,
     fontWeight: '700',
     color: '#fff',
     textAlign: 'center',
-    marginBottom: 8,
-    textShadowColor: 'rgba(0,0,0,0.3)',
-    textShadowOffset: {width: 0, height: 2},
-    textShadowRadius: 4,
+    marginBottom: 6,
   },
   welcomeSubtitle: {
-    fontSize: 16,
-    color: 'rgba(255,255,255,0.8)',
+    fontSize: 15,
+    color: 'rgba(255,255,255,0.9)',
     textAlign: 'center',
     fontWeight: '400',
   },
@@ -532,13 +482,13 @@ const styles = StyleSheet.create({
     maxWidth: 400,
   },
   formCard: {
-    borderRadius: 20,
-    padding: 24,
+    borderRadius: SIZES.radius + 4,
+    padding: SIZES.padding,
     shadowColor: '#000',
-    shadowOffset: {width: 0, height: 15},
-    shadowOpacity: 0.25,
-    shadowRadius: 25,
-    elevation: 12,
+    shadowOffset: {width: 0, height: 8},
+    shadowOpacity: 0.15,
+    shadowRadius: 16,
+    elevation: 8,
   },
   inputGroup: {
     marginBottom: 16,
@@ -546,19 +496,13 @@ const styles = StyleSheet.create({
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: 16,
-    borderWidth: 2,
-    paddingHorizontal: 16,
-    height: 56,
-    shadowColor: '#000',
-    shadowOffset: {width: 0, height: 2},
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
+    borderRadius: SIZES.radius,
+    borderWidth: 1.5,
+    paddingHorizontal: 14,
+    height: SIZES.inputHeight + 4,
   },
   inputError: {
-    borderColor: ERROR_COLOR,
-    backgroundColor: '#fff5f5',
+    backgroundColor: 'rgba(255,59,48,0.08)',
   },
   inputIcon: {
     marginRight: 12,
@@ -566,7 +510,6 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     fontSize: 16,
-    color: '#333',
     paddingVertical: 0,
     backgroundColor: 'transparent',
     borderWidth: 0,
@@ -583,7 +526,6 @@ const styles = StyleSheet.create({
     paddingLeft: 4,
   },
   errorText: {
-    color: ERROR_COLOR,
     fontSize: 14,
     marginLeft: 6,
     fontWeight: '500',
@@ -591,32 +533,31 @@ const styles = StyleSheet.create({
   saveLoginOption: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 12,
-    marginBottom: 8,
+    marginTop: 10,
+    marginBottom: 6,
   },
   checkbox: {
     marginRight: 8,
   },
   optionText: {
     fontSize: 14,
-    color: '#666',
     fontWeight: '500',
   },
   loginButton: {
-    borderRadius: 14,
+    borderRadius: SIZES.radius + 2,
     overflow: 'hidden',
-    marginBottom: 20,
-    shadowColor: THEME_COLOR,
-    shadowOffset: {width: 0, height: 6},
-    shadowOpacity: 0.25,
-    shadowRadius: 10,
-    elevation: 6,
+    marginBottom: 16,
+    shadowColor: '#667eea',
+    shadowOffset: {width: 0, height: 4},
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 4,
   },
   loginButtonDisabled: {
     opacity: 0.7,
   },
   loginButtonGradient: {
-    height: 56,
+    height: 52,
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
@@ -644,18 +585,17 @@ const styles = StyleSheet.create({
   },
   darkModeToggleContainer: {
     position: 'absolute',
-    top: 50,
-    right: 20,
+    top: Platform.OS === 'ios' ? 54 : 40,
+    right: 16,
     zIndex: 1000,
-    backgroundColor: 'rgba(255,255,255,0.15)',
-    borderRadius: 25,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    borderRadius: 20,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    elevation: 4,
     shadowColor: '#000',
-    shadowOffset: {width: 0, height: 4},
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 5,
-    backdropFilter: 'blur(10px)',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
   },
 });

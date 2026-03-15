@@ -137,7 +137,6 @@ const Dependent = () => {
         setDependents([]);
       }
     } catch (error) {
-      console.error('Error fetching dependents:', error);
       setDependents([]);
     } finally {
       setIsLoading(false);
@@ -326,7 +325,6 @@ const Dependent = () => {
         );
       }
     } catch (error) {
-      console.error('Error saving dependent:', error);
       showMessage(t('dependent.save_error', 'Lưu thất bại'), 'error');
     } finally {
       setIsLoading(false);
@@ -364,7 +362,6 @@ const Dependent = () => {
                 showMessage(t('dependent.delete_error', 'Xóa thất bại'), 'error');
               }
             } catch (error) {
-              console.error('Error deleting dependent:', error);
               showMessage(t('dependent.delete_error', 'Xóa thất bại'), 'error');
             } finally {
               setIsLoading(false);
@@ -418,6 +415,11 @@ const Dependent = () => {
             </View>
           </View>
           <View style={styles.cardActions}>
+            <TouchableOpacity
+              onPress={() => navigation.navigate('DependentSupportAmount', {dependent: item})}
+              style={[styles.actionButton, {backgroundColor: '#10b98120'}]}>
+              <Icon name="wallet-outline" size={18} color="#10b981" />
+            </TouchableOpacity>
             <TouchableOpacity
               onPress={() => openEditModal(item)}
               style={[styles.actionButton, {backgroundColor: colors.primary + '20'}]}>
