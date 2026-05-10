@@ -45,7 +45,37 @@ import Header from '../components/common/Header';
 // Modern UI components and theme
 import {useTheme} from '../hooks/useTheme';
 
-const {width: SCREEN_WIDTH} = Dimensions.get('window');
+const {width: SCREEN_WIDTH, height: SCREEN_HEIGHT} = Dimensions.get('window');
+const ERROR_OPTIONS = [
+  {code: '21', labelKey: 'daily_error_name_21'},
+  {code: '22', labelKey: 'daily_error_name_22'},
+  {code: '23', labelKey: 'daily_error_name_23'},
+  {code: '24', labelKey: 'daily_error_name_24'},
+  {code: '31', labelKey: 'daily_error_name_31'},
+  {code: '33', labelKey: 'daily_error_name_33'},
+  {code: '41', labelKey: 'daily_error_name_41'},
+  {code: '44', labelKey: 'daily_error_name_44'},
+  {code: '45', labelKey: 'daily_error_name_45'},
+  {code: '46', labelKey: 'daily_error_name_46'},
+  {code: '47', labelKey: 'daily_error_name_47'},
+  {code: '48', labelKey: 'daily_error_name_48'},
+  {code: '49', labelKey: 'daily_error_name_49'},
+  {code: '61', labelKey: 'daily_error_name_61'},
+  {code: '62', labelKey: 'daily_error_name_62'},
+  {code: '63', labelKey: 'daily_error_name_63'},
+  {code: '65', labelKey: 'daily_error_name_65'},
+  {code: '66', labelKey: 'daily_error_name_66'},
+  {code: '67', labelKey: 'daily_error_name_67'},
+  {code: '71', labelKey: 'daily_error_name_71'},
+  {code: '73', labelKey: 'daily_error_name_73'},
+  {code: '74', labelKey: 'daily_error_name_74'},
+  {code: '76', labelKey: 'daily_error_name_76'},
+  {code: '81', labelKey: 'daily_error_name_81'},
+  {code: '91', labelKey: 'daily_error_name_91'},
+  {code: '92', labelKey: 'daily_error_name_92'},
+  {code: '94', labelKey: 'daily_error_name_94'},
+  {code: '95', labelKey: 'daily_error_name_95'},
+];
 
 const Daily = () => {
   const {t} = useTranslation();
@@ -65,35 +95,43 @@ const Daily = () => {
     Alert.alert(t('noti'), t(message));
   };
   const listProduct = [
-    {label: 'C84_BUV', value: '0.55'},
+    {label: 'C84_BUV', value: '1.1'},
     {label: 'D16E_COP', value: '0.42'},
     {label: 'D637F', value: '1'},
     {label: 'D93F_PAO_DC2', value: '0.97'},
-    {label: 'D67E_PAO', value: '1.02'},
-    {label: 'D61F_PAO_DC2', value: '0.88'},
+    {label: 'D67E_PAO', value: '0.87'},
+    {label: 'D61F_PAO_DC2', value: '0.86'},
     {label: 'D66_DC3', value: '1.26'},
-    {label: 'DF93_4', value: '0.95'},
-    {label: 'DF93_3', value: '0.95'},
+    {label: 'DF93_4', value: '1.07'},
+    {label: 'DF93_3', value: '1.07'},
     {label: 'D042F_PAO_DC3', value: '1.08'},
-    {label: 'D14KFR', value: '1.03'},
-    {label: 'DK05FR_1', value: '1.03'},
-    {label: 'DK05FR_2', value: '1.03'},
+    {label: 'D14KFR', value: '1.01'},
+    {label: 'DK05FR_1', value: '1'},
+    {label: 'DK05FR_2', value: '1'},
     {label: 'C84N', value: '1.13'},
-    {label: 'C089', value: '1.13'},
+    {label: 'C089', value: '1.23'},
     {label: 'D860F_PAO_DC3', value: '1.26'},
-    {label: 'D67E_CTC', value: '0.80'},
-    {label: 'D66_5', value: '0.85'},
-    {label: 'D66_6', value: '0.85'},
+    {label: 'D67E_CTC', value: '0.98'},
+    {label: 'D86E_CTC', value: '0.98'},
+    {label: 'D66_5', value: '0.88'},
+    {label: 'D66_6', value: '0.88'},
+    {label: 'D66_7', value: '0.91'},
     {label: 'D93F_PAO_DC4', value: '1.08'},
     {label: 'D042F_PAO_DC4', value: '0.97'},
-    {label: 'D14KRR', value: '1.02'},
-    {label: 'DK05RR_1', value: '0.91'},
-    {label: 'DK05RR_2', value: '0.91'},
+    {label: 'D14KRR_2', value: '0.95'},
+    {label: 'D14KRR_1', value: '1.08'},
+    {label: 'DK05RR_1', value: '0.92'},
+    {label: 'DK05RR_2', value: '0.92'},
+    {label: 'DK05RR_3', value: '0.92'},
     {label: 'D61F_PAO_DC4', value: '0.8'},
+    {label: 'D59P', value: '0.84'},
   ];
   const [isShowModalSendReport, setShowModalSendReport] = useState(false);
   const [isModalProductChoiceVisible, setIsModalProductChoiceVisible] =
     useState(false);
+  const [isModalErrorChoiceVisible, setIsModalErrorChoiceVisible] =
+    useState(false);
+  const [selectedErrorRowId, setSelectedErrorRowId] = useState(null);
   const [loader, setLoader] = useState(false);
 
   const [shift, setShift] = useState('');
@@ -113,24 +151,115 @@ const Daily = () => {
   const [tempPercent, setTempPercent] = useState(0);
   const [isShowSendBtn, setIsShowSendBtn] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [reportErrors, setReportErrors] = useState([]);
+
+  const getErrorDescriptionByCode = code => {
+    const option = ERROR_OPTIONS.find(item => item.code === code);
+    if (!option) {
+      return '';
+    }
+    return t(option.labelKey);
+  };
+
+  const getErrorDisplayLabel = code => {
+    if (!code) {
+      return '';
+    }
+    return `${code} - ${getErrorDescriptionByCode(code)}`;
+  };
+
+  const errorOptionsForModal = ERROR_OPTIONS.map(item => ({
+    label: `${item.code} - ${getErrorDescriptionByCode(item.code)}`,
+    value: item.code,
+  }));
+
+  const handleAddErrorRow = () => {
+    setReportErrors(prev => [
+      ...prev,
+      {
+        id: `${Date.now()}-${prev.length}`,
+        code: '',
+        description: '',
+        shutdown_time: '',
+        error_date: moment(today).format('YYYY-MM-DD'),
+      },
+    ]);
+  };
+
+  const handleDeleteErrorRow = rowId => {
+    setReportErrors(prev => prev.filter(item => item.id !== rowId));
+  };
+
+  const handleOpenErrorPicker = rowId => {
+    setSelectedErrorRowId(rowId);
+    setIsModalErrorChoiceVisible(true);
+  };
+
+  const handleSelectErrorCode = selected => {
+    if (!selectedErrorRowId) {
+      return;
+    }
+    setReportErrors(prev =>
+      prev.map(item =>
+        item.id === selectedErrorRowId
+          ? {
+              ...item,
+              code: selected.value,
+              description:
+                !item.description ||
+                item.description === getErrorDescriptionByCode(item.code)
+                  ? getErrorDescriptionByCode(selected.value)
+                  : item.description,
+            }
+          : item,
+      ),
+    );
+    setSelectedErrorRowId(null);
+    setIsModalErrorChoiceVisible(false);
+  };
+
+  const handleChangeErrorField = (rowId, field, value) => {
+    setReportErrors(prev =>
+      prev.map(item => (item.id === rowId ? {...item, [field]: value} : item)),
+    );
+  };
 
   const handleSendDailyReport = async () => {
     try {
       setLoader(true);
-      if (operator_history === '' || shift === '') {
+      if (operator_history === '' || shift === '' || productName === '') {
         setLoader(false);
         throw new Error('not.empty');
       }
+      const totalQuantity = parseFloat(quatity) || 0;
+      const defectiveQuantity =
+      (parseFloat(error) || 0)
+      const cycleTime = parseFloat(productValue) || 0;
+      const operatedTime = parseFloat(timeWork) || 0;
+      const shutdownTime = parseFloat(shutdown_time) || 0;
+      const goodQuantity = parseFloat(quantity-error-fisrtProduct-temperature) || 0;
+      const mappedErrors = reportErrors
+        .filter(item => item.code && item.description)
+        .map(item => ({
+          code: item.code,
+          description: item.description,
+          shutdown_time: parseFloat(item.shutdown_time) || 0,
+          error_date: item.error_date || moment(today).format('YYYY-MM-DD'),
+        }));
       const field = {
         product: productName,
         user_id: authData?.data?.data?.id,
         department_id: authData?.data?.data?.department_id,
         date: moment(today).format('YYYY-MM-DD'),
         shift: shift,
-        quantity: quantity,
-        operated_time: timeWork,
-        shutdown_time: shutdown_time,
+        quantity: totalQuantity,
+        good_quantity: goodQuantity,
+        defective_quantity: defectiveQuantity,
+        cycle_time: cycleTime,
+        operated_time: operatedTime,
+        shutdown_time: shutdownTime,
         operator_history: operator_history,
+        errors: mappedErrors,
       };
       const dailyReport = await axios.post(
         `${BASE_URL}${PORT}${API}${VERSION}${V1}${DAILY_REPORT}${CREATE}`,
@@ -520,7 +649,13 @@ const Daily = () => {
             </TouchableOpacity>
           </LinearGradient>
 
-          <View style={styles.modalContent}>
+          <ScrollView
+            style={styles.modalScrollView}
+            contentContainerStyle={styles.modalContent}
+            showsVerticalScrollIndicator={true}
+            nestedScrollEnabled={true}
+            scrollEnabled={!isModalErrorChoiceVisible}
+            keyboardShouldPersistTaps="handled">
             <Text style={[styles.modalSectionTitle, { color: colors.text }]}>
               {t('select_work_shift', 'Chọn ca làm việc')}
             </Text>
@@ -606,6 +741,91 @@ const Daily = () => {
               </View>
             </View>
 
+            <View style={[styles.errorSectionContainer, { backgroundColor: colors.backgroundTertiary }]}>
+              <View style={styles.errorSectionHeader}>
+                <Text style={[styles.modalSectionTitle, { color: colors.text, marginBottom: 0 }]}>
+                  {t('error_list_input', 'Danh sách lỗi')}
+                </Text>
+                <TouchableOpacity
+                  style={[styles.addErrorButton, { backgroundColor: colors.primary }]}
+                  onPress={handleAddErrorRow}
+                  activeOpacity={0.8}>
+                  <Icon name="plus" size={16} color="#fff" />
+                  <Text style={styles.addErrorButtonText}>
+                    {t('add_error', 'Thêm lỗi')}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+
+              {reportErrors.length === 0 && (
+                <Text style={[styles.noErrorText, { color: colors.textSecondary }]}>
+                  {t('no_error_added', 'Chưa có lỗi nào được thêm')}
+                </Text>
+              )}
+
+              {reportErrors.map((item, index) => (
+                <View
+                  key={item.id}
+                  style={[styles.errorRowCard, { borderColor: colors.border, backgroundColor: colors.surface }]}>
+                  <View style={styles.errorRowHeader}>
+                    <Text style={[styles.errorRowTitle, { color: colors.text }]}>
+                      {t('error_entry', 'Lỗi')} #{index + 1}
+                    </Text>
+                    <TouchableOpacity
+                      onPress={() => handleDeleteErrorRow(item.id)}
+                      style={styles.errorDeleteButton}>
+                      <Icon name="delete-outline" size={20} color={colors.danger} />
+                    </TouchableOpacity>
+                  </View>
+
+                  <TouchableOpacity
+                    style={[styles.errorCodeSelector, { borderColor: colors.border, backgroundColor: colors.backgroundSecondary }]}
+                    onPress={() => handleOpenErrorPicker(item.id)}
+                    activeOpacity={0.8}>
+                    <Text
+                      style={[
+                        styles.errorCodeSelectorText,
+                        {color: item.code ? colors.text : colors.placeholder},
+                      ]}>
+                      {item.code
+                        ? getErrorDisplayLabel(item.code)
+                        : t('select_error_code', 'Chọn mã lỗi')}
+                    </Text>
+                    <Icon name="chevron-down" size={18} color={colors.primary} />
+                  </TouchableOpacity>
+
+                  <TextInput
+                    style={[styles.errorDescriptionInput, {
+                      borderColor: colors.border,
+                      backgroundColor: colors.backgroundSecondary,
+                      color: colors.text,
+                    }]}
+                    value={item.description}
+                    onChangeText={text =>
+                      handleChangeErrorField(item.id, 'description', text)
+                    }
+                    placeholder={t('error_description', 'Mô tả lỗi')}
+                    placeholderTextColor={colors.placeholder}
+                  />
+
+                  <TextInput
+                    style={[styles.errorDescriptionInput, {
+                      borderColor: colors.border,
+                      backgroundColor: colors.backgroundSecondary,
+                      color: colors.text,
+                    }]}
+                    value={item.shutdown_time?.toString()}
+                    onChangeText={text =>
+                      handleChangeErrorField(item.id, 'shutdown_time', text)
+                    }
+                    keyboardType="number-pad"
+                    placeholder={t('error_shutdown_time', 'Thời gian dừng của lỗi (phút)')}
+                    placeholderTextColor={colors.placeholder}
+                  />
+                </View>
+              ))}
+            </View>
+
             <TouchableOpacity
               style={styles.modalSendButton}
               onPress={handleSendDailyReport}
@@ -620,7 +840,7 @@ const Daily = () => {
                 </Text>
               </LinearGradient>
             </TouchableOpacity>
-          </View>
+          </ScrollView>
         </View>
       </View>
     </Modal>
@@ -643,6 +863,11 @@ const Daily = () => {
         <ScrollView
           style={styles.scrollView}
           contentContainerStyle={styles.scrollViewContent}
+          scrollEnabled={
+            !isShowModalSendReport &&
+            !isModalProductChoiceVisible &&
+            !isModalErrorChoiceVisible
+          }
           showsVerticalScrollIndicator={false}>
           <OptimizedLoader visible={loader} />
 
@@ -659,6 +884,16 @@ const Daily = () => {
           />
 
           {renderSendModal()}
+
+          <DailyModal
+            products={errorOptionsForModal}
+            visible={isModalErrorChoiceVisible}
+            onClose={() => {
+              setIsModalErrorChoiceVisible(false);
+              setSelectedErrorRowId(null);
+            }}
+            onProductSelected={handleSelectErrorCode}
+          />
         </ScrollView>
       </KeyboardAvoidingView>
 
@@ -889,6 +1124,10 @@ const styles = StyleSheet.create({
   },
   modalContent: {
     padding: 24,
+    paddingBottom: 30,
+  },
+  modalScrollView: {
+    maxHeight: SCREEN_HEIGHT * 0.7,
   },
   modalSectionTitle: {
     fontSize: 16,
@@ -957,6 +1196,77 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 8,
     elevation: 8,
+  },
+  errorSectionContainer: {
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 20,
+  },
+  errorSectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  addErrorButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 20,
+  },
+  addErrorButtonText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: 'bold',
+    marginLeft: 6,
+  },
+  noErrorText: {
+    fontSize: 13,
+    fontStyle: 'italic',
+    marginBottom: 4,
+  },
+  errorRowCard: {
+    borderWidth: 1,
+    borderRadius: 12,
+    padding: 12,
+    marginTop: 10,
+  },
+  errorRowHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  errorRowTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  errorDeleteButton: {
+    padding: 4,
+  },
+  errorCodeSelector: {
+    borderWidth: 1,
+    borderRadius: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    marginBottom: 10,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  errorCodeSelectorText: {
+    flex: 1,
+    marginRight: 6,
+    fontSize: 13,
+  },
+  errorDescriptionInput: {
+    borderWidth: 1,
+    borderRadius: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    marginBottom: 10,
+    fontSize: 13,
   },
 });
 

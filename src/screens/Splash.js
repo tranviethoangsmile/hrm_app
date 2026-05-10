@@ -150,7 +150,7 @@ const Splash = () => {
       </View>
 
       <View style={styles.footer}>
-        <Text style={styles.versionText}>V.15.03.26</Text>
+        <Text style={styles.versionText}>V.10.05.26</Text>
       </View>
     </View>
   );
