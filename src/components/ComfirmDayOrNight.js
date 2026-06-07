@@ -22,7 +22,7 @@ import {
 import {useNavigation} from '@react-navigation/native';
 import ModalMessage from './ModalMessage';
 
-const ConfirmDayOrNight = ({visible, closeModal, checkin, time, t}) => {
+const ConfirmDayOrNight = ({visible, closeModal, checkin, time, t, token}) => {
   const navigate = useNavigation();
   const [messageModal, setMessageModal] = useState('');
   const [messageType, setMessageType] = useState('success');
@@ -43,7 +43,6 @@ const ConfirmDayOrNight = ({visible, closeModal, checkin, time, t}) => {
 
   const handleCheckinWithQrCode = async (shift, action) => {
     let date_check;
-
     if (shift === 'DAY') {
       date_check = checkin.date;
     } else if (shift === 'NIGHT' && action === 'IN') {
@@ -53,7 +52,6 @@ const ConfirmDayOrNight = ({visible, closeModal, checkin, time, t}) => {
         .subtract(1, 'days')
         .format('YYYY-MM-DD');
     }
-
     const time_check = moment(new Date()).format('HH:mm');
     const field = {
       user_id: checkin.user_id,
@@ -61,12 +59,16 @@ const ConfirmDayOrNight = ({visible, closeModal, checkin, time, t}) => {
       check_time: time_check,
       work_shift: shift,
     };
-
     try {
       const result = await axios.post(
         `${BASE_URL}${PORT}${API}${VERSION}${V1}${CHECKIN}${CREATE}`,
         {
           ...field,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         },
       );
       if (!result?.data?.success) {

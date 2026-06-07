@@ -51,7 +51,8 @@ const Checkin = () => {
   const [qrContentModal, setQrContentModal] = useState(false);
   const [qrContent, setQrContent] = useState('');
 
-  const authData = useSelector(state => state.auth);
+  const authData = useSelector(state => state.auth.data);
+  const token = authData?.token
   const today = moment();
 
   const showMessage = (msg, type, dur) => {
@@ -96,11 +97,16 @@ const Checkin = () => {
       }
     };
     checkLanguage();
-  });
+  }, []);
 
   // Debug effect for QR modal
   useEffect(() => {
-    console.log('QR Modal state changed:', qrContentModal, 'Content:', qrContent);
+    console.log(
+      'QR Modal state changed:',
+      qrContentModal,
+      'Content:',
+      qrContent,
+    );
   }, [qrContentModal, qrContent]);
 
   const closeModal = () => {
@@ -108,13 +114,12 @@ const Checkin = () => {
   };
 
   // Check if authData is available before creating checkin object
-  const checkin = authData?.data?.data?.id
+  const checkin = authData?.data?.id
     ? {
-        user_id: authData.data.data.id,
+        user_id: authData?.data?.id,
         date: today.format('YYYY-MM-DD'),
       }
     : null;
-
   const handleQRCodeScanner = value => {
     if (!isScanned) {
       const qrValue = value.nativeEvent.codeStringValue;
@@ -192,6 +197,10 @@ const Checkin = () => {
         showMessage('auth.required', 'error', 1000);
         return;
       }
+      if (!token) {
+        showMessage('auth.required', 'error', 1000);
+        return;
+      }
 
       const field = {
         user_id: checkin.user_id,
@@ -204,6 +213,11 @@ const Checkin = () => {
         `${BASE_URL}${PORT}${API}${VERSION}${V1}${CHECKIN}${CREATE}`,
         {
           ...field,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         },
       );
       if (result?.data?.success) {
@@ -311,7 +325,7 @@ const Checkin = () => {
       </LinearGradient>
 
       <ConfirmDayOrNight
-        auth={authData}
+        token={token}
         visible={isVisible}
         onClose={() => {
           setVisible(!isVisible);
@@ -345,7 +359,7 @@ const Checkin = () => {
                 <Icon name="close" size={24} color="#666" />
               </TouchableOpacity>
             </View>
-            
+
             <ScrollView style={styles.contentContainer}>
               <View style={styles.qrContentBox}>
                 <Text style={styles.qrContentText}>
@@ -353,7 +367,7 @@ const Checkin = () => {
                 </Text>
               </View>
             </ScrollView>
-            
+
             <View style={styles.modalActions}>
               <TouchableOpacity
                 style={styles.copyButton}
@@ -363,12 +377,10 @@ const Checkin = () => {
                   colors={['#4FACFE', '#00F2FE']}
                   style={styles.copyGradient}>
                   <Icon name="copy-outline" size={20} color="#fff" />
-                  <Text style={styles.copyButtonText}>
-                    {t('copy', 'Copy')}
-                  </Text>
+                  <Text style={styles.copyButtonText}>{t('copy', 'Copy')}</Text>
                 </LinearGradient>
               </TouchableOpacity>
-              
+
               <TouchableOpacity
                 style={styles.closeModalButton}
                 onPress={closeQrContentModal}
