@@ -52,6 +52,8 @@ const Order = () => {
   }, []);
 
   const authData = useSelector(state => state.auth);
+  const userInfo = authData?.data?.data;
+  const token = authData?.data?.token;
   
   // Animation values
   const fadeAnim = useState(new Animated.Value(0))[0];
@@ -102,17 +104,19 @@ const Order = () => {
     () => ({
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${authData?.data?.token || ''}`,
+        Authorization: `Bearer ${token || ''}`,
+        token: token || '',
+        'x-access-token': token || '',
       },
     }),
-    [authData?.data?.token],
+    [token],
   );
 
   // Memoize getUserOrders function
   const getUserOrders = useCallback(async () => {
     try {
       // Check if authData is available
-      if (!authData?.data?.data?.id) {
+      if (!userInfo?.id) {
         console.log('AuthData not available, skipping getUserOrders');
         return;
       }
@@ -120,7 +124,7 @@ const Order = () => {
       const res = await axios.post(
         `${BASE_URL}${PORT}${API}${VERSION}${V1}${ORDER_URL}/user/`,
         {
-          user_id: authData.data.data.id,
+          user_id: userInfo.id,
         },
         config,
       );
@@ -150,7 +154,7 @@ const Order = () => {
       setOrderedDates([]);
       setPicked(0);
     }
-  }, [authData?.data?.data?.id, config]);
+  }, [userInfo?.id, config]);
 
   // Memoize check_ordered function
   const check_ordered = useCallback(
@@ -545,6 +549,7 @@ const Order = () => {
         getUserOrders={getUserOrders}
         onOrderDeleted={handleOrderDeleted}
         t={t}
+        config={config}
       />
 
       <ModalMessage

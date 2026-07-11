@@ -23,6 +23,7 @@ import Uniform from './Uniform';
 import OvertimeConfirm from './OvertimeConfirm';
 import Dependent from './Dependent';
 import DependentSupportAmount from './DependentSupportAmount';
+import FirstLoginPassword from './FirstLoginPassword';
 export {
   Checkin,
   Ai,
@@ -49,4 +50,5 @@ export {
   OvertimeConfirm,
   Dependent,
   DependentSupportAmount,
+  FirstLoginPassword,
 };

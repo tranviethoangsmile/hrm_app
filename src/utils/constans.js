@@ -3,6 +3,7 @@ export const PORT = ':80';
 // export const BASE_URL = 'http://192.168.10.6';
 // export const PORT = ':4000';
 export const API = '/api';
+export const APP = '/app'
 export const VERSION = '/version';
 export const V1 = '/v1';
 export const USER_URL = '/users';

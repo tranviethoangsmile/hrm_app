@@ -1,5 +1,5 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import React, {useEffect, useState, useCallback, useRef} from 'react';
+import React, {useEffect, useState, useCallback, useRef, useMemo} from 'react';
 import {
   View,
   Text,
@@ -69,6 +69,7 @@ const HomeTab = ({onScrollList}) => {
   const [showBirthdayToast, setShowBirthdayToast] = useState(false);
   const [showNewYearToast, setShowNewYearToast] = useState(false);
   const authData = useSelector(state => state.auth);
+  const token = authData?.data?.token;
   const [userInfo, setUserInfo] = useState(authData?.data.data);
   const [err, setError] = useState('');
   const [posts, setPosts] = useState([]);
@@ -89,7 +90,17 @@ const HomeTab = ({onScrollList}) => {
   // const fadeAnim = useRef(new Animated.Value(0)).current;
   // const slideAnim = useRef(new Animated.Value(50)).current;
   // const scaleAnim = useRef(new Animated.Value(0.95)).current;
-
+  const config = useMemo(
+    () => ({
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token || ''}`,
+        token: token || '',
+        'x-access-token': token || '',
+      },
+    }),
+    [token],
+  );
   const onClose = () => {
     setVisibleControl(false);
     setIsNotification(false);
@@ -136,7 +147,7 @@ const HomeTab = ({onScrollList}) => {
 
       const events = await axios.post(url, {
         position: userInfo.position,
-      });
+      }, config);
       
       if (events?.data?.success && events?.data?.data?.length > 0) {
         setEvent(events?.data.data[0]);
@@ -174,7 +185,7 @@ const HomeTab = ({onScrollList}) => {
       };
 
       const url = `${BASE_URL}${PORT}${API}${VERSION}${V1}${INFORMATION}${GET_ALL_BY_FIELD}`;
-      const informations = await axios.post(url, {field});
+      const informations = await axios.post(url, {},config);
 
       if (informations?.data?.success) {
         setError('');

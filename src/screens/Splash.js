@@ -85,11 +85,36 @@ const Splash = () => {
       if (lang != null) {
         startAnimations();
         timeout = setTimeout(() => {
-          if (authData?.data != null) {
-            navigation.replace('Main');
-          } else {
-            navigation.replace('Login');
-          }
+          Promise.all([
+            AsyncStorage.getItem('FIRST_LOGIN_REQUIRED'),
+            AsyncStorage.getItem('userInfor'),
+          ])
+            .then(([firstLoginFlag, savedUser]) => {
+              const isFirstLoginRequired = firstLoginFlag === 'true';
+              const hasSavedUser = !!savedUser;
+              const savedUserInfo = savedUser ? JSON.parse(savedUser) : null;
+
+              if (isFirstLoginRequired && hasSavedUser) {
+                navigation.replace('FirstLoginPassword', {
+                  userInfo: savedUserInfo,
+                });
+                return;
+              }
+
+              if (authData?.data != null) {
+                navigation.replace('Main');
+                return;
+              }
+
+              navigation.replace('Login');
+            })
+            .catch(() => {
+              if (authData?.data != null) {
+                navigation.replace('Main');
+              } else {
+                navigation.replace('Login');
+              }
+            });
         }, 3000);
       } else {
         navigation.navigate('Language');
@@ -108,7 +133,11 @@ const Splash = () => {
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
+      <StatusBar
+        barStyle="light-content"
+        backgroundColor="transparent"
+        translucent
+      />
       <LinearGradient
         colors={gradientColors}
         start={{x: 0, y: 0}}
@@ -143,7 +172,8 @@ const Splash = () => {
               ]}
             />
           </View>
-          <Animated.Text style={[styles.loadingText, {opacity: loadingOpacity}]}>
+          <Animated.Text
+            style={[styles.loadingText, {opacity: loadingOpacity}]}>
             {t('Loading')}
           </Animated.Text>
         </View>

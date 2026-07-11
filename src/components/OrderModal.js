@@ -33,6 +33,7 @@ const OrderModal = ({
   textColor,
   titleColor,
   subColor,
+  config
 }) => {
   const {colors, sizes, fonts, shadows, isDarkMode} = useTheme();
   const today = moment();
@@ -98,6 +99,7 @@ const OrderModal = ({
     try {
       const deleteOrder = await axios.delete(
         `${BASE_URL}${PORT}${API}${VERSION}${V1}${ORDER_URL}/${id}`,
+        config
       );
       if (deleteOrder?.data?.success) {
         // Success - remove from local state and notify parent

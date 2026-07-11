@@ -27,12 +27,13 @@ import {
   OvertimeConfirm,
   Dependent,
   DependentSupportAmount,
+  FirstLoginPassword,
 } from '../screens';
 const Stack = createStackNavigator();
 const MainNavigator = () => {
   return (
     <NavigationContainer>
-        <Stack.Navigator>
+      <Stack.Navigator>
         <Stack.Screen
           name="Splash"
           component={Splash}
@@ -76,6 +77,11 @@ const MainNavigator = () => {
         <Stack.Screen
           name="Login"
           component={Login}
+          options={{headerShown: false}}
+        />
+        <Stack.Screen
+          name="FirstLoginPassword"
+          component={FirstLoginPassword}
           options={{headerShown: false}}
         />
         <Stack.Screen
@@ -155,7 +161,7 @@ const MainNavigator = () => {
           options={{headerShown: false}}
         />
       </Stack.Navigator>
-      </NavigationContainer>
+    </NavigationContainer>
   );
 };
 

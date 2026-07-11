@@ -42,6 +42,12 @@ const ConfirmDayOrNight = ({visible, closeModal, checkin, time, t, token}) => {
   };
 
   const handleCheckinWithQrCode = async (shift, action) => {
+    if (!token) {
+      showAlert('auth.required');
+      closeModal();
+      return;
+    }
+
     let date_check;
     if (shift === 'DAY') {
       date_check = checkin.date;
@@ -68,6 +74,8 @@ const ConfirmDayOrNight = ({visible, closeModal, checkin, time, t, token}) => {
         {
           headers: {
             Authorization: `Bearer ${token}`,
+            token: token,
+            'x-access-token': token,
           },
         },
       );

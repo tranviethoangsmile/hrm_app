@@ -51,8 +51,9 @@ const Checkin = () => {
   const [qrContentModal, setQrContentModal] = useState(false);
   const [qrContent, setQrContent] = useState('');
 
-  const authData = useSelector(state => state.auth.data);
-  const token = authData?.token
+  const authData = useSelector(state => state.auth);
+  const userInfo = authData?.data?.data;
+  const token = authData?.data?.token;
   const today = moment();
 
   const showMessage = (msg, type, dur) => {
@@ -61,7 +62,13 @@ const Checkin = () => {
     setMessageType(type);
     setDuration(dur);
   };
-
+  const HEADER_CONFIG = {
+    headers: {
+      Authorization: `Bearer ${token}`,
+      token: token,
+      'x-access-token': token,
+    },
+  };
   const copyToClipboard = async () => {
     try {
       await Clipboard.setString(qrContent);
@@ -114,9 +121,9 @@ const Checkin = () => {
   };
 
   // Check if authData is available before creating checkin object
-  const checkin = authData?.data?.id
+  const checkin = userInfo?.id
     ? {
-        user_id: authData?.data?.id,
+        user_id: userInfo.id,
         date: today.format('YYYY-MM-DD'),
       }
     : null;
@@ -146,6 +153,10 @@ const Checkin = () => {
         showMessage('auth.required', 'error', 1500);
         return;
       }
+      if (!token) {
+        showMessage('auth.required', 'error', 1500);
+        return;
+      }
 
       const time = moment().format('HH:mm:ss A');
       if (
@@ -157,6 +168,7 @@ const Checkin = () => {
           {
             ...checkin,
           },
+          HEADER_CONFIG,
         );
         if (checked?.success) {
           showMessage('picked success', 'success', 1000);
@@ -169,6 +181,7 @@ const Checkin = () => {
           {
             ...checkin,
           },
+          HEADER_CONFIG,
         );
         if (checked?.success) {
           showMessage('success', 'success', 1000);
@@ -214,11 +227,7 @@ const Checkin = () => {
         {
           ...field,
         },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        },
+        HEADER_CONFIG,
       );
       if (result?.data?.success) {
         showMessage('checkin.success', 'success', 1000);
