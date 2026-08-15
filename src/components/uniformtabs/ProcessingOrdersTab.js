@@ -6,6 +6,7 @@ import {
   StyleSheet,
   Animated,
   RefreshControl,
+  Alert,
 } from 'react-native';
 import React, {useEffect, useState, useRef, useCallback} from 'react';
 import {
@@ -20,10 +21,10 @@ import {
   DELETE,
 } from '../../utils/constans';
 import ModalMessage from '../ModalMessage';
-import axios from 'axios';
+import apiClient from '../../services/apiClient';
 import {useTranslation} from 'react-i18next';
-import Icon from 'react-native-vector-icons/MaterialIcons';
-import {COLORS, SIZES, FONTS, SHADOWS, LAYOUT} from '../../config/theme';
+import Icon from 'react-native-vector-icons/Ionicons';
+import LinearGradient from 'react-native-linear-gradient';
 
 const ProcessingOrdersTab = ({USER_INFOR, isDarkMode, colors}) => {
   const {t} = useTranslation();
@@ -45,7 +46,7 @@ const ProcessingOrdersTab = ({USER_INFOR, isDarkMode, colors}) => {
   const handle_get_all_uniform_order_of_user = useCallback(async () => {
     try {
       const URL = `${BASE_URL}${PORT}${API}${VERSION}${V1}${UNIFORM_ORDER}${SEARCH}${WITH_USER_ID}`;
-      const response = await axios.post(URL, {
+      const response = await apiClient.post(URL, {
         user_id: USER_INFOR.id,
         order_status: 'pending',
       });
@@ -61,24 +62,33 @@ const ProcessingOrdersTab = ({USER_INFOR, isDarkMode, colors}) => {
   }, [USER_INFOR.id, showMessage]);
 
   const handle_delete_order = async orderId => {
-    try {
-      const deleteURL = `${BASE_URL}${PORT}${API}${VERSION}${V1}${UNIFORM_ORDER}${DELETE}`;
-      const response = await axios.post(deleteURL, {
-        id: orderId,
-      });
-      if (response.data.success) {
-        // Cập nhật state trước
-        setUniformOrders(orders =>
-          orders.filter(order => order.id !== orderId),
-        );
-        // Hiển thị message sau
-        showMessage('success', 'success', 1500);
-      } else {
-        showMessage('unSuccess', 'warning', 1500);
-      }
-    } catch (error) {
-      showMessage('err', 'error', 2000);
-    }
+    Alert.alert(t('confirm_delete'), t('wantDelete'), [
+      {text: t('cancel'), style: 'cancel'},
+      {
+        text: t('delete'),
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            const deleteURL = `${BASE_URL}${PORT}${API}${VERSION}${V1}${UNIFORM_ORDER}${DELETE}`;
+            const response = await apiClient.post(deleteURL, {
+              id: orderId,
+            });
+            if (response.data.success) {
+              // Cập nhật state trước
+              setUniformOrders(orders =>
+                orders.filter(order => order.id !== orderId),
+              );
+              // Hiển thị message sau
+              showMessage('success', 'success', 1500);
+            } else {
+              showMessage('unSuccess', 'warning', 1500);
+            }
+          } catch (error) {
+            showMessage('err', 'error', 2000);
+          }
+        },
+      },
+    ]);
   };
 
   const onRefresh = useCallback(async () => {
@@ -117,54 +127,79 @@ const ProcessingOrdersTab = ({USER_INFOR, isDarkMode, colors}) => {
   const opacity = animatedValue;
 
   const renderItem = ({item}) => (
-    <Animated.View style={[styles.orderContainer, {backgroundColor: colors.surface}]}>
+    <Animated.View
+      style={[
+        styles.orderContainer,
+        {backgroundColor: colors.surface, borderColor: colors.border},
+      ]}>
       <View style={styles.orderHeader}>
-        <View style={styles.orderIcon}>
-          <Icon name="pending" size={24} color={COLORS.warning} />
+        <View
+          style={[styles.orderIcon, {backgroundColor: colors.warning + '22'}]}>
+          <Icon name="time-outline" size={22} color={colors.warning} />
         </View>
         <View style={styles.orderInfo}>
-          <Text style={[styles.uniformType, {color: colors.text}]}>{t(`${item.uniform_type}`)}</Text>
+          <Text style={[styles.uniformType, {color: colors.text}]}>
+            {t(`${item.uniform_type}`)}
+          </Text>
           <Text style={[styles.orderDate, {color: colors.textSecondary}]}>
             {t('order_date')}: {item.created_at?.split('T')[0] || 'N/A'}
           </Text>
         </View>
         <TouchableOpacity
-          style={styles.deleteButton}
+          style={[styles.deleteButton, {backgroundColor: colors.danger + '15'}]}
           onPress={() => handle_delete_order(item.id)}>
-          <Icon name="delete" size={20} color={COLORS.danger} />
+          <Icon name="trash-outline" size={18} color={colors.danger} />
         </TouchableOpacity>
       </View>
-      
+
+      <LinearGradient
+        colors={['transparent', 'transparent']}
+        style={styles.separator}
+      />
+
       <View style={styles.orderDetails}>
         <View style={styles.detailRow}>
-          <Icon name="straighten" size={16} color={colors.textSecondary} />
-          <Text style={[styles.detailLabel, {color: colors.textSecondary}]}>{t('size')}:</Text>
-          <Text style={[styles.detailsValue, {color: colors.text}]}>{item.uniform_size}</Text>
+          <Icon name="resize-outline" size={15} color={colors.textSecondary} />
+          <Text style={[styles.detailLabel, {color: colors.textSecondary}]}>
+            {t('size')}:
+          </Text>
+          <Text style={[styles.detailsValue, {color: colors.text}]}>
+            {item.uniform_size}
+          </Text>
         </View>
         <View style={styles.detailRow}>
-          <Icon name="shopping-cart" size={16} color={colors.textSecondary} />
-          <Text style={[styles.detailLabel, {color: colors.textSecondary}]}>{t('quantity')}:</Text>
-          <Text style={[styles.detailsValue, {color: colors.text}]}>{item.quantity}</Text>
+          <Icon name="cart-outline" size={15} color={colors.textSecondary} />
+          <Text style={[styles.detailLabel, {color: colors.textSecondary}]}>
+            {t('quantity')}:
+          </Text>
+          <Text style={[styles.detailsValue, {color: colors.text}]}>
+            {item.quantity}
+          </Text>
         </View>
       </View>
 
       <View style={styles.statusSection}>
         <View style={styles.statusContainer}>
-          <View style={styles.statusIndicator}>
+          <View
+            style={[
+              styles.statusIndicator,
+              {backgroundColor: colors.warning + '30'},
+            ]}>
             <Animated.View style={[styles.statusDot, {opacity}]} />
           </View>
-          <Text style={[styles.statusLabel, {color: colors.textSecondary}]}>{t('status')}:</Text>
-          <Animated.Text style={[styles.status, {opacity, color: COLORS.warning}]}>
+          <Text style={[styles.statusLabel, {color: colors.textSecondary}]}>
+            {t('status')}:
+          </Text>
+          <Text style={[styles.status, {color: colors.warning}]}>
             {t(`${item.order_status}`)}
-          </Animated.Text>
+          </Text>
         </View>
-        <View style={[styles.progressBar, {backgroundColor: colors.borderColor}]}>
-          <Animated.View 
-            style={[
-              styles.progressFill, 
-              {opacity: opacity}
-            ]} 
-          />
+        <View
+          style={[
+            styles.progressBar,
+            {backgroundColor: colors.warning + '20'},
+          ]}>
+          <Animated.View style={[styles.progressFill, {opacity}]} />
         </View>
       </View>
     </Animated.View>
@@ -178,14 +213,23 @@ const ProcessingOrdersTab = ({USER_INFOR, isDarkMode, colors}) => {
           renderItem={renderItem}
           keyExtractor={item => item.id}
           contentContainerStyle={styles.list}
+          showsVerticalScrollIndicator={false}
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
           }
         />
       ) : (
         <View style={styles.emptyContainer}>
-          <Icon name="inbox" size={64} color={colors.textSecondary} />
-          <Text style={[styles.noDataText, {color: colors.textSecondary}]}>{t('not.data')}</Text>
+          <View
+            style={[
+              styles.emptyIcon,
+              {backgroundColor: colors.backgroundSecondary},
+            ]}>
+            <Icon name="time-outline" size={40} color={colors.textSecondary} />
+          </View>
+          <Text style={[styles.noDataText, {color: colors.textSecondary}]}>
+            {t('not.data')}
+          </Text>
         </View>
       )}
       {isMessageModalVisible && (
@@ -207,100 +251,96 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   list: {
-    padding: SIZES.padding,
+    padding: 16,
   },
   orderContainer: {
-    borderRadius: SIZES.radius * 2,
-    marginBottom: SIZES.padding,
-    ...SHADOWS.large,
-    elevation: 6,
-    shadowColor: COLORS.primary,
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
+    borderRadius: 20,
+    marginBottom: 14,
+    borderWidth: 0.5,
     overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 4},
+    shadowOpacity: 0.07,
+    shadowRadius: 12,
+    elevation: 3,
   },
   orderHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: SIZES.padding,
-    backgroundColor: COLORS.warning + '10',
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.borderColor,
+    padding: 14,
+  },
+  separator: {
+    height: 1,
+    backgroundColor: 'rgba(0,0,0,0.04)',
   },
   orderIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: COLORS.warning + '20',
-    ...LAYOUT.center,
-    marginRight: SIZES.base,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 10,
   },
   orderInfo: {
     flex: 1,
   },
   uniformType: {
-    ...FONTS.h3,
-    marginBottom: SIZES.base / 4,
+    fontSize: 15,
     fontWeight: '700',
+    marginBottom: 2,
   },
   orderDate: {
-    ...FONTS.body5,
     fontSize: 12,
   },
   orderDetails: {
-    padding: SIZES.padding,
-    paddingBottom: SIZES.base,
+    padding: 14,
+    paddingBottom: 6,
   },
   detailRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: SIZES.base / 2,
+    marginBottom: 6,
+    gap: 6,
   },
   detailLabel: {
-    ...FONTS.body4,
-    marginLeft: SIZES.base / 2,
-    marginRight: SIZES.base,
+    fontSize: 13,
     fontWeight: '500',
   },
   detailsValue: {
-    ...FONTS.h4,
+    fontSize: 14,
     fontWeight: '600',
   },
   statusSection: {
-    padding: SIZES.padding,
+    padding: 14,
     paddingTop: 0,
   },
   statusContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: SIZES.base,
+    marginBottom: 8,
   },
   statusIndicator: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    backgroundColor: COLORS.warning + '30',
-    marginRight: SIZES.base / 2,
-    ...LAYOUT.center,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    marginRight: 6,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   statusDot: {
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: COLORS.warning,
+    backgroundColor: '#FF9500',
   },
   statusLabel: {
-    ...FONTS.body4,
-    marginRight: SIZES.base / 2,
+    fontSize: 13,
+    marginRight: 6,
     fontWeight: '500',
   },
   status: {
-    ...FONTS.h4,
-    fontWeight: '600',
+    fontSize: 14,
+    fontWeight: '700',
   },
   progressBar: {
     height: 4,
@@ -309,7 +349,7 @@ const styles = StyleSheet.create({
   },
   progressFill: {
     height: '100%',
-    backgroundColor: COLORS.warning,
+    backgroundColor: '#FF9500',
     borderRadius: 2,
     width: '60%',
   },
@@ -317,18 +357,28 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: COLORS.danger + '15',
-    ...LAYOUT.center,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   emptyContainer: {
     flex: 1,
-    ...LAYOUT.center,
-    padding: SIZES.padding,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 16,
+  },
+  emptyIcon: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
   },
   noDataText: {
-    ...FONTS.body3,
-    marginTop: SIZES.base,
+    fontSize: 15,
+    marginTop: 4,
     textAlign: 'center',
+    fontWeight: '600',
   },
 });
 

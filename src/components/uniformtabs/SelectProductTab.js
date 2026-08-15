@@ -8,11 +8,9 @@ import {
   TextInput,
   TouchableOpacity,
   Modal,
-  Animated,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import ModalMessage from '../ModalMessage';
-import {COLORS, SIZES, FONTS, SHADOWS, LAYOUT} from '../../config/theme';
 import moment from 'moment';
 import CheckBox from '@react-native-community/checkbox';
 import {
@@ -25,9 +23,25 @@ import {
   PORT,
 } from '../../utils/constans';
 import {useTranslation} from 'react-i18next';
-import axios from 'axios';
+import apiClient from '../../services/apiClient';
+import LinearGradient from 'react-native-linear-gradient';
 
+import {UniformType} from '../../utils/Enum';
 import {uniformProducts} from '../../utils/uniform/uniform';
+
+const UNIFORM_TYPE_BACKEND = {
+  [UniformType.WORK_JACKET]: 'WORK JAKET',
+  [UniformType.WORK_PANTS]: 'WORK PANTS',
+  [UniformType.COVERALLS]: 'COVERALLS',
+  [UniformType.REFLECTIVE_VEST]: 'REFLECTIVE VEST',
+  [UniformType.ANTI_STATIC_CLOTHING]: 'ANTI STATIC CLOTHING',
+  [UniformType.FLAME_RESISTANT]: 'FLAME RESISTANT',
+  [UniformType.WORK_GLOVES]: 'WORK GLOVES',
+  [UniformType.SAFETY_SHOES]: 'SAFETY SHOES',
+  [UniformType.SAFETY_HELMET]: 'SAFETY HELMET',
+  [UniformType.WORK_SHOES]: 'WORK SHOES',
+  [UniformType.WORK_TROUSERS]: 'WORK TROUSERS',
+};
 
 const SelectProductTab = ({USER_INFOR, isDarkMode, colors}) => {
   const {t} = useTranslation();
@@ -82,7 +96,10 @@ const SelectProductTab = ({USER_INFOR, isDarkMode, colors}) => {
   };
 
   const handleCart = cart => {
-    const items = cart.map(({itemId, ...rest}) => rest);
+    const items = cart.map(({itemId, uniform_type, ...rest}) => ({
+      ...rest,
+      uniform_type: UNIFORM_TYPE_BACKEND[uniform_type] || uniform_type,
+    }));
     return items;
   };
 
@@ -97,10 +114,10 @@ const SelectProductTab = ({USER_INFOR, isDarkMode, colors}) => {
         items: handleCart(cart),
       };
       const URL = `${BASE_URL}${PORT}${API}${VERSION}${V1}${UNIFORM_ORDER}${CREATE}`;
-      const uniformOrder = await axios.post(URL, {
+      const uniformOrder = await apiClient.post(URL, {
         ...value,
       });
-      
+
       if (uniformOrder?.data.success) {
         // Thành công
         setIsChecked(false);
@@ -125,88 +142,120 @@ const SelectProductTab = ({USER_INFOR, isDarkMode, colors}) => {
     const product = uniformProducts.find(p => p.id === item.itemId);
 
     return (
-      <Animated.View style={[styles.cartItem, {backgroundColor: colors.background}]}>
+      <View
+        style={[
+          styles.cartItem,
+          {backgroundColor: colors.surface, borderColor: colors.border},
+        ]}>
         <Image source={product.image} style={styles.cartImage} />
         <View style={styles.cartDetails}>
-          <Text style={[styles.cartName, {color: colors.text}]}>{t(item.uniform_type)}</Text>
+          <Text style={[styles.cartName, {color: colors.text}]}>
+            {t(item.uniform_type)}
+          </Text>
           <View style={styles.cartInfo}>
             <Text style={[styles.cartText, {color: colors.textSecondary}]}>
               {t('size')}:{' '}
-              <Text style={[styles.cartTextBold, {color: colors.text}]}>{item.uniform_size}</Text>
+              <Text style={[styles.cartTextBold, {color: colors.text}]}>
+                {item.uniform_size}
+              </Text>
             </Text>
             <Text style={[styles.cartText, {color: colors.textSecondary}]}>
               {t('qty')}:{' '}
-              <Text style={[styles.cartTextBold, {color: colors.text}]}>{item.quantity}</Text>
+              <Text style={[styles.cartTextBold, {color: colors.text}]}>
+                {item.quantity}
+              </Text>
             </Text>
           </View>
         </View>
         <TouchableOpacity
-          style={styles.deleteButton}
+          style={[styles.deleteButton, {backgroundColor: colors.danger}]}
           onPress={() => handleRemoveFromCart(item.itemId)}>
-          <Icon name={'trash-outline'} size={20} color={COLORS.white} />
+          <Icon name="trash-outline" size={18} color="#fff" />
         </TouchableOpacity>
-      </Animated.View>
+      </View>
     );
   };
 
   const renderItem = ({item}) => (
-    <View style={[styles.itemContainer, {backgroundColor: colors.surface}]}>
+    <View
+      style={[
+        styles.itemContainer,
+        {backgroundColor: colors.surface, borderColor: colors.border},
+      ]}>
       <View style={styles.imageContainer}>
         <Image source={item.image} style={styles.image} />
-        <View style={styles.imageOverlay}>
-          <View style={styles.badge}>
-            <Text style={styles.badgeText}>{t('new')}</Text>
-          </View>
+        <LinearGradient
+          colors={['transparent', 'rgba(0,0,0,0.45)']}
+          style={styles.imageGradient}
+        />
+        <View style={styles.badge}>
+          <Text style={styles.badgeText}>{t('new')}</Text>
         </View>
       </View>
       <View style={styles.detailsContainer}>
         <View style={styles.headerSection}>
-            <Text style={[styles.name, {color: colors.text}]}>{t(item.type)}</Text>
+          <Text style={[styles.name, {color: colors.text}]}>
+            {t(item.type)}
+          </Text>
           <View style={styles.priceContainer}>
-            <Text style={[styles.priceLabel, {color: colors.textSecondary}]}>{t('price')}:</Text>
-            <Text style={[styles.price, {color: COLORS.success}]}>Free</Text>
+            <Text style={[styles.priceLabel, {color: colors.textSecondary}]}>
+              {t('price')}:
+            </Text>
+            <Text style={[styles.price, {color: colors.success}]}>Free</Text>
           </View>
         </View>
 
         <View style={styles.section}>
-          <Text style={[styles.label, {color: colors.textSecondary}]}>{t('size')}:</Text>
+          <Text style={[styles.label, {color: colors.textSecondary}]}>
+            {t('size')}:
+          </Text>
           <View style={styles.sizePicker}>
-            {item.sizes.map(size => (
-              <TouchableOpacity
-                key={size}
-                style={[
-                  styles.sizeOption,
-                  {backgroundColor: colors.surface, borderColor: colors.borderColor},
-                  selectedSize[item.id] === size && styles.selectedSize,
-                ]}
-                onPress={() =>
-                  setSelectedSize({...selectedSize, [item.id]: size})
-                }>
-                <Text
+            {item.sizes.map(size => {
+              const active = selectedSize[item.id] === size;
+              return (
+                <TouchableOpacity
+                  key={size}
                   style={[
-                    styles.sizeText,
-                    {color: colors.text},
-                    selectedSize[item.id] === size && styles.selectedSizeText,
-                  ]}>
-                  {size}
-                </Text>
-              </TouchableOpacity>
-            ))}
+                    styles.sizeOption,
+                    {
+                      borderColor: active ? colors.primary : colors.border,
+                      backgroundColor: active ? colors.primary : colors.surface,
+                    },
+                  ]}
+                  onPress={() =>
+                    setSelectedSize({...selectedSize, [item.id]: size})
+                  }>
+                  <Text
+                    style={[
+                      styles.sizeText,
+                      {color: active ? '#fff' : colors.text},
+                    ]}>
+                    {size}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
           </View>
         </View>
 
         <View style={styles.section}>
-          <Text style={[styles.label, {color: colors.textSecondary}]}>{t('qty')}:</Text>
-          <View style={[styles.quantityContainer, {backgroundColor: colors.background}]}>
+          <Text style={[styles.label, {color: colors.textSecondary}]}>
+            {t('qty')}:
+          </Text>
+          <View
+            style={[
+              styles.quantityContainer,
+              {backgroundColor: colors.backgroundSecondary},
+            ]}>
             <TouchableOpacity
-              style={styles.quantityButton}
+              style={[styles.quantityButton, {backgroundColor: colors.surface}]}
               onPress={() => {
                 const currentQty = qty[item.id] || 1;
                 if (currentQty > 1) {
                   setQuantity({...qty, [item.id]: currentQty - 1});
                 }
               }}>
-              <Icon name="remove" size={16} color={COLORS.primary} />
+              <Icon name="remove" size={16} color={colors.primary} />
             </TouchableOpacity>
             <TextInput
               style={[styles.quantityInput, {color: colors.text}]}
@@ -218,21 +267,28 @@ const SelectProductTab = ({USER_INFOR, isDarkMode, colors}) => {
               placeholderTextColor={colors.placeholder}
             />
             <TouchableOpacity
-              style={styles.quantityButton}
+              style={[styles.quantityButton, {backgroundColor: colors.surface}]}
               onPress={() => {
                 const currentQty = qty[item.id] || 1;
                 setQuantity({...qty, [item.id]: currentQty + 1});
               }}>
-              <Icon name="add" size={16} color={COLORS.primary} />
+              <Icon name="add" size={16} color={colors.primary} />
             </TouchableOpacity>
           </View>
         </View>
 
         <TouchableOpacity
           style={styles.addButton}
-          onPress={() => handleAddToCart(item.id)}>
-          <Icon name="add" size={18} color={COLORS.white} />
-          <Text style={styles.addButtonText}>{t('add_cart')}</Text>
+          onPress={() => handleAddToCart(item.id)}
+          activeOpacity={0.85}>
+          <LinearGradient
+            colors={colors.primaryGradient}
+            start={{x: 0, y: 0}}
+            end={{x: 1, y: 1}}
+            style={styles.addGradient}>
+            <Icon name="add" size={18} color="#fff" />
+            <Text style={styles.addButtonText}>{t('add_cart')}</Text>
+          </LinearGradient>
         </TouchableOpacity>
       </View>
     </View>
@@ -245,25 +301,50 @@ const SelectProductTab = ({USER_INFOR, isDarkMode, colors}) => {
         renderItem={renderItem}
         keyExtractor={item => item.id}
         contentContainerStyle={styles.list}
+        showsVerticalScrollIndicator={false}
       />
 
       <TouchableOpacity
         style={styles.cartButton}
-        onPress={() => setModalVisible(true)}>
-        <Text style={styles.cartButtonText}>
-          {t('cart')} ({cart.length})
-        </Text>
+        onPress={() => setModalVisible(true)}
+        activeOpacity={0.9}>
+        <LinearGradient
+          colors={colors.primaryGradient}
+          start={{x: 0, y: 0}}
+          end={{x: 1, y: 1}}
+          style={styles.cartGradient}>
+          <View style={styles.cartButtonContent}>
+            <Icon name="cart-outline" size={20} color="#fff" />
+            <Text style={styles.cartButtonText}>
+              {t('cart')} ({cart.length})
+            </Text>
+          </View>
+          {cart.length > 0 ? (
+            <View style={styles.cartBadge}>
+              <Text style={styles.cartBadgeText}>{cart.length}</Text>
+            </View>
+          ) : null}
+        </LinearGradient>
       </TouchableOpacity>
 
       <Modal visible={isModalVisible} transparent={true} animationType="slide">
         <View style={styles.modalContainer}>
-          <View style={[styles.modalContent, {backgroundColor: colors.surface}]}>
-            <TouchableOpacity
-              style={styles.closeIcon}
-              onPress={() => setModalVisible(false)}>
-              <Icon name="close" size={24} color={colors.text} />
-            </TouchableOpacity>
-            <Text style={[styles.modalTitle, {color: colors.text}]}>{t('cart')}</Text>
+          <View
+            style={[styles.modalContent, {backgroundColor: colors.surface}]}>
+            <View style={styles.modalHandle} />
+            <View style={styles.modalHeader}>
+              <Text style={[styles.modalTitle, {color: colors.text}]}>
+                {t('cart')}
+              </Text>
+              <TouchableOpacity
+                style={[
+                  styles.closeIcon,
+                  {backgroundColor: colors.backgroundSecondary},
+                ]}
+                onPress={() => setModalVisible(false)}>
+                <Icon name="close" size={20} color={colors.text} />
+              </TouchableOpacity>
+            </View>
 
             <FlatList
               data={cart}
@@ -271,24 +352,32 @@ const SelectProductTab = ({USER_INFOR, isDarkMode, colors}) => {
               keyExtractor={(item, index) => index.toString()}
               style={styles.cartList}
               ListEmptyComponent={
-                <Text style={[styles.emptyCartText, {color: colors.textSecondary}]}>{t('cart_empty')}</Text>
+                <Text
+                  style={[styles.emptyCartText, {color: colors.textSecondary}]}>
+                  {t('cart_empty')}
+                </Text>
               }
             />
 
             {cart.length > 0 && (
               <View style={styles.checkboxContainer}>
                 <CheckBox
-                  tintColors={{true: COLORS.primary, false: COLORS.dark}}
+                  tintColors={{true: colors.primary, false: colors.dark}}
                   value={isChecked}
                   onValueChange={newValue => setIsChecked(newValue)}
                 />
-                <Text style={[styles.checkboxLabel, {color: colors.text}]}>{t('note')}</Text>
+                <Text style={[styles.checkboxLabel, {color: colors.text}]}>
+                  {t('note')}
+                </Text>
               </View>
             )}
 
             {isChecked && (
               <TextInput
-                style={[styles.noteInput, {color: colors.text, borderColor: colors.borderColor}]}
+                style={[
+                  styles.noteInput,
+                  {color: colors.text, borderColor: colors.border},
+                ]}
                 placeholder={t('enter_note')}
                 value={notes}
                 onChangeText={text => setNotes(text)}
@@ -300,8 +389,15 @@ const SelectProductTab = ({USER_INFOR, isDarkMode, colors}) => {
             {cart.length > 0 && (
               <TouchableOpacity
                 style={styles.checkoutButton}
-                onPress={handleCheckout}>
-                <Text style={styles.checkoutButtonText}>{t('buy')}</Text>
+                onPress={handleCheckout}
+                activeOpacity={0.85}>
+                <LinearGradient
+                  colors={colors.primaryGradient}
+                  start={{x: 0, y: 0}}
+                  end={{x: 1, y: 1}}
+                  style={styles.checkoutGradient}>
+                  <Text style={styles.checkoutButtonText}>{t('buy')}</Text>
+                </LinearGradient>
               </TouchableOpacity>
             )}
           </View>
@@ -325,167 +421,186 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   list: {
-    padding: SIZES.padding,
+    padding: 16,
   },
   itemContainer: {
-    borderRadius: SIZES.radius * 2,
-    marginBottom: SIZES.padding,
-    ...SHADOWS.large,
+    borderRadius: 22,
+    marginBottom: 16,
+    borderWidth: 0.5,
     overflow: 'hidden',
-    elevation: 6,
-    shadowColor: COLORS.primary,
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 4},
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 3,
   },
   imageContainer: {
     position: 'relative',
   },
   image: {
     width: '100%',
-    height: 220,
+    height: 180,
     resizeMode: 'cover',
   },
-  imageOverlay: {
+  imageGradient: {
     position: 'absolute',
-    top: SIZES.base,
-    right: SIZES.base,
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
   },
   badge: {
-    backgroundColor: COLORS.success,
-    paddingHorizontal: SIZES.base,
-    paddingVertical: SIZES.base / 2,
-    borderRadius: SIZES.radius,
+    position: 'absolute',
+    top: 12,
+    right: 12,
+    backgroundColor: 'rgba(255,255,255,0.92)',
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    borderRadius: 14,
   },
   badgeText: {
-    ...FONTS.body5,
-    color: COLORS.white,
-    fontWeight: '600',
+    color: '#7C3AED',
+    fontSize: 11,
+    fontWeight: '700',
   },
   detailsContainer: {
-    padding: SIZES.padding,
+    padding: 16,
   },
   headerSection: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: SIZES.base,
+    marginBottom: 12,
   },
   name: {
-    ...FONTS.h2,
+    fontSize: 17,
+    fontWeight: '700',
     flex: 1,
   },
   priceContainer: {
     alignItems: 'flex-end',
   },
   priceLabel: {
-    ...FONTS.body5,
+    fontSize: 12,
   },
   price: {
-    ...FONTS.h3,
-    color: COLORS.success,
-    fontWeight: '700',
+    fontSize: 18,
+    color: '#10B981',
+    fontWeight: '800',
   },
   section: {
-    marginBottom: SIZES.base,
+    marginBottom: 12,
   },
   label: {
-    ...FONTS.body4,
-    marginBottom: SIZES.base / 2,
+    fontSize: 13,
+    marginBottom: 6,
     fontWeight: '600',
   },
   sizePicker: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: SIZES.base / 2,
-    marginBottom: SIZES.base,
+    gap: 8,
   },
   sizeOption: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    borderWidth: 2,
+    width: 46,
+    height: 46,
+    borderRadius: 23,
+    borderWidth: 1.5,
     justifyContent: 'center',
     alignItems: 'center',
-    minHeight: 48,
-  },
-  selectedSize: {
-    backgroundColor: COLORS.primary,
-    borderColor: COLORS.primary,
-    ...SHADOWS.medium,
   },
   sizeText: {
-    ...FONTS.body4,
-    fontWeight: '600',
     fontSize: 14,
-  },
-  selectedSizeText: {
-    color: COLORS.white,
+    fontWeight: '700',
   },
   quantityContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: SIZES.radius,
-    padding: SIZES.base / 2,
+    borderRadius: 14,
+    padding: 4,
     minHeight: 44,
   },
   quantityButton: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: COLORS.white,
     justifyContent: 'center',
     alignItems: 'center',
-    ...SHADOWS.light,
+    borderWidth: 0.5,
+    borderColor: 'rgba(0,0,0,0.05)',
   },
   quantityInput: {
     flex: 1,
     height: 36,
     textAlign: 'center',
-    ...FONTS.body4,
-    fontWeight: '600',
-    marginHorizontal: SIZES.base,
-    paddingVertical: 0,
-    paddingHorizontal: SIZES.base / 2,
     fontSize: 16,
+    fontWeight: '600',
+    marginHorizontal: 8,
+    paddingVertical: 0,
+    paddingHorizontal: 4,
     includeFontPadding: false,
-    textAlignVertical: 'center',
   },
   addButton: {
-    backgroundColor: COLORS.primary,
+    borderRadius: 14,
+    overflow: 'hidden',
+  },
+  addGradient: {
     height: 48,
-    borderRadius: SIZES.radius,
+    borderRadius: 14,
     justifyContent: 'center',
     alignItems: 'center',
     flexDirection: 'row',
-    ...SHADOWS.medium,
+    gap: 6,
   },
   addButtonText: {
-    color: COLORS.white,
-    ...FONTS.h4,
-    marginLeft: SIZES.base / 2,
+    color: '#fff',
+    fontSize: 15,
     fontWeight: '600',
   },
   cartButton: {
     position: 'absolute',
-    bottom: SIZES.padding,
-    right: SIZES.padding,
-    backgroundColor: COLORS.primary,
-    paddingHorizontal: SIZES.padding,
-    paddingVertical: SIZES.base,
-    borderRadius: SIZES.radius * 2,
-    ...SHADOWS.large,
+    bottom: 20,
+    right: 20,
+    borderRadius: 24,
+    overflow: 'hidden',
+    shadowColor: '#4F46E5',
+    shadowOffset: {width: 0, height: 6},
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+    elevation: 6,
+  },
+  cartGradient: {
     flexDirection: 'row',
     alignItems: 'center',
   },
+  cartButtonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 18,
+    paddingVertical: 13,
+    gap: 8,
+  },
   cartButtonText: {
-    color: COLORS.white,
-    ...FONTS.h4,
-    marginLeft: SIZES.base / 2,
-    fontWeight: '600',
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  cartBadge: {
+    position: 'absolute',
+    top: -8,
+    right: -8,
+    minWidth: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: '#EF4444',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 4,
+  },
+  cartBadgeText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '800',
   },
   modalContainer: {
     flex: 1,
@@ -493,104 +608,120 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   modalContent: {
-    borderTopLeftRadius: SIZES.radius * 3,
-    borderTopRightRadius: SIZES.radius * 3,
-    paddingHorizontal: SIZES.padding,
-    paddingBottom: SIZES.padding,
+    borderTopLeftRadius: 26,
+    borderTopRightRadius: 26,
+    paddingHorizontal: 16,
+    paddingBottom: 32,
+    paddingTop: 8,
     maxHeight: '80%',
   },
-  closeIcon: {
-    alignSelf: 'flex-end',
-    padding: SIZES.base,
-    marginTop: SIZES.base,
+  modalHandle: {
+    alignSelf: 'center',
+    width: 40,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: '#C7C7CC',
+    marginBottom: 12,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 12,
   },
   modalTitle: {
-    ...FONTS.h2,
-    marginBottom: SIZES.padding,
-    textAlign: 'center',
+    fontSize: 18,
     fontWeight: '700',
   },
+  closeIcon: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   cartList: {
-    marginBottom: SIZES.padding,
+    marginBottom: 12,
   },
   cartItem: {
     flexDirection: 'row',
-    borderRadius: SIZES.radius,
-    marginBottom: SIZES.base,
-    padding: SIZES.base,
-    ...SHADOWS.light,
+    borderRadius: 16,
+    borderWidth: 0.5,
+    marginBottom: 8,
+    padding: 10,
   },
   cartImage: {
-    width: 60,
-    height: 60,
-    borderRadius: SIZES.radius,
+    width: 56,
+    height: 56,
+    borderRadius: 12,
   },
   cartDetails: {
     flex: 1,
-    marginLeft: SIZES.base,
+    marginLeft: 10,
   },
   cartName: {
-    ...FONTS.h4,
-    marginBottom: SIZES.base / 2,
+    fontSize: 14,
     fontWeight: '600',
+    marginBottom: 4,
   },
   cartInfo: {
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
   cartText: {
-    ...FONTS.body4,
+    fontSize: 12,
   },
   cartTextBold: {
-    ...FONTS.h4,
+    fontSize: 13,
     fontWeight: '600',
   },
   deleteButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: COLORS.danger,
+    width: 34,
+    height: 34,
+    borderRadius: 17,
     justifyContent: 'center',
     alignItems: 'center',
-    marginLeft: SIZES.base,
+    marginLeft: 8,
   },
   checkboxContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: SIZES.base,
+    marginBottom: 8,
   },
   checkboxLabel: {
-    ...FONTS.body4,
-    marginLeft: SIZES.base,
+    fontSize: 14,
+    marginLeft: 8,
     fontWeight: '600',
   },
   noteInput: {
-    height: SIZES.inputHeight * 2,
+    height: 88,
     borderWidth: 1,
-    borderRadius: SIZES.radius,
-    paddingHorizontal: SIZES.inputPaddingHorizontal,
-    marginBottom: SIZES.padding,
-    ...FONTS.body4,
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingTop: 10,
+    marginBottom: 12,
+    fontSize: 14,
     textAlignVertical: 'top',
   },
   checkoutButton: {
-    backgroundColor: COLORS.primary,
-    height: SIZES.inputHeight,
-    borderRadius: SIZES.radius,
+    borderRadius: 14,
+    overflow: 'hidden',
+  },
+  checkoutGradient: {
+    height: 50,
+    borderRadius: 14,
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: SIZES.base,
-    ...SHADOWS.medium,
   },
   checkoutButtonText: {
-    color: COLORS.white,
-    ...FONTS.h4,
-    fontWeight: '600',
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '700',
   },
   emptyCartText: {
-    ...FONTS.body3,
+    fontSize: 15,
     textAlign: 'center',
-    marginTop: SIZES.padding,
+    marginTop: 16,
   },
 });
 

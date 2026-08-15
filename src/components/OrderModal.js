@@ -529,7 +529,6 @@ const OrderModal = ({
                                     color: isDay ? colors.warning : colors.info,
                                   },
                                 ]}>
-                                ]}>
                                 {isDay ? t('dd') : t('nn')}
                               </Text>
                             </View>

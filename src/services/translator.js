@@ -1,3 +1,6 @@
+import axios from 'axios';
+import {API_KEY_GOOGLE} from '../utils/constans';
+
 export const SUPPORTED_LANGS = [
   {code: 'vi', labelKey: 'translator.lang.vi'},
   {code: 'en', labelKey: 'translator.lang.en'},
@@ -94,21 +97,60 @@ export const mockRecognize = lang => {
   });
 };
 
-export const translateText = (text, from, to) => {
+const GOOGLE_TRANSLATE_URL = `https://translation.googleapis.com/language/translate/v2?key=${API_KEY_GOOGLE}`;
+
+const translateWithGoogle = async (text, from, to) => {
+  const response = await axios.post(
+    GOOGLE_TRANSLATE_URL,
+    {q: text, source: from, target: to, format: 'text'},
+    {headers: {'Content-Type': 'application/json'}},
+  );
+  return response?.data?.data?.translations?.[0]?.translatedText || null;
+};
+
+const translateWithMyMemory = async (text, from, to) => {
+  const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(
+    text,
+  )}&langpair=${encodeURIComponent(from)}|${encodeURIComponent(to)}`;
+  const response = await axios.get(url, {timeout: 15000});
+  const status = response?.data?.responseStatus;
+  const translated = response?.data?.responseData?.translatedText;
+  if (status === 200 && translated) {
+    return translated;
+  }
+  return null;
+};
+
+const fallbackTranslate = (text, from, to) => {
   const normalized = normalize(text);
   const matched = DICT.find(entry => {
     const source = entry[from];
     return source && normalize(source) === normalized;
   });
-  return new Promise(resolve => {
-    setTimeout(() => {
-      if (matched && matched[to]) {
-        resolve(matched[to]);
-      } else {
-        resolve(`[${to}] ${text}`);
-      }
-    }, 800);
-  });
+  return matched && matched[to] ? matched[to] : `[${to}] ${text}`;
+};
+
+export const translateText = async (text, from, to) => {
+  if (!text || from === to) {
+    return text;
+  }
+  try {
+    const google = await translateWithGoogle(text, from, to);
+    if (google) {
+      return google;
+    }
+  } catch (error) {
+    // Google key bị treo/mất quyền → thử MyMemory
+  }
+  try {
+    const myMemory = await translateWithMyMemory(text, from, to);
+    if (myMemory) {
+      return myMemory;
+    }
+  } catch (error) {
+    // MyMemory lỗi → fallback mock
+  }
+  return fallbackTranslate(text, from, to);
 };
 
 export const getLangLabelKey = code => {

@@ -49,7 +49,9 @@ const Translator = () => {
   const [spokenKey, setSpokenKey] = useState(null);
 
   const pulse = useRef(new Animated.Value(1)).current;
-  const speakBars = useRef(WAVE_BARS.map(() => new Animated.Value(0))).current;
+  const speakBars = useRef(
+    Array.from({length: WAVE_BARS}, () => new Animated.Value(0)),
+  ).current;
   const speakAnim = useRef(null);
   const speakTimer = useRef(null);
 

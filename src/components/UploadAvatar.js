@@ -9,7 +9,7 @@ import {
   Platform,
 } from 'react-native';
 import DocumentPicker from 'react-native-document-picker';
-import axios from 'axios';
+import apiClient from '../services/apiClient';
 import {
   API,
   BASE_URL,
@@ -92,7 +92,7 @@ const UploadAvatar = ({
         name: imageName,
       });
       formData.append('id', user_id);
-      const response = await axios.post(
+      const response = await apiClient.post(
         `${BASE_URL}${PORT}${API}${VERSION}${V1}${USER_URL}${UPLOAD_AVATAR}`,
         formData,
         {

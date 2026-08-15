@@ -1,9 +1,7 @@
-/* eslint-disable eqeqeq */
 /* eslint-disable react-native/no-inline-styles */
 import React, {useState, useCallback, useRef, useEffect} from 'react';
 import {
   View,
-  SafeAreaView,
   StatusBar,
   StyleSheet,
   TouchableOpacity,
@@ -13,8 +11,7 @@ import {
   Platform,
   ActivityIndicator,
 } from 'react-native';
-import Icon from 'react-native-vector-icons/MaterialIcons';
-import {useColorScheme} from 'react-native';
+import Icon from 'react-native-vector-icons/Ionicons';
 import {
   SelectProductTab,
   ProcessingOrdersTab,
@@ -24,31 +21,12 @@ import {useTranslation} from 'react-i18next';
 import Header from '../components/common/Header';
 import GuideModal from '../components/common/GuideModal';
 import {useNavigation} from '@react-navigation/native';
-import {COLORS, SIZES, FONTS, SHADOWS, LAYOUT} from '../config/theme';
 import {useTheme} from '../hooks/useTheme';
 
 const {width} = Dimensions.get('window');
-const TAB_WIDTH = width / 3;
+const HELP_BUTTON_WIDTH = 44;
 
-const TabIndicator = ({scrollX}) => {
-  const translateX = scrollX.interpolate({
-    inputRange: [0, width, width * 2],
-    outputRange: [0, TAB_WIDTH, TAB_WIDTH * 2],
-  });
-
-  return (
-    <Animated.View
-      style={[
-        styles.indicator,
-        {
-          transform: [{translateX}],
-        },
-      ]}
-    />
-  );
-};
-
-const TabButton = ({icon, title, selected, onPress, isDarkMode, colors}) => {
+const TabButton = ({icon, title, selected, onPress, colors}) => {
   const scaleAnim = useRef(new Animated.Value(1)).current;
   const fadeAnim = useRef(new Animated.Value(selected ? 1 : 0.7)).current;
 
@@ -76,21 +54,25 @@ const TabButton = ({icon, title, selected, onPress, isDarkMode, colors}) => {
           {
             transform: [{scale: scaleAnim}],
             opacity: fadeAnim,
-            backgroundColor: selected ? COLORS.primary + '15' : 'transparent',
+            backgroundColor: selected ? colors.primaryLight : 'transparent',
           },
         ]}>
-        <View style={styles.iconContainer}>
+        <View
+          style={[
+            styles.iconContainer,
+            {backgroundColor: selected ? colors.primary + '22' : 'transparent'},
+          ]}>
           <Icon
             name={icon}
-            size={22}
+            size={20}
             color={selected ? colors.primary : colors.textSecondary}
           />
         </View>
-        <Text style={[
-          styles.tabText, 
-          selected && styles.selectedText,
-          {color: selected ? colors.primary : colors.textSecondary}
-        ]}>
+        <Text
+          style={[
+            styles.tabText,
+            {color: selected ? colors.primary : colors.textSecondary},
+          ]}>
           {title}
         </Text>
       </Animated.View>
@@ -98,13 +80,13 @@ const TabButton = ({icon, title, selected, onPress, isDarkMode, colors}) => {
   );
 };
 
-const LoadingIndicator = () => (
+const LoadingIndicator = ({colors}) => (
   <View style={styles.loadingContainer}>
-    <ActivityIndicator size="large" color={COLORS.primary} />
+    <ActivityIndicator size="large" color={colors.primary} />
   </View>
 );
 
-const TabContent = ({component, index, selectedTab, fadeAnim}) => {
+const TabContent = ({component, index, selectedTab, fadeAnim, colors}) => {
   const [isLoading, setIsLoading] = useState(true);
   const slideAnim = useRef(new Animated.Value(0)).current;
   const opacity = useRef(new Animated.Value(0)).current;
@@ -156,7 +138,7 @@ const TabContent = ({component, index, selectedTab, fadeAnim}) => {
           opacity: opacity,
         },
       ]}>
-      {isLoading ? <LoadingIndicator /> : component}
+      {isLoading ? <LoadingIndicator colors={colors} /> : component}
     </Animated.View>
   );
 };
@@ -168,24 +150,41 @@ const Uniform = ({route}) => {
   const [selectedTab, setSelectedTab] = useState(0);
   const [isGuideVisible, setIsGuideVisible] = useState(false);
   const navigation = useNavigation();
-  const scrollX = useRef(new Animated.Value(0)).current;
   const fadeAnim = useRef(new Animated.Value(1)).current;
 
   const tabs = [
     {
-      icon: 'shopping-bag',
+      icon: 'bag-handle-outline',
       title: t('select.product'),
-      component: <SelectProductTab USER_INFOR={USER_INFOR} isDarkMode={isDarkMode} colors={colors} />,
+      component: (
+        <SelectProductTab
+          USER_INFOR={USER_INFOR}
+          isDarkMode={isDarkMode}
+          colors={colors}
+        />
+      ),
     },
     {
-      icon: 'pending',
+      icon: 'time-outline',
       title: t('processing.product'),
-      component: <ProcessingOrdersTab USER_INFOR={USER_INFOR} isDarkMode={isDarkMode} colors={colors} />,
+      component: (
+        <ProcessingOrdersTab
+          USER_INFOR={USER_INFOR}
+          isDarkMode={isDarkMode}
+          colors={colors}
+        />
+      ),
     },
     {
-      icon: 'check-circle',
+      icon: 'checkmark-done-outline',
       title: t('completed.product'),
-      component: <CompletedOrdersTab USER_INFOR={USER_INFOR} isDarkMode={isDarkMode} colors={colors} />,
+      component: (
+        <CompletedOrdersTab
+          USER_INFOR={USER_INFOR}
+          isDarkMode={isDarkMode}
+          colors={colors}
+        />
+      ),
     },
   ];
 
@@ -205,9 +204,8 @@ const Uniform = ({route}) => {
       ]).start();
 
       setSelectedTab(index);
-      scrollX.setValue(index * width);
     },
-    [scrollX, fadeAnim],
+    [fadeAnim],
   );
 
   return (
@@ -219,14 +217,17 @@ const Uniform = ({route}) => {
       />
       <Header title={t('uniform.title')} onBack={() => navigation.goBack()} />
       <View style={styles.content}>
-        <Animated.View style={[
-          styles.tabBar, 
-          {
-            backgroundColor: colors.surface,
-            elevation: 4,
-            shadowColor: isDarkMode ? '#000' : colors.primary,
-          }
-        ]}>
+        {/* Tab bar */}
+        <Animated.View
+          style={[
+            styles.tabBar,
+            {
+              backgroundColor: colors.surface,
+              borderColor: colors.border,
+              elevation: 4,
+              shadowColor: isDarkMode ? '#000' : colors.primary,
+            },
+          ]}>
           {tabs.map((tab, index) => (
             <TabButton
               key={index}
@@ -234,11 +235,18 @@ const Uniform = ({route}) => {
               title={tab.title}
               selected={selectedTab === index}
               onPress={() => handleTabPress(index)}
-              isDarkMode={isDarkMode}
               colors={colors}
             />
           ))}
-          <TabIndicator scrollX={scrollX} />
+          <TouchableOpacity
+            style={[
+              styles.tabHelpButton,
+              {backgroundColor: colors.primaryLight},
+            ]}
+            onPress={() => setIsGuideVisible(true)}
+            activeOpacity={0.7}>
+            <Icon name="help-circle" size={20} color={colors.primary} />
+          </TouchableOpacity>
         </Animated.View>
 
         <View style={styles.tabContent}>
@@ -249,6 +257,7 @@ const Uniform = ({route}) => {
               index={index}
               selectedTab={selectedTab}
               fadeAnim={fadeAnim}
+              colors={colors}
             />
           ))}
         </View>
@@ -273,14 +282,13 @@ const styles = StyleSheet.create({
   },
   tabBar: {
     flexDirection: 'row',
+    alignItems: 'center',
     height: 70,
-    ...SHADOWS.large,
     position: 'relative',
-    marginBottom: SIZES.base,
-    borderRadius: SIZES.radius * 2,
-    marginHorizontal: SIZES.padding,
-    marginTop: SIZES.padding,
-    elevation: 8,
+    borderRadius: 20,
+    borderWidth: 0.5,
+    marginHorizontal: 16,
+    marginTop: 16,
     shadowOffset: {
       width: 0,
       height: 4,
@@ -288,42 +296,41 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 8,
   },
+  tabHelpButton: {
+    width: HELP_BUTTON_WIDTH,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 4,
+  },
   tab: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingVertical: SIZES.base,
+    paddingVertical: 8,
   },
   tabContent: {
     flex: 1,
     position: 'relative',
     justifyContent: 'center',
     alignItems: 'center',
-    borderRadius: SIZES.radius,
-    paddingHorizontal: SIZES.base,
-    paddingVertical: SIZES.base / 2,
+    borderRadius: 14,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
   },
   iconContainer: {
-    marginBottom: SIZES.base / 2,
-  },
-  indicator: {
-    position: 'absolute',
-    bottom: 0,
-    height: 4,
-    width: TAB_WIDTH - 20,
-    backgroundColor: COLORS.primary,
-    borderRadius: 2,
-    alignSelf: 'center',
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 4,
   },
   tabText: {
-    ...FONTS.body4,
+    fontSize: 11,
+    fontWeight: '600',
     textAlign: 'center',
-    fontSize: 12,
-    fontWeight: '500',
-  },
-  selectedText: {
-    color: COLORS.primary,
-    fontWeight: '700',
   },
   tabPage: {
     width,
@@ -333,14 +340,6 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-  },
-  helpButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: COLORS.white + '20',
-    justifyContent: 'center',
-    alignItems: 'center',
   },
   loadingContainer: {
     flex: 1,

@@ -2,7 +2,6 @@ import {
   View,
   Text,
   FlatList,
-  TouchableOpacity,
   StyleSheet,
   Animated,
   RefreshControl,
@@ -19,10 +18,9 @@ import {
   PORT,
 } from '../../utils/constans';
 import ModalMessage from '../ModalMessage';
-import axios from 'axios';
+import apiClient from '../../services/apiClient';
 import {useTranslation} from 'react-i18next';
-import Icon from 'react-native-vector-icons/MaterialIcons';
-import {COLORS, SIZES, FONTS, SHADOWS, LAYOUT} from '../../config/theme';
+import Icon from 'react-native-vector-icons/Ionicons';
 
 const CompletedOrdersTab = ({USER_INFOR, isDarkMode, colors}) => {
   const {t} = useTranslation();
@@ -41,7 +39,7 @@ const CompletedOrdersTab = ({USER_INFOR, isDarkMode, colors}) => {
   const handle_get_all_uniform_order_of_user = useCallback(async () => {
     try {
       const URL = `${BASE_URL}${PORT}${API}${VERSION}${V1}${UNIFORM_ORDER}${SEARCH}${WITH_USER_ID}`;
-      const response = await axios.post(URL, {
+      const response = await apiClient.post(URL, {
         user_id: USER_INFOR.id,
         order_status: 'completed',
       });
@@ -68,18 +66,38 @@ const CompletedOrdersTab = ({USER_INFOR, isDarkMode, colors}) => {
 
   const renderItem = ({item, index}) => (
     <Animated.View
-      style={[styles.orderContainer, {backgroundColor: colors.surface}]}>
+      style={[
+        styles.orderContainer,
+        {backgroundColor: colors.surface, borderColor: colors.border},
+      ]}>
       <View style={styles.timelineContainer}>
-        <View style={styles.timelineLine} />
-        <View style={styles.timelineDot}>
-          <Icon name="check-circle" size={20} color={COLORS.success} />
+        <View
+          style={[
+            styles.timelineLine,
+            {backgroundColor: colors.success + '30'},
+          ]}
+        />
+        <View
+          style={[
+            styles.timelineDot,
+            {backgroundColor: colors.success + '15'},
+          ]}>
+          <Icon name="checkmark-circle" size={20} color={colors.success} />
         </View>
       </View>
 
       <View style={styles.orderContent}>
         <View style={styles.orderHeader}>
-          <View style={styles.orderIcon}>
-            <Icon name="check-circle" size={24} color={COLORS.success} />
+          <View
+            style={[
+              styles.orderIcon,
+              {backgroundColor: colors.success + '20'},
+            ]}>
+            <Icon
+              name="checkmark-circle-outline"
+              size={22}
+              color={colors.success}
+            />
           </View>
           <View style={styles.orderInfo}>
             <Text style={[styles.uniformType, {color: colors.text}]}>
@@ -89,14 +107,24 @@ const CompletedOrdersTab = ({USER_INFOR, isDarkMode, colors}) => {
               {t('completed_date')}: {item.delivery_date || 'N/A'}
             </Text>
           </View>
-          <View style={styles.statusBadge}>
-            <Text style={styles.statusText}>{t('completed')}</Text>
+          <View
+            style={[
+              styles.statusBadge,
+              {backgroundColor: colors.success + '15'},
+            ]}>
+            <Text style={[styles.statusText, {color: colors.success}]}>
+              {t('completed')}
+            </Text>
           </View>
         </View>
 
         <View style={styles.orderDetails}>
           <View style={styles.detailRow}>
-            <Icon name="straighten" size={16} color={colors.textSecondary} />
+            <Icon
+              name="resize-outline"
+              size={14}
+              color={colors.textSecondary}
+            />
             <Text style={[styles.detailLabel, {color: colors.textSecondary}]}>
               {t('size')}:
             </Text>
@@ -105,7 +133,7 @@ const CompletedOrdersTab = ({USER_INFOR, isDarkMode, colors}) => {
             </Text>
           </View>
           <View style={styles.detailRow}>
-            <Icon name="shopping-cart" size={16} color={colors.textSecondary} />
+            <Icon name="cart-outline" size={14} color={colors.textSecondary} />
             <Text style={[styles.detailLabel, {color: colors.textSecondary}]}>
               {t('quantity')}:
             </Text>
@@ -115,19 +143,29 @@ const CompletedOrdersTab = ({USER_INFOR, isDarkMode, colors}) => {
           </View>
         </View>
 
-        <View style={styles.completionSection}>
+        <View
+          style={[
+            styles.completionSection,
+            {backgroundColor: colors.success + '08'},
+          ]}>
           <View style={styles.completionRow}>
-            <Icon name="schedule" size={16} color={COLORS.success} />
+            <Icon name="calendar-outline" size={15} color={colors.success} />
             <Text
               style={[styles.completionLabel, {color: colors.textSecondary}]}>
               {t('delivery_date')}:
             </Text>
-            <Text style={[styles.completionValue, {color: COLORS.success}]}>
+            <Text style={[styles.completionValue, {color: colors.success}]}>
               {item.delivery_date}
             </Text>
           </View>
-          <View style={styles.successBar}>
-            <View style={styles.successFill} />
+          <View
+            style={[
+              styles.successBar,
+              {backgroundColor: colors.success + '20'},
+            ]}>
+            <View
+              style={[styles.successFill, {backgroundColor: colors.success}]}
+            />
           </View>
         </View>
       </View>
@@ -142,17 +180,24 @@ const CompletedOrdersTab = ({USER_INFOR, isDarkMode, colors}) => {
           renderItem={renderItem}
           keyExtractor={item => item.id}
           contentContainerStyle={styles.list}
+          showsVerticalScrollIndicator={false}
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
           }
         />
       ) : (
         <View style={styles.emptyContainer}>
-          <Icon
-            name="check-circle-outline"
-            size={64}
-            color={colors.textSecondary}
-          />
+          <View
+            style={[
+              styles.emptyIcon,
+              {backgroundColor: colors.backgroundSecondary},
+            ]}>
+            <Icon
+              name="checkmark-done-outline"
+              size={40}
+              color={colors.textSecondary}
+            />
+          </View>
           <Text style={[styles.noDataText, {color: colors.textSecondary}]}>
             {t('not.data')}
           </Text>
@@ -174,145 +219,142 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   list: {
-    padding: SIZES.padding,
+    padding: 16,
   },
   orderContainer: {
     flexDirection: 'row',
-    borderRadius: SIZES.radius * 2,
-    marginBottom: SIZES.padding,
-    ...SHADOWS.large,
-    elevation: 6,
-    shadowColor: COLORS.primary,
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
+    borderRadius: 20,
+    marginBottom: 14,
+    borderWidth: 0.5,
     overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 4},
+    shadowOpacity: 0.07,
+    shadowRadius: 12,
+    elevation: 3,
   },
   timelineContainer: {
     width: 40,
     alignItems: 'center',
-    paddingVertical: SIZES.padding,
+    paddingVertical: 16,
   },
   timelineLine: {
     position: 'absolute',
     top: 0,
     bottom: 0,
     width: 2,
-    backgroundColor: COLORS.success + '30',
     left: 19,
   },
   timelineDot: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: COLORS.success + '15',
-    ...LAYOUT.center,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    alignItems: 'center',
+    justifyContent: 'center',
     zIndex: 1,
   },
   orderContent: {
     flex: 1,
-    padding: SIZES.padding,
-    paddingLeft: SIZES.base,
+    padding: 14,
+    paddingLeft: 6,
   },
   orderHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: SIZES.base,
+    marginBottom: 10,
   },
   orderIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: COLORS.success + '20',
-    ...LAYOUT.center,
-    marginRight: SIZES.base,
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 10,
   },
   orderInfo: {
     flex: 1,
   },
   uniformType: {
-    ...FONTS.h3,
-    marginBottom: SIZES.base / 4,
+    fontSize: 15,
     fontWeight: '700',
+    marginBottom: 2,
   },
   orderDate: {
-    ...FONTS.body5,
     fontSize: 12,
   },
   statusBadge: {
-    backgroundColor: COLORS.success + '15',
-    paddingHorizontal: SIZES.base,
-    paddingVertical: SIZES.base / 2,
-    borderRadius: SIZES.radius,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 12,
   },
   statusText: {
-    ...FONTS.body5,
-    color: COLORS.success,
-    fontWeight: '600',
-    fontSize: 12,
+    fontSize: 11,
+    fontWeight: '700',
   },
   orderDetails: {
-    marginBottom: SIZES.base,
+    marginBottom: 10,
   },
   detailRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: SIZES.base / 2,
+    marginBottom: 6,
+    gap: 6,
   },
   detailLabel: {
-    ...FONTS.body4,
-    marginLeft: SIZES.base / 2,
-    marginRight: SIZES.base,
+    fontSize: 13,
     fontWeight: '500',
   },
   detailsValue: {
-    ...FONTS.h4,
+    fontSize: 14,
     fontWeight: '600',
   },
   completionSection: {
-    backgroundColor: COLORS.success + '05',
-    borderRadius: SIZES.radius,
-    padding: SIZES.base,
+    borderRadius: 14,
+    padding: 10,
   },
   completionRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: SIZES.base / 2,
+    marginBottom: 8,
+    gap: 6,
   },
   completionLabel: {
-    ...FONTS.body4,
-    marginLeft: SIZES.base / 2,
-    marginRight: SIZES.base,
+    fontSize: 13,
     fontWeight: '500',
   },
   completionValue: {
-    ...FONTS.h4,
+    fontSize: 14,
     fontWeight: '600',
   },
   successBar: {
     height: 4,
-    backgroundColor: COLORS.success + '20',
     borderRadius: 2,
     overflow: 'hidden',
   },
   successFill: {
     height: '100%',
-    backgroundColor: COLORS.success,
     borderRadius: 2,
     width: '100%',
   },
   emptyContainer: {
     flex: 1,
-    ...LAYOUT.center,
-    padding: SIZES.padding,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 16,
+  },
+  emptyIcon: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
   },
   noDataText: {
-    ...FONTS.body3,
-    marginTop: SIZES.base,
+    fontSize: 15,
+    marginTop: 4,
     textAlign: 'center',
+    fontWeight: '600',
   },
 });
 
