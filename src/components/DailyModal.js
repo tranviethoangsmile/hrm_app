@@ -1,3 +1,4 @@
+import React from 'react';
 import {
   View,
   Text,
@@ -6,13 +7,15 @@ import {
   TouchableOpacity,
   FlatList,
 } from 'react-native';
-import React from 'react';
 import {useTranslation} from 'react-i18next';
-import {COLORS, SIZES, FONTS, SHADOWS} from '../config/theme';
+import {FONTS} from '../config/theme';
+import {useTheme} from '../hooks/useTheme';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import LinearGradient from 'react-native-linear-gradient';
 
 const DailyModal = ({visible, onClose, products, onProductSelected}) => {
   const {t} = useTranslation();
+  const {colors} = useTheme();
   const [selectedLabel, setSelectedLabel] = React.useState(null);
 
   const handleProductClick = product => {
@@ -21,26 +24,46 @@ const DailyModal = ({visible, onClose, products, onProductSelected}) => {
     onClose();
   };
 
-  const renderProductItem = ({item}) => (
-    <TouchableOpacity
-      style={[
-        styles.productItem,
-        selectedLabel === item.label && styles.productItemSelected,
-      ]}
-      activeOpacity={0.85}
-      onPress={() => handleProductClick(item)}>
-      <Text style={styles.productLabel}>{item.label}</Text>
-      <Text style={styles.productValue}>{item.value}</Text>
-      {selectedLabel === item.label && (
-        <Icon
-          name="check-circle"
-          size={20}
-          color={COLORS.primary}
-          style={{marginLeft: 8}}
-        />
-      )}
-    </TouchableOpacity>
-  );
+  const renderProductItem = ({item}) => {
+    const isSelected = selectedLabel === item.label;
+    return (
+      <TouchableOpacity
+        style={[
+          styles.productItem,
+          isSelected && styles.productItemSelected,
+          {
+            backgroundColor: isSelected ? colors.primaryLight : colors.surface,
+            borderColor: isSelected ? colors.primary : colors.border,
+          },
+        ]}
+        activeOpacity={0.85}
+        onPress={() => handleProductClick(item)}>
+        <View
+          style={[
+            styles.productIcon,
+            {backgroundColor: colors.primary + '15'},
+          ]}>
+          <Icon name="package-variant" size={18} color={colors.primary} />
+        </View>
+        <Text style={[styles.productLabel, {color: colors.text}]}>
+          {item.label}
+        </Text>
+        <View
+          style={[
+            styles.cycleTimeChip,
+            {backgroundColor: colors.primary + '12'},
+          ]}>
+          <Icon name="timer-outline" size={12} color={colors.primary} />
+          <Text style={[styles.cycleTimeText, {color: colors.primary}]}>
+            {item.value}
+          </Text>
+        </View>
+        {isSelected && (
+          <Icon name="check-circle" size={20} color={colors.primary} />
+        )}
+      </TouchableOpacity>
+    );
+  };
 
   return (
     <Modal
@@ -49,15 +72,19 @@ const DailyModal = ({visible, onClose, products, onProductSelected}) => {
       onRequestClose={onClose}
       animationType="fade">
       <View style={styles.modalOverlay}>
-        <View style={styles.modalCard}>
-          <View style={styles.modalHeader}>
+        <View style={[styles.modalCard, {backgroundColor: colors.surface}]}>
+          <LinearGradient
+            colors={colors.primaryGradient}
+            start={{x: 0, y: 0}}
+            end={{x: 1, y: 1}}
+            style={styles.modalHeader}>
             <Text style={styles.modalTitle}>
               {t('select.product.title', 'Chọn sản phẩm')}
             </Text>
             <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-              <Icon name="close" size={22} color={COLORS.primary} />
+              <Icon name="close" size={20} color="#fff" />
             </TouchableOpacity>
-          </View>
+          </LinearGradient>
           <FlatList
             data={products}
             renderItem={renderProductItem}
@@ -66,7 +93,13 @@ const DailyModal = ({visible, onClose, products, onProductSelected}) => {
             contentContainerStyle={styles.flatListContainer}
             ListEmptyComponent={
               <View style={styles.emptyListContainer}>
-                <Text style={styles.emptyListText}>
+                <Icon
+                  name="package-variant-closed"
+                  size={40}
+                  color={colors.textTertiary}
+                />
+                <Text
+                  style={[styles.emptyListText, {color: colors.textSecondary}]}>
                   {t('no.products.available', 'Không có sản phẩm')}
                 </Text>
               </View>
@@ -85,15 +118,18 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.25)',
+    backgroundColor: 'rgba(0,0,0,0.45)',
   },
   modalCard: {
     width: '88%',
     maxHeight: '70%',
-    borderRadius: 18,
-    backgroundColor: '#fff',
+    borderRadius: 20,
     paddingBottom: 10,
-    ...SHADOWS.medium,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 8},
+    shadowOpacity: 0.25,
+    shadowRadius: 16,
+    elevation: 12,
     overflow: 'hidden',
   },
   modalHeader: {
@@ -101,67 +137,76 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 18,
-    paddingTop: 16,
-    paddingBottom: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
-    backgroundColor: '#f7fafd',
+    paddingVertical: 16,
   },
   modalTitle: {
     ...FONTS.h3,
-    color: COLORS.primary,
-    fontWeight: 'bold',
+    color: '#fff',
+    fontWeight: '700',
     fontSize: 18,
   },
   closeButton: {
-    padding: 6,
-    borderRadius: 16,
-    backgroundColor: '#f0f0f0',
+    padding: 8,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255,255,255,0.2)',
   },
   flatListContainer: {
-    paddingHorizontal: 10,
-    paddingVertical: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
   },
   productItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: '#f9f9f9',
-    borderRadius: 12,
+    borderRadius: 14,
     paddingVertical: 12,
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
     marginBottom: 8,
-    borderWidth: 1,
-    borderColor: '#e0e0e0',
+    borderWidth: 1.5,
   },
   productItemSelected: {
-    backgroundColor: '#e6f0fa',
-    borderColor: COLORS.primary,
-    shadowColor: COLORS.primary,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
     elevation: 2,
+  },
+  productIcon: {
+    width: 34,
+    height: 34,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 10,
   },
   productLabel: {
     ...FONTS.body2,
-    color: COLORS.text,
     fontWeight: '600',
     fontSize: 15,
+    flex: 1,
   },
-  productValue: {
-    ...FONTS.caption,
-    color: COLORS.textSecondary,
-    fontSize: 13,
-    marginLeft: 10,
+  cycleTimeChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: 10,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    marginRight: 8,
+  },
+  cycleTimeText: {
+    fontSize: 12,
+    fontWeight: '700',
+    marginLeft: 4,
   },
   emptyListContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     padding: 24,
-    minHeight: 120,
+    minHeight: 140,
   },
   emptyListText: {
     ...FONTS.body2,
-    color: COLORS.textSecondary,
     textAlign: 'center',
+    marginTop: 8,
   },
 });

@@ -10,7 +10,6 @@ import {
   Platform,
 } from 'react-native';
 import {useSelector} from 'react-redux';
-import axios from 'axios';
 import {useTranslation} from 'react-i18next';
 import moment from 'moment';
 import LinearGradient from 'react-native-linear-gradient';
@@ -26,8 +25,9 @@ import {
   SEARCH_BY_ID,
   UPDATE,
 } from '../utils/constans';
+import apiClient from '../services/apiClient';
 import OptimizedLoader from '../components/OptimizedLoader';
-import {FONTS, SHADOWS} from '../config/theme';
+import {FONTS} from '../config/theme';
 import {useTheme} from '../hooks/useTheme';
 
 const Notifications = ({navigation}) => {
@@ -44,7 +44,7 @@ const Notifications = ({navigation}) => {
   const getNotifications = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await axios.post(
+      const response = await apiClient.post(
         `${BASE_URL}${PORT}${API}${VERSION}${V1}${NOTIFICATION}${SEARCH_BY_ID}`,
         {
           user_id: userInfo?.id,
@@ -108,7 +108,7 @@ const Notifications = ({navigation}) => {
 
   const handle_notification_click = async notification => {
     try {
-      const response = await axios.put(
+      const response = await apiClient.put(
         `${BASE_URL}${PORT}${API}${VERSION}${V1}${NOTIFICATION}${UPDATE}`,
         {
           id: notification.id,
@@ -124,6 +124,8 @@ const Notifications = ({navigation}) => {
     }
   };
 
+  const unreadCount = notifications.filter(item => !item.is_readed).length;
+
   const filteredNotifications = useCallback(() => {
     switch (activeTab) {
       case 'system':
@@ -135,6 +137,10 @@ const Notifications = ({navigation}) => {
     }
   }, [notifications, activeTab]);
 
+  const systemCount = notifications.filter(
+    item => item.type?.toUpperCase() === 'SYSTEM',
+  ).length;
+
   const markAllAsRead = async () => {
     try {
       setLoading(true);
@@ -142,7 +148,7 @@ const Notifications = ({navigation}) => {
 
       const responses = await Promise.all(
         unreadNotifications.map(notification =>
-          axios.put(
+          apiClient.put(
             `${BASE_URL}${PORT}${API}${VERSION}${V1}${NOTIFICATION}${UPDATE}`,
             {
               id: notification.id,
@@ -194,15 +200,23 @@ const Notifications = ({navigation}) => {
             {t('notifications_title', 'Thông báo')}
           </Text>
           <Text style={styles.headerSubtitle}>
-            {notifications.length} thông báo
+            {t('notification_unread', {count: unreadCount})}
           </Text>
         </View>
 
         <View style={styles.headerRight}>
           <TouchableOpacity
-            style={styles.headerIconContainer}
-            onPress={markAllAsRead}>
-            <Icon name="checkmark-done" size={22} color="#ffffff" />
+            style={[
+              styles.headerIconContainer,
+              unreadCount === 0 && styles.headerIconDisabled,
+            ]}
+            onPress={markAllAsRead}
+            disabled={unreadCount === 0}>
+            <Icon
+              name="checkmark-done"
+              size={22}
+              color={unreadCount === 0 ? 'rgba(255,255,255,0.45)' : '#ffffff'}
+            />
           </TouchableOpacity>
         </View>
       </View>
@@ -210,36 +224,56 @@ const Notifications = ({navigation}) => {
   );
 
   const renderTabContainer = () => (
-    <View style={styles.tabContainer}>
-      <TouchableOpacity
-        style={[styles.tab, activeTab === 'all' && styles.activeTab]}
-        onPress={() => setActiveTab('all')}>
-        <Icon
-          name="notifications"
-          size={18}
-          color={activeTab === 'all' ? colors.primary : colors.textSecondary}
-        />
-        <Text
-          style={[styles.tabText, activeTab === 'all' && styles.activeTabText]}>
-          {t('notification_all', 'Tất cả')}
-        </Text>
-      </TouchableOpacity>
-      <TouchableOpacity
-        style={[styles.tab, activeTab === 'system' && styles.activeTab]}
-        onPress={() => setActiveTab('system')}>
-        <Icon
-          name="settings"
-          size={18}
-          color={activeTab === 'system' ? colors.primary : colors.textSecondary}
-        />
-        <Text
-          style={[
-            styles.tabText,
-            activeTab === 'system' && styles.activeTabText,
-          ]}>
-          {t('notification_system', 'Hệ thống')}
-        </Text>
-      </TouchableOpacity>
+    <View
+      style={[
+        styles.tabContainer,
+        {
+          backgroundColor: colors.backgroundSecondary,
+          borderColor: colors.border,
+        },
+      ]}>
+      {[
+        {key: 'all', title: t('notification_all'), icon: 'notifications'},
+        {key: 'system', title: t('notification_system'), icon: 'settings'},
+      ].map(tab => {
+        const isActive = activeTab === tab.key;
+        const count = tab.key === 'all' ? notifications.length : systemCount;
+        return (
+          <TouchableOpacity
+            key={tab.key}
+            activeOpacity={0.85}
+            style={[styles.tab, isActive && {backgroundColor: colors.primary}]}
+            onPress={() => setActiveTab(tab.key)}>
+            <Icon
+              name={tab.icon}
+              size={15}
+              color={isActive ? '#fff' : colors.textSecondary}
+            />
+            <Text
+              style={[
+                styles.tabText,
+                {color: isActive ? '#fff' : colors.textSecondary},
+              ]}>
+              {tab.title}
+            </Text>
+            <View
+              style={[
+                styles.tabBadge,
+                isActive
+                  ? {backgroundColor: 'rgba(255,255,255,0.22)'}
+                  : {backgroundColor: colors.surface},
+              ]}>
+              <Text
+                style={[
+                  styles.tabBadgeText,
+                  {color: isActive ? '#fff' : colors.textSecondary},
+                ]}>
+                {count}
+              </Text>
+            </View>
+          </TouchableOpacity>
+        );
+      })}
     </View>
   );
 
@@ -247,87 +281,97 @@ const Notifications = ({navigation}) => {
     const isUnread = !item.is_readed;
     const notificationColor = getNotificationColor(item.type);
     const isExpanded = expandedId === item.id;
-    const isSystemNotification = item.type?.toUpperCase() === 'SYSTEM';
 
     return (
       <TouchableOpacity
-        style={[styles.notificationItem, isUnread && styles.unreadItem]}
+        style={[styles.card, isUnread && styles.unreadCard]}
         onPress={() => handle_notification_click(item)}
         activeOpacity={0.7}>
-        <View style={styles.notificationCard}>
-          <View style={styles.notificationHeader}>
-            <View
-              style={[
-                styles.iconContainer,
-                {backgroundColor: notificationColor + '20'},
-              ]}>
-              <Icon
-                name={getNotificationIcon(item.type)}
-                size={22}
-                color={notificationColor}
+        {isUnread && (
+          <LinearGradient
+            colors={colors.primaryGradient}
+            start={{x: 0, y: 0}}
+            end={{x: 0, y: 1}}
+            style={styles.cardAccent}
+          />
+        )}
+        <View style={styles.cardRow}>
+          <View
+            style={[
+              styles.iconWrap,
+              {
+                backgroundColor: isUnread
+                  ? notificationColor + '1A'
+                  : colors.surfaceSecondary,
+              },
+            ]}>
+            <Icon
+              name={getNotificationIcon(item.type)}
+              size={22}
+              color={isUnread ? notificationColor : colors.textTertiary}
+            />
+            {isUnread && (
+              <View
+                style={[
+                  styles.unreadDot,
+                  {
+                    backgroundColor: notificationColor,
+                    borderColor: colors.surface,
+                  },
+                ]}
               />
-              {isUnread && (
-                <View
-                  style={[
-                    styles.unreadDot,
-                    {backgroundColor: notificationColor},
-                  ]}
-                />
-              )}
-            </View>
-            <View style={styles.textContainer}>
-              <View style={styles.titleRow}>
-                <Text
-                  style={[styles.title, isExpanded && styles.expandedTitle]}
-                  numberOfLines={isExpanded ? undefined : 2}>
-                  {item.title}
-                </Text>
-                <View
-                  style={[
-                    styles.typeChip,
-                    {backgroundColor: notificationColor + '15'},
-                  ]}>
-                  <Text style={[styles.typeText, {color: notificationColor}]}>
-                    {item.type?.toUpperCase()}
-                  </Text>
-                </View>
-              </View>
+            )}
+          </View>
+          <View style={styles.cardBody}>
+            <View style={styles.titleRow}>
               <Text
-                style={[styles.message, isExpanded && styles.expandedMessage]}
-                numberOfLines={isExpanded ? undefined : 3}>
-                {item.message}
+                style={styles.title}
+                numberOfLines={isExpanded ? undefined : 2}>
+                {item.title}
               </Text>
-              <View style={styles.footerContainer}>
-                <View style={styles.timeContainer}>
-                  <Icon
-                    name="time-outline"
-                    size={14}
-                    color={colors.textTertiary}
-                  />
-                  <Text style={styles.time}>
-                    {moment(item.created_at).format('DD/MM/YYYY HH:mm')}
-                  </Text>
-                </View>
-                {isSystemNotification && (
-                  <TouchableOpacity
-                    onPress={e => {
-                      e.stopPropagation();
-                      handleExpand(item.id);
-                    }}
-                    style={styles.expandButton}>
-                    <Text style={styles.expandButtonText}>
-                      {isExpanded
-                        ? t('notification_collapse', 'Thu gọn')
-                        : t('notification_expand', 'Xem thêm')}
-                    </Text>
-                    <Icon
-                      name={isExpanded ? 'chevron-up' : 'chevron-down'}
-                      size={16}
-                      color={colors.primary}
-                    />
-                  </TouchableOpacity>
-                )}
+              <View
+                style={[
+                  styles.typeChip,
+                  {backgroundColor: notificationColor + '1A'},
+                ]}>
+                <Text style={[styles.typeText, {color: notificationColor}]}>
+                  {item.type?.toUpperCase()}
+                </Text>
               </View>
+            </View>
+            <Text
+              style={styles.message}
+              numberOfLines={isExpanded ? undefined : 3}>
+              {item.message}
+            </Text>
+            <View style={styles.footerRow}>
+              <View style={styles.timeRow}>
+                <Icon
+                  name="time-outline"
+                  size={13}
+                  color={colors.textTertiary}
+                />
+                <Text style={styles.time}>
+                  {moment(item.created_at).format('DD/MM/YYYY HH:mm')}
+                </Text>
+              </View>
+              <TouchableOpacity
+                onPress={e => {
+                  e.stopPropagation();
+                  handleExpand(item.id);
+                }}
+                style={styles.expandBtn}>
+                <Text style={styles.expandBtnText}>
+                  {isExpanded
+                    ? t('notification_collapse', 'Thu gọn')
+                    : t('notification_expand', 'Xem thêm')}
+                </Text>
+                <Icon
+                  name={isExpanded ? 'chevron-up' : 'chevron-down'}
+                  size={14}
+                  color={colors.primary}
+                />
+              </TouchableOpacity>
             </View>
           </View>
         </View>
@@ -419,9 +463,8 @@ const Notifications = ({navigation}) => {
         headerRight: {
           flexDirection: 'row',
           alignItems: 'center',
-          gap: 12,
-          minWidth: 50,
           justifyContent: 'flex-end',
+          minWidth: 50,
         },
         headerIconContainer: {
           padding: 10,
@@ -432,82 +475,156 @@ const Notifications = ({navigation}) => {
           justifyContent: 'center',
           alignItems: 'center',
         },
+        headerIconDisabled: {
+          backgroundColor: 'rgba(255,255,255,0.08)',
+        },
         content: {
           flex: 1,
           backgroundColor: colors.background,
         },
         notificationsList: {
-          paddingVertical: 0,
-          paddingTop: 8,
-          paddingBottom: 8,
-        },
-        notificationItem: {
-          marginHorizontal: 0,
-          marginVertical: 0,
-          backgroundColor: colors.surface,
-          borderBottomWidth: 1,
-          borderBottomColor: colors.border,
-        },
-        unreadItem: {
-          borderLeftWidth: 4,
-          borderLeftColor: colors.primary,
-          backgroundColor: colors.primaryLight,
+          paddingTop: 4,
+          paddingBottom: 32,
         },
         tabContainer: {
           flexDirection: 'row',
-          backgroundColor: colors.surface,
-          paddingHorizontal: 16,
-          paddingVertical: 12,
-          borderBottomWidth: 1,
-          borderBottomColor: colors.border,
-          ...SHADOWS.light,
+          marginHorizontal: 16,
+          marginVertical: 12,
+          borderRadius: 16,
+          borderWidth: 1,
+          padding: 5,
         },
         tab: {
           flex: 1,
-          paddingVertical: 12,
-          paddingHorizontal: 16,
-          alignItems: 'center',
-          borderRadius: 24,
-          marginHorizontal: 4,
           flexDirection: 'row',
+          alignItems: 'center',
           justifyContent: 'center',
-          backgroundColor: colors.surfaceSecondary,
-          borderWidth: 1,
-          borderColor: colors.border,
-        },
-        activeTab: {
-          backgroundColor: colors.primary,
-          borderColor: colors.primary,
+          borderRadius: 12,
+          paddingVertical: 10,
         },
         tabText: {
-          ...FONTS.body4,
-          color: colors.textSecondary,
-          fontWeight: '600',
+          fontSize: 13,
+          fontWeight: '700',
           marginLeft: 6,
         },
-        activeTabText: {
-          color: '#fff',
+        tabBadge: {
+          borderRadius: 10,
+          paddingHorizontal: 7,
+          paddingVertical: 2,
+          marginLeft: 6,
+          minWidth: 18,
+          alignItems: 'center',
+          justifyContent: 'center',
+        },
+        tabBadgeText: {
+          fontSize: 11,
+          fontWeight: '700',
+        },
+        card: {
+          backgroundColor: colors.surface,
+          borderRadius: 20,
+          borderWidth: 1,
+          borderColor: colors.border,
+          marginHorizontal: 16,
+          marginBottom: 14,
+          padding: 16,
+          shadowColor: '#000',
+          shadowOffset: {width: 0, height: 3},
+          shadowOpacity: 0.06,
+          shadowRadius: 8,
+          elevation: 3,
+          overflow: 'hidden',
+        },
+        unreadCard: {
+          backgroundColor: colors.primaryLight,
+          borderColor: colors.primary + '30',
+        },
+        cardAccent: {
+          position: 'absolute',
+          left: 0,
+          top: 0,
+          bottom: 0,
+          width: 4,
+        },
+        cardRow: {
+          flexDirection: 'row',
+          alignItems: 'flex-start',
+        },
+        iconWrap: {
+          width: 46,
+          height: 46,
+          borderRadius: 15,
+          alignItems: 'center',
+          justifyContent: 'center',
+          marginRight: 14,
+        },
+        unreadDot: {
+          position: 'absolute',
+          width: 10,
+          height: 10,
+          borderRadius: 5,
+          borderWidth: 2,
+          right: -1,
+          top: -1,
+        },
+        cardBody: {
+          flex: 1,
+        },
+        titleRow: {
+          flexDirection: 'row',
+          alignItems: 'flex-start',
         },
         title: {
           ...FONTS.h4,
           color: colors.text,
-          fontWeight: '600',
-          marginBottom: 4,
+          fontWeight: '700',
+          flex: 1,
+          marginRight: 8,
+        },
+        typeChip: {
+          paddingHorizontal: 8,
+          paddingVertical: 3,
+          borderRadius: 8,
+          marginTop: 1,
+        },
+        typeText: {
+          fontSize: 10,
+          fontWeight: '700',
         },
         message: {
           ...FONTS.body3,
           color: colors.textSecondary,
           lineHeight: 20,
-          marginBottom: 6,
+          marginTop: 5,
+        },
+        footerRow: {
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          marginTop: 10,
+        },
+        timeRow: {
+          flexDirection: 'row',
+          alignItems: 'center',
         },
         time: {
           ...FONTS.body4,
           color: colors.textTertiary,
           marginLeft: 4,
         },
-        timeContainer: {
+        expandBtn: {
           flexDirection: 'row',
           alignItems: 'center',
+          paddingVertical: 4,
+          paddingHorizontal: 10,
+          borderRadius: 8,
+          backgroundColor: colors.surfaceSecondary,
+        },
+        expandBtnText: {
+          fontSize: 12,
+          fontWeight: '600',
+          color: colors.primary,
+          marginRight: 4,
         },
         emptyContainer: {
           flex: 1,
@@ -515,80 +632,6 @@ const Notifications = ({navigation}) => {
           justifyContent: 'center',
           paddingTop: 60,
           paddingHorizontal: 32,
-        },
-        expandedTitle: {
-          marginBottom: 8,
-        },
-        expandedMessage: {
-          marginBottom: 8,
-        },
-        footerContainer: {
-          flexDirection: 'row',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          marginTop: 8,
-        },
-        expandButton: {
-          flexDirection: 'row',
-          alignItems: 'center',
-          paddingVertical: 4,
-          paddingHorizontal: 8,
-          borderRadius: 6,
-          backgroundColor: colors.surfaceSecondary,
-        },
-        unreadDot: {
-          position: 'absolute',
-          width: 8,
-          height: 8,
-          borderRadius: 4,
-          right: -2,
-          top: -2,
-        },
-        notificationCard: {
-          backgroundColor: 'transparent',
-        },
-        notificationHeader: {
-          flexDirection: 'row',
-          padding: 16,
-        },
-        iconContainer: {
-          width: 48,
-          height: 48,
-          borderRadius: 24,
-          backgroundColor: colors.surfaceSecondary,
-          alignItems: 'center',
-          justifyContent: 'center',
-          marginRight: 16,
-          shadowColor: '#000',
-          shadowOffset: {width: 0, height: 2},
-          shadowOpacity: 0.1,
-          shadowRadius: 4,
-          elevation: 2,
-        },
-        textContainer: {
-          flex: 1,
-        },
-        titleRow: {
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-        },
-        typeChip: {
-          paddingHorizontal: 8,
-          paddingVertical: 4,
-          borderRadius: 12,
-          backgroundColor: colors.surfaceSecondary,
-        },
-        typeText: {
-          fontSize: 11,
-          fontWeight: '600',
-          color: colors.textSecondary,
-        },
-        expandButtonText: {
-          fontSize: 14,
-          fontWeight: '500',
-          color: colors.primary,
-          marginRight: 4,
         },
         emptyIconContainer: {
           marginBottom: 24,
@@ -627,7 +670,6 @@ const Notifications = ({navigation}) => {
           flexDirection: 'row',
           alignItems: 'center',
           justifyContent: 'center',
-          ...SHADOWS.light,
           shadowColor: colors.primary,
           shadowOffset: {width: 0, height: 4},
           shadowOpacity: 0.3,

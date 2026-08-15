@@ -19,7 +19,7 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import IconFA from 'react-native-vector-icons/FontAwesome5';
-import axios from 'axios';
+import apiClient from '../services/apiClient';
 import {useNavigation} from '@react-navigation/native';
 import {useSelector} from 'react-redux';
 import {useTranslation} from 'react-i18next';
@@ -281,7 +281,7 @@ const Message = () => {
 
   const getAllFriendList = useCallback(async () => {
     try {
-      const response = await axios.post(
+      const response = await apiClient.post(
         `${BASE_URL}${PORT}${API}${VERSION}${V1}${USER_URL}${FIND_USER_BY_FIELD}`,
         {position: USER_INFOR?.position},
       );
@@ -299,7 +299,7 @@ const Message = () => {
 
   const handleGetConversations = useCallback(async () => {
     try {
-      const response = await axios.post(
+      const response = await apiClient.post(
         `${BASE_URL}${PORT}${API}${VERSION}${V1}${GROUP_MEMBER}${GET_GROUP_MEMBER_OF_USER}`,
         {user_id: USER_INFOR?.id},
       );
@@ -353,7 +353,7 @@ const Message = () => {
 
   const handleDeleteConversation = async id => {
     try {
-      const result = await axios.post(
+      const result = await apiClient.post(
         `${BASE_URL}${PORT}${API}${VERSION}${V1}${CONVERSATION}${DELETE}`,
         {
           user_id: USER_INFOR?.id,
@@ -457,7 +457,7 @@ const Message = () => {
   const handleSelectUser = async (selectedUsers, title) => {
     try {
       const user = selectedUsers[0];
-      const conversation = await axios.post(
+      const conversation = await apiClient.post(
         `${BASE_URL}${PORT}${API}${VERSION}${V1}${CONVERSATION}${CREATE}`,
         {
           sender_id: USER_INFOR?.id,

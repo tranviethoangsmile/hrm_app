@@ -36,8 +36,9 @@ import Icon from 'react-native-vector-icons/Ionicons';
 import {useTranslation} from 'react-i18next';
 import i18n from 'i18next';
 import {useSelector} from 'react-redux';
-import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import apiClient from '../services/apiClient';
+import axios from 'axios';
 import EmojiSelector from 'react-native-emoji-selector';
 import {launchImageLibrary} from 'react-native-image-picker';
 import {
@@ -65,7 +66,7 @@ import IconFA from 'react-native-vector-icons/FontAwesome';
 import {useNavigation} from '@react-navigation/native';
 import moment from 'moment';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import {useThemeContext} from '../context/ThemeContext';
+import {useTheme} from '../hooks/useTheme';
 
 const extractFirstUrl = text => {
   if (!text) return null;
@@ -118,11 +119,11 @@ const ChatScreen = ({route}) => {
   const {t} = useTranslation();
   const authData = useSelector(state => state.auth);
   const USER_INFOR = authData?.data?.data;
-  const {isDarkMode} = useThemeContext();
+  const {colors, isDarkMode} = useTheme();
   const [isLoading, setIsloading] = useState(false);
   
   // Create styles based on theme
-  const styles = createStyles(isDarkMode);
+  const styles = createStyles(isDarkMode, colors);
   const flatListRef = useRef(null);
   const [showOptions, setShowOptions] = useState(false);
   const [selectedMessageId, setSelectedMessageId] = useState(null);
@@ -204,7 +205,7 @@ const ChatScreen = ({route}) => {
             name: asset.fileName,
             type: asset.type || 'image/jpeg',
           });
-          const res = await axios.post(
+          const res = await apiClient.post(
             `${BASE_URL}${PORT}${API}${VERSION}${V1}${MESSAGE}${CREATE}`,
             form,
             {
@@ -277,7 +278,7 @@ const ChatScreen = ({route}) => {
 
   const getAllMessage = async () => {
     try {
-      const response = await axios.post(
+      const response = await apiClient.post(
         `${BASE_URL}${PORT}${API}${VERSION}${V1}${MESSAGE}${SEARCH_MESSAGE_WITH_CONVERSATION}`,
         {
           conversation_id: conversationId,
@@ -465,7 +466,7 @@ const ChatScreen = ({route}) => {
   // Re-add handlers and Message component above the return statement
   const handleDeleteMessage = async messageId => {
     try {
-      const response = await axios.post(
+      const response = await apiClient.post(
         `${BASE_URL}${PORT}${API}${VERSION}${V1}${MESSAGE}${UNSEND}`,
         {
           message_id: messageId,
@@ -484,7 +485,7 @@ const ChatScreen = ({route}) => {
 
   const handleUnsendMessage = async messageId => {
     try {
-      const response = await axios.post(
+      const response = await apiClient.post(
         `${BASE_URL}${PORT}${API}${VERSION}${V1}${MESSAGE}${UNSEND}`,
         {
           message_id: messageId,
@@ -754,74 +755,101 @@ const ChatScreen = ({route}) => {
     // Nếu là hình ảnh hoặc video, không sử dụng background color
     const shouldUseBackground = !isImage && !isVideo;
 
+    const bubbleContent = (
+      <TouchableOpacity
+        onLongPress={() => handleLongPress(item, messageRef)}
+        delayLongPress={500}
+        activeOpacity={0.8}
+        style={styles.messageContainer}>
+        <Text
+          style={[
+            isUser ? styles.userMessageText : styles.otherMessageText,
+            isDeleted && styles.unsendMessageText,
+          ]}>
+          {messageText}
+        </Text>
+        {isLink && <LinkPreview url={isLink} />}
+        {isImage && (
+          <View style={styles.mediaWrapper}>
+            <TouchableOpacity
+              onPress={() => handleMediaPress(item.message, 'image', item)}
+              activeOpacity={0.9}>
+              <Image source={{uri: item.message}} style={styles.imageStyle} />
+            </TouchableOpacity>
+          </View>
+        )}
+        {isVideo && (
+          <View style={styles.mediaWrapper}>
+            <TouchableOpacity
+              onPress={() => handleMediaPress(item.message, 'video', item)}
+              activeOpacity={0.9}>
+              <Video
+                source={{uri: item.message}}
+                style={styles.videoStyle}
+                controls={false}
+                resizeMode="cover"
+              />
+              <View style={styles.playIcon}>
+                <Icon
+                  name="play-circle"
+                  size={40}
+                  color="rgba(255,255,255,0.9)"
+                />
+              </View>
+            </TouchableOpacity>
+          </View>
+        )}
+        {isDocument && (
+          <View style={styles.documentContainer}>
+            <IconFA name="file-o" size={20} color="#4A90E2" />
+            <Text style={styles.documentText}>{item.message}</Text>
+          </View>
+        )}
+        {isOther && (
+          <View style={styles.otherMessageTextContainer}>
+            <Text style={styles.otherMessageText}>{item.message}</Text>
+          </View>
+        )}
+        {!isDeleted && item.created_at && (
+          <Text
+            style={[
+              styles.messageTime,
+              {color: isUser ? 'rgba(255,255,255,0.75)' : colors.textSecondary},
+            ]}>
+            {moment(item.created_at).format('HH:mm')}
+          </Text>
+        )}
+      </TouchableOpacity>
+    );
+
+    if (shouldUseBackground && isUser) {
+      return (
+        <LinearGradient
+          ref={messageRef}
+          colors={colors.primaryGradient}
+          start={{x: 0, y: 0}}
+          end={{x: 1, y: 1}}
+          style={[
+            styles.userMessageContainer,
+            isDeleted && styles.unsendMessageContainer,
+          ]}>
+          {bubbleContent}
+        </LinearGradient>
+      );
+    }
+
     return (
       <View
         ref={messageRef}
         style={[
           shouldUseBackground
-            ? isUser
-              ? styles.userMessageContainer
-              : styles.otherMessageContainer
+            ? styles.otherMessageContainer
             : isUser
             ? styles.userMediaMessageContainer
             : styles.mediaMessageContainer,
           isDeleted && styles.unsendMessageContainer,
         ]}>
-        <TouchableOpacity
-          onLongPress={() => handleLongPress(item, messageRef)}
-          delayLongPress={500}
-          activeOpacity={0.8}
-          style={styles.messageContainer}>
-          <Text
-            style={[
-              isUser ? styles.userMessageText : styles.otherMessageText,
-              isDeleted && styles.unsendMessageText,
-            ]}>
-            {messageText}
-          </Text>
-          {isLink && <LinkPreview url={isLink} />}
-          {isImage && (
-            <View style={styles.mediaWrapper}>
-              <TouchableOpacity
-                onPress={() => handleMediaPress(item.message, 'image', item)}
-                activeOpacity={0.9}>
-                <Image source={{uri: item.message}} style={styles.imageStyle} />
-              </TouchableOpacity>
-            </View>
-          )}
-          {isVideo && (
-            <View style={styles.mediaWrapper}>
-              <TouchableOpacity
-                onPress={() => handleMediaPress(item.message, 'video', item)}
-                activeOpacity={0.9}>
-                <Video
-                  source={{uri: item.message}}
-                  style={styles.videoStyle}
-                  controls={false}
-                  resizeMode="cover"
-                />
-                <View style={styles.playIcon}>
-                  <Icon
-                    name="play-circle"
-                    size={40}
-                    color="rgba(255,255,255,0.9)"
-                  />
-                </View>
-              </TouchableOpacity>
-            </View>
-          )}
-          {isDocument && (
-            <View style={styles.documentContainer}>
-              <IconFA name="file-o" size={20} color="#4A90E2" />
-              <Text style={styles.documentText}>{item.message}</Text>
-            </View>
-          )}
-          {isOther && (
-            <View style={styles.otherMessageTextContainer}>
-              <Text style={styles.otherMessageText}>{item.message}</Text>
-            </View>
-          )}
-        </TouchableOpacity>
+        {bubbleContent}
       </View>
     );
   });
@@ -963,7 +991,7 @@ const ChatScreen = ({route}) => {
               translucent
             />
             <LinearGradient
-              colors={['#667eea', '#764ba2', '#f093fb']}
+              colors={colors.primaryGradient}
               start={{x: 0, y: 0}}
               end={{x: 1, y: 1}}
               style={styles.headerContainer}>
@@ -1087,13 +1115,21 @@ const ChatScreen = ({route}) => {
                 <TouchableOpacity
                   style={styles.iconButton}
                   onPress={handleToggleEmojiPicker}>
-                  <Icon name="happy-outline" color={isDarkMode ? "#8E8E93" : "#8E8E93"} size={24} />
+                  <Icon
+                    name="happy-outline"
+                    color={colors.textSecondary}
+                    size={24}
+                  />
                 </TouchableOpacity>
 
                 <TouchableOpacity
                   style={styles.iconButton}
                   onPress={handleImagePicker}>
-                  <Icon name="images-outline" color={isDarkMode ? "#8E8E93" : "#8E8E93"} size={24} />
+                  <Icon
+                    name="images-outline"
+                    color={colors.textSecondary}
+                    size={24}
+                  />
                 </TouchableOpacity>
 
                 <View style={styles.textInputContainer}>
@@ -1103,21 +1139,27 @@ const ChatScreen = ({route}) => {
                     value={message}
                     onChangeText={handleTextChange}
                     placeholder={safeTranslate('tymess', 'Type your message...')}
-                    placeholderTextColor={isDarkMode ? "#8E8E93" : "#8E8E93"}
+                    placeholderTextColor={colors.textSecondary}
                     onFocus={handleFocusInput}
                     multiline
                     maxLength={1000}
                   />
                 </View>
 
-                <TouchableOpacity 
-                  onPress={handleSend} 
+                <TouchableOpacity
+                  onPress={handleSend}
                   style={[
                     styles.sendButton,
-                    {opacity: message.trim() ? 1 : 0.5}
+                    {opacity: message.trim() ? 1 : 0.5},
                   ]}
                   disabled={!message.trim()}>
-                  <Icon name="send" color="#FFF" size={20} />
+                  <LinearGradient
+                    colors={colors.primaryGradient}
+                    start={{x: 0, y: 0}}
+                    end={{x: 1, y: 1}}
+                    style={styles.sendGradient}>
+                    <Icon name="send" color="#FFF" size={20} />
+                  </LinearGradient>
                 </TouchableOpacity>
               </View>
             </View>
@@ -1159,42 +1201,45 @@ const ChatScreen = ({route}) => {
 };
 
 // Dynamic styles based on theme
-const createStyles = (isDarkMode) => StyleSheet.create({
+const createStyles = (isDarkMode, colors) => StyleSheet.create({
   userMessageContainer: {
     alignSelf: 'flex-end',
-    backgroundColor: '#007AFF',
     borderRadius: 20,
     marginVertical: 3,
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingTop: 10,
+    paddingBottom: 6,
     maxWidth: '80%',
     marginRight: 16,
     position: 'relative',
-    shadowColor: '#007AFF',
-    shadowOffset: {width: 0, height: 2},
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowColor: colors.primary,
+    shadowOffset: {width: 0, height: 3},
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
+    elevation: 4,
     borderBottomRightRadius: 6,
+    borderTopRightRadius: 2,
   },
   otherMessageContainer: {
     alignSelf: 'flex-start',
-    backgroundColor: isDarkMode ? '#1C1C1E' : '#FFFFFF',
+    backgroundColor: colors.surface,
     borderRadius: 20,
     marginVertical: 3,
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingTop: 10,
+    paddingBottom: 6,
     maxWidth: '80%',
     marginLeft: 16,
     position: 'relative',
-    shadowColor: isDarkMode ? '#000' : '#000',
+    shadowColor: '#000',
     shadowOffset: {width: 0, height: 1},
     shadowOpacity: isDarkMode ? 0.3 : 0.1,
     shadowRadius: 3,
     elevation: 2,
     borderBottomLeftRadius: 6,
+    borderTopLeftRadius: 2,
     borderWidth: 0.5,
-    borderColor: isDarkMode ? '#2C2C2E' : '#E5E5EA',
+    borderColor: colors.border,
   },
   mediaMessageContainer: {
     alignSelf: 'flex-start',
@@ -1241,7 +1286,7 @@ const createStyles = (isDarkMode) => StyleSheet.create({
   },
   container: {
     flex: 1,
-    backgroundColor: isDarkMode ? '#000000' : '#F2F2F7',
+    backgroundColor: colors.background,
   },
   headerSafeArea: {
     backgroundColor: 'transparent',
@@ -1425,16 +1470,16 @@ const createStyles = (isDarkMode) => StyleSheet.create({
     alignItems: 'center',
   },
   inputContainer: {
-    backgroundColor: isDarkMode ? '#000000' : '#F2F2F7',
+    backgroundColor: colors.background,
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderTopWidth: 0.5,
-    borderTopColor: isDarkMode ? '#2C2C2E' : '#E5E5EA',
+    borderTopColor: colors.border,
   },
   inputWrapper: {
     flexDirection: 'row',
     alignItems: 'flex-end',
-    backgroundColor: isDarkMode ? '#1C1C1E' : '#FFFFFF',
+    backgroundColor: colors.surface,
     borderRadius: 25,
     paddingHorizontal: 12,
     paddingVertical: 8,
@@ -1444,7 +1489,7 @@ const createStyles = (isDarkMode) => StyleSheet.create({
     shadowRadius: 2,
     elevation: 2,
     borderWidth: 0.5,
-    borderColor: isDarkMode ? '#2C2C2E' : '#E5E5EA',
+    borderColor: colors.border,
   },
   iconButton: {
     paddingHorizontal: 8,
@@ -1459,7 +1504,7 @@ const createStyles = (isDarkMode) => StyleSheet.create({
   },
   textInput: {
     fontSize: 16,
-    color: isDarkMode ? '#FFFFFF' : '#000000',
+    color: colors.text,
     paddingVertical: 8,
     paddingHorizontal: 0,
     textAlignVertical: 'top',
@@ -1467,17 +1512,24 @@ const createStyles = (isDarkMode) => StyleSheet.create({
     maxHeight: 80,
   },
   sendButton: {
-    backgroundColor: '#007AFF',
     borderRadius: 20,
-    width: 36,
-    height: 36,
+    width: 38,
+    height: 38,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#007AFF',
-    shadowOffset: {width: 0, height: 2},
+    overflow: 'hidden',
+    shadowColor: colors.primary,
+    shadowOffset: {width: 0, height: 3},
     shadowOpacity: 0.3,
-    shadowRadius: 4,
+    shadowRadius: 5,
     elevation: 3,
+  },
+  sendGradient: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   messagesList: {
     paddingHorizontal: 16,
@@ -1490,10 +1542,16 @@ const createStyles = (isDarkMode) => StyleSheet.create({
     fontWeight: '400',
   },
   otherMessageText: {
-    color: isDarkMode ? '#FFFFFF' : '#000000',
+    color: colors.text,
     fontSize: 16,
     lineHeight: 22,
     fontWeight: '400',
+  },
+  messageTime: {
+    fontSize: 10,
+    fontWeight: '500',
+    alignSelf: 'flex-end',
+    marginTop: 4,
   },
   notMessageContainer: {
     flex: 1,
@@ -1503,11 +1561,11 @@ const createStyles = (isDarkMode) => StyleSheet.create({
   },
   notMessageText: {
     fontSize: 18,
-    color: isDarkMode ? '#8E8E93' : '#777',
+    color: colors.textSecondary,
   },
   showEmojiTab: {
     height: 280,
-    backgroundColor: isDarkMode ? '#1C1C1E' : '#F2F2F7',
+    backgroundColor: colors.backgroundSecondary,
     zIndex: 1000,
     elevation: 8,
     borderTopLeftRadius: 20,
@@ -1663,10 +1721,12 @@ const createStyles = (isDarkMode) => StyleSheet.create({
     marginVertical: 15,
     paddingHorizontal: 12,
     paddingVertical: 6,
-    backgroundColor: isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
+    backgroundColor: colors.backgroundSecondary,
     borderRadius: 12,
     alignSelf: 'center',
     marginHorizontal: 20,
+    borderWidth: 0.5,
+    borderColor: colors.border,
   },
   typingIndicator: {
     flexDirection: 'row',
@@ -1675,7 +1735,7 @@ const createStyles = (isDarkMode) => StyleSheet.create({
     marginLeft: 16,
   },
   typingBubble: {
-    backgroundColor: isDarkMode ? '#1C1C1E' : '#FFFFFF',
+    backgroundColor: colors.surface,
     borderRadius: 20,
     paddingHorizontal: 16,
     paddingVertical: 12,
@@ -1686,7 +1746,7 @@ const createStyles = (isDarkMode) => StyleSheet.create({
     shadowRadius: 3,
     elevation: 2,
     borderWidth: 0.5,
-    borderColor: isDarkMode ? '#2C2C2E' : '#E5E5EA',
+    borderColor: colors.border,
     borderBottomLeftRadius: 6,
   },
   typingDots: {
@@ -1717,6 +1777,6 @@ const createStyles = (isDarkMode) => StyleSheet.create({
 });
 
 // Create default styles for export
-const defaultStyles = createStyles(false);
+const defaultStyles = createStyles(false, COLORS);
 
 export default ChatScreen;
