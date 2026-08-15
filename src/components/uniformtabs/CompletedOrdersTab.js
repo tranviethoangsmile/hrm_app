@@ -67,21 +67,24 @@ const CompletedOrdersTab = ({USER_INFOR, isDarkMode, colors}) => {
   }, [handle_get_all_uniform_order_of_user]);
 
   const renderItem = ({item, index}) => (
-    <Animated.View style={[styles.orderContainer, {backgroundColor: colors.surface}]}>
+    <Animated.View
+      style={[styles.orderContainer, {backgroundColor: colors.surface}]}>
       <View style={styles.timelineContainer}>
         <View style={styles.timelineLine} />
         <View style={styles.timelineDot}>
           <Icon name="check-circle" size={20} color={COLORS.success} />
         </View>
       </View>
-      
+
       <View style={styles.orderContent}>
         <View style={styles.orderHeader}>
           <View style={styles.orderIcon}>
             <Icon name="check-circle" size={24} color={COLORS.success} />
           </View>
           <View style={styles.orderInfo}>
-            <Text style={[styles.uniformType, {color: colors.text}]}>{t(`${item.uniform_type}`)}</Text>
+            <Text style={[styles.uniformType, {color: colors.text}]}>
+              {t(`${item.uniform_type}`)}
+            </Text>
             <Text style={[styles.orderDate, {color: colors.textSecondary}]}>
               {t('completed_date')}: {item.delivery_date || 'N/A'}
             </Text>
@@ -94,21 +97,34 @@ const CompletedOrdersTab = ({USER_INFOR, isDarkMode, colors}) => {
         <View style={styles.orderDetails}>
           <View style={styles.detailRow}>
             <Icon name="straighten" size={16} color={colors.textSecondary} />
-            <Text style={[styles.detailLabel, {color: colors.textSecondary}]}>{t('size')}:</Text>
-            <Text style={[styles.detailsValue, {color: colors.text}]}>{item.uniform_size}</Text>
+            <Text style={[styles.detailLabel, {color: colors.textSecondary}]}>
+              {t('size')}:
+            </Text>
+            <Text style={[styles.detailsValue, {color: colors.text}]}>
+              {item.uniform_size}
+            </Text>
           </View>
           <View style={styles.detailRow}>
             <Icon name="shopping-cart" size={16} color={colors.textSecondary} />
-            <Text style={[styles.detailLabel, {color: colors.textSecondary}]}>{t('quantity')}:</Text>
-            <Text style={[styles.detailsValue, {color: colors.text}]}>{item.quantity}</Text>
+            <Text style={[styles.detailLabel, {color: colors.textSecondary}]}>
+              {t('quantity')}:
+            </Text>
+            <Text style={[styles.detailsValue, {color: colors.text}]}>
+              {item.quantity}
+            </Text>
           </View>
         </View>
 
         <View style={styles.completionSection}>
           <View style={styles.completionRow}>
             <Icon name="schedule" size={16} color={COLORS.success} />
-            <Text style={[styles.completionLabel, {color: colors.textSecondary}]}>{t('delivery_date')}:</Text>
-            <Text style={[styles.completionValue, {color: COLORS.success}]}>{item.delivery_date}</Text>
+            <Text
+              style={[styles.completionLabel, {color: colors.textSecondary}]}>
+              {t('delivery_date')}:
+            </Text>
+            <Text style={[styles.completionValue, {color: COLORS.success}]}>
+              {item.delivery_date}
+            </Text>
           </View>
           <View style={styles.successBar}>
             <View style={styles.successFill} />
@@ -132,14 +148,21 @@ const CompletedOrdersTab = ({USER_INFOR, isDarkMode, colors}) => {
         />
       ) : (
         <View style={styles.emptyContainer}>
-          <Icon name="check-circle-outline" size={64} color={colors.textSecondary} />
-          <Text style={[styles.noDataText, {color: colors.textSecondary}]}>{t('not.data')}</Text>
+          <Icon
+            name="check-circle-outline"
+            size={64}
+            color={colors.textSecondary}
+          />
+          <Text style={[styles.noDataText, {color: colors.textSecondary}]}>
+            {t('not.data')}
+          </Text>
         </View>
       )}
       <ModalMessage
-        visible={isMessageModalVisible}
-        message={t(message)}
+        isVisible={isMessageModalVisible}
+        message={message}
         type={messageType}
+        t={t}
         onClose={() => setMessageModalVisible(false)}
       />
     </View>

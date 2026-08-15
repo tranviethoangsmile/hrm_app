@@ -103,7 +103,7 @@ const UploadAvatar = ({
       );
       if (response?.data?.success) {
         setIsloading(false);
-        showMessage(t('success'), 'success', 1000);
+        showMessage('success', 'success', 1000);
         if (onSuccess) {
           onSuccess();
         }
@@ -113,11 +113,11 @@ const UploadAvatar = ({
         }, 1000);
       } else {
         setIsloading(false);
-        showMessage(t('unSuccess'), 'error', 1000);
+        showMessage('unSuccess', 'error', 1000);
       }
     } catch (error) {
       setIsloading(false);
-      showMessage(t('unSuccess'), 'error', 1000);
+      showMessage('unSuccess', 'error', 1000);
     }
   };
 
@@ -160,10 +160,11 @@ const UploadAvatar = ({
         </View>
         <OptimizedLoader visible={isloading} />
         <ModalMessage
-          visible={isMessageModalVisible}
+          isVisible={isMessageModalVisible}
           message={messageModal}
           type={messageType}
           duration={duration}
+          t={t}
           onClose={() => setMessageModalVisible(false)}
         />
       </View>

@@ -18,9 +18,9 @@ import {useTheme} from '../hooks/useTheme';
 
 const {width: SCREEN_WIDTH, height: SCREEN_HEIGHT} = Dimensions.get('window');
 
-// Gradient colors aligned with app (e.g. DependentSupportAmount header)
-const LIGHT_GRADIENT = ['#667eea', '#764ba2'];
-const DARK_GRADIENT = ['#1a1a2e', '#2d1b4e', '#16213e'];
+// Gradient colors aligned with brand (Indigo → Violet)
+const LIGHT_GRADIENT = ['#4F46E5', '#7C3AED'];
+const DARK_GRADIENT = ['#6366F1', '#8B5CF6'];
 
 const Splash = () => {
   const {t} = useTranslation();

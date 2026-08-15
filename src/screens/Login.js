@@ -23,6 +23,7 @@ import {useTranslation} from 'react-i18next';
 import i18next from '../../services/i18next';
 import {useDispatch} from 'react-redux';
 import {setAuthData} from '../redux/AuthSlice';
+import {TOKEN_KEY} from '../services/apiClient';
 import {
   API,
   BASE_URL,
@@ -187,6 +188,9 @@ const Login = () => {
         'FIRST_LOGIN_REQUIRED',
         JSON.stringify(needsPasswordChange),
       );
+      if (token) {
+        await AsyncStorage.setItem(TOKEN_KEY, token);
+      }
       dispatch(setAuthData(login?.data));
 
       if (needsPasswordChange) {

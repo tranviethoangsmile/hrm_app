@@ -1,5 +1,5 @@
 /* eslint-disable react-native/no-inline-styles */
-/* eslint-disable react-hooks/exhaustive-deps */
+
 import React, {useEffect, useState, useCallback} from 'react';
 import {
   View,
@@ -88,7 +88,10 @@ const Dependent = () => {
     {label: t('dependent.relationship_child', 'Con'), value: 'CHILD'},
     {label: t('dependent.relationship_spouse', 'Vợ/Chồng'), value: 'SPOUSE'},
     {label: t('dependent.relationship_parent', 'Bố/Mẹ'), value: 'PARENT'},
-    {label: t('dependent.relationship_sibling', 'Anh/Chị/Em'), value: 'SIBLING'},
+    {
+      label: t('dependent.relationship_sibling', 'Anh/Chị/Em'),
+      value: 'SIBLING',
+    },
     {label: t('dependent.relationship_other', 'Khác'), value: 'OTHER'},
   ];
 
@@ -183,7 +186,9 @@ const Dependent = () => {
     setPhone(item.phone || '');
     setAddress(item.address || '');
     setTaxCode(item.tax_code || '');
-    setDeductionAmount(item.deduction_amount ? String(item.deduction_amount) : '');
+    setDeductionAmount(
+      item.deduction_amount ? String(item.deduction_amount) : '',
+    );
     setNotes(item.notes || '');
     setMediaUri(item.media_path || null);
     setMediaName('');
@@ -227,15 +232,24 @@ const Dependent = () => {
       return false;
     }
     if (!relationship) {
-      showMessage(t('dependent.relationship_required', 'Vui lòng chọn mối quan hệ'), 'error');
+      showMessage(
+        t('dependent.relationship_required', 'Vui lòng chọn mối quan hệ'),
+        'error',
+      );
       return false;
     }
     if (!gender) {
-      showMessage(t('dependent.gender_required', 'Vui lòng chọn giới tính'), 'error');
+      showMessage(
+        t('dependent.gender_required', 'Vui lòng chọn giới tính'),
+        'error',
+      );
       return false;
     }
     if (!address.trim()) {
-      showMessage(t('dependent.address_required', 'Vui lòng nhập địa chỉ'), 'error');
+      showMessage(
+        t('dependent.address_required', 'Vui lòng nhập địa chỉ'),
+        'error',
+      );
       return false;
     }
     return true;
@@ -334,7 +348,10 @@ const Dependent = () => {
   const handleDelete = id => {
     Alert.alert(
       t('dependent.delete_title', 'Xóa người phụ thuộc'),
-      t('dependent.delete_message', 'Bạn có chắc chắn muốn xóa người phụ thuộc này?'),
+      t(
+        'dependent.delete_message',
+        'Bạn có chắc chắn muốn xóa người phụ thuộc này?',
+      ),
       [
         {
           text: t('cancel', 'Hủy'),
@@ -356,10 +373,16 @@ const Dependent = () => {
                 },
               );
               if (res?.data?.success) {
-                showMessage(t('dependent.delete_success', 'Xóa thành công'), 'success');
+                showMessage(
+                  t('dependent.delete_success', 'Xóa thành công'),
+                  'success',
+                );
                 getDependents();
               } else {
-                showMessage(t('dependent.delete_error', 'Xóa thất bại'), 'error');
+                showMessage(
+                  t('dependent.delete_error', 'Xóa thất bại'),
+                  'error',
+                );
               }
             } catch (error) {
               showMessage(t('dependent.delete_error', 'Xóa thất bại'), 'error');
@@ -402,27 +425,41 @@ const Dependent = () => {
       <View style={[styles.dependentCard, {backgroundColor: colors.surface}]}>
         <View style={styles.cardHeader}>
           <View style={styles.cardHeaderLeft}>
-            <View style={[styles.avatarPlaceholder, {backgroundColor: colors.primary}]}>
+            <View
+              style={[
+                styles.avatarPlaceholder,
+                {backgroundColor: colors.primary},
+              ]}>
               <Icon name="person" size={24} color="#fff" />
             </View>
             <View style={styles.cardInfo}>
               <Text style={[styles.dependentName, {color: colors.text}]}>
                 {item.name}
               </Text>
-              <Text style={[styles.dependentRelationship, {color: colors.textSecondary}]}>
-                {relationshipOptions.find(r => r.value === item.relationship)?.label || item.relationship}
+              <Text
+                style={[
+                  styles.dependentRelationship,
+                  {color: colors.textSecondary},
+                ]}>
+                {relationshipOptions.find(r => r.value === item.relationship)
+                  ?.label || item.relationship}
               </Text>
             </View>
           </View>
           <View style={styles.cardActions}>
             <TouchableOpacity
-              onPress={() => navigation.navigate('DependentSupportAmount', {dependent: item})}
+              onPress={() =>
+                navigation.navigate('DependentSupportAmount', {dependent: item})
+              }
               style={[styles.actionButton, {backgroundColor: '#10b98120'}]}>
               <Icon name="wallet-outline" size={18} color="#10b981" />
             </TouchableOpacity>
             <TouchableOpacity
               onPress={() => openEditModal(item)}
-              style={[styles.actionButton, {backgroundColor: colors.primary + '20'}]}>
+              style={[
+                styles.actionButton,
+                {backgroundColor: colors.primary + '20'},
+              ]}>
               <Icon name="pencil" size={18} color={colors.primary} />
             </TouchableOpacity>
             <TouchableOpacity
@@ -440,12 +477,20 @@ const Dependent = () => {
                 {backgroundColor: getStatusColor(item.status || 'PENDING')},
               ]}
             />
-            <Text style={[styles.statusText, {color: getStatusColor(item.status || 'PENDING')}]}>
+            <Text
+              style={[
+                styles.statusText,
+                {color: getStatusColor(item.status || 'PENDING')},
+              ]}>
               {getStatusText(item.status || 'PENDING')}
             </Text>
           </View>
           <View style={styles.infoRow}>
-            <Icon name="calendar-outline" size={16} color={colors.textSecondary} />
+            <Icon
+              name="calendar-outline"
+              size={16}
+              color={colors.textSecondary}
+            />
             <Text style={[styles.infoText, {color: colors.textSecondary}]}>
               {t('dependent.date_of_birth', 'Ngày sinh')}:{' '}
             </Text>
@@ -456,18 +501,27 @@ const Dependent = () => {
           </View>
           {item.gender && (
             <View style={styles.infoRow}>
-              <Icon name="person-outline" size={16} color={colors.textSecondary} />
+              <Icon
+                name="person-outline"
+                size={16}
+                color={colors.textSecondary}
+              />
               <Text style={[styles.infoText, {color: colors.textSecondary}]}>
                 {t('dependent.gender', 'Giới tính')}:{' '}
               </Text>
               <Text style={[styles.infoValue, {color: colors.text}]}>
-                {genderOptions.find(g => g.value === item.gender)?.label || item.gender}
+                {genderOptions.find(g => g.value === item.gender)?.label ||
+                  item.gender}
               </Text>
             </View>
           )}
           {item.identification_number && (
             <View style={styles.infoRow}>
-              <Icon name="card-outline" size={16} color={colors.textSecondary} />
+              <Icon
+                name="card-outline"
+                size={16}
+                color={colors.textSecondary}
+              />
               <Text style={[styles.infoText, {color: colors.textSecondary}]}>
                 {t('dependent.id_number', 'CMND/CCCD')}:{' '}
               </Text>
@@ -478,7 +532,11 @@ const Dependent = () => {
           )}
           {item.phone && (
             <View style={styles.infoRow}>
-              <Icon name="call-outline" size={16} color={colors.textSecondary} />
+              <Icon
+                name="call-outline"
+                size={16}
+                color={colors.textSecondary}
+              />
               <Text style={[styles.infoText, {color: colors.textSecondary}]}>
                 {t('dependent.phone', 'Số điện thoại')}:{' '}
               </Text>
@@ -489,18 +547,28 @@ const Dependent = () => {
           )}
           {item.address && (
             <View style={styles.infoRow}>
-              <Icon name="location-outline" size={16} color={colors.textSecondary} />
+              <Icon
+                name="location-outline"
+                size={16}
+                color={colors.textSecondary}
+              />
               <Text style={[styles.infoText, {color: colors.textSecondary}]}>
                 {t('dependent.address', 'Địa chỉ')}:{' '}
               </Text>
-              <Text style={[styles.infoValue, {color: colors.text}]} numberOfLines={2}>
+              <Text
+                style={[styles.infoValue, {color: colors.text}]}
+                numberOfLines={2}>
                 {item.address}
               </Text>
             </View>
           )}
           {item.deduction_amount && (
             <View style={styles.infoRow}>
-              <Icon name="cash-outline" size={16} color={colors.textSecondary} />
+              <Icon
+                name="cash-outline"
+                size={16}
+                color={colors.textSecondary}
+              />
               <Text style={[styles.infoText, {color: colors.textSecondary}]}>
                 {t('dependent.deduction_amount', 'Mức giảm trừ')}:{' '}
               </Text>
@@ -581,7 +649,9 @@ const Dependent = () => {
         <FlatList
           data={dependents}
           renderItem={renderDependent}
-          keyExtractor={(item, index) => item?.id?.toString() || index.toString()}
+          keyExtractor={(item, index) =>
+            item?.id?.toString() || index.toString()
+          }
           contentContainerStyle={styles.listContent}
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
@@ -597,7 +667,8 @@ const Dependent = () => {
         transparent={true}
         onRequestClose={closeModal}>
         <View style={styles.modalOverlay}>
-          <View style={[styles.modalContent, {backgroundColor: colors.surface}]}>
+          <View
+            style={[styles.modalContent, {backgroundColor: colors.surface}]}>
             <View style={styles.modalHeader}>
               <Text style={[styles.modalTitle, {color: colors.text}]}>
                 {isEdit
@@ -617,10 +688,14 @@ const Dependent = () => {
               scrollEnabled={!relationshipOpen && !genderOpen}>
               <View style={styles.formGroup}>
                 <Text style={[styles.label, {color: colors.text}]}>
-                  {t('dependent.name', 'Tên')} <Text style={styles.required}>*</Text>
+                  {t('dependent.name', 'Tên')}{' '}
+                  <Text style={styles.required}>*</Text>
                 </Text>
                 <TextInput
-                  style={[styles.input, {backgroundColor: colors.background, color: colors.text}]}
+                  style={[
+                    styles.input,
+                    {backgroundColor: colors.background, color: colors.text},
+                  ]}
                   value={name}
                   onChangeText={setName}
                   placeholder={t('dependent.name_placeholder', 'Nhập tên')}
@@ -628,28 +703,38 @@ const Dependent = () => {
                 />
               </View>
 
-              <View style={[styles.formGroup, {zIndex: relationshipOpen ? 10000 : 1}]}>
+              <View
+                style={[
+                  styles.formGroup,
+                  {zIndex: relationshipOpen ? 10000 : 1},
+                ]}>
                 <Text style={[styles.label, {color: colors.text}]}>
-                  {t('dependent.relationship', 'Mối quan hệ')} <Text style={styles.required}>*</Text>
+                  {t('dependent.relationship', 'Mối quan hệ')}{' '}
+                  <Text style={styles.required}>*</Text>
                 </Text>
                 <DropDownPicker
                   open={relationshipOpen}
                   value={relationship}
                   items={relationshipOptions}
-                  setOpen={(open) => {
+                  setOpen={open => {
                     setRelationshipOpen(open);
                     if (open) {
                       setGenderOpen(false);
                     }
                   }}
                   setValue={setRelationship}
-                  placeholder={t('dependent.relationship_placeholder', 'Chọn mối quan hệ')}
+                  placeholder={t(
+                    'dependent.relationship_placeholder',
+                    'Chọn mối quan hệ',
+                  )}
                   placeholderStyle={{color: colors.textTertiary}}
                   style={[
                     styles.dropdown,
                     {
                       backgroundColor: colors.background,
-                      borderColor: relationshipOpen ? colors.primary : colors.border,
+                      borderColor: relationshipOpen
+                        ? colors.primary
+                        : colors.border,
                     },
                   ]}
                   textStyle={{color: colors.text, fontSize: 16}}
@@ -704,22 +789,27 @@ const Dependent = () => {
                 />
               </View>
 
-              <View style={[styles.formGroup, {zIndex: genderOpen ? 10000 : 1}]}>
+              <View
+                style={[styles.formGroup, {zIndex: genderOpen ? 10000 : 1}]}>
                 <Text style={[styles.label, {color: colors.text}]}>
-                  {t('dependent.gender', 'Giới tính')} <Text style={styles.required}>*</Text>
+                  {t('dependent.gender', 'Giới tính')}{' '}
+                  <Text style={styles.required}>*</Text>
                 </Text>
                 <DropDownPicker
                   open={genderOpen}
                   value={gender}
                   items={genderOptions}
-                  setOpen={(open) => {
+                  setOpen={open => {
                     setGenderOpen(open);
                     if (open) {
                       setRelationshipOpen(false);
                     }
                   }}
                   setValue={setGender}
-                  placeholder={t('dependent.gender_placeholder', 'Chọn giới tính')}
+                  placeholder={t(
+                    'dependent.gender_placeholder',
+                    'Chọn giới tính',
+                  )}
                   placeholderStyle={{color: colors.textTertiary}}
                   style={[
                     styles.dropdown,
@@ -781,15 +871,23 @@ const Dependent = () => {
 
               <View style={styles.formGroup}>
                 <Text style={[styles.label, {color: colors.text}]}>
-                  {t('dependent.date_of_birth', 'Ngày sinh')} <Text style={styles.required}>*</Text>
+                  {t('dependent.date_of_birth', 'Ngày sinh')}{' '}
+                  <Text style={styles.required}>*</Text>
                 </Text>
                 <TouchableOpacity
                   onPress={() => setDatePickerVisible(true)}
-                  style={[styles.dateButton, {backgroundColor: colors.background}]}>
+                  style={[
+                    styles.dateButton,
+                    {backgroundColor: colors.background},
+                  ]}>
                   <Text style={[styles.dateText, {color: colors.text}]}>
                     {moment(dateOfBirth).format('DD/MM/YYYY')}
                   </Text>
-                  <Icon name="calendar-outline" size={20} color={colors.primary} />
+                  <Icon
+                    name="calendar-outline"
+                    size={20}
+                    color={colors.primary}
+                  />
                 </TouchableOpacity>
               </View>
 
@@ -798,10 +896,16 @@ const Dependent = () => {
                   {t('dependent.id_number', 'CMND/CCCD')}
                 </Text>
                 <TextInput
-                  style={[styles.input, {backgroundColor: colors.background, color: colors.text}]}
+                  style={[
+                    styles.input,
+                    {backgroundColor: colors.background, color: colors.text},
+                  ]}
                   value={identificationNumber}
                   onChangeText={setIdentificationNumber}
-                  placeholder={t('dependent.id_number_placeholder', 'Nhập số CMND/CCCD')}
+                  placeholder={t(
+                    'dependent.id_number_placeholder',
+                    'Nhập số CMND/CCCD',
+                  )}
                   placeholderTextColor={colors.textTertiary}
                   keyboardType="numeric"
                 />
@@ -812,10 +916,16 @@ const Dependent = () => {
                   {t('dependent.phone', 'Số điện thoại')}
                 </Text>
                 <TextInput
-                  style={[styles.input, {backgroundColor: colors.background, color: colors.text}]}
+                  style={[
+                    styles.input,
+                    {backgroundColor: colors.background, color: colors.text},
+                  ]}
                   value={phone}
                   onChangeText={setPhone}
-                  placeholder={t('dependent.phone_placeholder', 'Nhập số điện thoại')}
+                  placeholder={t(
+                    'dependent.phone_placeholder',
+                    'Nhập số điện thoại',
+                  )}
                   placeholderTextColor={colors.textTertiary}
                   keyboardType="phone-pad"
                 />
@@ -823,7 +933,8 @@ const Dependent = () => {
 
               <View style={styles.formGroup}>
                 <Text style={[styles.label, {color: colors.text}]}>
-                  {t('dependent.address', 'Địa chỉ')} <Text style={styles.required}>*</Text>
+                  {t('dependent.address', 'Địa chỉ')}{' '}
+                  <Text style={styles.required}>*</Text>
                 </Text>
                 <TextInput
                   style={[
@@ -833,7 +944,10 @@ const Dependent = () => {
                   ]}
                   value={address}
                   onChangeText={setAddress}
-                  placeholder={t('dependent.address_placeholder', 'Nhập địa chỉ')}
+                  placeholder={t(
+                    'dependent.address_placeholder',
+                    'Nhập địa chỉ',
+                  )}
                   placeholderTextColor={colors.textTertiary}
                   multiline
                   numberOfLines={3}
@@ -845,10 +959,16 @@ const Dependent = () => {
                   {t('dependent.tax_code', 'Mã số thuế')}
                 </Text>
                 <TextInput
-                  style={[styles.input, {backgroundColor: colors.background, color: colors.text}]}
+                  style={[
+                    styles.input,
+                    {backgroundColor: colors.background, color: colors.text},
+                  ]}
                   value={taxCode}
                   onChangeText={setTaxCode}
-                  placeholder={t('dependent.tax_code_placeholder', 'Nhập mã số thuế')}
+                  placeholder={t(
+                    'dependent.tax_code_placeholder',
+                    'Nhập mã số thuế',
+                  )}
                   placeholderTextColor={colors.textTertiary}
                 />
               </View>
@@ -858,10 +978,16 @@ const Dependent = () => {
                   {t('dependent.deduction_amount', 'Mức giảm trừ')}
                 </Text>
                 <TextInput
-                  style={[styles.input, {backgroundColor: colors.background, color: colors.text}]}
+                  style={[
+                    styles.input,
+                    {backgroundColor: colors.background, color: colors.text},
+                  ]}
                   value={deductionAmount}
                   onChangeText={setDeductionAmount}
-                  placeholder={t('dependent.deduction_amount_placeholder', 'Nhập mức giảm trừ (VNĐ)')}
+                  placeholder={t(
+                    'dependent.deduction_amount_placeholder',
+                    'Nhập mức giảm trừ (VNĐ)',
+                  )}
                   placeholderTextColor={colors.textTertiary}
                   keyboardType="numeric"
                 />
@@ -879,7 +1005,10 @@ const Dependent = () => {
                   ]}
                   value={notes}
                   onChangeText={setNotes}
-                  placeholder={t('dependent.notes_placeholder', 'Nhập ghi chú (nếu có)')}
+                  placeholder={t(
+                    'dependent.notes_placeholder',
+                    'Nhập ghi chú (nếu có)',
+                  )}
                   placeholderTextColor={colors.textTertiary}
                   multiline
                   numberOfLines={3}
@@ -892,16 +1021,30 @@ const Dependent = () => {
                 </Text>
                 <TouchableOpacity
                   onPress={handleImagePicker}
-                  style={[styles.imagePickerButton, {backgroundColor: colors.background, borderColor: colors.border}]}>
+                  style={[
+                    styles.imagePickerButton,
+                    {
+                      backgroundColor: colors.background,
+                      borderColor: colors.border,
+                    },
+                  ]}>
                   {mediaUri ? (
                     <View style={styles.imagePreview}>
                       <Image
-                        source={{uri: mediaUri.startsWith('http') ? mediaUri : `file://${mediaUri}`}}
+                        source={{
+                          uri: mediaUri.startsWith('http')
+                            ? mediaUri
+                            : `file://${mediaUri}`,
+                        }}
                         style={styles.previewImage}
                         resizeMode="cover"
                       />
                       <View style={styles.imageOverlay}>
-                        <Icon name="checkmark-circle" size={24} color="#10b981" />
+                        <Icon
+                          name="checkmark-circle"
+                          size={24}
+                          color="#10b981"
+                        />
                         <Text style={[styles.imageText, {color: '#10b981'}]}>
                           {t('dependent.image_selected', 'Đã chọn ảnh')}
                         </Text>
@@ -909,9 +1052,20 @@ const Dependent = () => {
                     </View>
                   ) : (
                     <View style={styles.imagePickerContent}>
-                      <Icon name="camera-outline" size={24} color={colors.primary} />
-                      <Text style={[styles.imagePickerText, {color: colors.primary}]}>
-                        {t('dependent.select_document', 'Chọn giấy tờ chứng minh')}
+                      <Icon
+                        name="camera-outline"
+                        size={24}
+                        color={colors.primary}
+                      />
+                      <Text
+                        style={[
+                          styles.imagePickerText,
+                          {color: colors.primary},
+                        ]}>
+                        {t(
+                          'dependent.select_document',
+                          'Chọn giấy tờ chứng minh',
+                        )}
                       </Text>
                     </View>
                   )}
@@ -923,7 +1077,11 @@ const Dependent = () => {
               <TouchableOpacity
                 onPress={closeModal}
                 style={[styles.cancelButton, {borderColor: colors.border}]}>
-                <Text style={[styles.cancelButtonText, {color: colors.textSecondary}]}>
+                <Text
+                  style={[
+                    styles.cancelButtonText,
+                    {color: colors.textSecondary},
+                  ]}>
                   {t('cancel', 'Hủy')}
                 </Text>
               </TouchableOpacity>
@@ -968,9 +1126,10 @@ const Dependent = () => {
 
       {/* Message Modal */}
       <ModalMessage
-        visible={modalMessage.visible}
+        isVisible={modalMessage.visible}
         type={modalMessage.type}
         message={modalMessage.message}
+        t={t}
         onClose={() => setModalMessage({...modalMessage, visible: false})}
       />
     </View>
@@ -984,7 +1143,8 @@ const createStyles = (colors, isDarkMode) =>
       backgroundColor: colors.background,
     },
     headerGradient: {
-      paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight || 24 : 44,
+      paddingTop:
+        Platform.OS === 'android' ? StatusBar.currentHeight || 24 : 44,
       paddingBottom: 12,
       shadowColor: colors.shadow,
       shadowOffset: {width: 0, height: 4},

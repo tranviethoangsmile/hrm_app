@@ -19,7 +19,7 @@ import FeatureTab from '../components/tabs/FeatureTab';
 import {useNavigation} from '@react-navigation/native';
 import LinearGradient from 'react-native-linear-gradient';
 import {useTheme} from '../hooks/useTheme';
-import axios from 'axios';
+import apiClient from '../services/apiClient';
 import {
   BASE_URL,
   PORT,
@@ -47,7 +47,7 @@ const Main = () => {
   const getNotificationCount = useCallback(async () => {
     try {
       const user_id = userInfo?.id;
-      const notifications = await axios.post(
+      const notifications = await apiClient.post(
         `${BASE_URL}${PORT}${API}${VERSION}${V1}${NOTIFICATION}${SEARCH_BY_ID}`,
         {
           user_id,
@@ -119,7 +119,7 @@ const Main = () => {
       activeOpacity={0.7}>
       {selected ? (
         <LinearGradient
-          colors={isDarkMode ? ['#0A84FF', '#5E5CE6'] : ['#667eea', '#764ba2']}
+          colors={colors.primaryGradient}
           style={styles.selectedTabGradient}>
           <Icon name={iconFilled || iconName} size={24} color="#fff" />
         </LinearGradient>
@@ -178,7 +178,7 @@ const Main = () => {
             onPress={() => navigation.navigate('Checkin')}
             activeOpacity={0.8}>
             <LinearGradient
-              colors={isDarkMode ? ['#0A84FF', '#5E5CE6'] : ['#4FACFE', '#00F2FE']}
+              colors={colors.primaryGradient}
               style={styles.centerTabGradient}>
               <Icon name="finger-print" size={26} color="#fff" />
             </LinearGradient>

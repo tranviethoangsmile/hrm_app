@@ -72,8 +72,12 @@ const Setting = () => {
         style={[
           styles.languageItem,
           {
-            backgroundColor: colors.surface,
-            borderColor: selectedLocale === item.id ? colors.primary : colors.border,
+            backgroundColor:
+              selectedLocale === item.id
+                ? colors.primaryLight
+                : colors.surface,
+            borderColor:
+              selectedLocale === item.id ? colors.primary : colors.border,
           },
           selectedLocale === item.id && styles.selectedLanguageItem,
         ]}
@@ -107,7 +111,7 @@ const Setting = () => {
 
       {/* Modern Header with Gradient */}
       <LinearGradient
-        colors={isDarkMode ? ['#1a1a2e', '#16213e'] : ['#667eea', '#764ba2']}
+        colors={colors.primaryGradient}
         start={{x: 0, y: 0}}
         end={{x: 1, y: 1}}
         style={styles.headerGradient}>
@@ -134,6 +138,39 @@ const Setting = () => {
         <View style={[styles.settingItem, {backgroundColor: colors.surface, borderColor: colors.border}]}>
           <DarkModeToggle size="large" />
         </View>
+
+        <View style={[styles.sectionHeader, {borderBottomColor: colors.border}]}>
+          <Icon name="account-key-outline" size={24} color={colors.primary} />
+          <Text style={[styles.sectionTitle, {color: colors.text}]}>
+            {t('changepassword.account_section', 'Account')}
+          </Text>
+        </View>
+
+        <TouchableOpacity
+          style={[styles.settingItem, {backgroundColor: colors.surface, borderColor: colors.border}]}
+          onPress={() => navigation.navigate('ChangePassword')}
+          activeOpacity={0.7}>
+          <View style={styles.settingItemContent}>
+            <Icon name="lock-reset" size={22} color={colors.primary} />
+            <Text style={[styles.settingItemText, {color: colors.text}]}>
+              {t('changepassword.title', 'Change Password')}
+            </Text>
+            <Icon name="chevron-right" size={22} color={colors.textSecondary} />
+          </View>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[styles.settingItem, {backgroundColor: colors.surface, borderColor: colors.border}]}
+          onPress={() => navigation.navigate('Support')}
+          activeOpacity={0.7}>
+          <View style={styles.settingItemContent}>
+            <Icon name="help-circle-outline" size={22} color={colors.primary} />
+            <Text style={[styles.settingItemText, {color: colors.text}]}>
+              {t('support.title', 'Help & Support')}
+            </Text>
+            <Icon name="chevron-right" size={22} color={colors.textSecondary} />
+          </View>
+        </TouchableOpacity>
 
         <View style={[styles.sectionHeader, {borderBottomColor: colors.border}]}>
           <Icon name="translate" size={24} color={colors.primary} />
@@ -214,7 +251,6 @@ const styles = StyleSheet.create({
     marginLeft: 12,
   },
   settingItem: {
-    backgroundColor: '#ffffff',
     borderRadius: 12,
     padding: 16,
     marginVertical: 6,
@@ -227,6 +263,16 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
+  },
+  settingItemContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  settingItemText: {
+    flex: 1,
+    fontSize: 16,
+    fontWeight: '600',
+    marginLeft: 14,
   },
   listContainer: {
     paddingVertical: 8,
@@ -234,7 +280,6 @@ const styles = StyleSheet.create({
   languageItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#ffffff',
     borderRadius: 12,
     padding: 16,
     marginVertical: 6,
@@ -247,11 +292,9 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
     borderWidth: 1,
-    borderColor: '#f0f4f8',
   },
   selectedLanguageItem: {
     borderWidth: 2,
-    backgroundColor: '#f8f9ff',
   },
   flagText: {
     fontSize: 24,

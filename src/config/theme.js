@@ -1,9 +1,10 @@
 // Light theme colors
 export const LIGHT_COLORS = {
   // Primary colors
-  primary: '#007AFF',
-  primaryLight: '#e3f2fd',
-  primary2: '#5856D6',
+  primary: '#4F46E5',
+  primaryLight: '#EEF2FF',
+  primary2: '#7C3AED',
+  primaryGradient: ['#4F46E5', '#7C3AED'],
   
   // Text colors
   text: '#1A1A1A',
@@ -52,9 +53,10 @@ export const LIGHT_COLORS = {
 // Dark theme colors
 export const DARK_COLORS = {
   // Primary colors
-  primary: '#0A84FF',
-  primaryLight: '#1a1a2e',
-  primary2: '#5E5CE6',
+  primary: '#818CF8',
+  primaryLight: '#1E1B4B',
+  primary2: '#A78BFA',
+  primaryGradient: ['#6366F1', '#8B5CF6'],
   
   // Text colors
   text: '#FFFFFF',

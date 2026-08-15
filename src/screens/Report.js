@@ -13,7 +13,7 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import React, {useEffect, useState, useRef} from 'react';
-import axios from 'axios';
+import apiClient from '../services/apiClient';
 import {useNavigation} from '@react-navigation/native';
 import OptimizedLoader from '../components/OptimizedLoader';
 import moment from 'moment';
@@ -71,7 +71,7 @@ const Report = () => {
   const [productValue, setProductValue] = useState('');
   const [compareShift, setCompareShift] = useState(false);
   const [dailyReports, setDailyReports] = useState([]);
-  
+
   // Animation values
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(50)).current;
@@ -97,7 +97,7 @@ const Report = () => {
       const field = {
         department_id: authData?.data?.data?.department_id,
       };
-      const inventorys = await axios.post(
+      const inventorys = await apiClient.post(
         `${BASE_URL}${PORT}${API}${VERSION}${V1}${INVENTORY}${SEARCH}`,
         {
           ...field,
@@ -136,7 +136,7 @@ const Report = () => {
       if (typeof productValue === 'string' && productValue !== '') {
         search_value.product = productValue;
       }
-      const res = await axios.post(
+      const res = await apiClient.post(
         `${BASE_URL}${PORT}${API}${VERSION}${V1}${DAILY_REPORT}${GET_ALL}`,
         search_value,
       );
@@ -188,7 +188,7 @@ const Report = () => {
     if (shiftValue) {
       setCompareShift(false);
     }
-    
+
     // Start animations
     Animated.parallel([
       Animated.timing(fadeAnim, {
@@ -209,7 +209,6 @@ const Report = () => {
         useNativeDriver: true,
       }),
     ]).start();
-    // eslint-disable-next-line
   }, [shiftValue, productValue]);
 
   const width = Dimensions.get('screen').width * 1;
@@ -220,7 +219,10 @@ const Report = () => {
     backgroundGradientFromOpacity: 0,
     backgroundGradientTo: colors.surface,
     backgroundGradientToOpacity: 0.5,
-    color: (opacity = 1) => `${colors.primary}${Math.floor(opacity * 255).toString(16).padStart(2, '0')}`,
+    color: (opacity = 1) =>
+      `${colors.primary}${Math.floor(opacity * 255)
+        .toString(16)
+        .padStart(2, '0')}`,
     strokeWidth: 3,
     barPercentage: 0.6,
     useShadowColorFromDataset: false,
@@ -337,7 +339,7 @@ const Report = () => {
   }
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
+    <View style={[styles.container, {backgroundColor: colors.background}]}>
       <StatusBar
         barStyle={isDarkMode ? 'light-content' : 'dark-content'}
         backgroundColor="transparent"
@@ -348,36 +350,36 @@ const Report = () => {
         onBack={() => navigation.goBack()}
       />
       <OptimizedLoader visible={isLoading} />
-      
-      <ScrollView 
+
+      <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollViewContent}
         showsVerticalScrollIndicator={false}>
-        
         {/* Inventory Card */}
-        <Animated.View 
+        <Animated.View
           style={[
             styles.card,
             {
               opacity: fadeAnim,
-              transform: [
-                { translateY: slideAnim },
-                { scale: scaleAnim }
-              ]
-            }
+              transform: [{translateY: slideAnim}, {scale: scaleAnim}],
+            },
           ]}>
           <LinearGradient
-            colors={isDarkMode ? [colors.surface, colors.surfaceSecondary] : [colors.white, colors.backgroundSecondary]}
+            colors={
+              isDarkMode
+                ? [colors.surface, colors.surfaceSecondary]
+                : [colors.white, colors.backgroundSecondary]
+            }
             style={styles.cardGradient}>
             <View style={styles.sectionHeader}>
-              <View style={[styles.iconContainer, { backgroundColor: colors.primary + '20' }]}>
-                <Icon
-                  name="pie-chart"
-                  size={24}
-                  color={colors.primary}
-                />
+              <View
+                style={[
+                  styles.iconContainer,
+                  {backgroundColor: colors.primary + '20'},
+                ]}>
+                <Icon name="pie-chart" size={24} color={colors.primary} />
               </View>
-              <Text style={[styles.sectionTitle, { color: colors.text }]}>
+              <Text style={[styles.sectionTitle, {color: colors.text}]}>
                 {t('inventory')}
               </Text>
             </View>
@@ -398,7 +400,7 @@ const Report = () => {
             ) : (
               <View style={styles.emptyContainer}>
                 <IconFA name="chart-pie" size={48} color={colors.placeholder} />
-                <Text style={[styles.emptyText, { color: colors.placeholder }]}>
+                <Text style={[styles.emptyText, {color: colors.placeholder}]}>
                   {t('no_data')}
                 </Text>
               </View>
@@ -406,38 +408,43 @@ const Report = () => {
           </LinearGradient>
         </Animated.View>
         {/* Daily Report Card */}
-        <Animated.View 
+        <Animated.View
           style={[
             styles.card,
             {
               opacity: fadeAnim,
-              transform: [
-                { translateY: slideAnim },
-                { scale: scaleAnim }
-              ]
-            }
+              transform: [{translateY: slideAnim}, {scale: scaleAnim}],
+            },
           ]}>
           <LinearGradient
-            colors={isDarkMode ? [colors.surface, colors.surfaceSecondary] : [colors.white, colors.backgroundSecondary]}
+            colors={
+              isDarkMode
+                ? [colors.surface, colors.surfaceSecondary]
+                : [colors.white, colors.backgroundSecondary]
+            }
             style={styles.cardGradient}>
             <View style={styles.sectionHeader}>
-              <View style={[styles.iconContainer, { backgroundColor: colors.success + '20' }]}>
-                <Icon
-                  name="bar-chart"
-                  size={24}
-                  color={colors.success}
-                />
+              <View
+                style={[
+                  styles.iconContainer,
+                  {backgroundColor: colors.success + '20'},
+                ]}>
+                <Icon name="bar-chart" size={24} color={colors.success} />
               </View>
-              <Text style={[styles.sectionTitle, { color: colors.text }]}>
+              <Text style={[styles.sectionTitle, {color: colors.text}]}>
                 {t('Dai')}
               </Text>
             </View>
-            
-            <View style={[styles.filterRow, { zIndex: 9999 }]}>
+
+            <View style={[styles.filterRow, {zIndex: 9999}]}>
               <View style={styles.filterItem}>
                 <View style={styles.filterLabel}>
                   <IconFA name="clock" size={14} color={colors.primary} />
-                  <Text style={[styles.filterLabelText, { color: colors.textSecondary }]}>
+                  <Text
+                    style={[
+                      styles.filterLabelText,
+                      {color: colors.textSecondary},
+                    ]}>
                     {t('S')}
                   </Text>
                 </View>
@@ -455,25 +462,39 @@ const Report = () => {
                   placeholderStyle={{color: colors.placeholder}}
                   zIndex={9999}
                   zIndexInverse={9998}
-                  dropDownContainerStyle={[styles.dropdown, { 
-                    backgroundColor: colors.surface,
-                    borderColor: colors.border,
-                    zIndex: 9999,
-                    elevation: 9999,
-                  }]}
-                  style={[styles.dropdown, { 
-                    backgroundColor: colors.backgroundSecondary,
-                    borderColor: colors.border 
-                  }]}
+                  dropDownContainerStyle={[
+                    styles.dropdown,
+                    {
+                      backgroundColor: colors.surface,
+                      borderColor: colors.border,
+                      zIndex: 9999,
+                      elevation: 9999,
+                    },
+                  ]}
+                  style={[
+                    styles.dropdown,
+                    {
+                      backgroundColor: colors.backgroundSecondary,
+                      borderColor: colors.border,
+                    },
+                  ]}
                   ArrowDownIconComponent={() => (
-                    <Icon name="chevron-down" size={16} color={colors.primary} />
+                    <Icon
+                      name="chevron-down"
+                      size={16}
+                      color={colors.primary}
+                    />
                   )}
                 />
               </View>
               <View style={styles.filterItem}>
                 <View style={styles.filterLabel}>
                   <IconFA name="box" size={14} color={colors.primary} />
-                  <Text style={[styles.filterLabelText, { color: colors.textSecondary }]}>
+                  <Text
+                    style={[
+                      styles.filterLabelText,
+                      {color: colors.textSecondary},
+                    ]}>
                     {t('product')}
                   </Text>
                 </View>
@@ -489,23 +510,33 @@ const Report = () => {
                   placeholderStyle={{color: colors.placeholder}}
                   zIndex={9999}
                   zIndexInverse={9998}
-                  dropDownContainerStyle={[styles.dropdown, { 
-                    backgroundColor: colors.surface,
-                    borderColor: colors.border,
-                    zIndex: 9999,
-                    elevation: 9999,
-                  }]}
-                  style={[styles.dropdown, { 
-                    backgroundColor: colors.backgroundSecondary,
-                    borderColor: colors.border 
-                  }]}
+                  dropDownContainerStyle={[
+                    styles.dropdown,
+                    {
+                      backgroundColor: colors.surface,
+                      borderColor: colors.border,
+                      zIndex: 9999,
+                      elevation: 9999,
+                    },
+                  ]}
+                  style={[
+                    styles.dropdown,
+                    {
+                      backgroundColor: colors.backgroundSecondary,
+                      borderColor: colors.border,
+                    },
+                  ]}
                   ArrowDownIconComponent={() => (
-                    <Icon name="chevron-down" size={16} color={colors.primary} />
+                    <Icon
+                      name="chevron-down"
+                      size={16}
+                      color={colors.primary}
+                    />
                   )}
                 />
               </View>
             </View>
-            
+
             <View style={styles.chartBody}>
               {lineData.datasets.length > 0 ? (
                 <View style={styles.chartWrapper}>
@@ -515,47 +546,60 @@ const Report = () => {
                     height={240}
                     chartConfig={chartConfig}
                     bezier
-                    style={[styles.chartStyle, { backgroundColor: colors.surface }]}
+                    style={[
+                      styles.chartStyle,
+                      {backgroundColor: colors.surface},
+                    ]}
                     verticalLabelRotation={30}
                     fromZero
                     withDots
                     withShadow={false}
                     withInnerLines
                     withOuterLines
-                    renderDotContent={({x, y, index, indexData, datasetIndex}) => {
+                    renderDotContent={({
+                      x,
+                      y,
+                      index,
+                      indexData,
+                      datasetIndex,
+                    }) => {
                       const dataset = lineData.datasets[datasetIndex];
                       const value = indexData || 0;
-                      const displayValue = Number.isInteger(value) ? value.toString() : value.toFixed(1);
-                      
+                      const displayValue = Number.isInteger(value)
+                        ? value.toString()
+                        : value.toFixed(1);
+
                       // Điều chỉnh vị trí để tránh che khuất
                       const adjustedY = y < 30 ? y + 30 : y - 25;
-                      const adjustedX = x < 20 ? x + 10 : x > width - 50 ? x - 20 : x - 15;
-                      
+                      const adjustedX =
+                        x < 20 ? x + 10 : x > width - 50 ? x - 20 : x - 15;
+
                       return (
                         <View
                           key={`dot-${dataset?.datasetIndex || 0}-${index}`}
                           style={[
-                            styles.dotContainer, 
-                            { 
+                            styles.dotContainer,
+                            {
                               backgroundColor: colors.surface,
                               borderColor: dataset?.color() || colors.primary,
                               left: adjustedX,
                               top: adjustedY,
                               shadowColor: dataset?.color() || colors.primary,
-                              shadowOffset: { width: 0, height: 2 },
+                              shadowOffset: {width: 0, height: 2},
                               shadowOpacity: 0.3,
                               shadowRadius: 4,
                               elevation: 4,
-                            }
+                            },
                           ]}>
-                          <Text style={[
-                            styles.dotText, 
-                            { 
-                              color: colors.text,
-                              fontWeight: '700',
-                              fontSize: 11
-                            }
-                          ]}>
+                          <Text
+                            style={[
+                              styles.dotText,
+                              {
+                                color: colors.text,
+                                fontWeight: '700',
+                                fontSize: 11,
+                              },
+                            ]}>
                             {displayValue}
                           </Text>
                         </View>
@@ -565,13 +609,17 @@ const Report = () => {
                 </View>
               ) : (
                 <View style={styles.emptyContainer}>
-                  <IconFA name="chart-line" size={48} color={colors.placeholder} />
-                  <Text style={[styles.emptyText, { color: colors.placeholder }]}>
+                  <IconFA
+                    name="chart-line"
+                    size={48}
+                    color={colors.placeholder}
+                  />
+                  <Text style={[styles.emptyText, {color: colors.placeholder}]}>
                     {t('no_data')}
                   </Text>
                 </View>
               )}
-              
+
               {/* Legend */}
               {lineData.datasets.length > 0 && (
                 <View style={styles.legendContainer}>
@@ -580,10 +628,10 @@ const Report = () => {
                       <View
                         style={[
                           styles.legendColor,
-                          { backgroundColor: dataset.color() }
+                          {backgroundColor: dataset.color()},
                         ]}
                       />
-                      <Text style={[styles.legendText, { color: colors.text }]}>
+                      <Text style={[styles.legendText, {color: colors.text}]}>
                         {lineData.legend[index]}
                       </Text>
                     </View>
@@ -591,15 +639,17 @@ const Report = () => {
                 </View>
               )}
             </View>
-            
+
             {/* Floating Compare Button */}
             <TouchableOpacity
               style={[
                 styles.floatingButton,
-                { 
-                  backgroundColor: compareShift ? colors.success : colors.primary,
-                  opacity: (!!shiftValue || !!productValue) ? 0.5 : 1
-                }
+                {
+                  backgroundColor: compareShift
+                    ? colors.success
+                    : colors.primary,
+                  opacity: !!shiftValue || !!productValue ? 0.5 : 1,
+                },
               ]}
               onPress={() => {
                 if (!shiftValue && !productValue) {
@@ -608,15 +658,10 @@ const Report = () => {
               }}
               disabled={!!shiftValue || !!productValue}
               activeOpacity={0.7}>
-              <IconFA 
-                name="exchange-alt" 
-                size={12} 
-                color="#fff" 
-              />
+              <IconFA name="exchange-alt" size={12} color="#fff" />
             </TouchableOpacity>
           </LinearGradient>
         </Animated.View>
-        
       </ScrollView>
     </View>
   );

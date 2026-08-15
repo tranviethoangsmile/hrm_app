@@ -24,6 +24,26 @@ import OvertimeConfirm from './OvertimeConfirm';
 import Dependent from './Dependent';
 import DependentSupportAmount from './DependentSupportAmount';
 import FirstLoginPassword from './FirstLoginPassword';
+import Schedule from './Schedule';
+import IDCard from './IDCard';
+import Directory from './Directory';
+import Docs from './Docs';
+import SalaryTrend from './SalaryTrend';
+import Approvals from './Approvals';
+import ChangePassword from './ChangePassword';
+import EditProfile from './EditProfile';
+import Support from './Support';
+import Learning from './Learning';
+import PayslipHistory from './PayslipHistory';
+import AttendanceSummary from './AttendanceSummary';
+import Survey from './Survey';
+import Benefits from './Benefits';
+import Translator from './Translator';
+import OrgChart from './OrgChart';
+import Performance from './Performance';
+import Referral from './Referral';
+import ShiftSwap from './ShiftSwap';
+import Asset from './Asset';
 export {
   Checkin,
   Ai,
@@ -51,4 +71,24 @@ export {
   Dependent,
   DependentSupportAmount,
   FirstLoginPassword,
+  Schedule,
+  IDCard,
+  Directory,
+  Docs,
+  SalaryTrend,
+  Approvals,
+  ChangePassword,
+  EditProfile,
+  Support,
+  Learning,
+  PayslipHistory,
+  AttendanceSummary,
+  Survey,
+  Benefits,
+  Translator,
+  OrgChart,
+  Performance,
+  Referral,
+  ShiftSwap,
+  Asset,
 };

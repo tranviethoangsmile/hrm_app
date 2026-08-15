@@ -23,7 +23,7 @@ const Header = ({title, onBack, right}) => {
         translucent
       />
       <LinearGradient
-        colors={isDarkMode ? ['#1a1a2e', '#16213e'] : ['#667eea', '#764ba2']}
+        colors={colors.primaryGradient}
         start={{x: 0, y: 0}}
         end={{x: 1, y: 1}}
         style={styles.headerGradient}>

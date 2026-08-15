@@ -8,6 +8,7 @@ import {name as appName} from './app.json';
 import messaging from '@react-native-firebase/messaging';
 import {decrypt} from './src/services';
 import PushNotification from 'react-native-push-notification';
+
 messaging().setBackgroundMessageHandler(async remoteMessage => {
   const encryptedMessage = remoteMessage.notification.body;
   const key = remoteMessage?.data?.key;

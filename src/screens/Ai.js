@@ -1,5 +1,4 @@
 /* eslint-disable react-native/no-inline-styles */
-/* eslint-disable no-unreachable */
 import React, {useEffect, useState, useRef} from 'react';
 import {
   View,
@@ -10,17 +9,20 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Alert,
-  SafeAreaView,
   Platform,
-  StatusBar,
 } from 'react-native';
+import Icon from 'react-native-vector-icons/Ionicons';
+import LinearGradient from 'react-native-linear-gradient';
 import socket from '../socket.io/socket.io';
 import i18next from '../../services/i18next';
 import {useTranslation} from 'react-i18next';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import Header from '../components/common/Header';
+import {useTheme} from '../hooks/useTheme';
 
 const Ai = () => {
   const {t} = useTranslation();
+  const {colors} = useTheme();
   const getLanguage = async () => {
     return await AsyncStorage.getItem('Language');
   };
@@ -35,6 +37,8 @@ const Ai = () => {
         i18next.changeLanguage(lang);
       }
     };
+    checkLanguage();
+
     const handleMessage = receivedMessage => {
       setMessages(prevMessages => [
         ...prevMessages,
@@ -42,47 +46,40 @@ const Ai = () => {
       ]);
     };
 
-    // Listen for incoming messages from the server
     socket.on('messgpt', handleMessage);
 
-    // Cleanup socket event listener when the component is unmounted
     return () => {
       socket.off('messgpt', handleMessage);
     };
-    checkLanguage();
-  }, [messages]);
+  }, []);
 
   const sendMessage = () => {
     if (newMessage.trim() === '') {
-      Alert.alert('Enter your text');
+      Alert.alert(t('Ai'), t('tymess'));
       return;
     }
 
-    // Emit the new message to the server
     socket.emit('sendMessage', {chat: newMessage});
 
-    // Update the local state with the sent message
     setMessages(prevMessages => [
       ...prevMessages,
       {text: newMessage, sent: true},
     ]);
 
-    // Clear the input field
     setNewMessage('');
 
-    // Scroll to the end of the ScrollView when a new message is sent
     if (scrollViewRef.current) {
       scrollViewRef.current.scrollToEnd({animated: true});
     }
   };
 
   return (
-    <SafeAreaView style={{flex: 1}}>
-      <StatusBar barStyle="dark-content" backgroundColor="#fff" />
+    <View style={[styles.container, {backgroundColor: colors.background}]}>
+      <Header title={t('Ai')} />
       <KeyboardAvoidingView
         keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.container}>
+        style={styles.flex}>
         <ScrollView
           ref={scrollViewRef}
           contentContainerStyle={styles.messagesContainer}
@@ -96,84 +93,103 @@ const Ai = () => {
             <View
               key={index}
               style={[
-                styles.messageContainer,
-                {
-                  alignSelf: item.sent ? 'flex-end' : 'flex-start',
-                  backgroundColor: item.sent ? '#4CAF50' : '#2196F3',
-                },
+                styles.messageRow,
+                {justifyContent: item.sent ? 'flex-end' : 'flex-start'},
               ]}>
-              <Text style={styles.messageText}>{item.text}</Text>
+              <LinearGradient
+                colors={
+                  item.sent
+                    ? colors.primaryGradient
+                    : [colors.surfaceSecondary, colors.surfaceSecondary]
+                }
+                start={{x: 0, y: 0}}
+                end={{x: 1, y: 1}}
+                style={styles.bubble}>
+                <Text
+                  style={[
+                    styles.messageText,
+                    {color: item.sent ? '#fff' : colors.text},
+                  ]}>
+                  {item.text}
+                </Text>
+              </LinearGradient>
             </View>
           ))}
         </ScrollView>
 
-        <View style={styles.inputContainer}>
+        <View
+          style={[
+            styles.inputContainer,
+            {borderTopColor: colors.border, backgroundColor: colors.surface},
+          ]}>
           <TextInput
-            style={styles.input}
+            style={[styles.input, {color: colors.text, backgroundColor: colors.backgroundSecondary}]}
             placeholder={t('tymess')}
-            placeholderTextColor="#757575"
+            placeholderTextColor={colors.textTertiary}
             value={newMessage}
             onChangeText={text => setNewMessage(text)}
           />
-          <TouchableOpacity style={styles.sendButton} onPress={sendMessage}>
-            <Text style={styles.sendButtonText}>{t('Send')}</Text>
+          <TouchableOpacity onPress={sendMessage} activeOpacity={0.85}>
+            <LinearGradient
+              colors={colors.primaryGradient}
+              start={{x: 0, y: 0}}
+              end={{x: 1, y: 1}}
+              style={styles.sendButton}>
+              <Icon name="send" size={16} color="#fff" />
+            </LinearGradient>
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
-    </SafeAreaView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
-    justifyContent: 'center',
+  },
+  flex: {
+    flex: 1,
   },
   messagesContainer: {
     flexGrow: 1,
-    padding: 10,
+    padding: 12,
   },
-  messageContainer: {
-    maxWidth: '80%',
+  messageRow: {
     flexDirection: 'row',
-    marginBottom: 5,
-    padding: 10,
-    borderRadius: 8,
+    marginBottom: 8,
+  },
+  bubble: {
+    maxWidth: '80%',
+    padding: 12,
+    borderRadius: 16,
+    borderTopLeftRadius: 4,
   },
   messageText: {
-    fontSize: 16,
-    marginHorizontal: 5,
-    color: 'white',
+    fontSize: 15,
+    lineHeight: 21,
   },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     borderTopWidth: 1,
-    borderTopColor: '#ccc',
     paddingVertical: 10,
-    paddingHorizontal: 5,
-    backgroundColor: 'white',
+    paddingHorizontal: 10,
+    gap: 8,
   },
   input: {
     flex: 1,
-    padding: 8,
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 5,
-    marginRight: 10,
-    color: 'black', // Text color
-    backgroundColor: '#FFF', // Thêm màu nền cho TextInput
-    marginVertical: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 20,
+    fontSize: 15,
   },
   sendButton: {
-    backgroundColor: '#2196F3',
-    padding: 10,
-    borderRadius: 5,
-  },
-  sendButtonText: {
-    color: 'white',
-    fontWeight: 'bold',
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });
 

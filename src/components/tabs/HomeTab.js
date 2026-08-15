@@ -1,5 +1,5 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import React, {useEffect, useState, useCallback, useRef, useMemo} from 'react';
+import React, {useEffect, useState, useCallback, useRef} from 'react';
 import {
   View,
   Text,
@@ -23,14 +23,13 @@ import Control from '../Control';
 import Notifications from '../Notifications';
 import {useTranslation} from 'react-i18next';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import axios from 'axios';
 import i18next from '../../../services/i18next';
 import Video from 'react-native-video';
-import Icon from 'react-native-vector-icons/FontAwesome';
 import MaterialIcon from 'react-native-vector-icons/MaterialCommunityIcons';
 import IconFA from 'react-native-vector-icons/FontAwesome5';
 import LinearGradient from 'react-native-linear-gradient';
 import {useTheme} from '../../hooks/useTheme';
+import apiClient from '../../services/apiClient';
 import PopupEvent from '../PopupEvent';
 import {
   BASE_URL,
@@ -42,12 +41,12 @@ import {
   GET_ALL_BY_FIELD,
   EVENTS,
   NOTIFICATION,
-  SEARCH_BY_ID,
   GET_EVENTS_WITH_POSITION,
   UPDATE,
   GET_EVENT_WITH_POSITION,
 } from '../../utils/constans';
 import OptimizedLoader from '../OptimizedLoader';
+import {useUserProfile} from '../../hooks/useUserProfile';
 import HappyModal from '../HappyModal';
 import moment from 'moment';
 import LinkPreview from 'react-native-link-preview';
@@ -69,8 +68,7 @@ const HomeTab = ({onScrollList}) => {
   const [showBirthdayToast, setShowBirthdayToast] = useState(false);
   const [showNewYearToast, setShowNewYearToast] = useState(false);
   const authData = useSelector(state => state.auth);
-  const token = authData?.data?.token;
-  const [userInfo, setUserInfo] = useState(authData?.data.data);
+  const [userInfo, setUserInfo] = useState(authData?.data?.data);
   const [err, setError] = useState('');
   const [posts, setPosts] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
@@ -85,22 +83,34 @@ const HomeTab = ({onScrollList}) => {
   const [duration, setDuration] = useState(1000);
   const [isMessageModalVisible, setMessageModalVisible] = useState(false);
   const [selectedMedia, setSelectedMedia] = useState(null);
+  const {userInfo: profileUser} = useUserProfile();
+
+  const getUserFullName = () =>
+    userInfo?.full_name ||
+    userInfo?.name ||
+    profileUser?.full_name ||
+    profileUser?.name ||
+    authData?.data?.data?.full_name ||
+    authData?.data?.data?.name ||
+    userInfo?.user_name ||
+    profileUser?.user_name ||
+    t('home.user', 'User');
+
+  const getGreeting = () => {
+    const hour = moment().hour();
+    if (hour < 12) {
+      return t('home.greeting_morning', 'Good morning');
+    }
+    if (hour < 18) {
+      return t('home.greeting_afternoon', 'Good afternoon');
+    }
+    return t('home.greeting_evening', 'Good evening');
+  };
 
   // Animation values - removed to prevent flickering
   // const fadeAnim = useRef(new Animated.Value(0)).current;
   // const slideAnim = useRef(new Animated.Value(50)).current;
   // const scaleAnim = useRef(new Animated.Value(0.95)).current;
-  const config = useMemo(
-    () => ({
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token || ''}`,
-        token: token || '',
-        'x-access-token': token || '',
-      },
-    }),
-    [token],
-  );
   const onClose = () => {
     setVisibleControl(false);
     setIsNotification(false);
@@ -122,7 +132,7 @@ const HomeTab = ({onScrollList}) => {
     try {
       setIsLoading(true);
       const url = `${BASE_URL}${PORT}${API}${VERSION}${V1}${EVENTS}${GET_EVENT_WITH_POSITION}`;
-      const events = await axios.post(url, {
+      const events = await apiClient.post(url, {
         position: userInfo.position,
       });
       if (events?.data?.success) {
@@ -141,14 +151,19 @@ const HomeTab = ({onScrollList}) => {
 
   const get_event_detail = async () => {
     try {
-      if (!userInfo?.position) return; // Early return if no position
-      
+      if (!userInfo?.position) {
+        return;
+      } // Early return if no position
+
       const url = `${BASE_URL}${PORT}${API}${VERSION}${V1}${EVENTS}${GET_EVENTS_WITH_POSITION}`;
 
-      const events = await axios.post(url, {
-        position: userInfo.position,
-      }, config);
-      
+      const events = await apiClient.post(
+        url,
+        {
+          position: userInfo.position,
+        },
+      );
+
       if (events?.data?.success && events?.data?.data?.length > 0) {
         setEvent(events?.data.data[0]);
         // Use requestAnimationFrame for better performance
@@ -172,7 +187,7 @@ const HomeTab = ({onScrollList}) => {
         setError('User information not found');
         return;
       }
-      
+
       const userInfor = JSON.parse(userInforString);
       if (!userInfor?.position) {
         setError('User position not found');
@@ -185,7 +200,7 @@ const HomeTab = ({onScrollList}) => {
       };
 
       const url = `${BASE_URL}${PORT}${API}${VERSION}${V1}${INFORMATION}${GET_ALL_BY_FIELD}`;
-      const informations = await axios.post(url, {},config);
+      const informations = await apiClient.post(url, {});
 
       if (informations?.data?.success) {
         setError('');
@@ -205,8 +220,6 @@ const HomeTab = ({onScrollList}) => {
     }
   };
 
-
-
   const handle_notification_click = async notification => {
     try {
       const field = {
@@ -214,7 +227,7 @@ const HomeTab = ({onScrollList}) => {
         user_id: userInfo?.id,
         is_read: true,
       };
-      const updateNotification = await axios.post(
+      const updateNotification = await apiClient.post(
         `${BASE_URL}${PORT}${API}${VERSION}${V1}${NOTIFICATION}${UPDATE}`,
         {field},
       );
@@ -320,13 +333,18 @@ const HomeTab = ({onScrollList}) => {
           start={{x: 0, y: 0}}
           end={{x: 1, y: 1}}
           style={[
-            styles.postContent, 
+            styles.postContent,
             isAdmin && styles.adminPostContent,
-            {backgroundColor: colors.surface}
+            {backgroundColor: colors.surface},
           ]}>
           {/* Glass overlay for modern effect */}
-          <View style={[styles.glassOverlay, {backgroundColor: colors.primary + '05'}]} />
-          
+          <View
+            style={[
+              styles.glassOverlay,
+              {backgroundColor: colors.primary + '05'},
+            ]}
+          />
+
           {/* Admin indicator overlay - only on header area */}
           {isAdmin && (
             <View style={styles.adminIndicatorOverlay}>
@@ -346,11 +364,16 @@ const HomeTab = ({onScrollList}) => {
             </View>
             <View style={styles.nameAndDayContainer}>
               <View style={styles.nameRow}>
-                <Text style={[styles.nameText, {color: colors.text}]}>{item.user.name}</Text>
+                <Text style={[styles.nameText, {color: colors.text}]}>
+                  {item.user.name}
+                </Text>
                 {isAdmin && (
                   <LinearGradient
                     colors={[colors.primary, colors.primary2]}
-                    style={[styles.adminBadge, {backgroundColor: colors.primary}]}>
+                    style={[
+                      styles.adminBadge,
+                      {backgroundColor: colors.primary},
+                    ]}>
                     <IconFA name="crown" size={12} color="#fff" />
                     <Text style={styles.adminBadgeText}>Admin</Text>
                   </LinearGradient>
@@ -363,11 +386,12 @@ const HomeTab = ({onScrollList}) => {
           </View>
 
           {item.title && (
-            <Text style={[
-              styles.postTitleText, 
-              {color: colors.text},
-              isAdmin && styles.adminTitleText
-            ]}>
+            <Text
+              style={[
+                styles.postTitleText,
+                {color: colors.text},
+                isAdmin && styles.adminTitleText,
+              ]}>
               {item.title}
             </Text>
           )}
@@ -481,7 +505,8 @@ const HomeTab = ({onScrollList}) => {
               </TouchableOpacity>
             ))}
 
-          <View style={[styles.postMetaContainer, {borderTopColor: colors.border}]}>
+          <View
+            style={[styles.postMetaContainer, {borderTopColor: colors.border}]}>
             <View style={styles.postActionsGroup}>
               <Animated.View style={{transform: [{scale: scaleAnim}]}}>
                 <TouchableOpacity
@@ -494,7 +519,11 @@ const HomeTab = ({onScrollList}) => {
                     solid={isLiked}
                   />
                   <Text
-                    style={[styles.actionText, isLiked && styles.likedText, {color: colors.textSecondary}]}>
+                    style={[
+                      styles.actionText,
+                      isLiked && styles.likedText,
+                      {color: colors.textSecondary},
+                    ]}>
                     {isLiked ? 'Liked' : 'Like'}
                   </Text>
                 </TouchableOpacity>
@@ -503,19 +532,21 @@ const HomeTab = ({onScrollList}) => {
               <TouchableOpacity
                 onPress={handleComment}
                 style={styles.actionButton}>
-                <IconFA
-                  name="comment"
-                  size={18}
-                  color={colors.gray400}
-                />
-                <Text style={[styles.actionText, {color: colors.textSecondary}]}>Comment</Text>
+                <IconFA name="comment" size={18} color={colors.gray400} />
+                <Text
+                  style={[styles.actionText, {color: colors.textSecondary}]}>
+                  Comment
+                </Text>
               </TouchableOpacity>
 
               <TouchableOpacity
                 onPress={handleShare}
                 style={styles.actionButton}>
                 <IconFA name="share" size={18} color={colors.gray400} />
-                <Text style={[styles.actionText, {color: colors.textSecondary}]}>Share</Text>
+                <Text
+                  style={[styles.actionText, {color: colors.textSecondary}]}>
+                  Share
+                </Text>
               </TouchableOpacity>
             </View>
 
@@ -533,7 +564,10 @@ const HomeTab = ({onScrollList}) => {
               onPress={handleGoToEventScreen}>
               <LinearGradient
                 colors={[colors.primary, colors.primary2]}
-                style={[styles.eventButtonGradient, {backgroundColor: colors.primary}]}>
+                style={[
+                  styles.eventButtonGradient,
+                  {backgroundColor: colors.primary},
+                ]}>
                 <IconFA name="calendar-check" size={18} color="#fff" />
                 <Text style={styles.eventButtonText}>{t('confirm.c')}</Text>
               </LinearGradient>
@@ -548,31 +582,52 @@ const HomeTab = ({onScrollList}) => {
     setVisibleControl(!visibleControl);
   };
 
+  const [heroExpanded, setHeroExpanded] = useState(true);
+  const heroBodyHeight = useRef(new Animated.Value(280)).current;
+  const heroBodyOpacity = useRef(new Animated.Value(1)).current;
+  const heroArrowRotate = useRef(new Animated.Value(0)).current;
+
+  const toggleHero = () => {
+    const next = !heroExpanded;
+    setHeroExpanded(next);
+    Animated.parallel([
+      Animated.timing(heroBodyHeight, {
+        toValue: next ? 280 : 0,
+        duration: 300,
+        useNativeDriver: false,
+      }),
+      Animated.timing(heroBodyOpacity, {
+        toValue: next ? 1 : 0,
+        duration: 260,
+        useNativeDriver: false,
+      }),
+      Animated.timing(heroArrowRotate, {
+        toValue: next ? 0 : 1,
+        duration: 260,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  };
+
   const onRefresh = useCallback(() => {
     setRefreshing(true);
-    get_all_information().then(() => setRefreshing(false));
-  }, []);
+    Promise.all([get_all_information()]).then(() => setRefreshing(false));
+  }, [get_all_information]);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         setIsLoading(true); // Show loading immediately
-        
+
         // Run language check and API calls in parallel for better performance
-        const [lang] = await Promise.all([
-          getLanguage(),
-        ]);
-        
+        const [lang] = await Promise.all([getLanguage()]);
+
         if (lang != null) {
           i18next.changeLanguage(lang);
         }
-        
+
         // Run API calls in parallel instead of sequential
-        await Promise.all([
-          get_all_information(),
-          get_event_detail(),
-        ]);
-        
+        await Promise.all([get_all_information(), get_event_detail()]);
       } catch (error) {
         console.error('Error fetching data:', error);
         setError('Failed to load data');
@@ -618,8 +673,10 @@ const HomeTab = ({onScrollList}) => {
   const checkSpecialDays = async () => {
     try {
       // Check Birthday
-      const userBirthday = moment(userInfo.dob).format('MM-DD');
-      if (today === userBirthday) {
+      const userBirthday = userInfo?.dob
+        ? moment(userInfo.dob).format('MM-DD')
+        : null;
+      if (userBirthday && today === userBirthday) {
         const lastBirthdayShow = await AsyncStorage.getItem('lastBirthdayShow');
         const today = new Date().toISOString().split('T')[0];
 
@@ -683,46 +740,86 @@ const HomeTab = ({onScrollList}) => {
     <View style={[styles.container, {backgroundColor: colors.background}]}>
       <OptimizedLoader visible={isLoading} />
 
-      {/* Modern Header with Theme Support */}
-      <View style={styles.headerContainer}>
-        <LinearGradient
-          colors={[colors.primary, colors.primary2]}
-          start={{x: 0, y: 0}}
-          end={{x: 1, y: 1}}
-          style={styles.header}>
-          <View style={styles.headerContent}>
-            <View style={styles.headerLeft}>
-              <TouchableOpacity
-                onPress={handleControl}
-                style={styles.headerIconContainer}>
-                <IconFA name="bars" size={20} color="#ffffff" />
-              </TouchableOpacity>
-            </View>
+      {/* Modern Hero Header */}
+      <LinearGradient
+        colors={colors.primaryGradient}
+        start={{x: 0, y: 0}}
+        end={{x: 1, y: 1}}
+        style={[styles.hero, !heroExpanded && styles.heroCollapsed]}>
+        <View
+          style={[
+            styles.heroTopRow,
+            !heroExpanded && styles.heroTopRowCollapsed,
+          ]}>
+          <TouchableOpacity
+            onPress={handleControl}
+            style={styles.heroIconBtn}
+            hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}>
+            <IconFA name="bars" size={18} color="#fff" />
+          </TouchableOpacity>
 
-            <View style={styles.headerTitleContainer}>
-              <Text style={styles.headerTitle}>{t('info')}</Text>
-            </View>
+          {!heroExpanded && (
+            <Text style={styles.heroTitle} numberOfLines={1}>
+              {t('home.info_board')}
+            </Text>
+          )}
 
-            <View style={styles.headerRight}>
-              <TouchableOpacity
-                onPress={() => {
-                  navigation.navigate('Profile');
-                }}
-                style={styles.profileContainer}>
-                <Image
-                  source={
-                    userInfo.avatar
-                      ? {uri: userInfo.avatar}
-                      : require('../../assets/images/avatar.jpg')
-                  }
-                  style={styles.headerAvatar}
-                />
-                <View style={styles.avatarRing} />
-              </TouchableOpacity>
+          <TouchableOpacity
+            onPress={toggleHero}
+            style={styles.heroIconBtn}
+            hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}>
+            <Animated.View
+              style={{
+                transform: [
+                  {
+                    rotate: heroArrowRotate.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: ['0deg', '180deg'],
+                    }),
+                  },
+                ],
+              }}>
+              <MaterialIcon name="chevron-up" size={18} color="#fff" />
+            </Animated.View>
+          </TouchableOpacity>
+        </View>
+
+        <Animated.View
+          style={[
+            styles.heroBody,
+            {
+              maxHeight: heroBodyHeight,
+              opacity: heroBodyOpacity,
+            },
+          ]}>
+          <View style={styles.heroMain}>
+            <View style={styles.heroTextWrap}>
+              <Text style={styles.heroGreeting}>{getGreeting()},</Text>
+              <Text style={styles.heroName} numberOfLines={1}>
+                {getUserFullName()}
+              </Text>
+              <Text style={styles.heroDate}>
+                {moment().format('dddd, DD/MM/YYYY')}
+              </Text>
             </View>
+            <TouchableOpacity
+              onPress={() => navigation.navigate('Profile')}
+              style={styles.heroAvatarWrap}
+              activeOpacity={0.8}>
+              <Image
+                source={
+                  userInfo?.avatar
+                    ? {uri: userInfo.avatar}
+                    : require('../../assets/images/avatar.jpg')
+                }
+                style={styles.heroAvatar}
+              />
+              <View style={styles.heroAvatarRing} />
+              <View style={styles.onlineDot} />
+            </TouchableOpacity>
           </View>
-        </LinearGradient>
-      </View>
+        </Animated.View>
+      </LinearGradient>
 
       <Control visible={visibleControl} t={t} onClose={onClose} />
       <Notifications
@@ -732,8 +829,11 @@ const HomeTab = ({onScrollList}) => {
         onNotificationClick={handle_notification_click}
       />
 
-      <View style={[styles.feedContainer, {backgroundColor: colors.background}]}>
-        {err ? <Text style={[styles.errorText, {color: colors.danger}]}>{err}</Text> : null}
+      <View
+        style={[styles.feedContainer, {backgroundColor: colors.background}]}>
+        {err ? (
+          <Text style={[styles.errorText, {color: colors.danger}]}>{err}</Text>
+        ) : null}
         <FlatList
           data={showAllPosts ? posts : posts.slice(0, 5)}
           renderItem={({item, index}) => (
@@ -745,7 +845,9 @@ const HomeTab = ({onScrollList}) => {
               index={index}
             />
           )}
-          keyExtractor={(item, index) => item.id?.toString() || index.toString()}
+          keyExtractor={(item, index) =>
+            item.id?.toString() || index.toString()
+          }
           onScroll={onScrollList}
           scrollEventThrottle={32}
           refreshControl={
@@ -851,83 +953,112 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  headerContainer: {
-    shadowColor: '#000',
-    shadowOffset: {width: 0, height: 4},
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-    elevation: 8,
-  },
-  header: {
-    paddingTop: Platform.OS === 'ios' ? 50 : 30,
-    paddingBottom: 20,
+  hero: {
+    paddingTop: Platform.OS === 'ios' ? 52 : 34,
+    paddingBottom: 0,
     paddingHorizontal: 20,
+    borderBottomLeftRadius: 28,
+    borderBottomRightRadius: 28,
+    shadowColor: '#4F46E5',
+    shadowOffset: {width: 0, height: 6},
+    shadowOpacity: 0.25,
+    shadowRadius: 16,
+    elevation: 10,
   },
-  headerContent: {
+  heroTopRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    marginBottom: 20,
   },
-  headerLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  heroCollapsed: {
+    borderBottomLeftRadius: 0,
+    borderBottomRightRadius: 0,
   },
-  headerIconContainer: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: {width: 0, height: 2},
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
+  heroTopRowCollapsed: {
+    marginBottom: 0,
   },
-  headerTitleContainer: {
+  heroTitle: {
     flex: 1,
-    alignItems: 'center',
-  },
-  headerTitle: {
-    fontSize: 22,
+    fontSize: 20,
     fontWeight: '700',
     color: '#ffffff',
+    textAlign: 'center',
     textShadowColor: 'rgba(0,0,0,0.3)',
     textShadowOffset: {width: 0, height: 1},
     textShadowRadius: 3,
   },
-  headerSubtitle: {
-    fontSize: 12,
-    color: 'rgba(255,255,255,0.8)',
-    marginTop: 2,
-    fontWeight: '500',
-  },
-  headerRight: {
-    flexDirection: 'row',
+  heroIconBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255,255,255,0.18)',
     alignItems: 'center',
-    gap: 12,
-  },
-
-  profileContainer: {
+    justifyContent: 'center',
     position: 'relative',
   },
-  headerAvatar: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    borderWidth: 2,
+  heroBody: {
+    overflow: 'hidden',
+  },
+  heroMain: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  heroTextWrap: {
+    flex: 1,
+    paddingRight: 16,
+  },
+  heroGreeting: {
+    fontSize: 14,
+    color: 'rgba(255,255,255,0.85)',
+    fontWeight: '500',
+    marginBottom: 4,
+  },
+  heroName: {
+    fontSize: 24,
+    color: '#ffffff',
+    fontWeight: '800',
+    textShadowColor: 'rgba(0,0,0,0.2)',
+    textShadowOffset: {width: 0, height: 1},
+    textShadowRadius: 3,
+  },
+  heroDate: {
+    fontSize: 13,
+    color: 'rgba(255,255,255,0.85)',
+    marginTop: 6,
+    fontWeight: '500',
+  },
+  heroAvatarWrap: {
+    position: 'relative',
+  },
+  heroAvatar: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    borderWidth: 2.5,
     borderColor: '#ffffff',
   },
-  avatarRing: {
+  heroAvatarRing: {
     position: 'absolute',
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 64,
+    height: 64,
+    borderRadius: 32,
     borderWidth: 2,
-    borderColor: 'rgba(255,255,255,0.3)',
+    borderColor: 'rgba(255,255,255,0.4)',
     top: -4,
     left: -4,
+  },
+  onlineDot: {
+    position: 'absolute',
+    bottom: 2,
+    right: 2,
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    backgroundColor: '#34C759',
+    borderWidth: 2,
+    borderColor: '#ffffff',
   },
 
   feedContainer: {
@@ -935,7 +1066,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingBottom: 100,
-    paddingTop: 16,
+    paddingTop: 0,
   },
   errorText: {
     color: '#ff6b6b',

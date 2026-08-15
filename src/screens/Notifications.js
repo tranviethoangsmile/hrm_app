@@ -1,15 +1,13 @@
-import React, {useEffect, useState, useCallback} from 'react';
+import React, {useEffect, useState, useCallback, useMemo} from 'react';
 import {
   View,
   Text,
   StyleSheet,
-  SafeAreaView,
   StatusBar,
   FlatList,
   TouchableOpacity,
   RefreshControl,
   Platform,
-  Dimensions,
 } from 'react-native';
 import {useSelector} from 'react-redux';
 import axios from 'axios';
@@ -29,13 +27,12 @@ import {
   UPDATE,
 } from '../utils/constans';
 import OptimizedLoader from '../components/OptimizedLoader';
-import {COLORS, SIZES, FONTS, SHADOWS} from '../config/theme';
-import {useThemeContext} from '../context/ThemeContext';
-
-const {width: SCREEN_WIDTH} = Dimensions.get('window');
+import {FONTS, SHADOWS} from '../config/theme';
+import {useTheme} from '../hooks/useTheme';
 
 const Notifications = ({navigation}) => {
   const {t} = useTranslation();
+  const {colors} = useTheme();
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
@@ -43,7 +40,6 @@ const Notifications = ({navigation}) => {
   const [expandedId, setExpandedId] = useState(null);
   const authData = useSelector(state => state.auth);
   const userInfo = authData?.data?.data;
-  const {isDarkMode} = useThemeContext();
 
   const getNotifications = useCallback(async () => {
     try {
@@ -79,17 +75,17 @@ const Notifications = ({navigation}) => {
   const getNotificationColor = type => {
     switch (type?.toUpperCase()) {
       case 'SUCCESS':
-        return '#4CAF50';
+        return colors.success;
       case 'SYSTEM':
-        return '#F44336';
+        return colors.danger;
       case 'INFO':
-        return '#2196F3';
+        return colors.info;
       case 'WARNING':
-        return '#FF9800';
+        return colors.warning;
       case 'ERROR':
-        return '#F44390';
+        return colors.error;
       default:
-        return '#667eea';
+        return colors.primary;
     }
   };
 
@@ -179,7 +175,7 @@ const Notifications = ({navigation}) => {
 
   const renderModernHeader = () => (
     <LinearGradient
-      colors={['#667eea', '#764ba2', '#f093fb']}
+      colors={colors.primaryGradient}
       start={{x: 0, y: 0}}
       end={{x: 1, y: 1}}
       style={styles.headerGradient}>
@@ -221,7 +217,7 @@ const Notifications = ({navigation}) => {
         <Icon
           name="notifications"
           size={18}
-          color={activeTab === 'all' ? '#667eea' : (isDarkMode ? '#6C6C70' : '#94a3b8')}
+          color={activeTab === 'all' ? colors.primary : colors.textSecondary}
         />
         <Text
           style={[styles.tabText, activeTab === 'all' && styles.activeTabText]}>
@@ -234,7 +230,7 @@ const Notifications = ({navigation}) => {
         <Icon
           name="settings"
           size={18}
-          color={activeTab === 'system' ? '#667eea' : (isDarkMode ? '#6C6C70' : '#94a3b8')}
+          color={activeTab === 'system' ? colors.primary : colors.textSecondary}
         />
         <Text
           style={[
@@ -286,7 +282,11 @@ const Notifications = ({navigation}) => {
                   numberOfLines={isExpanded ? undefined : 2}>
                   {item.title}
                 </Text>
-                <View style={[styles.typeChip, {backgroundColor: notificationColor + '15'}]}>
+                <View
+                  style={[
+                    styles.typeChip,
+                    {backgroundColor: notificationColor + '15'},
+                  ]}>
                   <Text style={[styles.typeText, {color: notificationColor}]}>
                     {item.type?.toUpperCase()}
                   </Text>
@@ -299,7 +299,11 @@ const Notifications = ({navigation}) => {
               </Text>
               <View style={styles.footerContainer}>
                 <View style={styles.timeContainer}>
-                  <Icon name="time-outline" size={14} color={isDarkMode ? "#6C6C70" : "#94a3b8"} />
+                  <Icon
+                    name="time-outline"
+                    size={14}
+                    color={colors.textTertiary}
+                  />
                   <Text style={styles.time}>
                     {moment(item.created_at).format('DD/MM/YYYY HH:mm')}
                   </Text>
@@ -319,7 +323,7 @@ const Notifications = ({navigation}) => {
                     <Icon
                       name={isExpanded ? 'chevron-up' : 'chevron-down'}
                       size={16}
-                      color="#667eea"
+                      color={colors.primary}
                     />
                   </TouchableOpacity>
                 )}
@@ -335,7 +339,7 @@ const Notifications = ({navigation}) => {
     <View style={styles.emptyContainer}>
       <View style={styles.emptyIconContainer}>
         <LinearGradient
-          colors={['#667eea', '#764ba2']}
+          colors={colors.primaryGradient}
           style={styles.emptyIconGradient}>
           <IconMCI name="bell-off" size={60} color="#ffffff" />
         </LinearGradient>
@@ -358,8 +362,287 @@ const Notifications = ({navigation}) => {
     </View>
   );
 
-  // Create dynamic styles based on theme
-  const styles = createStyles(isDarkMode);
+  const styles = useMemo(
+    () =>
+      StyleSheet.create({
+        container: {
+          flex: 1,
+          backgroundColor: colors.background,
+        },
+        headerGradient: {
+          paddingTop: Platform.OS === 'ios' ? 50 : 20,
+          shadowColor: colors.primary,
+          shadowOffset: {width: 0, height: 4},
+          shadowOpacity: 0.3,
+          shadowRadius: 12,
+          elevation: 8,
+        },
+        headerOverlay: {
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(255,255,255,0.05)',
+        },
+        telegramHeader: {
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          paddingHorizontal: 20,
+          paddingVertical: 16,
+          height: 64,
+        },
+        headerLeft: {
+          flexDirection: 'row',
+          alignItems: 'center',
+          minWidth: 50,
+        },
+        headerTitleContainer: {
+          flex: 1,
+          alignItems: 'center',
+        },
+        headerTitle: {
+          fontSize: 24,
+          fontWeight: '700',
+          color: '#ffffff',
+          textShadowColor: 'rgba(0,0,0,0.3)',
+          textShadowOffset: {width: 0, height: 1},
+          textShadowRadius: 3,
+        },
+        headerSubtitle: {
+          fontSize: 14,
+          fontWeight: '500',
+          color: 'rgba(255,255,255,0.8)',
+          marginTop: 2,
+        },
+        headerRight: {
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: 12,
+          minWidth: 50,
+          justifyContent: 'flex-end',
+        },
+        headerIconContainer: {
+          padding: 10,
+          borderRadius: 22,
+          backgroundColor: 'rgba(255,255,255,0.15)',
+          minWidth: 44,
+          minHeight: 44,
+          justifyContent: 'center',
+          alignItems: 'center',
+        },
+        content: {
+          flex: 1,
+          backgroundColor: colors.background,
+        },
+        notificationsList: {
+          paddingVertical: 0,
+          paddingTop: 8,
+          paddingBottom: 8,
+        },
+        notificationItem: {
+          marginHorizontal: 0,
+          marginVertical: 0,
+          backgroundColor: colors.surface,
+          borderBottomWidth: 1,
+          borderBottomColor: colors.border,
+        },
+        unreadItem: {
+          borderLeftWidth: 4,
+          borderLeftColor: colors.primary,
+          backgroundColor: colors.primaryLight,
+        },
+        tabContainer: {
+          flexDirection: 'row',
+          backgroundColor: colors.surface,
+          paddingHorizontal: 16,
+          paddingVertical: 12,
+          borderBottomWidth: 1,
+          borderBottomColor: colors.border,
+          ...SHADOWS.light,
+        },
+        tab: {
+          flex: 1,
+          paddingVertical: 12,
+          paddingHorizontal: 16,
+          alignItems: 'center',
+          borderRadius: 24,
+          marginHorizontal: 4,
+          flexDirection: 'row',
+          justifyContent: 'center',
+          backgroundColor: colors.surfaceSecondary,
+          borderWidth: 1,
+          borderColor: colors.border,
+        },
+        activeTab: {
+          backgroundColor: colors.primary,
+          borderColor: colors.primary,
+        },
+        tabText: {
+          ...FONTS.body4,
+          color: colors.textSecondary,
+          fontWeight: '600',
+          marginLeft: 6,
+        },
+        activeTabText: {
+          color: '#fff',
+        },
+        title: {
+          ...FONTS.h4,
+          color: colors.text,
+          fontWeight: '600',
+          marginBottom: 4,
+        },
+        message: {
+          ...FONTS.body3,
+          color: colors.textSecondary,
+          lineHeight: 20,
+          marginBottom: 6,
+        },
+        time: {
+          ...FONTS.body4,
+          color: colors.textTertiary,
+          marginLeft: 4,
+        },
+        timeContainer: {
+          flexDirection: 'row',
+          alignItems: 'center',
+        },
+        emptyContainer: {
+          flex: 1,
+          alignItems: 'center',
+          justifyContent: 'center',
+          paddingTop: 60,
+          paddingHorizontal: 32,
+        },
+        expandedTitle: {
+          marginBottom: 8,
+        },
+        expandedMessage: {
+          marginBottom: 8,
+        },
+        footerContainer: {
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginTop: 8,
+        },
+        expandButton: {
+          flexDirection: 'row',
+          alignItems: 'center',
+          paddingVertical: 4,
+          paddingHorizontal: 8,
+          borderRadius: 6,
+          backgroundColor: colors.surfaceSecondary,
+        },
+        unreadDot: {
+          position: 'absolute',
+          width: 8,
+          height: 8,
+          borderRadius: 4,
+          right: -2,
+          top: -2,
+        },
+        notificationCard: {
+          backgroundColor: 'transparent',
+        },
+        notificationHeader: {
+          flexDirection: 'row',
+          padding: 16,
+        },
+        iconContainer: {
+          width: 48,
+          height: 48,
+          borderRadius: 24,
+          backgroundColor: colors.surfaceSecondary,
+          alignItems: 'center',
+          justifyContent: 'center',
+          marginRight: 16,
+          shadowColor: '#000',
+          shadowOffset: {width: 0, height: 2},
+          shadowOpacity: 0.1,
+          shadowRadius: 4,
+          elevation: 2,
+        },
+        textContainer: {
+          flex: 1,
+        },
+        titleRow: {
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+        },
+        typeChip: {
+          paddingHorizontal: 8,
+          paddingVertical: 4,
+          borderRadius: 12,
+          backgroundColor: colors.surfaceSecondary,
+        },
+        typeText: {
+          fontSize: 11,
+          fontWeight: '600',
+          color: colors.textSecondary,
+        },
+        expandButtonText: {
+          fontSize: 14,
+          fontWeight: '500',
+          color: colors.primary,
+          marginRight: 4,
+        },
+        emptyIconContainer: {
+          marginBottom: 24,
+        },
+        emptyIconGradient: {
+          width: 120,
+          height: 120,
+          borderRadius: 60,
+          alignItems: 'center',
+          justifyContent: 'center',
+          shadowColor: colors.primary,
+          shadowOffset: {width: 0, height: 8},
+          shadowOpacity: 0.3,
+          shadowRadius: 16,
+          elevation: 8,
+        },
+        emptyTitle: {
+          fontSize: 20,
+          fontWeight: '600',
+          color: colors.text,
+          marginBottom: 8,
+          textAlign: 'center',
+        },
+        emptyDescription: {
+          fontSize: 16,
+          color: colors.textSecondary,
+          textAlign: 'center',
+          lineHeight: 24,
+          marginBottom: 24,
+        },
+        refreshButton: {
+          paddingVertical: 14,
+          paddingHorizontal: 24,
+          borderRadius: 28,
+          backgroundColor: colors.primary,
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'center',
+          ...SHADOWS.light,
+          shadowColor: colors.primary,
+          shadowOffset: {width: 0, height: 4},
+          shadowOpacity: 0.3,
+          shadowRadius: 8,
+          elevation: 4,
+        },
+        refreshButtonText: {
+          fontSize: 14,
+          fontWeight: '600',
+          color: '#fff',
+          marginLeft: 8,
+        },
+      }),
+    [colors],
+  );
 
   return (
     <View style={styles.container}>
@@ -391,284 +674,5 @@ const Notifications = ({navigation}) => {
     </View>
   );
 };
-
-// Dynamic styles based on theme
-const createStyles = (isDarkMode) => StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: isDarkMode ? '#000000' : '#f8fafc',
-  },
-  headerGradient: {
-    paddingTop: Platform.OS === 'ios' ? 50 : 20,
-    shadowColor: '#667eea',
-    shadowOffset: {width: 0, height: 4},
-    shadowOpacity: 0.3,
-    shadowRadius: 12,
-    elevation: 8,
-  },
-  headerOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(255,255,255,0.05)',
-  },
-  telegramHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    height: 64,
-  },
-  headerLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    minWidth: 50,
-  },
-  headerTitleContainer: {
-    flex: 1,
-    alignItems: 'center',
-  },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#ffffff',
-    textShadowColor: 'rgba(0,0,0,0.3)',
-    textShadowOffset: {width: 0, height: 1},
-    textShadowRadius: 3,
-  },
-  headerSubtitle: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: 'rgba(255,255,255,0.8)',
-    marginTop: 2,
-  },
-  headerRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    minWidth: 50,
-    justifyContent: 'flex-end',
-  },
-  headerIconContainer: {
-    padding: 10,
-    borderRadius: 22,
-    backgroundColor: 'rgba(255,255,255,0.15)',
-    minWidth: 44,
-    minHeight: 44,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  content: {
-    flex: 1,
-    backgroundColor: isDarkMode ? '#000000' : '#f8fafc',
-  },
-  notificationsList: {
-    paddingVertical: 0,
-    paddingTop: 8,
-    paddingBottom: 8,
-  },
-  notificationItem: {
-    marginHorizontal: 0,
-    marginVertical: 0,
-    backgroundColor: isDarkMode ? '#1C1C1E' : '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: isDarkMode ? '#2C2C2E' : '#e2e8f0',
-  },
-  unreadItem: {
-    borderLeftWidth: 4,
-    borderLeftColor: '#667eea',
-    backgroundColor: isDarkMode ? '#1a1a2e' : '#f8faff',
-  },
-  tabContainer: {
-    flexDirection: 'row',
-    backgroundColor: isDarkMode ? '#1C1C1E' : '#fff',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: isDarkMode ? '#2C2C2E' : '#e2e8f0',
-    ...SHADOWS.light,
-  },
-  tab: {
-    flex: 1,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    alignItems: 'center',
-    borderRadius: 24,
-    marginHorizontal: 4,
-    flexDirection: 'row',
-    justifyContent: 'center',
-    backgroundColor: isDarkMode ? '#2C2C2E' : '#f7fafc',
-    borderWidth: 1,
-    borderColor: isDarkMode ? '#3C3C3E' : '#e2e8f0',
-  },
-  activeTab: {
-    backgroundColor: '#667eea',
-    borderColor: '#667eea',
-  },
-  tabText: {
-    ...FONTS.body4,
-    color: isDarkMode ? '#8E8E93' : '#64748b',
-    fontWeight: '600',
-    marginLeft: 6,
-  },
-  activeTabText: {
-    color: '#fff',
-  },
-  title: {
-    ...FONTS.h4,
-    color: isDarkMode ? '#FFFFFF' : '#1e293b',
-    fontWeight: '600',
-    marginBottom: 4,
-  },
-  message: {
-    ...FONTS.body3,
-    color: isDarkMode ? '#8E8E93' : '#64748b',
-    lineHeight: 20,
-    marginBottom: 6,
-  },
-  time: {
-    ...FONTS.body4,
-    color: isDarkMode ? '#6C6C70' : '#94a3b8',
-    marginLeft: 4,
-  },
-  timeContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  emptyContainer: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingTop: 60,
-    paddingHorizontal: 32,
-  },
-  expandedTitle: {
-    marginBottom: 8,
-  },
-  expandedMessage: {
-    marginBottom: 8,
-  },
-  footerContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: 8,
-  },
-  expandButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 4,
-    paddingHorizontal: 8,
-    borderRadius: 6,
-    backgroundColor: isDarkMode ? '#2C2C2E' : '#f1f5f9',
-  },
-  unreadDot: {
-    position: 'absolute',
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    right: -2,
-    top: -2,
-  },
-  notificationCard: {
-    backgroundColor: 'transparent',
-  },
-  notificationHeader: {
-    flexDirection: 'row',
-    padding: 16,
-  },
-  iconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: isDarkMode ? '#2C2C2E' : '#f1f5f9',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 16,
-    shadowColor: '#000',
-    shadowOffset: {width: 0, height: 2},
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  textContainer: {
-    flex: 1,
-  },
-  titleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  typeChip: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
-    backgroundColor: isDarkMode ? '#2C2C2E' : '#f1f5f9',
-  },
-  typeText: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: isDarkMode ? '#8E8E93' : '#64748b',
-  },
-  expandButtonText: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#667eea',
-    marginRight: 4,
-  },
-  emptyIconContainer: {
-    marginBottom: 24,
-  },
-  emptyIconGradient: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#667eea',
-    shadowOffset: {width: 0, height: 8},
-    shadowOpacity: 0.3,
-    shadowRadius: 16,
-    elevation: 8,
-  },
-  emptyTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: isDarkMode ? '#FFFFFF' : '#1e293b',
-    marginBottom: 8,
-    textAlign: 'center',
-  },
-  emptyDescription: {
-    fontSize: 16,
-    color: isDarkMode ? '#8E8E93' : '#64748b',
-    textAlign: 'center',
-    lineHeight: 24,
-    marginBottom: 24,
-  },
-  refreshButton: {
-    paddingVertical: 14,
-    paddingHorizontal: 24,
-    borderRadius: 28,
-    backgroundColor: '#667eea',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    ...SHADOWS.light,
-    shadowColor: '#667eea',
-    shadowOffset: {width: 0, height: 4},
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  refreshButtonText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#fff',
-    marginLeft: 8,
-  },
-});
 
 export default Notifications;

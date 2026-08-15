@@ -442,9 +442,17 @@ const Salary = () => {
             <View style={styles.payrollList}>
               {payrollSections.map((section, sectionIndex) => (
                 <View key={sectionIndex} style={styles.sectionContainer}>
-                  <Text style={[styles.sectionTitle, {color: theme.isDarkMode ? theme.colors.primary : theme.colors.text}]}>
-                    {section.title}
-                  </Text>
+                  <View style={styles.sectionTitleRow}>
+                    <View
+                      style={[
+                        styles.sectionTitleAccent,
+                        {backgroundColor: theme.colors.primary},
+                      ]}
+                    />
+                    <Text style={[styles.sectionTitle, {color: theme.isDarkMode ? theme.colors.primary : theme.colors.text}]}>
+                      {section.title}
+                    </Text>
+                  </View>
                   {section.items.map((item, itemIndex) => (
                     <View key={itemIndex} style={[styles.payrollItem, {borderBottomColor: theme.colors.border}]}>
                       <View style={[styles.itemIcon, {backgroundColor: theme.isDarkMode ? theme.colors.surfaceSecondary : '#f0f9ff'}]}>
@@ -667,7 +675,7 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   summaryValue: {
-    fontSize: 20,
+    fontSize: 24,
     fontWeight: '800',
     color: '#ffffff',
     letterSpacing: 0.5,
@@ -733,10 +741,20 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 16,
     fontWeight: '700',
-    marginBottom: 12,
-    paddingHorizontal: 4,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
+  },
+  sectionTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+    paddingHorizontal: 4,
+  },
+  sectionTitleAccent: {
+    width: 4,
+    height: 18,
+    borderRadius: 2,
+    marginRight: 8,
   },
   payrollItem: {
     flexDirection: 'row',

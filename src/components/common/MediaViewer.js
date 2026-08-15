@@ -125,7 +125,7 @@ const MediaViewer = ({
         </View>
 
         <ModalMessage
-          visible={isMessageVisible}
+          isVisible={isMessageVisible}
           message={messageText}
           type={messageType}
           duration={1000}

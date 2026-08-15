@@ -1,4 +1,3 @@
-/* eslint-disable react/self-closing-comp */
 import React, {useState, useEffect} from 'react';
 import {
   StyleSheet,
@@ -14,7 +13,7 @@ import {
   Easing,
 } from 'react-native';
 import {API, BASE_URL, ORDER_URL, PORT, V1, VERSION} from '../utils/constans';
-import axios from 'axios';
+import apiClient from '../services/apiClient';
 import moment from 'moment';
 import ModalMessage from './ModalMessage';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
@@ -33,7 +32,6 @@ const OrderModal = ({
   textColor,
   titleColor,
   subColor,
-  config
 }) => {
   const {colors, sizes, fonts, shadows, isDarkMode} = useTheme();
   const today = moment();
@@ -45,7 +43,7 @@ const OrderModal = ({
   const [messageType, setMessageType] = useState('success');
   const [duration, setDuration] = useState(1000);
   const [isMessageModalVisible, setMessageModalVisible] = useState(false);
-  
+
   // Animation values - removed to prevent scroll conflicts
   // const fadeAnim = useState(new Animated.Value(0))[0];
   // const slideAnim = useState(new Animated.Value(50))[0];
@@ -97,9 +95,8 @@ const OrderModal = ({
 
   const handleCancelOrder = async id => {
     try {
-      const deleteOrder = await axios.delete(
+      const deleteOrder = await apiClient.delete(
         `${BASE_URL}${PORT}${API}${VERSION}${V1}${ORDER_URL}/${id}`,
-        config
       );
       if (deleteOrder?.data?.success) {
         // Success - remove from local state and notify parent
@@ -359,172 +356,230 @@ const OrderModal = ({
       visible={visible}
       animationType="fade"
       onRequestClose={closeModal}>
-      <View style={[styles.backdrop, { backgroundColor: isDarkMode ? 'rgba(0,0,0,0.8)' : 'rgba(0,0,0,0.5)' }]}>
-        <TouchableOpacity 
+      <View
+        style={[
+          styles.backdrop,
+          {backgroundColor: isDarkMode ? 'rgba(0,0,0,0.8)' : 'rgba(0,0,0,0.5)'},
+        ]}>
+        <TouchableOpacity
           style={styles.backdropTouchable}
           activeOpacity={1}
           onPress={closeModal}
         />
         <View style={styles.modalContent}>
-              {/* Header with Gradient */}
-              <LinearGradient
-                colors={[colors.primary, colors.primary2]}
-                start={{x: 0, y: 0}}
-                end={{x: 1, y: 1}}
-                style={styles.headerGradient}>
-                <View style={styles.header}>
-                  <TouchableOpacity
-                    onPress={closeModal}
-                    style={styles.closeBtn}
-                    activeOpacity={0.7}>
-                    <Icon name="close" size={20} color="#fff" />
-                  </TouchableOpacity>
-                  <Text style={styles.modalTitle}>{t('order.list.title')}</Text>
-                  <View style={{width: 40}} />
+          {/* Header with Gradient */}
+          <LinearGradient
+            colors={[colors.primary, colors.primary2]}
+            start={{x: 0, y: 0}}
+            end={{x: 1, y: 1}}
+            style={styles.headerGradient}>
+            <View style={styles.header}>
+              <TouchableOpacity
+                onPress={closeModal}
+                style={styles.closeBtn}
+                activeOpacity={0.7}>
+                <Icon name="close" size={20} color="#fff" />
+              </TouchableOpacity>
+              <Text style={styles.modalTitle}>{t('order.list.title')}</Text>
+              <View style={{width: 40}} />
+            </View>
+
+            {/* Stats Cards */}
+            <View style={styles.statsContainer}>
+              <View style={styles.statCard}>
+                <View style={styles.statIconContainer}>
+                  <IconFA
+                    name="clipboard-list"
+                    size={16}
+                    color={colors.primary}
+                  />
                 </View>
-
-                {/* Stats Cards */}
-                <View style={styles.statsContainer}>
-                  <View style={styles.statCard}>
-                    <View style={styles.statIconContainer}>
-                      <IconFA name="clipboard-list" size={16} color={colors.primary} />
-                    </View>
-                    <View style={styles.statContent}>
-                      <Text style={styles.statNumber}>{totalOrders}</Text>
-                      <Text style={styles.statLabel}>{t('ord')}</Text>
-                    </View>
-                  </View>
-                  <View style={styles.statCard}>
-                    <View style={styles.statIconContainer}>
-                      <IconFA name="check-circle" size={16} color={colors.success} />
-                    </View>
-                    <View style={styles.statContent}>
-                      <Text style={styles.statNumber}>{pickedOrders}</Text>
-                      <Text style={styles.statLabel}>{t('pid')}</Text>
-                    </View>
-                  </View>
+                <View style={styles.statContent}>
+                  <Text style={styles.statNumber}>{totalOrders}</Text>
+                  <Text style={styles.statLabel}>{t('ord')}</Text>
                 </View>
-              </LinearGradient>
+              </View>
+              <View style={styles.statCard}>
+                <View style={styles.statIconContainer}>
+                  <IconFA
+                    name="check-circle"
+                    size={16}
+                    color={colors.success}
+                  />
+                </View>
+                <View style={styles.statContent}>
+                  <Text style={styles.statNumber}>{pickedOrders}</Text>
+                  <Text style={styles.statLabel}>{t('pid')}</Text>
+                </View>
+              </View>
+            </View>
+          </LinearGradient>
 
-              {/* Body */}
-              <ScrollView
-                style={[styles.body, { backgroundColor: colors.background }]}
-                contentContainerStyle={styles.bodyContent}
-                showsVerticalScrollIndicator={true}
-                bounces={true}
-                scrollEnabled={true}
-                nestedScrollEnabled={true}
-                keyboardShouldPersistTaps="handled">
-                {!localOrders || localOrders.length === 0 ? (
-                  <View style={styles.emptyContainer}>
-                    <View style={[styles.emptyIcon, { backgroundColor: colors.backgroundSecondary }]}>
-                      <IconFA name="utensils" size={40} color={colors.placeholder} />
-                    </View>
-                    <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
-                      {t('order.empty.message')}
-                    </Text>
-                    <Text style={[styles.emptySubText, { color: colors.placeholder }]}>
-                      {t('order.empty.subtitle')}
-                    </Text>
-                  </View>
-                ) : (
-                  <>
-                    <View style={styles.sectionHeader}>
-                      <IconFA name="list" size={18} color={colors.primary} />
-                      <Text style={[styles.sectionTitle, { color: colors.text }]}>
-                        {t('order.section.title')}
-                      </Text>
-                    </View>
-                    {localOrders
-                      .filter(order => order && order.id)
-                      .map((order, index) => {
-                        const isPast = moment(
-                          order.date,
-                          'YYYY-MM-DD',
-                        ).isBefore(today, 'day');
-                        const orderMoment = moment(order.date, 'YYYY-MM-DD');
-                        const isDay = order.dayOrNight === 'DAY';
-                        const canDelete = !isPast && !order.isPicked;
+          {/* Body */}
+          <ScrollView
+            style={[styles.body, {backgroundColor: colors.background}]}
+            contentContainerStyle={styles.bodyContent}
+            showsVerticalScrollIndicator={true}
+            bounces={true}
+            scrollEnabled={true}
+            nestedScrollEnabled={true}
+            keyboardShouldPersistTaps="handled">
+            {!localOrders || localOrders.length === 0 ? (
+              <View style={styles.emptyContainer}>
+                <View
+                  style={[
+                    styles.emptyIcon,
+                    {backgroundColor: colors.backgroundSecondary},
+                  ]}>
+                  <IconFA
+                    name="utensils"
+                    size={40}
+                    color={colors.placeholder}
+                  />
+                </View>
+                <Text style={[styles.emptyText, {color: colors.textSecondary}]}>
+                  {t('order.empty.message')}
+                </Text>
+                <Text
+                  style={[styles.emptySubText, {color: colors.placeholder}]}>
+                  {t('order.empty.subtitle')}
+                </Text>
+              </View>
+            ) : (
+              <>
+                <View style={styles.sectionHeader}>
+                  <IconFA name="list" size={18} color={colors.primary} />
+                  <Text style={[styles.sectionTitle, {color: colors.text}]}>
+                    {t('order.section.title')}
+                  </Text>
+                </View>
+                {localOrders
+                  .filter(order => order && order.id)
+                  .map((order, index) => {
+                    const isPast = moment(order.date, 'YYYY-MM-DD').isBefore(
+                      today,
+                      'day',
+                    );
+                    const orderMoment = moment(order.date, 'YYYY-MM-DD');
+                    const isDay = order.dayOrNight === 'DAY';
+                    const canDelete = !isPast && !order.isPicked;
 
-                        return (
-                          <View
-                            key={order.id}
-                            style={[
-                              styles.orderCard,
-                              isPast && styles.pastOrderCard,
-                            ]}>
-                            <LinearGradient
-                              colors={
-                                isPast
-                                  ? [colors.backgroundSecondary, colors.backgroundTertiary]
-                                  : [colors.surface, colors.backgroundSecondary]
-                              }
-                              start={{x: 0, y: 0}}
-                              end={{x: 1, y: 1}}
-                              style={styles.orderCardHeader}>
-                              <View style={styles.orderCardContent}>
-                                <View style={styles.orderDateSection}>
-                                  <View style={styles.dateHeader}>
-                                    <IconFA name="calendar-day" size={14} color={colors.primary} />
-                                    <Text style={[styles.orderDate, { color: colors.text }]}>
-                                      {orderMoment.format('DD/MM/YYYY')}
-                                    </Text>
-                                  </View>
-                                  <Text style={[styles.orderDay, { color: colors.textSecondary }]}>
-                                    {t(getWeekdayKey(orderMoment))}
-                                  </Text>
-                                </View>
-
-                                <View style={[styles.orderShiftSection, { 
-                                  backgroundColor: isDay ? colors.warning + '20' : colors.info + '20' 
-                                }]}>
-                                  <IconFA
-                                    name={isDay ? 'sun' : 'moon'}
-                                    size={16}
-                                    color={isDay ? colors.warning : colors.info}
-                                  />
-                                  <Text style={[styles.orderShiftText, { 
-                                    color: isDay ? colors.warning : colors.info 
-                                  }]}>
-                                    {isDay ? t('dd') : t('nn')}
-                                  </Text>
-                                </View>
-
-                                {/* Show status badge if picked */}
-                                {order.isPicked && (
-                                  <View style={[styles.pickedBadge, { backgroundColor: colors.success + '20' }]}>
-                                    <IconFA
-                                      name="check-circle"
-                                      size={16}
-                                      color={colors.success}
-                                    />
-                                    <Text style={[styles.pickedText, { color: colors.success }]}>
-                                      {t('pid')}
-                                    </Text>
-                                  </View>
-                                )}
-
-                                {/* Only show delete button if can delete */}
-                                {canDelete && (
-                                  <TouchableOpacity
-                                    style={[styles.deleteButton, { backgroundColor: colors.danger + '20' }]}
-                                    onPress={() => handleCancelOrder(order.id)}
-                                    activeOpacity={0.7}>
-                                    <IconFA
-                                      name="trash"
-                                      size={16}
-                                      color={colors.danger}
-                                    />
-                                  </TouchableOpacity>
-                                )}
+                    return (
+                      <View
+                        key={order.id}
+                        style={[
+                          styles.orderCard,
+                          isPast && styles.pastOrderCard,
+                        ]}>
+                        <LinearGradient
+                          colors={
+                            isPast
+                              ? [
+                                  colors.backgroundSecondary,
+                                  colors.backgroundTertiary,
+                                ]
+                              : [colors.surface, colors.backgroundSecondary]
+                          }
+                          start={{x: 0, y: 0}}
+                          end={{x: 1, y: 1}}
+                          style={styles.orderCardHeader}>
+                          <View style={styles.orderCardContent}>
+                            <View style={styles.orderDateSection}>
+                              <View style={styles.dateHeader}>
+                                <IconFA
+                                  name="calendar-day"
+                                  size={14}
+                                  color={colors.primary}
+                                />
+                                <Text
+                                  style={[
+                                    styles.orderDate,
+                                    {color: colors.text},
+                                  ]}>
+                                  {orderMoment.format('DD/MM/YYYY')}
+                                </Text>
                               </View>
-                            </LinearGradient>
+                              <Text
+                                style={[
+                                  styles.orderDay,
+                                  {color: colors.textSecondary},
+                                ]}>
+                                {t(getWeekdayKey(orderMoment))}
+                              </Text>
+                            </View>
+
+                            <View
+                              style={[
+                                styles.orderShiftSection,
+                                {
+                                  backgroundColor: isDay
+                                    ? colors.warning + '20'
+                                    : colors.info + '20',
+                                },
+                              ]}>
+                              <IconFA
+                                name={isDay ? 'sun' : 'moon'}
+                                size={16}
+                                color={isDay ? colors.warning : colors.info}
+                              />
+                              <Text
+                                style={[
+                                  styles.orderShiftText,
+                                  {
+                                    color: isDay ? colors.warning : colors.info,
+                                  },
+                                ]}>
+                                ]}>
+                                {isDay ? t('dd') : t('nn')}
+                              </Text>
+                            </View>
+
+                            {/* Show status badge if picked */}
+                            {order.isPicked && (
+                              <View
+                                style={[
+                                  styles.pickedBadge,
+                                  {backgroundColor: colors.success + '20'},
+                                ]}>
+                                <IconFA
+                                  name="check-circle"
+                                  size={16}
+                                  color={colors.success}
+                                />
+                                <Text
+                                  style={[
+                                    styles.pickedText,
+                                    {color: colors.success},
+                                  ]}>
+                                  {t('pid')}
+                                </Text>
+                              </View>
+                            )}
+
+                            {/* Only show delete button if can delete */}
+                            {canDelete && (
+                              <TouchableOpacity
+                                style={[
+                                  styles.deleteButton,
+                                  {backgroundColor: colors.danger + '20'},
+                                ]}
+                                onPress={() => handleCancelOrder(order.id)}
+                                activeOpacity={0.7}>
+                                <IconFA
+                                  name="trash"
+                                  size={16}
+                                  color={colors.danger}
+                                />
+                              </TouchableOpacity>
+                            )}
                           </View>
-                        );
-                      })}
-                  </>
-                )}
-              </ScrollView>
+                        </LinearGradient>
+                      </View>
+                    );
+                  })}
+              </>
+            )}
+          </ScrollView>
         </View>
       </View>
       <ModalMessage

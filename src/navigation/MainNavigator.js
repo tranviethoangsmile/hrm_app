@@ -28,6 +28,26 @@ import {
   Dependent,
   DependentSupportAmount,
   FirstLoginPassword,
+  Schedule,
+  IDCard,
+  Directory,
+  Docs,
+  SalaryTrend,
+  Approvals,
+  ChangePassword,
+  EditProfile,
+  Support,
+  Learning,
+  PayslipHistory,
+  AttendanceSummary,
+  Survey,
+  Benefits,
+  Translator,
+  OrgChart,
+  Performance,
+  Referral,
+  ShiftSwap,
+  Asset,
 } from '../screens';
 const Stack = createStackNavigator();
 const MainNavigator = () => {
@@ -158,6 +178,106 @@ const MainNavigator = () => {
         <Stack.Screen
           name="DependentSupportAmount"
           component={DependentSupportAmount}
+          options={{headerShown: false}}
+        />
+        <Stack.Screen
+          name="Schedule"
+          component={Schedule}
+          options={{headerShown: false}}
+        />
+        <Stack.Screen
+          name="IDCard"
+          component={IDCard}
+          options={{headerShown: false}}
+        />
+        <Stack.Screen
+          name="Directory"
+          component={Directory}
+          options={{headerShown: false}}
+        />
+        <Stack.Screen
+          name="Docs"
+          component={Docs}
+          options={{headerShown: false}}
+        />
+        <Stack.Screen
+          name="SalaryTrend"
+          component={SalaryTrend}
+          options={{headerShown: false}}
+        />
+        <Stack.Screen
+          name="Approvals"
+          component={Approvals}
+          options={{headerShown: false}}
+        />
+        <Stack.Screen
+          name="ChangePassword"
+          component={ChangePassword}
+          options={{headerShown: false}}
+        />
+        <Stack.Screen
+          name="EditProfile"
+          component={EditProfile}
+          options={{headerShown: false}}
+        />
+        <Stack.Screen
+          name="Support"
+          component={Support}
+          options={{headerShown: false}}
+        />
+        <Stack.Screen
+          name="Learning"
+          component={Learning}
+          options={{headerShown: false}}
+        />
+        <Stack.Screen
+          name="PayslipHistory"
+          component={PayslipHistory}
+          options={{headerShown: false}}
+        />
+        <Stack.Screen
+          name="AttendanceSummary"
+          component={AttendanceSummary}
+          options={{headerShown: false}}
+        />
+        <Stack.Screen
+          name="Survey"
+          component={Survey}
+          options={{headerShown: false}}
+        />
+        <Stack.Screen
+          name="Benefits"
+          component={Benefits}
+          options={{headerShown: false}}
+        />
+        <Stack.Screen
+          name="Translator"
+          component={Translator}
+          options={{headerShown: false}}
+        />
+        <Stack.Screen
+          name="OrgChart"
+          component={OrgChart}
+          options={{headerShown: false}}
+        />
+        <Stack.Screen
+          name="Performance"
+          component={Performance}
+          options={{headerShown: false}}
+        />
+        <Stack.Screen
+          name="Referral"
+          component={Referral}
+          options={{headerShown: false}}
+        />
+        <Stack.Screen
+          name="ShiftSwap"
+          component={ShiftSwap}
+          options={{headerShown: false}}
+        />
+        <Stack.Screen
+          name="Asset"
+          component={Asset}
           options={{headerShown: false}}
         />
       </Stack.Navigator>

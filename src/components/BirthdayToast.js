@@ -19,20 +19,19 @@ const BirthdayToast = ({visible, onClose, onShowModal}) => {
 
   useEffect(() => {
     if (visible) {
+      translateY.setValue(-100);
       Animated.spring(translateY, {
         toValue: 0,
         friction: 6,
         tension: 40,
         useNativeDriver: true,
       }).start();
-    } else {
-      Animated.timing(translateY, {
-        toValue: -100,
-        duration: 300,
-        useNativeDriver: true,
-      }).start();
     }
   }, [visible, translateY]);
+
+  if (!visible) {
+    return null;
+  }
 
   const handlePress = () => {
     onShowModal();

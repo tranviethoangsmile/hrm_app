@@ -8,7 +8,6 @@ import {
   StyleSheet,
   ScrollView,
   Alert,
-  Image,
   TouchableOpacity,
   StatusBar,
   FlatList,
@@ -33,9 +32,10 @@ import {
   API,
   VERSION,
   V1,
-  USER_URL,
   CHECKIN,
   SEARCH,
+  DAY_OFFS,
+  GET_ALL,
 } from '../utils/constans';
 import {
   BG_COLOR,
@@ -43,8 +43,8 @@ import {
   THEME_COLOR,
   THEME_COLOR_2,
 } from '../utils/Colors';
-import UploadAvatar from '../components/UploadAvatar';
 import Header from '../components/common/Header';
+import AttendanceCalendar from '../components/common/AttendanceCalendar';
 import LinearGradient from 'react-native-linear-gradient';
 
 const {width} = Dimensions.get('window');
@@ -58,19 +58,20 @@ const Profile = () => {
   const {t} = useTranslation();
   const authData = useSelector(state => state.auth);
   const user_id = authData?.data?.data?.id;
-  const [userInfo, setUserInfo] = useState({});
   const [userCheckin, setUserCheckin] = useState([]);
   const [today, setToday] = useState(moment().format('YYYY-MM-DD'));
   const [isModalVisible, setIsModalVisible] = useState(false);
-  const [isModalUpAvataVisible, setIsModalUpAvataVisible] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [viewMode, setViewMode] = useState('list');
+  const [dayOffs, setDayOffs] = useState([]);
   const token = authData?.data?.data?.token;
 
   const year = moment(today).format('YYYY');
   const month = moment(today).format('MM');
+  const calYear = parseInt(year, 10);
+  const calMonth = parseInt(month, 10) - 1;
   const totalWorkTime = userCheckin.reduce((total, checkin) => {
     if (!checkin.is_weekend) {
       return total + checkin.work_time;
@@ -91,13 +92,24 @@ const Profile = () => {
     }
     return total;
   }, 0);
-  const handleUploadAvatar = () => {
-    setIsModalUpAvataVisible(!isModalUpAvataVisible);
-  };
-
-  const handleUploadSuccess = () => {
-    get_user_info();
-    setIsModalUpAvataVisible(false);
+  const handleSelectDay = key => {
+    const found = userCheckin.find(
+      c => moment(c.date).format('YYYY-MM-DD') === key,
+    );
+    if (!found) {
+      return;
+    }
+    const status = found.is_paid_leave
+      ? t('leave')
+      : found.is_weekend
+      ? t('weekend')
+      : found.work_shift === 'NIGHT'
+      ? t('night_shift')
+      : t('day_shift');
+    Alert.alert(
+      moment(key).format('DD/MM/YYYY'),
+      `${status} — ${t('wt')}: ${found.work_time}h`,
+    );
   };
 
   useEffect(() => {
@@ -106,9 +118,24 @@ const Profile = () => {
     }
   }, [today]);
 
+  const get_day_offs = async () => {
+    try {
+      const res = await axios.get(
+        `${BASE_URL}${PORT}${API}${VERSION}${V1}${DAY_OFFS}${GET_ALL}`,
+      );
+      if (res?.data?.success) {
+        setDayOffs((res?.data?.data || []).map(item => item.date));
+      }
+    } catch (error) {
+      console.error(error);
+      setDayOffs([]);
+    }
+  };
+
   const get_checkin_of_user = async () => {
     try {
       setIsLoading(true);
+      get_day_offs();
       const year = moment(today).format('YYYY');
       const month = moment(today).format('MM');
 
@@ -170,11 +197,19 @@ const Profile = () => {
 
           <View style={styles.timeSection}>
             <View style={styles.timeRow}>
-              <Icon name="log-in-outline" size={16} color={colors.textSecondary} />
+              <Icon
+                name="log-in-outline"
+                size={16}
+                color={colors.textSecondary}
+              />
               <Text style={styles.timeText}>{item.time_in || '--:--'}</Text>
             </View>
             <View style={styles.timeRow}>
-              <Icon name="log-out-outline" size={16} color={colors.textSecondary} />
+              <Icon
+                name="log-out-outline"
+                size={16}
+                color={colors.textSecondary}
+              />
               <Text style={styles.timeText}>{item.time_out || '--:--'}</Text>
             </View>
           </View>
@@ -214,16 +249,6 @@ const Profile = () => {
     );
   };
 
-  const get_user_info = async () => {
-    const res = await axios.get(
-      `${BASE_URL}${PORT}${API}${VERSION}${V1}${USER_URL}/${user_id}`,
-    );
-    if (res?.data?.success) {
-      setUserInfo(res.data.data);
-    } else {
-      setUserInfo({});
-    }
-  };
   useEffect(() => {
     const checkLanguage = async () => {
       const lang = await getLanguage();
@@ -231,9 +256,7 @@ const Profile = () => {
         i18next.changeLanguage(lang);
       }
     };
-    get_user_info();
     checkLanguage();
-    // eslint-disable-next-line
   }, []);
 
   const styles = createStyles(colors, isDarkMode);
@@ -241,7 +264,7 @@ const Profile = () => {
   return (
     <View style={styles.container}>
       <StatusBar
-        barStyle={isDarkMode ? "light-content" : "dark-content"}
+        barStyle={isDarkMode ? 'light-content' : 'dark-content'}
         backgroundColor="transparent"
         translucent
       />
@@ -259,10 +282,19 @@ const Profile = () => {
             hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}>
             <Icon name="arrow-back" size={20} color="#fff" />
           </TouchableOpacity>
-          <Text style={styles.headerTitle} numberOfLines={1} ellipsizeMode="tail">
+          <Text
+            style={styles.headerTitle}
+            numberOfLines={1}
+            ellipsizeMode="tail">
             {t('profile.title', 'Profile')}
           </Text>
           <View style={styles.headerRightButtons}>
+            <TouchableOpacity
+              onPress={() => navigation.navigate('EditProfile')}
+              style={styles.backButton}
+              hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}>
+              <Icon name="create-outline" size={20} color="#fff" />
+            </TouchableOpacity>
             <TouchableOpacity
               onPress={() => navigation.navigate('Salary')}
               style={styles.backButton}
@@ -279,173 +311,63 @@ const Profile = () => {
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }>
-        {/* Employee Card */}
-        <View style={styles.employeeCard}>
-          <LinearGradient
-            colors={['#667eea', '#764ba2']}
-            start={{x: 0, y: 0}}
-            end={{x: 1, y: 1}}
-            style={styles.cardGradient}>
-            {/* Card Header */}
-            <View style={styles.cardHeader}>
-              <Text style={styles.companyName}>DAIHATSU METAL</Text>
+        {/* Attendance Summary Hero */}
+        <LinearGradient
+          colors={colors.primaryGradient}
+          start={{x: 0, y: 0}}
+          end={{x: 1, y: 1}}
+          style={styles.heroCard}>
+          <View style={styles.heroTop}>
+            <View style={styles.heroTitleWrap}>
+              <Icon name="analytics-outline" size={18} color="#fff" />
+              <Text style={styles.heroTitle}>
+                {t('profile.attendance_stat', 'Attendance Stats')}
+              </Text>
             </View>
-
-            {/* Employee Info */}
             <TouchableOpacity
-              style={styles.employeeInfo}
-              onPress={() => setIsExpanded(!isExpanded)}
-              activeOpacity={0.7}>
-              <TouchableOpacity
-                style={styles.avatarContainer}
-                onPress={handleUploadAvatar}>
-                <Image
-                  source={
-                    userInfo.avatar
-                      ? {uri: userInfo.avatar}
-                      : require('../assets/images/avatar.jpg')
-                  }
-                  style={styles.employeeAvatar}
-                />
-                <View style={styles.cameraOverlay}>
-                  <Icon name="camera" size={10} color="#fff" />
-                </View>
-              </TouchableOpacity>
-
-              <View style={styles.employeeDetails}>
-                <Text style={styles.employeeName}>
-                  {userInfo.name || '---'}
-                </Text>
-                <Text style={styles.employeePosition}>
-                  {userInfo.position || 'Employee'}
-                </Text>
-                <View style={styles.contactRow}>
-                  <Icon
-                    name="mail-outline"
-                    size={12}
-                    color="rgba(255,255,255,0.8)"
-                  />
-                  <Text style={styles.employeeEmail} numberOfLines={1}>
-                    {userInfo.email || 'email@company.com'}
-                  </Text>
-                </View>
-              </View>
-
-              <View style={styles.employeeIdSection}>
-                <Text style={styles.idLabel}>ID</Text>
-                <Text style={styles.employeeId}>
-                  {userInfo.employee_id || '---'}
-                </Text>
-              </View>
-
-              <Icon
-                name={isExpanded ? 'chevron-up' : 'chevron-down'}
-                size={24}
-                color="rgba(255,255,255,0.6)"
-                style={styles.expandIcon}
-              />
-            </TouchableOpacity>
-
-            {/* Expanded Details */}
-            {isExpanded && (
-              <View style={styles.expandedDetails}>
-                <View style={styles.detailRow}>
-                  <Icon
-                    name="call-outline"
-                    size={16}
-                    color="rgba(255,255,255,0.8)"
-                  />
-                  <Text style={styles.detailText}>
-                    {userInfo.phone || '---'}
-                  </Text>
-                </View>
-                <View style={styles.detailRow}>
-                  <Icon
-                    name="location-outline"
-                    size={16}
-                    color="rgba(255,255,255,0.8)"
-                  />
-                  <Text style={styles.detailText}>
-                    {userInfo.address || '---'}
-                  </Text>
-                </View>
-                <View style={styles.detailRow}>
-                  <Icon
-                    name="calendar-outline"
-                    size={16}
-                    color="rgba(255,255,255,0.8)"
-                  />
-                  <Text style={styles.detailText}>
-                    {userInfo.join_date
-                      ? moment(userInfo.join_date).format('DD/MM/YYYY')
-                      : '---'}
-                  </Text>
-                </View>
-                <View style={styles.detailRow}>
-                  <Icon
-                    name="briefcase-outline"
-                    size={16}
-                    color="rgba(255,255,255,0.8)"
-                  />
-                  <Text style={styles.detailText}>
-                    {userInfo.department || '---'}
-                  </Text>
-                </View>
-              </View>
-            )}
-          </LinearGradient>
-        </View>
-
-        {/* Month Selector & Stats */}
-        <View style={styles.statsContainer}>
-          <TouchableOpacity
-            style={styles.monthSelector}
-            onPress={() => setIsModalVisible(true)}>
-            <LinearGradient
-              colors={['#4FACFE', '#00F2FE']}
-              start={{x: 0, y: 0}}
-              end={{x: 1, y: 1}}
-              style={styles.monthGradient}>
-              <Icon name="calendar-outline" size={18} color="#fff" />
-              <Text style={styles.monthText}>
+              style={styles.heroMonth}
+              onPress={() => setIsModalVisible(true)}
+              activeOpacity={0.8}>
+              <Icon name="calendar-outline" size={15} color="#fff" />
+              <Text style={styles.heroMonthText}>
                 {moment(today).format('YYYY/MM')}
               </Text>
-              <Icon name="chevron-down" size={16} color="#fff" />
-            </LinearGradient>
-          </TouchableOpacity>
-
-          <View style={styles.statsRow}>
-            <View style={styles.statCard}>
-              <LinearGradient
-                colors={['#11998e', '#38ef7d']}
-                style={styles.statGradient}>
-                <Icon name="time-outline" size={20} color="#fff" />
-                <Text style={styles.statNumber}>{totalWorkTime}</Text>
-                <Text style={styles.statLabel}>{t('wt', 'Hours')}</Text>
-              </LinearGradient>
+              <Icon name="chevron-down" size={14} color="#fff" />
+            </TouchableOpacity>
+          </View>
+          <View style={styles.heroDivider} />
+          <View style={styles.heroStats}>
+            <View style={styles.heroStat}>
+              <Icon
+                name="time-outline"
+                size={18}
+                color="rgba(255,255,255,0.9)"
+              />
+              <Text style={styles.heroStatNumber}>{totalWorkTime}</Text>
+              <Text style={styles.heroStatLabel}>{t('wt', 'Hours')}</Text>
             </View>
-
-            <View style={styles.statCard}>
-              <LinearGradient
-                colors={['#FF6B6B', '#FFE66D']}
-                style={styles.statGradient}>
-                <Icon name="flash-outline" size={20} color="#fff" />
-                <Text style={styles.statNumber}>{totalOverTime}</Text>
-                <Text style={styles.statLabel}>{t('ot', 'OT')}</Text>
-              </LinearGradient>
+            <View style={styles.heroStatSep} />
+            <View style={styles.heroStat}>
+              <Icon
+                name="flash-outline"
+                size={18}
+                color="rgba(255,255,255,0.9)"
+              />
+              <Text style={styles.heroStatNumber}>{totalOverTime}</Text>
+              <Text style={styles.heroStatLabel}>{t('ot', 'OT')}</Text>
             </View>
-
-            <View style={styles.statCard}>
-              <LinearGradient
-                colors={['#A18AFF', '#FF8A80']}
-                style={styles.statGradient}>
-                <Icon name="calendar-number-outline" size={20} color="#fff" />
-                <Text style={styles.statNumber}>{totalWorkTimeWeekend}</Text>
-                <Text style={styles.statLabel}>{t('wend', 'Weekend')}</Text>
-              </LinearGradient>
+            <View style={styles.heroStatSep} />
+            <View style={styles.heroStat}>
+              <Icon
+                name="calendar-number-outline"
+                size={18}
+                color="rgba(255,255,255,0.9)"
+              />
+              <Text style={styles.heroStatNumber}>{totalWorkTimeWeekend}</Text>
+              <Text style={styles.heroStatLabel}>{t('wend', 'Weekend')}</Text>
             </View>
           </View>
-        </View>
+        </LinearGradient>
 
         {/* Check-in History */}
         <View style={styles.historyContainer}>
@@ -456,48 +378,96 @@ const Profile = () => {
                 {t('c-i-h', 'Check-in History')}
               </Text>
             </View>
+            <View style={styles.viewToggle}>
+              <TouchableOpacity
+                style={[
+                  styles.viewToggleBtn,
+                  viewMode === 'calendar' && {
+                    backgroundColor: colors.primary,
+                  },
+                ]}
+                onPress={() => setViewMode('calendar')}>
+                <Icon
+                  name="calendar-outline"
+                  size={16}
+                  color={
+                    viewMode === 'calendar' ? '#fff' : colors.textSecondary
+                  }
+                />
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[
+                  styles.viewToggleBtn,
+                  viewMode === 'list' && {backgroundColor: colors.primary},
+                ]}
+                onPress={() => setViewMode('list')}>
+                <Icon
+                  name="list-outline"
+                  size={16}
+                  color={viewMode === 'list' ? '#fff' : colors.textSecondary}
+                />
+              </TouchableOpacity>
+            </View>
           </View>
 
-          {error ? (
-            <View style={styles.messageContainer}>
-              <LinearGradient
-                colors={['#FF6B6B', '#FFE66D']}
-                style={styles.errorContainer}>
-                <Icon name="alert-circle-outline" size={32} color="#fff" />
-                <Text style={styles.errorText}>{t(error)}</Text>
-              </LinearGradient>
-            </View>
-          ) : null}
-
-          {isLoading ? (
-            <View style={styles.messageContainer}>
-              <View style={styles.loadingContainer}>
-                <ActivityIndicator size="large" color={colors.primary} />
-                <Text style={styles.loadingText}>Loading...</Text>
-              </View>
-            </View>
-          ) : userCheckin.length === 0 ? (
-            <View style={styles.messageContainer}>
-              <View style={styles.emptyContainer}>
-                <Icon name="calendar-outline" size={64} color={colors.textTertiary} />
-                <Text style={styles.emptyText}>
-                  {t('not.data', 'No data available')}
-                </Text>
-                <Text style={styles.emptySubText}>Pull down to refresh</Text>
-              </View>
-            </View>
-          ) : (
-            <FlatList
-              data={userCheckin}
-              renderItem={renderCheckin}
-              keyExtractor={(item, index) =>
-                item?.id?.toString() || index.toString()
-              }
-              showsVerticalScrollIndicator={false}
-              style={styles.historyList}
-              contentContainerStyle={styles.listContent}
-              scrollEnabled={false}
+          {viewMode === 'calendar' ? (
+            <AttendanceCalendar
+              year={calYear}
+              month={calMonth}
+              checkins={userCheckin}
+              dayoffs={dayOffs}
+              onSelectDay={handleSelectDay}
             />
+          ) : (
+            <View>
+              {error ? (
+                <View style={styles.messageContainer}>
+                  <LinearGradient
+                    colors={['#FF6B6B', '#FFE66D']}
+                    style={styles.errorContainer}>
+                    <Icon name="alert-circle-outline" size={32} color="#fff" />
+                    <Text style={styles.errorText}>{t(error)}</Text>
+                  </LinearGradient>
+                </View>
+              ) : null}
+
+              {isLoading ? (
+                <View style={styles.messageContainer}>
+                  <View style={styles.loadingContainer}>
+                    <ActivityIndicator size="large" color={colors.primary} />
+                    <Text style={styles.loadingText}>Loading...</Text>
+                  </View>
+                </View>
+              ) : userCheckin.length === 0 ? (
+                <View style={styles.messageContainer}>
+                  <View style={styles.emptyContainer}>
+                    <Icon
+                      name="calendar-outline"
+                      size={64}
+                      color={colors.textTertiary}
+                    />
+                    <Text style={styles.emptyText}>
+                      {t('not.data', 'No data available')}
+                    </Text>
+                    <Text style={styles.emptySubText}>
+                      Pull down to refresh
+                    </Text>
+                  </View>
+                </View>
+              ) : (
+                <FlatList
+                  data={userCheckin}
+                  renderItem={renderCheckin}
+                  keyExtractor={(item, index) =>
+                    item?.id?.toString() || index.toString()
+                  }
+                  showsVerticalScrollIndicator={false}
+                  style={styles.historyList}
+                  contentContainerStyle={styles.listContent}
+                  scrollEnabled={false}
+                />
+              )}
+            </View>
           )}
         </View>
       </ScrollView>
@@ -508,419 +478,317 @@ const Profile = () => {
         setSelectedDate={setToday}
         getCheckin={get_checkin_of_user}
       />
-
-      <UploadAvatar
-        visible={isModalUpAvataVisible}
-        closeModal={() => setIsModalUpAvataVisible(false)}
-        t={t}
-        user_id={user_id}
-        avatar_url={userInfo.avatar}
-        onSuccess={handleUploadSuccess}
-      />
     </View>
   );
 };
 
-const createStyles = (colors, isDarkMode) => StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  headerGradient: {
-    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight || 24 : 44,
-    paddingBottom: 12,
-    shadowColor: colors.shadow,
-    shadowOffset: {width: 0, height: 4},
-    shadowOpacity: 0.3,
-    shadowRadius: 12,
-    elevation: 8,
-  },
-  headerContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 12,
-    paddingTop: 5,
-  },
-  backButton: {
-    padding: 6,
-    borderRadius: 16,
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#fff',
-    letterSpacing: 0.3,
-    flex: 1,
-    textAlign: 'center',
-  },
-  headerRightButtons: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  scrollContainer: {
-    flex: 1,
-    marginTop: -5,
-    backgroundColor: colors.background,
-  },
-  employeeCard: {
-    marginHorizontal: 0,
-    marginTop: 0,
-    backgroundColor: colors.primary,
-    shadowColor: colors.shadow,
-    shadowOffset: {width: 0, height: 8},
-    shadowOpacity: 0.25,
-    shadowRadius: 16,
-    elevation: 12,
-  },
-  cardGradient: {
-    padding: 16,
-    minHeight: 120,
-  },
-  cardHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  companyName: {
-    fontSize: 12,
-    fontWeight: '800',
-    color: 'rgba(255,255,255,0.9)',
-    letterSpacing: 1.2,
-  },
-  employeeInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  avatarContainer: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    position: 'relative',
-    marginRight: 16,
-  },
-  employeeAvatar: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    borderWidth: 3,
-    borderColor: 'rgba(255,255,255,0.3)',
-  },
-  cameraOverlay: {
-    position: 'absolute',
-    bottom: 0,
-    right: 0,
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    backgroundColor: 'rgba(0,0,0,0.6)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  employeeDetails: {
-    flex: 1,
-  },
-  employeeName: {
-    fontSize: 18,
-    fontWeight: '800',
-    color: '#fff',
-    marginBottom: 2,
-    letterSpacing: 0.3,
-  },
-  employeePosition: {
-    fontSize: 13,
-    color: 'rgba(255,255,255,0.85)',
-    fontWeight: '600',
-    marginBottom: 4,
-  },
-  contactRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  employeeEmail: {
-    fontSize: 11,
-    color: 'rgba(255,255,255,0.8)',
-    fontWeight: '500',
-    marginLeft: 4,
-    flex: 1,
-  },
-  employeeIdSection: {
-    alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.15)',
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 12,
-    minWidth: 60,
-  },
-  idLabel: {
-    fontSize: 10,
-    color: 'rgba(255,255,255,0.7)',
-    fontWeight: '600',
-    marginBottom: 2,
-  },
-  employeeId: {
-    fontSize: 14,
-    color: '#fff',
-    fontWeight: '800',
-    letterSpacing: 0.5,
-  },
-  statsContainer: {
-    marginTop: 1,
-    backgroundColor: colors.surface,
-  },
-  monthSelector: {
-    marginBottom: 12,
-  },
-  monthGradient: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 10,
-    shadowColor: '#4FACFE',
-    shadowOffset: {width: 0, height: 2},
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 4,
-  },
-  monthText: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#fff',
-    marginHorizontal: 8,
-    letterSpacing: 0.3,
-  },
-  statsRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingHorizontal: 12,
-    paddingBottom: 12,
-  },
-  statCard: {
-    flex: 1,
-    marginHorizontal: 3,
-    borderRadius: 12,
-    shadowColor: '#000',
-    shadowOffset: {width: 0, height: 2},
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 4,
-  },
-  statGradient: {
-    padding: 12,
-    borderRadius: 12,
-    alignItems: 'center',
-    minHeight: 70,
-    justifyContent: 'center',
-  },
-  statNumber: {
-    fontSize: 18,
-    fontWeight: '800',
-    color: '#fff',
-    marginTop: 4,
-    letterSpacing: 0.3,
-  },
-  statLabel: {
-    fontSize: 11,
-    color: 'rgba(255,255,255,0.9)',
-    fontWeight: '600',
-    marginTop: 2,
-    textAlign: 'center',
-  },
-  historyContainer: {
-    marginTop: 1,
-    backgroundColor: colors.surface,
-    shadowColor: colors.shadow,
-    shadowOffset: {width: 0, height: 8},
-    shadowOpacity: 0.15,
-    shadowRadius: 16,
-    elevation: 8,
-  },
-  historyHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-  historyTitleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  historyTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: colors.text,
-    marginLeft: 10,
-    letterSpacing: 0.5,
-  },
-  historyCount: {
-    fontSize: 14,
-    color: colors.primary,
-    fontWeight: '600',
-  },
-  messageContainer: {
-    padding: 40,
-    alignItems: 'center',
-  },
-  errorContainer: {
-    alignItems: 'center',
-    padding: 20,
-    borderRadius: 16,
-  },
-  errorText: {
-    color: '#fff',
-    marginTop: 12,
-    fontSize: 16,
-    fontWeight: '600',
-    textAlign: 'center',
-  },
-  loadingContainer: {
-    alignItems: 'center',
-  },
-  loadingText: {
-    color: colors.primary,
-    marginTop: 12,
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  emptyContainer: {
-    alignItems: 'center',
-  },
-  emptyText: {
-    color: colors.textSecondary,
-    fontSize: 18,
-    fontWeight: '600',
-    marginTop: 16,
-  },
-  emptySubText: {
-    color: colors.textTertiary,
-    fontSize: 14,
-    marginTop: 4,
-  },
-  historyList: {
-    flex: 1,
-  },
-  listContent: {
-    paddingBottom: 20,
-  },
-  checkinRow: {
-    marginHorizontal: 16,
-    marginVertical: 6,
-    borderRadius: 16,
-    backgroundColor: colors.surface,
-    shadowColor: colors.shadow,
-    shadowOffset: {width: 0, height: 2},
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  paidLeaveRow: {
-    backgroundColor: isDarkMode ? 'rgba(16, 185, 129, 0.1)' : '#f0fdfa',
-    borderLeftWidth: 4,
-    borderLeftColor: '#00D4AA',
-  },
-  weekendRow: {
-    backgroundColor: isDarkMode ? 'rgba(239, 68, 68, 0.1)' : '#fef2f2',
-    borderLeftWidth: 4,
-    borderLeftColor: '#FF6B6B',
-  },
-  nightShiftRow: {
-    backgroundColor: isDarkMode ? 'rgba(161, 138, 255, 0.1)' : '#f8faff',
-    borderLeftWidth: 4,
-    borderLeftColor: '#A18AFF',
-  },
-  rowContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 16,
-  },
-  dateSection: {
-    alignItems: 'center',
-    marginRight: 16,
-    minWidth: 50,
-  },
-  dateText: {
-    fontSize: 20,
-    fontWeight: '800',
-    color: colors.text,
-    letterSpacing: 0.5,
-  },
-  dayText: {
-    fontSize: 12,
-    color: colors.textSecondary,
-    fontWeight: '600',
-    marginTop: 2,
-  },
-  timeSection: {
-    flex: 1,
-    marginRight: 16,
-  },
-  timeRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginVertical: 2,
-  },
-  timeText: {
-    fontSize: 14,
-    color: colors.textSecondary,
-    fontWeight: '600',
-    marginLeft: 8,
-  },
-  hoursSection: {
-    alignItems: 'center',
-    marginRight: 16,
-    minWidth: 60,
-  },
-  hoursText: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: colors.primary,
-  },
-  overtimeText: {
-    fontSize: 12,
-    color: '#f59e0b',
-    fontWeight: '600',
-    marginTop: 2,
-  },
-  statusBadge: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20,
-    minWidth: 70,
-    alignItems: 'center',
-  },
-  statusText: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#fff',
-    letterSpacing: 0.5,
-  },
-  expandIcon: {
-    marginLeft: 8,
-  },
-  expandedDetails: {
-    marginTop: 16,
-    paddingTop: 16,
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(255,255,255,0.1)',
-  },
-  detailRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  detailText: {
-    fontSize: 14,
-    color: 'rgba(255,255,255,0.9)',
-    marginLeft: 12,
-    flex: 1,
-  },
-});
+const createStyles = (colors, isDarkMode) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    headerGradient: {
+      paddingTop:
+        Platform.OS === 'android' ? StatusBar.currentHeight || 24 : 44,
+      paddingBottom: 12,
+      shadowColor: colors.shadow,
+      shadowOffset: {width: 0, height: 4},
+      shadowOpacity: 0.3,
+      shadowRadius: 12,
+      elevation: 8,
+    },
+    headerContent: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: 12,
+      paddingTop: 5,
+    },
+    backButton: {
+      padding: 6,
+      borderRadius: 16,
+      backgroundColor: 'rgba(255,255,255,0.2)',
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    headerTitle: {
+      fontSize: 18,
+      fontWeight: '600',
+      color: '#fff',
+      letterSpacing: 0.3,
+      flex: 1,
+      textAlign: 'center',
+    },
+    headerRightButtons: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+    },
+    scrollContainer: {
+      flex: 1,
+      marginTop: -5,
+      backgroundColor: colors.background,
+    },
+    heroCard: {
+      marginHorizontal: 16,
+      marginTop: 14,
+      marginBottom: 16,
+      borderRadius: 22,
+      padding: 20,
+      shadowColor: colors.shadow,
+      shadowOffset: {width: 0, height: 8},
+      shadowOpacity: 0.25,
+      shadowRadius: 16,
+      elevation: 10,
+    },
+    heroTop: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+    },
+    heroTitleWrap: {
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    heroTitle: {
+      fontSize: 15,
+      fontWeight: '700',
+      color: '#fff',
+      marginLeft: 8,
+      letterSpacing: 0.3,
+    },
+    heroMonth: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: 'rgba(255,255,255,0.2)',
+      paddingVertical: 7,
+      paddingHorizontal: 12,
+      borderRadius: 20,
+      gap: 6,
+    },
+    heroMonthText: {
+      fontSize: 14,
+      fontWeight: '700',
+      color: '#fff',
+      letterSpacing: 0.3,
+    },
+    heroDivider: {
+      height: 1,
+      backgroundColor: 'rgba(255,255,255,0.2)',
+      marginVertical: 16,
+    },
+    heroStats: {
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    heroStat: {
+      flex: 1,
+      alignItems: 'center',
+    },
+    heroStatSep: {
+      width: 1,
+      height: 40,
+      backgroundColor: 'rgba(255,255,255,0.2)',
+    },
+    heroStatNumber: {
+      fontSize: 24,
+      fontWeight: '800',
+      color: '#fff',
+      marginTop: 6,
+      letterSpacing: 0.5,
+    },
+    heroStatLabel: {
+      fontSize: 12,
+      color: 'rgba(255,255,255,0.85)',
+      fontWeight: '600',
+      marginTop: 2,
+    },
+    historyContainer: {
+      marginTop: 1,
+      backgroundColor: colors.surface,
+      shadowColor: colors.shadow,
+      shadowOffset: {width: 0, height: 8},
+      shadowOpacity: 0.15,
+      shadowRadius: 16,
+      elevation: 8,
+    },
+    historyHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: 16,
+      paddingVertical: 16,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
+    },
+    historyTitleContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    historyTitle: {
+      fontSize: 18,
+      fontWeight: '700',
+      color: colors.text,
+      marginLeft: 10,
+      letterSpacing: 0.5,
+    },
+    viewToggle: {
+      flexDirection: 'row',
+      borderRadius: 10,
+      backgroundColor: colors.surfaceSecondary,
+      padding: 3,
+      gap: 2,
+    },
+    viewToggleBtn: {
+      width: 32,
+      height: 28,
+      borderRadius: 8,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    historyCount: {
+      fontSize: 14,
+      color: colors.primary,
+      fontWeight: '600',
+    },
+    messageContainer: {
+      padding: 40,
+      alignItems: 'center',
+    },
+    errorContainer: {
+      alignItems: 'center',
+      padding: 20,
+      borderRadius: 16,
+    },
+    errorText: {
+      color: '#fff',
+      marginTop: 12,
+      fontSize: 16,
+      fontWeight: '600',
+      textAlign: 'center',
+    },
+    loadingContainer: {
+      alignItems: 'center',
+    },
+    loadingText: {
+      color: colors.primary,
+      marginTop: 12,
+      fontSize: 16,
+      fontWeight: '600',
+    },
+    emptyContainer: {
+      alignItems: 'center',
+    },
+    emptyText: {
+      color: colors.textSecondary,
+      fontSize: 18,
+      fontWeight: '600',
+      marginTop: 16,
+    },
+    emptySubText: {
+      color: colors.textTertiary,
+      fontSize: 14,
+      marginTop: 4,
+    },
+    historyList: {
+      flex: 1,
+    },
+    listContent: {
+      paddingBottom: 20,
+    },
+    checkinRow: {
+      marginHorizontal: 16,
+      marginVertical: 6,
+      borderRadius: 16,
+      backgroundColor: colors.surface,
+      shadowColor: colors.shadow,
+      shadowOffset: {width: 0, height: 2},
+      shadowOpacity: 0.08,
+      shadowRadius: 8,
+      elevation: 4,
+    },
+    paidLeaveRow: {
+      backgroundColor: isDarkMode ? 'rgba(16, 185, 129, 0.1)' : '#f0fdfa',
+      borderLeftWidth: 4,
+      borderLeftColor: '#00D4AA',
+    },
+    weekendRow: {
+      backgroundColor: isDarkMode ? 'rgba(239, 68, 68, 0.1)' : '#fef2f2',
+      borderLeftWidth: 4,
+      borderLeftColor: '#FF6B6B',
+    },
+    nightShiftRow: {
+      backgroundColor: isDarkMode ? 'rgba(161, 138, 255, 0.1)' : '#f8faff',
+      borderLeftWidth: 4,
+      borderLeftColor: '#A18AFF',
+    },
+    rowContent: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      padding: 16,
+    },
+    dateSection: {
+      alignItems: 'center',
+      marginRight: 16,
+      minWidth: 50,
+    },
+    dateText: {
+      fontSize: 20,
+      fontWeight: '800',
+      color: colors.text,
+      letterSpacing: 0.5,
+    },
+    dayText: {
+      fontSize: 12,
+      color: colors.textSecondary,
+      fontWeight: '600',
+      marginTop: 2,
+    },
+    timeSection: {
+      flex: 1,
+      marginRight: 16,
+    },
+    timeRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginVertical: 2,
+    },
+    timeText: {
+      fontSize: 14,
+      color: colors.textSecondary,
+      fontWeight: '600',
+      marginLeft: 8,
+    },
+    hoursSection: {
+      alignItems: 'center',
+      marginRight: 16,
+      minWidth: 60,
+    },
+    hoursText: {
+      fontSize: 16,
+      fontWeight: '700',
+      color: colors.primary,
+    },
+    overtimeText: {
+      fontSize: 12,
+      color: '#f59e0b',
+      fontWeight: '600',
+      marginTop: 2,
+    },
+    statusBadge: {
+      paddingHorizontal: 12,
+      paddingVertical: 6,
+      borderRadius: 20,
+      minWidth: 70,
+      alignItems: 'center',
+    },
+    statusText: {
+      fontSize: 12,
+      fontWeight: '700',
+      color: '#fff',
+      letterSpacing: 0.5,
+    },
+  });
 
 export default Profile;
