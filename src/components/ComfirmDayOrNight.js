@@ -21,6 +21,7 @@ import {
 } from '../utils/constans';
 import {useNavigation} from '@react-navigation/native';
 import ModalMessage from './ModalMessage';
+import {translateMessage} from '../../services/i18next';
 
 const ConfirmDayOrNight = ({visible, closeModal, checkin, time, t, token}) => {
   const navigate = useNavigation();
@@ -38,7 +39,7 @@ const ConfirmDayOrNight = ({visible, closeModal, checkin, time, t, token}) => {
   };
 
   const showAlert = message => {
-    Alert.alert(t('noti'), t(message));
+    Alert.alert(t('noti'), translateMessage(message));
   };
 
   const handleCheckinWithQrCode = async (shift, action) => {

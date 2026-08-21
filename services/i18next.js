@@ -41,4 +41,11 @@ i18n.use(initReactI18next).init({
   cleanCode: true,
 });
 
+// Dịch message NHƯNG chỉ khi message là key hợp lệ trong translations.
+// Tránh i18next missingKey warning khi message là chuỗi lỗi thô (VD: "Request failed with status code 401").
+export const translateMessage = message => {
+  if (typeof message !== 'string' || message === '') return message;
+  return i18n.exists(message) ? i18n.t(message) : message;
+};
+
 export default i18n;

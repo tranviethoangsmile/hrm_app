@@ -31,7 +31,7 @@ import {useNavigation} from '@react-navigation/native';
 import moment from 'moment';
 import {useTranslation} from 'react-i18next';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import i18next from '../../services/i18next';
+import i18next, {translateMessage} from '../../services/i18next';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import IconFA from 'react-native-vector-icons/FontAwesome5';
 import apiClient from '../services/apiClient';
@@ -124,7 +124,7 @@ const Daily = () => {
     return await AsyncStorage.getItem('Language');
   };
   const showAlert = message => {
-    Alert.alert(t('noti'), t(message));
+    Alert.alert(t('noti'), translateMessage(message));
   };
   const [isShowModalSendReport, setShowModalSendReport] = useState(false);
   const [isModalProductChoiceVisible, setIsModalProductChoiceVisible] =

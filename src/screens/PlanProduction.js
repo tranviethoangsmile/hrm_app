@@ -23,7 +23,7 @@ import {
 import {useSelector} from 'react-redux';
 import axios from 'axios';
 import moment from 'moment';
-import i18next from '../../services/i18next';
+import i18next, {translateMessage} from '../../services/i18next';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import {useTranslation} from 'react-i18next';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -43,7 +43,7 @@ const PlanProduction = () => {
   const end_date = moment(start_date).add(7, 'days').format('YYYY-MM-DD');
 
   const showAlert = message => {
-    Alert.alert(t('noti'), t(message));
+    Alert.alert(t('noti'), translateMessage(message));
   };
 
   const getLanguage = async () => {

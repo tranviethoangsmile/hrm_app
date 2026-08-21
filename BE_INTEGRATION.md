@@ -147,66 +147,23 @@ Tài liệu này mô tả cách frontend (`hrm_app`) đang gọi API, và nhữn
 
 ---
 
-## 4. ⭐ Dịch thuật âm thanh — Specification (ưu tiên cao nhất)
+## 4. Translator hiện tại — không cần BE dịch
 
-Đây là tính năng quan trọng nhất của P5. **Yêu cầu sản phẩm:** người dùng **nói vào → app trả lại âm thanh** (không chỉ văn bản). Người dùng chọn ngôn ngữ đích → nhận lại giọng nói đúng ngôn ngữ đó.
+`src/services/translator.js` gọi trực tiếp MyMemory REST API cho text translation.
+STT và TTS vẫn là các thành phần native độc lập trong app:
 
-### 4.1 Luồng gọi đề xuất (BE giữ state không cần thiết)
+- STT: `@react-native-voice/voice`.
+- Translation: `MyMemoryTranslationService`.
+- TTS: `react-native-tts`, đọc bản dịch bằng ngôn ngữ đích.
 
-```
-[Nói] → File audio (m4a/wav) 
-      → POST /translate/audio {audio, from_lang, to_lang, voice}
-      → BE: STT (speech-to-text) → dịch → TTS (text-to-speech)
-      → Response: {translated_text, source_text, audio_url}
-      → App phát audio_url bằng react-native-sound / expo-av
-```
+Không dùng Google Translate, OpenAI, Gemini, DeepSeek, ElevenLabs hoặc backend
+interpreter cho pipeline hiện tại.
 
-### 4.2 Endpoint
+### 4.1 Giới hạn phạm vi
 
-`POST /translate/audio` — `multipart/form-data`
-
-| Field | Kiểu | Bắt buộc | Mô tả |
-|---|---|---|---|
-| `audio` | file | ✅ | file ghi âm (m4a/wav/ogg), < 15s, < 5MB |
-| `from_lang` | string | ✅ | mã ngôn ngữ nguồn: `vi|en|ja|pt|zh|ko` |
-| `to_lang` | string | ✅ | mã ngôn ngữ đích (user chọn trên app) |
-| `voice` | string | ❌ | giọng TTS đích (mặc định theo `to_lang`) |
-
-Response:
-
-```json
-{
-  "success": true,
-  "data": {
-    "source_text": "Xin chào, tôi là nhân viên mới.",
-    "translated_text": "Hello, I am a new employee.",
-    "to_lang": "en",
-    "audio_url": "https://cdn.hrm.com/tts/1732.mp3",
-    "duration_ms": 2300
-  }
-}
-```
-
-- `audio_url` phải là **URL tĩnh** tồn tại tối thiểu 24h (BE sinh TTS rồi đẩy lên CDN/S3).
-- FE dùng `translated_text` + `audio_url` để render card kết quả (xem `src/screens/Translator.js` — hiện tự chơi mock bằng animation; đổi qua `react-native-sound` khi BE có).
-- Lỗi: trả `success:false` + `message` (e.g. audio quá dài / ngôn ngữ không hỗ trợ).
-
-### 4.3 Nếu chưa có BE — FE đang làm gì (mock)
-
-`src/services/translator.js`:
-- `SUPPORTED_LANGS` — 6 ngôn ngữ đang hỗ trợ.
-- `mockRecognize(lang)` — mô phỏng STT (trả câu mẫu ngẫu nhiên).
-- `translateText(text, from, to)` — mô phỏng dịch (từ điển 4 câu + fallback `[to]`).
-- `mockSynthesize(text, lang)` / `synthDurationMs(text)` — mô phỏng TTS (trả URI giả + thời lượng), FE animation wave theo `duration_ms`.
-
-**Khi tích hợp:** thay `mockRecognize` → thư viện ghi âm + gọi `POST /translate/audio`; thay `mockSynthesize`/animation → `react-native-sound` phát `audio_url`.
-
-### 4.4 Gợi ý lib BE
-
-- STT: Google Speech-to-Text / Whisper / Azure Speech.
-- Translate: Google Translate API / Azure Translator.
-- TTS: Google Text-to-Speech / Azure / ElevenLabs (chọn `voice` theo `to_lang`).
-- Async: audio < 15s nên gọi đồng bộ (< 5s) là đủ; nếu lâu hơn dùng job + polling `GET /translate/audio/:id`.
+Translator không có dependency BE trong phiên bản hiện tại. Nếu sau này cần
+thay MyMemory bằng backend, đó là một dự án riêng và không được đưa API provider
+hoặc secret vào UI/mobile bundle.
 
 ---
 
@@ -216,5 +173,3 @@ Response:
 - [ ] Trả `{success, data, message}` đúng shape.
 - [ ] Field name khớp mô tả trong §3/§4 (không đổi key).
 - [ ] 403 vs 404 phân biệt đúng (user không có quyền ≠ không tồn tại).
-- [ ] Dịch audio trả về **audio (URL)**, không chỉ văn bản.
-- [ ] Sau khi BE xong: báo FE → FE thay mock bằng call API trong từng screen (`src/screens/*.js`) rồi xoá/giữ mock vai fallback.

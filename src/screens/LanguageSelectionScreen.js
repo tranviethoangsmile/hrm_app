@@ -5,134 +5,125 @@ import {
   TouchableOpacity,
   StyleSheet,
   FlatList,
-  Button,
   StatusBar,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {useNavigation} from '@react-navigation/native';
-import {
-  BG_COLOR,
-  TEXT_COLOR,
-  THEME_COLOR,
-  THEME_COLOR_2,
-} from '../utils/Colors';
+import {useTranslation} from 'react-i18next';
+import i18next from '../../services/i18next';
+import Icon from 'react-native-vector-icons/Ionicons';
+import {useTheme} from '../hooks/useTheme';
+import {SIZES, FONTS} from '../config/theme';
+
+const SUPPORTED_LOCALES = [
+  {id: 'vi', flag: '🇻🇳', label: 'Tiếng Việt'},
+  {id: 'ja', flag: '🇯🇵', label: '日本語'},
+  {id: 'en', flag: '🇺🇸', label: 'English'},
+  {id: 'pt', flag: '🇧🇷', label: 'Português (Brasil)'},
+];
 
 const LanguageSelectionScreen = () => {
   const navigation = useNavigation();
-  const [selectedLocale, setSelectedLocale] = useState('');
+  const {t} = useTranslation();
+  const {colors, isDarkMode} = useTheme();
+  const [selectedLocale, setSelectedLocale] = useState(null);
+  const [saving, setSaving] = useState(false);
 
-  const supportedLocales = [
-    {id: 'en', label: 'English'},
-    {id: 'vi', label: 'Tiếng Việt'},
-    {id: 'ja', label: '日本語'},
-    {id: 'pt', label: 'Português (Brasil)'},
-  ];
-
-  const onSelectLocale = async locale => {
+  const continueToLogin = async () => {
+    if (!selectedLocale || saving) return;
+    setSaving(true);
     try {
-      await AsyncStorage.setItem('Language', locale);
-      setSelectedLocale(locale);
-    } catch (error) {
-      console.error('Error saving language:', error);
-      // Hiển thị thông báo lỗi cho người dùng
+      await AsyncStorage.setItem('Language', selectedLocale);
+      await i18next.changeLanguage(selectedLocale);
+      navigation.reset({index: 0, routes: [{name: 'Login'}]});
+    } finally {
+      setSaving(false);
     }
   };
 
-  const renderItem = ({item}) => (
-    <TouchableOpacity
-      style={[
-        styles.languageButton,
-        selectedLocale === item.id && styles.selectedLanguage,
-      ]}
-      onPress={() => onSelectLocale(item.id)}>
-      <Text style={styles.languageText}>{item.label}</Text>
-    </TouchableOpacity>
-  );
-
   return (
-    <View style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#fff" />
-      <Text style={styles.title}>Choose Your Language</Text>
-      <FlatList
-        contentContainerStyle={styles.listContainer}
-        data={supportedLocales}
-        renderItem={renderItem}
-        keyExtractor={item => item.id}
-        extraData={selectedLocale}
+    <View style={[styles.container, {backgroundColor: colors.background}]}>
+      <StatusBar
+        barStyle={isDarkMode ? 'light-content' : 'dark-content'}
+        backgroundColor={colors.background}
       />
-      <View style={styles.buttonContainer}>
-        <TouchableOpacity
-          style={styles.nextButton}
-          onPress={() => {
-            navigation.navigate('Login');
-          }}>
-          <Text style={styles.nextButtonText}>Next</Text>
-        </TouchableOpacity>
+      <View style={styles.header}>
+        <View style={[styles.logoMark, {backgroundColor: colors.primaryLight}]}>
+          <Icon name="language-outline" size={28} color={colors.primary} />
+        </View>
+        <Text style={[styles.title, {color: colors.text}]}>
+          {t('app.language_title')}
+        </Text>
+        <Text style={[styles.subtitle, {color: colors.textSecondary}]}>
+          {t('app.language_subtitle')}
+        </Text>
       </View>
+      <FlatList
+        data={SUPPORTED_LOCALES}
+        keyExtractor={item => item.id}
+        contentContainerStyle={styles.list}
+        showsVerticalScrollIndicator={false}
+        renderItem={({item}) => {
+          const selected = selectedLocale === item.id;
+          return (
+            <TouchableOpacity
+              style={[
+                styles.option,
+                {backgroundColor: colors.surface, borderColor: colors.border},
+                selected && {
+                  backgroundColor: colors.primaryLight,
+                  borderColor: colors.primary,
+                },
+              ]}
+              onPress={() => setSelectedLocale(item.id)}
+              activeOpacity={0.75}
+              accessibilityRole="radio"
+              accessibilityState={{selected}}
+              accessibilityLabel={item.label}>
+              <Text style={styles.flag}>{item.flag}</Text>
+              <Text style={[styles.language, {color: colors.text}]}>
+                {item.label}
+              </Text>
+              {selected ? (
+                <Icon name="checkmark-circle" size={23} color={colors.primary} />
+              ) : (
+                <View style={[styles.emptyCheck, {borderColor: colors.border}]} />
+              )}
+            </TouchableOpacity>
+          );
+        }}
+      />
+      <TouchableOpacity
+        style={[
+          styles.continue,
+          {backgroundColor: selectedLocale ? colors.primary : colors.surfaceSecondary},
+        ]}
+        onPress={continueToLogin}
+        disabled={!selectedLocale || saving}
+        activeOpacity={0.8}
+        accessibilityRole="button">
+        <Text style={[styles.continueText, {color: selectedLocale ? '#fff' : colors.textTertiary}]}>
+          {saving ? t('Loading') : t('app.continue')}
+        </Text>
+        <Icon name="arrow-forward" size={19} color={selectedLocale ? '#fff' : colors.textTertiary} />
+      </TouchableOpacity>
     </View>
   );
 };
 
-// LanguageSelectionScreen.js
-
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: BG_COLOR,
-    paddingHorizontal: 20,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 20,
-    marginTop: 100,
-    color: TEXT_COLOR,
-  },
-  listContainer: {
-    flexGrow: 1,
-    justifyContent: 'center',
-  },
-  languageButton: {
-    padding: 15,
-    marginVertical: 5,
-    backgroundColor: '#fff',
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: '#ccc',
-    alignItems: 'center',
-  },
-  languageText: {
-    fontSize: 18,
-    color: TEXT_COLOR,
-  },
-  selectedLanguage: {
-    backgroundColor: THEME_COLOR,
-  },
-  selectedLanguageText: {
-    color: 'white',
-  },
-  buttonContainer: {
-    width: '100%',
-    paddingHorizontal: 20,
-    paddingBottom: 20,
-    position: 'absolute',
-    bottom: 0,
-  },
-  nextButton: {
-    marginTop: 10,
-    paddingVertical: 10,
-    paddingHorizontal: 30,
-    backgroundColor: THEME_COLOR_2,
-    borderRadius: 5,
-    alignSelf: 'center',
-  },
-  nextButtonText: {
-    color: 'white',
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
+  container: {flex: 1, paddingHorizontal: SIZES.spacing.xxl, paddingTop: SIZES.spacing.section},
+  header: {alignItems: 'center', marginBottom: SIZES.spacing.xxl},
+  logoMark: {width: 64, height: 64, borderRadius: SIZES.radiusScale.lg, alignItems: 'center', justifyContent: 'center', marginBottom: SIZES.spacing.xl},
+  title: {...FONTS.title, textAlign: 'center'},
+  subtitle: {...FONTS.body, textAlign: 'center', marginTop: SIZES.spacing.sm, maxWidth: 310},
+  list: {gap: SIZES.spacing.md, paddingBottom: SIZES.spacing.xl},
+  option: {minHeight: 68, borderWidth: 1, borderRadius: SIZES.radiusScale.md, paddingHorizontal: SIZES.spacing.lg, flexDirection: 'row', alignItems: 'center', gap: SIZES.spacing.md},
+  flag: {fontSize: 25},
+  language: {...FONTS.bodyMedium, flex: 1},
+  emptyCheck: {width: 23, height: 23, borderRadius: 12, borderWidth: 1.5},
+  continue: {minHeight: 54, borderRadius: SIZES.radiusScale.md, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: SIZES.spacing.sm, marginBottom: SIZES.spacing.xxl},
+  continueText: {...FONTS.bodyMedium},
 });
 
 export default LanguageSelectionScreen;

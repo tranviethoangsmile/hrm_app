@@ -17,10 +17,10 @@ import {
   Platform,
 } from 'react-native';
 import {useSelector} from 'react-redux';
-import axios from 'axios';
+import apiClient from '../services/apiClient';
 import SelectDate from '../components/SelectDate';
 import moment from 'moment';
-import i18next from '../../services/i18next';
+import i18next, {translateMessage} from '../../services/i18next';
 import {useTranslation} from 'react-i18next';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Icon from 'react-native-vector-icons/Ionicons';
@@ -66,7 +66,6 @@ const Profile = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [viewMode, setViewMode] = useState('list');
   const [dayOffs, setDayOffs] = useState([]);
-  const token = authData?.data?.data?.token;
 
   const year = moment(today).format('YYYY');
   const month = moment(today).format('MM');
@@ -99,9 +98,12 @@ const Profile = () => {
     if (!found) {
       return;
     }
+    const isOffDayWork =
+      (dayOffs || []).find(d => moment(d).format('YYYY-MM-DD') === key) ||
+      found.is_weekend;
     const status = found.is_paid_leave
       ? t('leave')
-      : found.is_weekend
+      : isOffDayWork
       ? t('weekend')
       : found.work_shift === 'NIGHT'
       ? t('night_shift')
@@ -120,7 +122,7 @@ const Profile = () => {
 
   const get_day_offs = async () => {
     try {
-      const res = await axios.get(
+      const res = await apiClient.get(
         `${BASE_URL}${PORT}${API}${VERSION}${V1}${DAY_OFFS}${GET_ALL}`,
       );
       if (res?.data?.success) {
@@ -139,7 +141,7 @@ const Profile = () => {
       const year = moment(today).format('YYYY');
       const month = moment(today).format('MM');
 
-      const res = await axios.post(
+      const res = await apiClient.post(
         `${BASE_URL}${PORT}${API}${VERSION}${V1}${CHECKIN}${SEARCH}`,
         {
           user_id: user_id,
@@ -426,7 +428,7 @@ const Profile = () => {
                     colors={['#FF6B6B', '#FFE66D']}
                     style={styles.errorContainer}>
                     <Icon name="alert-circle-outline" size={32} color="#fff" />
-                    <Text style={styles.errorText}>{t(error)}</Text>
+                    <Text style={styles.errorText}>{translateMessage(error)}</Text>
                   </LinearGradient>
                 </View>
               ) : null}

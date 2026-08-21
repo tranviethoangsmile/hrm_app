@@ -19,7 +19,7 @@ import {useTranslation} from 'react-i18next';
 import {THEME_COLOR_2} from '../utils/Colors';
 import {useSelector} from 'react-redux';
 import {useTheme} from '../hooks/useTheme';
-import axios from 'axios';
+import apiClient from '../services/apiClient';
 import moment from 'moment';
 import 'moment/locale/ja';
 import 'moment/locale/pt';
@@ -55,7 +55,7 @@ const OvertimeConfirm = ({navigation}) => {
     try {
       setIsLoading(true);
       setError('');
-      const response = await axios.post(
+      const response = await apiClient.post(
         `${BASE_URL}${PORT}${API}${VERSION}${V1}${OVERTIME_REQUEST}${GET_ALL_BY_USER_ID}`,
         {
           id: user_id,
@@ -92,7 +92,7 @@ const OvertimeConfirm = ({navigation}) => {
     async id => {
       try {
         setIsLoading(true);
-        const response = await axios.post(
+        const response = await apiClient.post(
           `${BASE_URL}${PORT}${API}${VERSION}${V1}${OVERTIME_REQUEST}${UPDATE_IS_CONFIRM_OVERTIME_REQUEST}`,
           {
             id,
@@ -145,7 +145,9 @@ const OvertimeConfirm = ({navigation}) => {
   const renderDescription = useCallback(
     (description, id) => {
       if (!description) {
-        return <Text style={[styles.description, {color: colors.text}]}>-</Text>;
+        return (
+          <Text style={[styles.description, {color: colors.text}]}>-</Text>
+        );
       }
 
       const isExpanded = expandedItems[id];
@@ -157,7 +159,9 @@ const OvertimeConfirm = ({navigation}) => {
 
       return (
         <View style={styles.descriptionWrapper}>
-          <Text style={[styles.description, {color: colors.text}]}>{displayText}</Text>
+          <Text style={[styles.description, {color: colors.text}]}>
+            {displayText}
+          </Text>
           {shouldShowExpandButton && (
             <TouchableOpacity
               style={styles.expandButton}
@@ -193,23 +197,38 @@ const OvertimeConfirm = ({navigation}) => {
           </Text>
         </View>
         <View style={styles.requestDateContainer}>
-          <Icon name="clock-o" size={14} color={colors.textSecondary} style={styles.dateIcon} />
-          <Text style={[styles.dateText, {color: colors.textSecondary}]}>{formatDate(item.created_at)}</Text>
+          <Icon
+            name="clock-o"
+            size={14}
+            color={colors.textSecondary}
+            style={styles.dateIcon}
+          />
+          <Text style={[styles.dateText, {color: colors.textSecondary}]}>
+            {formatDate(item.created_at)}
+          </Text>
         </View>
       </View>
 
       <View style={styles.cardBody}>
         <View style={styles.infoRow}>
           <Icon name="building" size={18} color={colors.primary} />
-          <Text style={[styles.label, {color: colors.textSecondary}]}>{t('overtime.work_area')}:</Text>
-          <Text style={[styles.value, {color: colors.text}]}>{item.departmentDetail?.name || '-'}</Text>
+          <Text style={[styles.label, {color: colors.textSecondary}]}>
+            {t('overtime.work_area')}:
+          </Text>
+          <Text style={[styles.value, {color: colors.text}]}>
+            {item.departmentDetail?.name || '-'}
+          </Text>
         </View>
 
         <View style={styles.infoRow}>
           <Icon name="user" size={18} color={colors.primary} />
-          <Text style={[styles.label, {color: colors.textSecondary}]}>{t('overtime.requester')}:</Text>
+          <Text style={[styles.label, {color: colors.textSecondary}]}>
+            {t('overtime.requester')}:
+          </Text>
           <View style={styles.requesterContainer}>
-            <Text style={[styles.value, {color: colors.text}]}>{item.leaderDetail?.name || '-'}</Text>
+            <Text style={[styles.value, {color: colors.text}]}>
+              {item.leaderDetail?.name || '-'}
+            </Text>
             {item.leaderDetail?.avatar && (
               <Image
                 source={{
@@ -223,24 +242,36 @@ const OvertimeConfirm = ({navigation}) => {
           </View>
         </View>
 
-        <View style={[styles.contentContainer, {backgroundColor: colors.background}]}>
+        <View
+          style={[
+            styles.contentContainer,
+            {backgroundColor: colors.background},
+          ]}>
           <View style={styles.infoRow}>
             <Icon name="file-text" size={18} color={colors.primary} />
-            <Text style={[styles.label, {color: colors.textSecondary}]}>{t('overtime.work_content')}:</Text>
+            <Text style={[styles.label, {color: colors.textSecondary}]}>
+              {t('overtime.work_content')}:
+            </Text>
           </View>
           {renderDescription(item.description, item.id)}
         </View>
 
-        <View style={[styles.dateContainer, {backgroundColor: colors.background}]}>
+        <View
+          style={[styles.dateContainer, {backgroundColor: colors.background}]}>
           <View style={styles.infoRow}>
             <Icon name="calendar" size={18} color={colors.primary} />
-            <Text style={[styles.label, {color: colors.textSecondary}]}>{t('overtime.work_date')}:</Text>
-            <Text style={[styles.value, {color: colors.text}]}>{formatDate(item.date)}</Text>
+            <Text style={[styles.label, {color: colors.textSecondary}]}>
+              {t('overtime.work_date')}:
+            </Text>
+            <Text style={[styles.value, {color: colors.text}]}>
+              {formatDate(item.date)}
+            </Text>
           </View>
         </View>
 
         {!item.is_confirm && (
-          <View style={[styles.actionContainer, {borderTopColor: colors.border}]}>
+          <View
+            style={[styles.actionContainer, {borderTopColor: colors.border}]}>
             <TouchableOpacity
               style={[styles.actionButton, styles.actionConfirmButton]}
               onPress={() => handleConfirm(item.id)}>
@@ -256,13 +287,13 @@ const OvertimeConfirm = ({navigation}) => {
   return (
     <View style={[styles.container, {backgroundColor: colors.background}]}>
       <StatusBar
-        barStyle={isDarkMode ? "light-content" : "dark-content"}
+        barStyle={isDarkMode ? 'light-content' : 'dark-content'}
         backgroundColor="transparent"
         translucent
       />
-      
+
       <LinearGradient
-        colors={isDarkMode ? ['#1a1a2e', '#16213e'] : ['#667eea', '#764ba2']}
+        colors={colors.primaryGradient}
         start={{x: 0, y: 0}}
         end={{x: 1, y: 1}}
         style={styles.headerGradient}>
@@ -273,11 +304,14 @@ const OvertimeConfirm = ({navigation}) => {
             hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}>
             <Icon name="arrow-left" size={20} color="#fff" />
           </TouchableOpacity>
-          
-          <Text style={styles.headerTitle} numberOfLines={1} ellipsizeMode="tail">
+
+          <Text
+            style={styles.headerTitle}
+            numberOfLines={1}
+            ellipsizeMode="tail">
             {t('overtime.title')}
           </Text>
-          
+
           <TouchableOpacity
             style={styles.backButton}
             onPress={() => setShowGuide(true)}
@@ -293,7 +327,9 @@ const OvertimeConfirm = ({navigation}) => {
         ) : error ? (
           <Text style={[styles.errorText, {color: colors.error}]}>{error}</Text>
         ) : overtimeRequests.length === 0 ? (
-          <Text style={[styles.emptyText, {color: colors.textSecondary}]}>{t('not.data')}</Text>
+          <Text style={[styles.emptyText, {color: colors.textSecondary}]}>
+            {t('not.data')}
+          </Text>
         ) : (
           <FlatList
             data={overtimeRequests}
@@ -313,9 +349,13 @@ const OvertimeConfirm = ({navigation}) => {
           style={styles.modalOverlay}
           activeOpacity={1}
           onPress={() => setShowGuide(false)}>
-          <View style={[styles.modalContent, {backgroundColor: colors.surface}]}>
-            <View style={[styles.modalHeader, {borderBottomColor: colors.border}]}>
-              <Text style={[styles.modalTitle, {color: colors.text}]}>{t('overtime.guide_title')}</Text>
+          <View
+            style={[styles.modalContent, {backgroundColor: colors.surface}]}>
+            <View
+              style={[styles.modalHeader, {borderBottomColor: colors.border}]}>
+              <Text style={[styles.modalTitle, {color: colors.text}]}>
+                {t('overtime.guide_title')}
+              </Text>
               <TouchableOpacity onPress={() => setShowGuide(false)}>
                 <Icon name="times" size={20} color={colors.textSecondary} />
               </TouchableOpacity>

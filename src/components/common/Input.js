@@ -8,6 +8,7 @@ import {
 } from 'react-native';
 import {COLORS, SIZES, FONTS} from '../../config/theme';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons'; // Or your preferred icon set
+import {useTheme} from '../../hooks/useTheme';
 
 const Input = ({
   label,
@@ -28,6 +29,7 @@ const Input = ({
   editable = true,
   ...props
 }) => {
+  const {colors} = useTheme();
   const [isFocused, setIsFocused] = useState(false);
   const [isPasswordVisible, setIsPasswordVisible] = useState(!secureTextEntry);
 
@@ -37,10 +39,10 @@ const Input = ({
     setIsPasswordVisible(!isPasswordVisible);
 
   const borderColor = error
-    ? COLORS.danger
+    ? colors.danger
     : isFocused
-    ? COLORS.primary
-    : COLORS.borderColor;
+    ? colors.primary
+    : colors.border;
 
   return (
     <View style={[styles.container, containerStyle]}>
@@ -48,13 +50,14 @@ const Input = ({
       <View
         style={[
           styles.inputContainer,
-          {borderColor},
+          {borderColor, backgroundColor: colors.surface},
           multiline && styles.multilineInputContainer,
           !editable && styles.disabledInputContainer,
         ]}>
         <TextInput
           style={[
             styles.input,
+            {color: colors.text},
             inputStyle,
             multiline && styles.multilineInput,
             !editable && styles.disabledInputText,
@@ -62,7 +65,7 @@ const Input = ({
           value={value}
           onChangeText={onChangeText}
           placeholder={placeholder}
-          placeholderTextColor={COLORS.placeholder}
+          placeholderTextColor={colors.placeholder}
           secureTextEntry={secureTextEntry && !isPasswordVisible}
           keyboardType={keyboardType}
           multiline={multiline}
@@ -79,13 +82,13 @@ const Input = ({
             <Icon
               name={isPasswordVisible ? 'eye-off' : 'eye'}
               size={SIZES.h3}
-              color={COLORS.icon}
+              color={colors.icon}
             />
           </TouchableOpacity>
         )}
         {!secureTextEntry && iconName && (
           <TouchableOpacity onPress={onIconPress} style={styles.iconContainer}>
-            <Icon name={iconName} size={SIZES.h3} color={COLORS.icon} />
+            <Icon name={iconName} size={SIZES.h3} color={colors.icon} />
           </TouchableOpacity>
         )}
       </View>

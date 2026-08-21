@@ -47,8 +47,12 @@
 	<string>photos</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string></string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Ứng dụng cần quyền micro để nhận dạng giọng nói và dịch trực tiếp.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>PhotoLibrary</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>Ứng dụng cần quyền nhận dạng giọng nói để dịch nói trực tiếp.</string>
 	<key>UIAppFonts</key>
 	<array>
 		<string>AntDesign.ttf</string>

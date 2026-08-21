@@ -6,6 +6,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import {COLORS, SIZES, FONTS} from '../../config/theme';
+import {useTheme} from '../../hooks/useTheme';
 
 const Button = ({
   title,
@@ -20,6 +21,7 @@ const Button = ({
   iconRight,
   ...props
 }) => {
+  const {colors} = useTheme();
   const getButtonStyles = () => {
     let baseStyle = styles.button;
     let textBaseStyle = styles.text;
@@ -72,9 +74,21 @@ const Button = ({
   const {button: computedButtonStyle, text: computedTextStyle} =
     getButtonStyles();
 
+  const variantColor = variant === 'danger' ? colors.danger : colors.primary;
+  const variantStyle =
+    variant === 'outline'
+      ? {borderColor: colors.primary, backgroundColor: 'transparent'}
+      : variant === 'ghost'
+      ? {backgroundColor: 'transparent'}
+      : {backgroundColor: variant === 'success' ? colors.success : variantColor};
+  const variantTextStyle =
+    variant === 'outline' || variant === 'ghost'
+      ? {color: colors.primary}
+      : {color: '#fff'};
+
   return (
     <TouchableOpacity
-      style={[computedButtonStyle, style]}
+      style={[computedButtonStyle, variantStyle, style]}
       onPress={onPress}
       disabled={disabled || isLoading}
       activeOpacity={0.7}
@@ -82,12 +96,12 @@ const Button = ({
       {isLoading ? (
         <ActivityIndicator
           size="small"
-          color={computedTextStyle.color || COLORS.white}
+            color={variantTextStyle.color}
         />
       ) : (
         <>
           {iconLeft}
-          <Text style={[computedTextStyle, textStyle]}>{title}</Text>
+           <Text style={[computedTextStyle, variantTextStyle, textStyle]}>{title}</Text>
           {iconRight}
         </>
       )}

@@ -11,6 +11,7 @@ import {
 import React, {useState, useEffect} from 'react';
 import CheckBox from '@react-native-community/checkbox';
 import axios from 'axios';
+import {translateMessage} from '../../../services/i18next';
 import {
   BASE_URL,
   PORT,
@@ -24,7 +25,7 @@ import {TEXT_COLOR} from '../../utils/Colors';
 const EditPlanProduction = ({visible, planProduction, t, onClose, reCall}) => {
   const [editableData, setEditableData] = useState(planProduction);
   const showAlert = message => {
-    Alert.alert(t('noti'), t(message));
+    Alert.alert(t('noti'), translateMessage(message));
   };
 
   useEffect(() => {

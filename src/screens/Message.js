@@ -25,6 +25,7 @@ import {useSelector} from 'react-redux';
 import {useTranslation} from 'react-i18next';
 import LinearGradient from 'react-native-linear-gradient';
 import {useTheme} from '../hooks/useTheme';
+import {translateMessage} from '../../services/i18next';
 import {
   API,
   BASE_URL,
@@ -276,7 +277,7 @@ const Message = () => {
   }, []);
 
   const showAlert = message => {
-    Alert.alert(t('noti'), t(message));
+    Alert.alert(t('noti'), translateMessage(message));
   };
 
   const getAllFriendList = useCallback(async () => {

@@ -11,7 +11,7 @@ import {useTranslation} from 'react-i18next';
 import moment from 'moment';
 import Icon from 'react-native-vector-icons/Ionicons';
 import LinearGradient from 'react-native-linear-gradient';
-import axios from 'axios';
+import apiClient from '../services/apiClient';
 import Header from '../components/common/Header';
 import {useTheme} from '../hooks/useTheme';
 import {useUserProfile} from '../hooks/useUserProfile';
@@ -88,7 +88,7 @@ const Schedule = () => {
 
   const fetchDayOffs = async () => {
     try {
-      const res = await axios.get(
+      const res = await apiClient.get(
         `${BASE_URL}${PORT}${API}${VERSION}${V1}${DAY_OFFS}${GET_ALL}`,
       );
       if (res?.data?.success) {

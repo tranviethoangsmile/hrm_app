@@ -28,7 +28,7 @@ import {
 import {useSelector} from 'react-redux';
 import {useTheme} from '../hooks/useTheme';
 import moment from 'moment';
-import axios from 'axios';
+import apiClient from '../services/apiClient';
 import ModalMessage from '../components/ModalMessage';
 import {
   API,
@@ -42,7 +42,11 @@ import {
   OVERTIME_REQUEST,
   CREATE,
   USER_URL,
-  GET_ALL,
+  DASHBOARD,
+  LEADER_DASH,
+  OVERTIME_REQUESTS,
+  GET_USER_WITH_DEPARTMENT_ID,
+  UPDATE_IS_CONFIRM_OVERTIME_REQUEST,
 } from '../utils/constans';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -115,6 +119,19 @@ function Manager() {
     message: '',
   });
 
+  // Overtime list (ADMIN) + Employee directory
+  const [overtimeRequests, setOvertimeRequests] = useState([]);
+  const [overtimeLoading, setOvertimeLoading] = useState(false);
+  const [employees, setEmployees] = useState([]);
+  const [employeesLoading, setEmployeesLoading] = useState(false);
+
+  const currentUser = authData?.data?.data;
+  const userRole = String(currentUser?.role || '').toUpperCase() || '';
+  const isAdmin = userRole === 'ADMIN';
+  const canCreateOvertime = ['LEADER', 'MANAGER', 'SUPERVISOR'].includes(
+    userRole,
+  );
+
   useEffect(() => {
     const role = authData?.data?.data.role;
     if (role === 'STAFF') {
@@ -125,12 +142,21 @@ function Manager() {
     if (activeTab === 'leave') {
       getValueRequestLeave();
     }
+    if (activeTab === 'overtime' && userRole === 'ADMIN') {
+      loadAllOvertime();
+    }
+    if (activeTab === 'employees') {
+      loadEmployees();
+    }
   }, [
     activeTab,
     authData?.data?.data.role,
     getValueRequestLeave,
+    loadAllOvertime,
+    loadEmployees,
     navigation,
     t,
+    userRole,
   ]);
 
   const showAlert = message => {
@@ -157,7 +183,7 @@ function Manager() {
       const field = {
         leader_id: authData?.data?.data?.id,
       };
-      const leaves = await axios.post(
+      const leaves = await apiClient.post(
         `${BASE_URL}${PORT}${API}${VERSION}${V1}${PAID_LEAVE}${SEARCH}`,
         field,
       );
@@ -180,7 +206,7 @@ function Manager() {
         id: leaveId,
         feedback: feedback,
       };
-      const update = await axios.post(
+      const update = await apiClient.post(
         `${BASE_URL}${PORT}${API}${VERSION}${V1}${PAID_LEAVE}${UPDATE}`,
         field,
       );
@@ -219,7 +245,7 @@ function Manager() {
   const handleApproveLeaveRequest = async id => {
     try {
       const field = {id};
-      const update = await axios.put(
+      const update = await apiClient.put(
         `${BASE_URL}${PORT}${API}${VERSION}${V1}${PAID_LEAVE}`,
         field,
       );
@@ -246,7 +272,9 @@ function Manager() {
 
   // Thêm các hàm để lọc dữ liệu theo trạng thái
   const getFilteredLeaveData = () => {
-    if (!leaveRequested || leaveRequested.length === 0) return [];
+    if (!leaveRequested || leaveRequested.length === 0) {
+      return [];
+    }
 
     switch (activeLeaveSubTab) {
       case 'pending':
@@ -276,7 +304,9 @@ function Manager() {
   };
 
   const getSubTabCount = subTab => {
-    if (!leaveRequested || leaveRequested.length === 0) return 0;
+    if (!leaveRequested || leaveRequested.length === 0) {
+      return 0;
+    }
 
     switch (subTab) {
       case 'pending':
@@ -333,7 +363,9 @@ function Manager() {
   };
 
   const handleCreateOvertimeRequest = async () => {
-    if (!validateOvertimeForm()) return;
+    if (!validateOvertimeForm()) {
+      return;
+    }
 
     try {
       setIsLoading(true);
@@ -349,10 +381,13 @@ function Manager() {
         leader_id: overtimeFormData.leader_id,
       };
 
-      const response = await axios.post(
-        `${BASE_URL}${PORT}${API}${VERSION}${V1}${OVERTIME_REQUEST}${CREATE}`,
-        field,
+      const isLeaderRole = ['LEADER', 'MANAGER', 'SUPERVISOR'].includes(
+        userRole,
       );
+      const createPath = isLeaderRole
+        ? `${BASE_URL}${PORT}${API}${VERSION}${V1}${DASHBOARD}${LEADER_DASH}${OVERTIME_REQUESTS}${CREATE}`
+        : `${BASE_URL}${PORT}${API}${VERSION}${V1}${OVERTIME_REQUEST}${CREATE}`;
+      const response = await apiClient.post(createPath, field);
 
       if (response?.data?.success) {
         setIsLoading(false);
@@ -395,7 +430,7 @@ function Manager() {
   const getAllUsers = async () => {
     try {
       console.log('Getting all users...');
-      const response = await axios.get(
+      const response = await apiClient.get(
         `${BASE_URL}${PORT}${API}${VERSION}${V1}${USER_URL}`,
       );
       console.log('Users response:', response?.data);
@@ -442,6 +477,80 @@ function Manager() {
     setShowOvertimeModal(true);
   };
 
+  const loadAllOvertime = useCallback(async () => {
+    try {
+      setOvertimeLoading(true);
+      const res = await apiClient.post(
+        `${BASE_URL}${PORT}${API}${VERSION}${V1}${OVERTIME_REQUEST}/getAll`,
+        {},
+      );
+      if (res?.data?.success) {
+        setOvertimeRequests(res?.data?.data || []);
+      } else {
+        setOvertimeRequests([]);
+      }
+    } catch (error) {
+      setOvertimeRequests([]);
+    } finally {
+      setOvertimeLoading(false);
+    }
+  }, []);
+
+  const handleConfirmOvertime = async id => {
+    try {
+      setIsLoading(true);
+      const res = await apiClient.post(
+        `${BASE_URL}${PORT}${API}${VERSION}${V1}${OVERTIME_REQUEST}${UPDATE_IS_CONFIRM_OVERTIME_REQUEST}`,
+        {
+          id,
+          user_id: currentUser?.id,
+        },
+      );
+      if (res?.data?.success) {
+        setOvertimeRequests(prev =>
+          prev.map(request =>
+            request.id === id ? {...request, is_confirm: true} : request,
+          ),
+        );
+        showModalMessageAlert('success', t('overtime.confirm_success'));
+      } else {
+        showModalMessageAlert('error', t('overtime.confirm_error'));
+      }
+    } catch (error) {
+      showModalMessageAlert('error', t('overtime.confirm_error'));
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const loadEmployees = useCallback(async () => {
+    try {
+      setEmployeesLoading(true);
+      let list = [];
+      if (isAdmin || userRole === 'MANAGER') {
+        const res = await apiClient.get(
+          `${BASE_URL}${PORT}${API}${VERSION}${V1}${USER_URL}`,
+        );
+        if (res?.data?.success) {
+          list = res?.data?.data || [];
+        }
+      } else {
+        const res = await apiClient.post(
+          `${BASE_URL}${PORT}${API}${VERSION}${V1}${USER_URL}${GET_USER_WITH_DEPARTMENT_ID}`,
+          {department_id: currentUser?.department_id},
+        );
+        if (res?.data?.success) {
+          list = res?.data?.data || [];
+        }
+      }
+      setEmployees(list);
+    } catch (error) {
+      setEmployees([]);
+    } finally {
+      setEmployeesLoading(false);
+    }
+  }, [isAdmin, userRole, currentUser?.department_id]);
+
   const renderTabBar = () => (
     <View style={[styles.tabBarContainer, {backgroundColor: colors.surface}]}>
       <ScrollView
@@ -453,7 +562,10 @@ function Manager() {
             key={tab.id}
             style={[
               styles.tabButton,
-              {backgroundColor: activeTab === tab.id ? colors.primary : colors.background},
+              {
+                backgroundColor:
+                  activeTab === tab.id ? colors.primary : colors.background,
+              },
               activeTab === tab.id && styles.activeTabButton,
             ]}
             onPress={() => setActiveTab(tab.id)}>
@@ -485,7 +597,8 @@ function Manager() {
     ];
 
     return (
-      <View style={[styles.subTabBarContainer, {backgroundColor: colors.surface}]}>
+      <View
+        style={[styles.subTabBarContainer, {backgroundColor: colors.surface}]}>
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -497,27 +610,47 @@ function Manager() {
                 key={subTab.id}
                 style={[
                   styles.subTabButton,
-                  {backgroundColor: activeLeaveSubTab === subTab.id ? colors.primary : colors.background},
+                  {
+                    backgroundColor:
+                      activeLeaveSubTab === subTab.id
+                        ? colors.primary
+                        : colors.background,
+                  },
                   activeLeaveSubTab === subTab.id && styles.activeSubTabButton,
                 ]}
                 onPress={() => setActiveLeaveSubTab(subTab.id)}>
                 <Icon
                   name={subTab.icon}
                   size={16}
-                  color={activeLeaveSubTab === subTab.id ? '#fff' : colors.textSecondary}
+                  color={
+                    activeLeaveSubTab === subTab.id
+                      ? '#fff'
+                      : colors.textSecondary
+                  }
                 />
                 <Text
                   style={[
                     styles.subTabButtonText,
-                    {color: activeLeaveSubTab === subTab.id ? '#fff' : colors.textSecondary},
+                    {
+                      color:
+                        activeLeaveSubTab === subTab.id
+                          ? '#fff'
+                          : colors.textSecondary,
+                    },
                     activeLeaveSubTab === subTab.id &&
                       styles.activeSubTabButtonText,
                   ]}>
                   {getSubTabTitle(subTab.title)}
                 </Text>
                 {count > 0 && (
-                  <View style={[styles.subTabBadge, {backgroundColor: colors.primary}]}>
-                    <Text style={[styles.subTabBadgeText, {color: '#fff'}]}>{count}</Text>
+                  <View
+                    style={[
+                      styles.subTabBadge,
+                      {backgroundColor: colors.primary},
+                    ]}>
+                    <Text style={[styles.subTabBadgeText, {color: '#fff'}]}>
+                      {count}
+                    </Text>
                   </View>
                 )}
               </TouchableOpacity>
@@ -554,7 +687,8 @@ function Manager() {
     return (
       <View style={[styles.modernLeaveCard, {backgroundColor: colors.surface}]}>
         {/* Card Header */}
-        <View style={[styles.modernCardHeader, {borderBottomColor: colors.border}]}>
+        <View
+          style={[styles.modernCardHeader, {borderBottomColor: colors.border}]}>
           <View style={styles.userSection}>
             <View style={styles.avatarContainer}>
               {item.staff.avatar ? (
@@ -575,8 +709,14 @@ function Manager() {
               )}
             </View>
             <View style={styles.userDetails}>
-              <Text style={[styles.modernUserName, {color: colors.text}]}>{item.staff.name}</Text>
-              <Text style={[styles.modernUserPosition, {color: colors.textSecondary}]}>
+              <Text style={[styles.modernUserName, {color: colors.text}]}>
+                {item.staff.name}
+              </Text>
+              <Text
+                style={[
+                  styles.modernUserPosition,
+                  {color: colors.textSecondary},
+                ]}>
                 {item.staff.position || 'Nhân viên'}
               </Text>
             </View>
@@ -596,20 +736,38 @@ function Manager() {
         <View style={styles.modernCardContent}>
           {/* Date and Type Row */}
           <View style={styles.infoRowModern}>
-            <View style={[styles.infoItemModern, {backgroundColor: colors.background}]}>
-              <View style={[styles.infoIconContainer, {backgroundColor: colors.surface}]}>
+            <View
+              style={[
+                styles.infoItemModern,
+                {backgroundColor: colors.background},
+              ]}>
+              <View
+                style={[
+                  styles.infoIconContainer,
+                  {backgroundColor: colors.surface},
+                ]}>
                 <Icon name="calendar-today" size={16} color={colors.primary} />
               </View>
               <View style={styles.infoTextContainer}>
-                <Text style={[styles.infoLabel, {color: colors.textSecondary}]}>Ngày nghỉ</Text>
+                <Text style={[styles.infoLabel, {color: colors.textSecondary}]}>
+                  Ngày nghỉ
+                </Text>
                 <Text style={[styles.infoValue, {color: colors.text}]}>
                   {moment(item.date_leave).format('DD/MM/YYYY')}
                 </Text>
               </View>
             </View>
 
-            <View style={[styles.infoItemModern, {backgroundColor: colors.background}]}>
-              <View style={[styles.infoIconContainer, {backgroundColor: colors.surface}]}>
+            <View
+              style={[
+                styles.infoItemModern,
+                {backgroundColor: colors.background},
+              ]}>
+              <View
+                style={[
+                  styles.infoIconContainer,
+                  {backgroundColor: colors.surface},
+                ]}>
                 <Icon
                   name={item.is_paid ? 'wallet' : 'wallet-outline'}
                   size={16}
@@ -617,7 +775,9 @@ function Manager() {
                 />
               </View>
               <View style={styles.infoTextContainer}>
-                <Text style={[styles.infoLabel, {color: colors.textSecondary}]}>Loại nghỉ</Text>
+                <Text style={[styles.infoLabel, {color: colors.textSecondary}]}>
+                  Loại nghỉ
+                </Text>
                 <Text
                   style={[
                     styles.infoValue,
@@ -630,25 +790,50 @@ function Manager() {
           </View>
 
           {/* Reason Section */}
-          <View style={[styles.infoItemModern, {backgroundColor: colors.background}]}>
-            <View style={[styles.infoIconContainer, {backgroundColor: colors.surface}]}>
+          <View
+            style={[
+              styles.infoItemModern,
+              {backgroundColor: colors.background},
+            ]}>
+            <View
+              style={[
+                styles.infoIconContainer,
+                {backgroundColor: colors.surface},
+              ]}>
               <Icon name="text-box-outline" size={16} color={colors.primary} />
             </View>
             <View style={styles.infoTextContainer}>
-              <Text style={[styles.infoLabel, {color: colors.textSecondary}]}>Lý do nghỉ</Text>
-              <Text style={[styles.infoValue, {color: colors.text}]}>{item.reason}</Text>
+              <Text style={[styles.infoLabel, {color: colors.textSecondary}]}>
+                Lý do nghỉ
+              </Text>
+              <Text style={[styles.infoValue, {color: colors.text}]}>
+                {item.reason}
+              </Text>
             </View>
           </View>
 
           {/* Feedback Section */}
           {item.feedback && (
-            <View style={[styles.feedbackSection, {backgroundColor: colors.background}]}>
+            <View
+              style={[
+                styles.feedbackSection,
+                {backgroundColor: colors.background},
+              ]}>
               <View style={styles.feedbackHeader}>
                 <Icon name="message-text-outline" size={16} color="#e67e22" />
-                <Text style={[styles.feedbackLabel, {color: colors.textSecondary}]}>Phản hồi</Text>
+                <Text
+                  style={[styles.feedbackLabel, {color: colors.textSecondary}]}>
+                  Phản hồi
+                </Text>
               </View>
-              <View style={[styles.feedbackBubble, {backgroundColor: colors.surface}]}>
-                <Text style={[styles.modernFeedbackText, {color: colors.text}]}>{item.feedback}</Text>
+              <View
+                style={[
+                  styles.feedbackBubble,
+                  {backgroundColor: colors.surface},
+                ]}>
+                <Text style={[styles.modernFeedbackText, {color: colors.text}]}>
+                  {item.feedback}
+                </Text>
               </View>
             </View>
           )}
@@ -656,7 +841,11 @@ function Manager() {
 
         {/* Action Buttons */}
         {!item.is_approve && !item.feedback && (
-          <View style={[styles.modernActionButtons, {borderTopColor: colors.border}]}>
+          <View
+            style={[
+              styles.modernActionButtons,
+              {borderTopColor: colors.border},
+            ]}>
             <TouchableOpacity
               style={styles.modernRejectButton}
               onPress={() => {
@@ -691,7 +880,11 @@ function Manager() {
   };
 
   const renderLeaveManagement = () => (
-    <View style={[styles.leaveManagementContainer, {backgroundColor: colors.background}]}>
+    <View
+      style={[
+        styles.leaveManagementContainer,
+        {backgroundColor: colors.background},
+      ]}>
       <FlatList
         data={getFilteredLeaveData()}
         renderItem={renderItem}
@@ -709,12 +902,18 @@ function Manager() {
           getFilteredLeaveData().length === 0 && styles.emptyListContainer,
         ]}
         showsVerticalScrollIndicator={false}
-        ItemSeparatorComponent={() => <View style={[styles.cardSeparator, {backgroundColor: colors.border}]} />}
+        ItemSeparatorComponent={() => (
+          <View
+            style={[styles.cardSeparator, {backgroundColor: colors.border}]}
+          />
+        )}
         ListEmptyComponent={
           isLoading ? (
             <View style={styles.modernLoadingContainer}>
               <ActivityIndicator size="large" color={colors.primary} />
-              <Text style={[styles.loadingText, {color: colors.text}]}>Đang tải dữ liệu...</Text>
+              <Text style={[styles.loadingText, {color: colors.text}]}>
+                Đang tải dữ liệu...
+              </Text>
             </View>
           ) : (
             <View style={styles.modernEmptyContainer}>
@@ -731,7 +930,11 @@ function Manager() {
                 {activeLeaveSubTab === 'rejected' &&
                   'Không có đơn nghỉ bị từ chối'}
               </Text>
-              <Text style={[styles.modernEmptySubtitle, {color: colors.textSecondary}]}>
+              <Text
+                style={[
+                  styles.modernEmptySubtitle,
+                  {color: colors.textSecondary},
+                ]}>
                 {activeLeaveSubTab === 'pending' &&
                   'Hiện tại chưa có đơn xin nghỉ phép nào cần được duyệt'}
                 {activeLeaveSubTab === 'approved' &&
@@ -743,7 +946,7 @@ function Manager() {
                 style={styles.refreshButton}
                 onPress={onRefresh}>
                 <LinearGradient
-                  colors={[THEME_COLOR, THEME_COLOR_2]}
+                  colors={colors.primaryGradient}
                   style={styles.refreshButtonGradient}>
                   <Icon name="refresh" size={16} color="#fff" />
                   <Text style={styles.refreshButtonText}>Làm mới</Text>
@@ -756,38 +959,223 @@ function Manager() {
     </View>
   );
 
-  const renderOvertimeManagement = () => (
-    <View style={[styles.tabContent, {backgroundColor: colors.background}]}>
-      <View style={styles.emptyStateContainer}>
-        <Icon name="clock-plus" size={64} color={colors.textSecondary} />
-        <Text style={[styles.emptyStateTitle, {color: colors.text}]}>{t('manager.tabs.overtime')}</Text>
-        <Text style={[styles.emptyStateText, {color: colors.textSecondary}]}>
-          Create and manage overtime requests
-        </Text>
+  const renderOvertimeManagement = () => {
+    if (userRole !== 'ADMIN') {
+      return (
+        <View style={[styles.tabContent, {backgroundColor: colors.background}]}>
+          <View style={styles.emptyStateContainer}>
+            <Icon name="clock-plus" size={64} color={colors.textSecondary} />
+            <Text style={[styles.emptyStateTitle, {color: colors.text}]}>
+              {t('manager.tabs.overtime')}
+            </Text>
+            <Text
+              style={[styles.emptyStateText, {color: colors.textSecondary}]}>
+              {t('manager.ot.create_hint')}
+            </Text>
+          </View>
+          {canCreateOvertime && (
+            <TouchableOpacity
+              style={[styles.floatingButton, {backgroundColor: colors.primary}]}
+              onPress={openOvertimeModal}>
+              <Icon name="plus" size={24} color="#fff" />
+            </TouchableOpacity>
+          )}
+        </View>
+      );
+    }
+
+    return (
+      <View style={[styles.tabContent, {backgroundColor: colors.background}]}>
+        <FlatList
+          data={overtimeRequests}
+          keyExtractor={item =>
+            item?.id ? item.id.toString() : String(Math.random())
+          }
+          contentContainerStyle={[
+            styles.modernListContainer,
+            overtimeRequests.length === 0 && styles.emptyListContainer,
+          ]}
+          ListEmptyComponent={
+            overtimeLoading ? (
+              <View style={styles.modernLoadingContainer}>
+                <ActivityIndicator size="large" color={colors.primary} />
+                <Text style={[styles.loadingText, {color: colors.text}]}>
+                  {t('loading')}
+                </Text>
+              </View>
+            ) : (
+              <View style={styles.modernEmptyContainer}>
+                <Icon
+                  name="clock-plus"
+                  size={56}
+                  color={colors.textSecondary}
+                />
+                <Text style={[styles.modernEmptyTitle, {color: colors.text}]}>
+                  {t('manager.ot.list_empty')}
+                </Text>
+              </View>
+            )
+          }
+          renderItem={({item}) => (
+            <View
+              style={[
+                styles.otCard,
+                {backgroundColor: colors.surface, borderColor: colors.border},
+              ]}>
+              <View style={styles.otCardHeader}>
+                <View
+                  style={[
+                    styles.otStatusDot,
+                    {
+                      backgroundColor: item.is_confirm ? '#2ecc71' : '#f39c12',
+                    },
+                  ]}
+                />
+                <Text
+                  style={[styles.otStatusText, {color: colors.textSecondary}]}>
+                  {item.is_confirm
+                    ? t('overtime.approved')
+                    : t('overtime.pending')}
+                </Text>
+                <Text style={[styles.otDate, {color: colors.textSecondary}]}>
+                  {moment(item.date).format('DD/MM/YYYY')}
+                </Text>
+              </View>
+              <View style={styles.otRow}>
+                <Icon name="account" size={16} color={colors.primary} />
+                <Text style={[styles.otLabel, {color: colors.textSecondary}]}>
+                  {t('overtime.requester')}:
+                </Text>
+                <Text style={[styles.otValue, {color: colors.text}]}>
+                  {item.leaderDetail?.name || '-'}
+                </Text>
+              </View>
+              <View style={styles.otRow}>
+                <Icon name="office-building" size={16} color={colors.primary} />
+                <Text style={[styles.otLabel, {color: colors.textSecondary}]}>
+                  {t('overtime.work_area')}:
+                </Text>
+                <Text style={[styles.otValue, {color: colors.text}]}>
+                  {item.departmentDetail?.name || '-'}
+                </Text>
+              </View>
+              {!item.is_confirm && (
+                <TouchableOpacity
+                  style={[styles.otConfirmBtn, {backgroundColor: '#2ecc71'}]}
+                  onPress={() => handleConfirmOvertime(item.id)}>
+                  <Icon name="check" size={16} color="#fff" />
+                  <Text style={styles.otConfirmText}>
+                    {t('overtime.confirm')}
+                  </Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          )}
+        />
       </View>
+    );
+  };
 
-      {/* Floating Add Button */}
-      <TouchableOpacity
-        style={[styles.floatingButton, {backgroundColor: colors.primary}]}
-        onPress={openOvertimeModal}>
-        <Icon name="plus" size={24} color="#fff" />
-      </TouchableOpacity>
-    </View>
-  );
-
-  const renderEmployeeManagement = () => (
-    <View style={[styles.comingSoonContainer, {backgroundColor: colors.background}]}>
-      <Icon name="account-group" size={64} color={colors.textSecondary} />
-      <Text style={[styles.comingSoonTitle, {color: colors.text}]}>Employee Management</Text>
-      <Text style={[styles.comingSoonText, {color: colors.textSecondary}]}>Coming Soon...</Text>
-    </View>
-  );
+  const renderEmployeeManagement = () => {
+    return (
+      <View
+        style={[
+          styles.leaveManagementContainer,
+          {backgroundColor: colors.background},
+        ]}>
+        <FlatList
+          data={employees}
+          keyExtractor={item =>
+            item?.id ? item.id.toString() : String(Math.random())
+          }
+          contentContainerStyle={[
+            styles.modernListContainer,
+            employees.length === 0 && styles.emptyListContainer,
+          ]}
+          ListEmptyComponent={
+            employeesLoading ? (
+              <View style={styles.modernLoadingContainer}>
+                <ActivityIndicator size="large" color={colors.primary} />
+                <Text style={[styles.loadingText, {color: colors.text}]}>
+                  {t('loading')}
+                </Text>
+              </View>
+            ) : (
+              <View style={styles.modernEmptyContainer}>
+                <Icon
+                  name="account-group"
+                  size={56}
+                  color={colors.textSecondary}
+                />
+                <Text style={[styles.modernEmptyTitle, {color: colors.text}]}>
+                  {t('manager.employees.empty')}
+                </Text>
+              </View>
+            )
+          }
+          renderItem={({item}) => {
+            const initial = (item?.name || '?').charAt(0).toUpperCase();
+            return (
+              <View
+                style={[
+                  styles.empRow,
+                  {backgroundColor: colors.surface, borderColor: colors.border},
+                ]}>
+                <LinearGradient
+                  colors={[colors.primary, colors.primary2]}
+                  style={styles.empAvatar}>
+                  <Text style={styles.empAvatarText}>{initial}</Text>
+                </LinearGradient>
+                <View style={styles.empInfo}>
+                  <Text style={[styles.empName, {color: colors.text}]}>
+                    {item?.name}
+                  </Text>
+                  {item?.position ? (
+                    <Text
+                      style={[styles.empPos, {color: colors.textSecondary}]}>
+                      {item?.position}
+                    </Text>
+                  ) : null}
+                </View>
+                {item?.role ? (
+                  <View
+                    style={[
+                      styles.empRoleBadge,
+                      {
+                        backgroundColor: colors.background,
+                        borderColor: colors.border,
+                      },
+                    ]}>
+                    <Text
+                      style={[
+                        styles.empRoleText,
+                        {color: colors.textSecondary},
+                      ]}>
+                      {item?.role}
+                    </Text>
+                  </View>
+                ) : null}
+              </View>
+            );
+          }}
+        />
+      </View>
+    );
+  };
 
   const renderReports = () => (
-    <View style={[styles.comingSoonContainer, {backgroundColor: colors.background}]}>
+    <View
+      style={[
+        styles.comingSoonContainer,
+        {backgroundColor: colors.background},
+      ]}>
       <Icon name="chart-line" size={64} color={colors.textSecondary} />
-      <Text style={[styles.comingSoonTitle, {color: colors.text}]}>Reports & Analytics</Text>
-      <Text style={[styles.comingSoonText, {color: colors.textSecondary}]}>Coming Soon...</Text>
+      <Text style={[styles.comingSoonTitle, {color: colors.text}]}>
+        Reports & Analytics
+      </Text>
+      <Text style={[styles.comingSoonText, {color: colors.textSecondary}]}>
+        Coming Soon...
+      </Text>
     </View>
   );
 
@@ -809,14 +1197,14 @@ function Manager() {
   return (
     <View style={[styles.container, {backgroundColor: colors.background}]}>
       <StatusBar
-        barStyle={isDarkMode ? "light-content" : "dark-content"}
+        barStyle={isDarkMode ? 'light-content' : 'dark-content'}
         backgroundColor="transparent"
         translucent
       />
 
       {/* Modern Header with Gradient */}
       <LinearGradient
-        colors={isDarkMode ? ['#1a1a2e', '#16213e'] : ['#667eea', '#764ba2']}
+        colors={colors.primaryGradient}
         start={{x: 0, y: 0}}
         end={{x: 1, y: 1}}
         style={styles.headerGradient}>
@@ -833,9 +1221,12 @@ function Manager() {
         </View>
       </LinearGradient>
 
-      {err ? <Text style={[styles.errorText, {color: colors.error}]}>{err}</Text> : null}
+      {err ? (
+        <Text style={[styles.errorText, {color: colors.error}]}>{err}</Text>
+      ) : null}
 
-      <View style={[styles.contentWrapper, {backgroundColor: colors.background}]}>
+      <View
+        style={[styles.contentWrapper, {backgroundColor: colors.background}]}>
         {renderTabBar()}
         {activeTab === 'leave' && renderLeaveSubTabs()}
         {renderTabContent()}
@@ -851,10 +1242,20 @@ function Manager() {
           style={styles.modalOverlay}
           activeOpacity={1}
           onPress={onClose}>
-          <View style={[styles.modalContent, {backgroundColor: colors.surface}]}>
-            <Text style={[styles.modalTitle, {color: colors.text}]}>{t('feedback')}</Text>
+          <View
+            style={[styles.modalContent, {backgroundColor: colors.surface}]}>
+            <Text style={[styles.modalTitle, {color: colors.text}]}>
+              {t('feedback')}
+            </Text>
             <TextInput
-              style={[styles.feedbackInput, {backgroundColor: colors.background, color: colors.text, borderColor: colors.border}]}
+              style={[
+                styles.feedbackInput,
+                {
+                  backgroundColor: colors.background,
+                  color: colors.text,
+                  borderColor: colors.border,
+                },
+              ]}
               placeholder={t('enter_feedback')}
               placeholderTextColor={colors.textSecondary}
               value={feedback}
@@ -863,12 +1264,26 @@ function Manager() {
             />
             <View style={styles.modalButtons}>
               <TouchableOpacity
-                style={[styles.modalButton, styles.cancelButton, {backgroundColor: colors.background}]}
+                style={[
+                  styles.modalButton,
+                  styles.cancelButton,
+                  {backgroundColor: colors.background},
+                ]}
                 onPress={handleCancelFeedback}>
-                <Text style={[styles.cancelButtonText, {color: colors.textSecondary}]}>{t('cancel')}</Text>
+                <Text
+                  style={[
+                    styles.cancelButtonText,
+                    {color: colors.textSecondary},
+                  ]}>
+                  {t('cancel')}
+                </Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[styles.modalButton, styles.submitButton, {backgroundColor: colors.primary}]}
+                style={[
+                  styles.modalButton,
+                  styles.submitButton,
+                  {backgroundColor: colors.primary},
+                ]}
                 onPress={handleUnApproveLeaveRequest}>
                 <Text style={styles.submitButtonText}>{t('submit')}</Text>
               </TouchableOpacity>
@@ -887,20 +1302,44 @@ function Manager() {
           style={styles.modalOverlay}
           activeOpacity={1}
           onPress={() => setShowConfirmModal(false)}>
-          <View style={[styles.modalContent, styles.confirmModalContent, {backgroundColor: colors.surface}]}>
+          <View
+            style={[
+              styles.modalContent,
+              styles.confirmModalContent,
+              {backgroundColor: colors.surface},
+            ]}>
             <View style={styles.confirmIconContainer}>
               <Icon name="help-circle" size={50} color={colors.primary} />
             </View>
-            <Text style={[styles.confirmTitle, {color: colors.text}]}>{t('plzcof')}</Text>
-            <Text style={[styles.confirmMessage, {color: colors.textSecondary}]}>{t('confirm_approve')}</Text>
+            <Text style={[styles.confirmTitle, {color: colors.text}]}>
+              {t('plzcof')}
+            </Text>
+            <Text
+              style={[styles.confirmMessage, {color: colors.textSecondary}]}>
+              {t('confirm_approve')}
+            </Text>
             <View style={styles.modalButtons}>
               <TouchableOpacity
-                style={[styles.modalButton, styles.cancelButton, {backgroundColor: colors.background}]}
+                style={[
+                  styles.modalButton,
+                  styles.cancelButton,
+                  {backgroundColor: colors.background},
+                ]}
                 onPress={() => setShowConfirmModal(false)}>
-                <Text style={[styles.cancelButtonText, {color: colors.textSecondary}]}>{t('cancel')}</Text>
+                <Text
+                  style={[
+                    styles.cancelButtonText,
+                    {color: colors.textSecondary},
+                  ]}>
+                  {t('cancel')}
+                </Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[styles.modalButton, styles.confirmButton, {backgroundColor: colors.primary}]}
+                style={[
+                  styles.modalButton,
+                  styles.confirmButton,
+                  {backgroundColor: colors.primary},
+                ]}
                 onPress={handleConfirmApprove}>
                 <Icon
                   name="check"
@@ -922,7 +1361,12 @@ function Manager() {
         visible={showOvertimeModal}
         onRequestClose={handleCancelOvertimeModal}>
         <View style={styles.modalOverlay}>
-          <View style={[styles.modalContent, styles.modernOvertimeModal, {backgroundColor: colors.surface}]}>
+          <View
+            style={[
+              styles.modalContent,
+              styles.modernOvertimeModal,
+              {backgroundColor: colors.surface},
+            ]}>
             {/* Modal Header */}
             <View style={styles.modalHeader}>
               <LinearGradient
@@ -949,14 +1393,25 @@ function Manager() {
               style={styles.modalBody}
               showsVerticalScrollIndicator={false}>
               {/* User Selection */}
-              <View style={[styles.modernInputGroup, {zIndex: 10000, elevation: 10000}]}>
+              <View
+                style={[
+                  styles.modernInputGroup,
+                  {zIndex: 10000, elevation: 10000},
+                ]}>
                 <Text style={[styles.modernInputLabel, {color: colors.text}]}>
                   <Icon name="account" size={14} color={colors.primary} />{' '}
                   {t('overtime.select_user')}
                 </Text>
                 <View style={styles.dropdownWrapper}>
                   <TouchableOpacity
-                    style={[styles.modernTextInput, styles.modernSelectInput, {backgroundColor: colors.background, borderColor: colors.border}]}
+                    style={[
+                      styles.modernTextInput,
+                      styles.modernSelectInput,
+                      {
+                        backgroundColor: colors.background,
+                        borderColor: colors.border,
+                      },
+                    ]}
                     onPress={() => {
                       console.log('Opening user selection dropdown...');
                       getAllUsers();
@@ -973,23 +1428,33 @@ function Manager() {
                       style={[
                         selectedUser
                           ? [styles.modernSelectedText, {color: colors.text}]
-                          : [styles.modernPlaceholderText, {color: colors.textSecondary}]
+                          : [
+                              styles.modernPlaceholderText,
+                              {color: colors.textSecondary},
+                            ],
                       ]}>
                       {selectedUser
                         ? selectedUser.name
                         : t('overtime.select_user')}
                     </Text>
-                    <Icon 
-                      name={showUserSelection ? "chevron-up" : "chevron-down"} 
-                      size={20} 
-                      color={colors.primary} 
+                    <Icon
+                      name={showUserSelection ? 'chevron-up' : 'chevron-down'}
+                      size={20}
+                      color={colors.primary}
                     />
                   </TouchableOpacity>
-                  
+
                   {/* Dropdown List */}
                   {showUserSelection && (
-                    <View style={[styles.dropdownContainer, {backgroundColor: colors.surface, borderColor: colors.border}]}>
-                      <ScrollView 
+                    <View
+                      style={[
+                        styles.dropdownContainer,
+                        {
+                          backgroundColor: colors.surface,
+                          borderColor: colors.border,
+                        },
+                      ]}>
+                      <ScrollView
                         style={styles.dropdownScrollView}
                         showsVerticalScrollIndicator={false}
                         nestedScrollEnabled={true}>
@@ -999,8 +1464,13 @@ function Manager() {
                               key={user.id}
                               style={[
                                 styles.dropdownItem,
-                                {backgroundColor: colors.background, borderBottomColor: colors.border},
-                                selectedUser?.id === user.id && {backgroundColor: colors.primary + '20'}
+                                {
+                                  backgroundColor: colors.background,
+                                  borderBottomColor: colors.border,
+                                },
+                                selectedUser?.id === user.id && {
+                                  backgroundColor: colors.primary + '20',
+                                },
                               ]}
                               onPress={() => handleUserSelect(user)}>
                               <View style={styles.dropdownItemContent}>
@@ -1014,22 +1484,38 @@ function Manager() {
                                   </LinearGradient>
                                 </View>
                                 <View style={styles.dropdownUserInfo}>
-                                  <Text style={[styles.dropdownUserName, {color: colors.text}]}>
+                                  <Text
+                                    style={[
+                                      styles.dropdownUserName,
+                                      {color: colors.text},
+                                    ]}>
                                     {user.name}
                                   </Text>
-                                  <Text style={[styles.dropdownUserPosition, {color: colors.textSecondary}]}>
+                                  <Text
+                                    style={[
+                                      styles.dropdownUserPosition,
+                                      {color: colors.textSecondary},
+                                    ]}>
                                     {user.position}
                                   </Text>
                                 </View>
                                 {selectedUser?.id === user.id && (
-                                  <Icon name="check" size={20} color={colors.primary} />
+                                  <Icon
+                                    name="check"
+                                    size={20}
+                                    color={colors.primary}
+                                  />
                                 )}
                               </View>
                             </TouchableOpacity>
                           ))
                         ) : (
                           <View style={styles.dropdownEmpty}>
-                            <Text style={[styles.dropdownEmptyText, {color: colors.textSecondary}]}>
+                            <Text
+                              style={[
+                                styles.dropdownEmptyText,
+                                {color: colors.textSecondary},
+                              ]}>
                               Không có user nào
                             </Text>
                           </View>
@@ -1047,7 +1533,14 @@ function Manager() {
                   {t('overtime.date')}
                 </Text>
                 <TouchableOpacity
-                  style={[styles.modernTextInput, styles.modernSelectInput, {backgroundColor: colors.background, borderColor: colors.border}]}
+                  style={[
+                    styles.modernTextInput,
+                    styles.modernSelectInput,
+                    {
+                      backgroundColor: colors.background,
+                      borderColor: colors.border,
+                    },
+                  ]}
                   onPress={() => setShowDatePicker(true)}>
                   <View style={styles.inputIconContainer}>
                     <Icon
@@ -1060,7 +1553,10 @@ function Manager() {
                     style={[
                       overtimeFormData.date
                         ? [styles.modernSelectedText, {color: colors.text}]
-                        : [styles.modernPlaceholderText, {color: colors.textSecondary}]
+                        : [
+                            styles.modernPlaceholderText,
+                            {color: colors.textSecondary},
+                          ],
                     ]}>
                     {overtimeFormData.date || t('overtime.select_date')}
                   </Text>
@@ -1075,7 +1571,14 @@ function Manager() {
                   {t('overtime.position')}
                 </Text>
                 <View
-                  style={[styles.modernTextInput, styles.modernReadOnlyInput, {backgroundColor: colors.background, borderColor: colors.border}]}>
+                  style={[
+                    styles.modernTextInput,
+                    styles.modernReadOnlyInput,
+                    {
+                      backgroundColor: colors.background,
+                      borderColor: colors.border,
+                    },
+                  ]}>
                   <View style={styles.inputIconContainer}>
                     <Icon
                       name="badge-account-outline"
@@ -1083,7 +1586,11 @@ function Manager() {
                       color={colors.textSecondary}
                     />
                   </View>
-                  <Text style={[styles.modernReadOnlyText, {color: colors.textSecondary}]}>
+                  <Text
+                    style={[
+                      styles.modernReadOnlyText,
+                      {color: colors.textSecondary},
+                    ]}>
                     {overtimeFormData.position || t('overtime.position')}
                   </Text>
                   <Icon name="lock" size={16} color={colors.textSecondary} />
@@ -1097,7 +1604,14 @@ function Manager() {
                   {t('overtime.hours')}
                 </Text>
                 <View
-                  style={[styles.modernTextInput, styles.modernInputWithIcon, {backgroundColor: colors.background, borderColor: colors.border}]}>
+                  style={[
+                    styles.modernTextInput,
+                    styles.modernInputWithIcon,
+                    {
+                      backgroundColor: colors.background,
+                      borderColor: colors.border,
+                    },
+                  ]}>
                   <View style={styles.inputIconContainer}>
                     <Icon
                       name="clock-time-eight"
@@ -1115,7 +1629,10 @@ function Manager() {
                     }
                     keyboardType="numeric"
                   />
-                  <Text style={[styles.inputUnit, {color: colors.textSecondary}]}>giờ</Text>
+                  <Text
+                    style={[styles.inputUnit, {color: colors.textSecondary}]}>
+                    giờ
+                  </Text>
                 </View>
               </View>
 
@@ -1129,7 +1646,10 @@ function Manager() {
                   style={[
                     styles.modernTextInput,
                     styles.modernTextAreaContainer,
-                    {backgroundColor: colors.background, borderColor: colors.border}
+                    {
+                      backgroundColor: colors.background,
+                      borderColor: colors.border,
+                    },
                   ]}>
                   <View style={styles.inputIconContainerTop}>
                     <Icon
@@ -1139,7 +1659,11 @@ function Manager() {
                     />
                   </View>
                   <TextInput
-                    style={[styles.modernTextInputField, styles.modernTextArea, {color: colors.text}]}
+                    style={[
+                      styles.modernTextInputField,
+                      styles.modernTextArea,
+                      {color: colors.text},
+                    ]}
                     placeholder={t('overtime.description_placeholder')}
                     placeholderTextColor={colors.textSecondary}
                     value={overtimeFormData.description}
@@ -1157,10 +1681,14 @@ function Manager() {
             {/* Modal Footer */}
             <View style={[styles.modalFooter, {borderTopColor: colors.border}]}>
               <TouchableOpacity
-                style={[styles.modernCancelButton, {backgroundColor: colors.background}]}
+                style={[
+                  styles.modernCancelButton,
+                  {backgroundColor: colors.background},
+                ]}
                 onPress={handleCancelOvertimeModal}>
                 <Icon name="close-circle-outline" size={18} color="#e74c3c" />
-                <Text style={[styles.modernCancelButtonText, {color: '#e74c3c'}]}>
+                <Text
+                  style={[styles.modernCancelButtonText, {color: '#e74c3c'}]}>
                   {t('overtime.cancel')}
                 </Text>
               </TouchableOpacity>
@@ -1209,7 +1737,6 @@ function Manager() {
         t={t}
         duration={3000}
       />
-
     </View>
   );
 }
@@ -2056,7 +2583,7 @@ const styles = StyleSheet.create({
     borderLeftWidth: 3,
     marginBottom: 16,
   },
-  reasonText: {
+  reasonTextAlt: {
     fontSize: 14,
     lineHeight: 20,
     marginTop: 8,
@@ -2332,6 +2859,105 @@ const styles = StyleSheet.create({
   dropdownEmptyText: {
     fontSize: 14,
     fontStyle: 'italic',
+  },
+  // Overtime admin list
+  otCard: {
+    borderRadius: 14,
+    borderWidth: 1,
+    padding: 14,
+    marginBottom: 12,
+  },
+  otCardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  otStatusDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    marginRight: 6,
+  },
+  otStatusText: {
+    fontSize: 13,
+    fontWeight: '600',
+    flex: 1,
+  },
+  otDate: {
+    fontSize: 13,
+  },
+  otRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  otLabel: {
+    fontSize: 14,
+    marginLeft: 6,
+    marginRight: 4,
+    minWidth: 92,
+  },
+  otValue: {
+    flex: 1,
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  otConfirmBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 10,
+    borderRadius: 10,
+    marginTop: 6,
+  },
+  otConfirmText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
+    marginLeft: 6,
+  },
+  // Employee directory
+  empRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: 14,
+    borderWidth: 1,
+    padding: 12,
+    marginBottom: 12,
+  },
+  empAvatar: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  empAvatarText: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: '700',
+  },
+  empInfo: {
+    flex: 1,
+  },
+  empName: {
+    fontSize: 15,
+    fontWeight: '600',
+    marginBottom: 2,
+  },
+  empPos: {
+    fontSize: 13,
+  },
+  empRoleBadge: {
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  empRoleText: {
+    fontSize: 11,
+    fontWeight: '700',
   },
 });
 

@@ -82,7 +82,7 @@ Trạng thái chung: **UI shell hoàn chỉnh, mock data — chờ BE gắn API*
 | Giới thiệu nhân viên | `Referral` | `src/screens/Referral.js` | Chưa có — cần `GET /referrals/jobs` + `POST /referrals` (gửi HR) | Bảng referrals/job_openings mới |
 | Đổi ca làm | `ShiftSwap` | `src/screens/ShiftSwap.js` | Chưa có — cần `GET /shifts?user_id&week` + `POST /shift-swaps` | Bảng shift_swaps mới (dùng `A.s`/`B.s` ca hiện có) |
 | Quản lý tài sản | `Asset` | `src/screens/Asset.js` | Chưa có — cần `GET /assets?user_id` + `POST /assets/:id/return` | Bảng assets/asset_assignments mới |
-| Dịch thuật âm thanh | `Translator` | `src/screens/Translator.js` | Chưa có — cần `POST /translate/audio` (STT→dịch→TTS, trả `audio_url`), xem `BE_INTEGRATION.md` §4 | Google/Whisper (STT) + Translate + TTS (Google/Azure/ElevenLabs) |
+| Dịch hội thoại | `Translator` | `src/screens/Translator.js` | MyMemory text translation + native STT/TTS; không cần API key | `@react-native-voice/voice` + MyMemory + `react-native-tts` |
 
 ### 2.1 Chi tiết từng màn hình (mock → BE)
 
@@ -160,11 +160,10 @@ Trạng thái chung: **UI shell hoàn chỉnh, mock data — chờ BE gắn API*
 - Hero 3 stat (tổng, đang dùng, hỏng); danh sách tài sản (icon gradient, code, ngày bàn giao, badge trạng thái); nút **Trả tài sản** với confirm Alert.
 - Thay `MOCK_ASSETS` bằng `GET /assets?user_id`; trả tài sản gọi `POST /assets/:id/return`.
 
-**Translator** (`translator.*`) — audio-in → audio-out ⭐
-- **Luồng chính (voice):** giữ-nhấn mic → mock STT (`mockRecognize`) → mock dịch (`translateText`) → **tự phát lại bằng giọng nói ngôn ngữ đích** (`mockSynthesize` + `synthDurationMs`). Người dùng chọn ngôn ngữ đích = ngôn ngữ nhận lại âm thanh.
-- Card kết quả đích có **audio row**: trạng thái "Đang phát âm..." + waveform animation + nút Play/Stop; văn bản vẫn hiển thị kèm Copy.
-- Chế độ text giữ nguyên (TextInput + Dịch), cũng phát âm kết quả.
-- Khi BE có: thay mock bằng `POST /translate/audio` (multipart) → phát `audio_url` bằng `react-native-sound`/`expo-av`; xem `BE_INTEGRATION.md` §4.
+**Translator** (`translator.*`) — conversation-first
+- Voice flow: native STT → sentence segmentation → ordered MyMemory text translation → conversation message → optional native TTS in the target language.
+- Text mode uses the same `MyMemoryTranslationService`; the screen never calls the API directly.
+- Translation requests are UTF-8 encoded, capped at MyMemory's 500-byte segment limit, retried a finite number of times, and rendered with an error state when offline.
 
 ### 2.2 i18n
 

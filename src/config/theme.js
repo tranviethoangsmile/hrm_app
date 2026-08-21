@@ -48,6 +48,11 @@ export const LIGHT_COLORS = {
   // Shadow
   shadow: 'rgba(0,0,0,0.1)',
   shadowDark: 'rgba(0,0,0,0.25)',
+  // Semantic aliases used by the redesigned app surfaces.
+  primaryDark: '#3730A3',
+  surfaceElevated: '#FFFFFF',
+  overlay: 'rgba(15, 23, 42, 0.48)',
+  focusRing: '#A5B4FC',
 };
 
 // Dark theme colors
@@ -100,6 +105,11 @@ export const DARK_COLORS = {
   // Shadow
   shadow: 'rgba(0,0,0,0.3)',
   shadowDark: 'rgba(0,0,0,0.5)',
+  // Semantic aliases used by the redesigned app surfaces.
+  primaryDark: '#C4B5FD',
+  surfaceElevated: '#242426',
+  overlay: 'rgba(0, 0, 0, 0.62)',
+  focusRing: '#818CF8',
 };
 
 // Legacy export for backward compatibility
@@ -114,6 +124,24 @@ export const SIZES = {
   inputHeight: 48,
   inputPaddingHorizontal: 16,
   headerHeight: 60,
+
+  // Product spacing and shape tokens.
+  spacing: {
+    xs: 4,
+    sm: 8,
+    md: 12,
+    lg: 16,
+    xl: 20,
+    xxl: 24,
+    xxxl: 32,
+    section: 40,
+  },
+  radiusScale: {
+    sm: 10,
+    md: 14,
+    lg: 20,
+    pill: 999,
+  },
 
   // Font sizes
   largeTitle: 50,
@@ -133,6 +161,48 @@ export const SIZES = {
 };
 
 export const FONTS = {
+  display: {
+    fontFamily: 'System',
+    fontSize: 32,
+    lineHeight: 38,
+    fontWeight: '800',
+  },
+  title: {
+    fontFamily: 'System',
+    fontSize: 24,
+    lineHeight: 30,
+    fontWeight: '800',
+  },
+  heading: {
+    fontFamily: 'System',
+    fontSize: 18,
+    lineHeight: 24,
+    fontWeight: '700',
+  },
+  body: {
+    fontFamily: 'System',
+    fontSize: 16,
+    lineHeight: 23,
+    fontWeight: '400',
+  },
+  bodyMedium: {
+    fontFamily: 'System',
+    fontSize: 16,
+    lineHeight: 23,
+    fontWeight: '600',
+  },
+  label: {
+    fontFamily: 'System',
+    fontSize: 13,
+    lineHeight: 18,
+    fontWeight: '700',
+  },
+  caption: {
+    fontFamily: 'System',
+    fontSize: 12,
+    lineHeight: 16,
+    fontWeight: '500',
+  },
   largeTitle: {
     fontFamily: 'System',
     fontSize: SIZES.largeTitle,

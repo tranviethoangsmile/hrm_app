@@ -1,12 +1,14 @@
 import React from 'react';
 import {View, StyleSheet} from 'react-native';
 import {COLORS, SIZES, SHADOWS} from '../../config/theme';
+import {useTheme} from '../../hooks/useTheme';
 
 const Card = ({children, style, shadowType = 'light', ...props}) => {
+  const {colors} = useTheme();
   const shadowStyle = SHADOWS[shadowType] || SHADOWS.light;
 
   return (
-    <View style={[styles.card, shadowStyle, style]} {...props}>
+    <View style={[styles.card, {backgroundColor: colors.surface}, shadowStyle, style]} {...props}>
       {children}
     </View>
   );

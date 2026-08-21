@@ -38,7 +38,6 @@ import i18n from 'i18next';
 import {useSelector} from 'react-redux';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import apiClient from '../services/apiClient';
-import axios from 'axios';
 import EmojiSelector from 'react-native-emoji-selector';
 import {launchImageLibrary} from 'react-native-image-picker';
 import {
@@ -51,11 +50,12 @@ import {
   SEARCH_MESSAGE_WITH_CONVERSATION,
   UNSEND,
   DELETE,
-  API_KEY_GOOGLE,
   CREATE,
 } from '../utils/constans';
 import socket from '../socket.io/socket.io';
 import OptimizedLoader from '../components/OptimizedLoader';
+import {translateText} from '../services/translator';
+import {detectLanguage} from '../services/conversation/languageDetection';
 import {encrypt, decrypt} from '../services';
 import {ModalMessage} from '../components';
 import MediaViewer from '../components/common/MediaViewer';
@@ -127,7 +127,6 @@ const ChatScreen = ({route}) => {
   const flatListRef = useRef(null);
   const [showOptions, setShowOptions] = useState(false);
   const [selectedMessageId, setSelectedMessageId] = useState(null);
-  const url = `https://translation.googleapis.com/language/translate/v2?key=${API_KEY_GOOGLE}`;
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [messageModal, setMessageModal] = useState('');
   const [messageType, setMessageType] = useState('success');
@@ -577,21 +576,17 @@ const ChatScreen = ({route}) => {
 
     try {
       setIsTranslating(true);
-      // Sử dụng POST với JSON data như Google Translate API yêu cầu
-      const data = {
-        q: originalMessage,
-        target: i18n.language,
-        format: 'text',
-      };
-      const response = await axios.post(url, data, {
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
+      // Dịch qua services/translator (MyMemory, không cần key — Google key cũ
+      // đã bị suspended). Ngôn ngữ đích = ngôn ngữ giao diện hiện tại.
+      const targetLang = (i18n.language || 'vi').split('-')[0];
+      const sourceLang = detectLanguage(originalMessage) || 'vi';
+      const translatedText = await translateText(
+        originalMessage,
+        sourceLang,
+        targetLang,
+      );
 
-      if (response?.data?.data?.translations?.[0]?.translatedText) {
-        const translatedText =
-          response.data.data.translations[0].translatedText;
+      if (translatedText) {
         const newMessage = {
           ...messageToTranslate,
           translatedMessage: translatedText,

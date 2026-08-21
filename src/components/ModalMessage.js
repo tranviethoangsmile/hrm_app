@@ -10,9 +10,10 @@ import Icon from 'react-native-vector-icons/Ionicons';
 import {TEXT_COLOR} from '../utils/Colors';
 import {NativeModules} from 'react-native';
 import {useTheme} from '../hooks/useTheme';
+import {translateMessage} from '../../services/i18next';
 const {height} = Dimensions.get('window');
 const topPosition = height * 0.1;
-const ModalMessage = ({isVisible, onClose, message, type, t, duration}) => {
+const ModalMessage = ({isVisible, onClose, message, type, duration}) => {
   const {colors, isDarkMode} = useTheme();
   const getModalStyles = () => {
     switch (type) {
@@ -85,7 +86,7 @@ const ModalMessage = ({isVisible, onClose, message, type, t, duration}) => {
       <View style={[getModalStyles(), styles.shadowBox, {backgroundColor: colors.surface}]}>
         {getIcon()}
         <Text style={[styles.modalMessage, {color: colors.text}]}>
-          {message ? t(message) : message}
+          {translateMessage(message)}
         </Text>
         <TouchableOpacity style={styles.closeButton} onPress={onClose}>
           <Icon name={'close'} size={28} color={colors.textSecondary} />

@@ -11,6 +11,8 @@ import {
   Animated,
   Easing,
   TouchableOpacity,
+  Modal,
+  TextInput,
 } from 'react-native';
 import React, {useEffect, useState, useRef} from 'react';
 import apiClient from '../services/apiClient';
@@ -22,7 +24,7 @@ import IconFA from 'react-native-vector-icons/FontAwesome5';
 import {useSelector} from 'react-redux';
 import {useTranslation} from 'react-i18next';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import i18next from '../../services/i18next';
+import i18next, {translateMessage} from '../../services/i18next';
 import Header from '../components/common/Header';
 import LinearGradient from 'react-native-linear-gradient';
 import {useTheme} from '../hooks/useTheme';
@@ -38,6 +40,10 @@ import {
   INVENTORY,
   DAILY_REPORT,
   GET_ALL,
+  DASHBOARD,
+  LEADER_DASH,
+  INVENTORIES,
+  UPDATE_INVENTORY,
 } from '../utils/constans';
 import {LineChart, BarChart, PieChart} from 'react-native-chart-kit';
 import DropDownPicker from 'react-native-dropdown-picker';
@@ -72,6 +78,18 @@ const Report = () => {
   const [compareShift, setCompareShift] = useState(false);
   const [dailyReports, setDailyReports] = useState([]);
 
+  // Inventory management (leader only)
+  const [inventoryItems, setInventoryItems] = useState([]);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editItem, setEditItem] = useState(null);
+  const [quantityInput, setQuantityInput] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
+
+  const userRole = String(authData?.data?.data?.role || '').toUpperCase() || '';
+  const canEditInventory = ['LEADER', 'SUPERVISOR', 'MANAGER'].includes(
+    userRole,
+  );
+
   // Animation values
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(50)).current;
@@ -81,7 +99,7 @@ const Report = () => {
     return await AsyncStorage.getItem('Language');
   };
   const showAlert = message => {
-    Alert.alert(t('noti'), t(message));
+    Alert.alert(t('noti'), translateMessage(message));
   };
   const getRandomColor = () => {
     const letters = '0123456789ABCDEF';
@@ -112,6 +130,13 @@ const Report = () => {
           legendFontSize: 16,
         }));
         setDataInventory(newData);
+        setInventoryItems(
+          inventorys?.data?.data.map(item => ({
+            product: item.product,
+            quantity: item.quantity,
+            department_id: item.department_id,
+          })),
+        );
       } else {
         setDataInventory([]);
         throw new Error('not.data');
@@ -292,6 +317,54 @@ const Report = () => {
     };
   }
 
+  const handleOpenEditInventory = item => {
+    setEditItem(item);
+    setQuantityInput(String(item.quantity ?? ''));
+    setShowEditModal(true);
+  };
+
+  const handleSaveInventory = async () => {
+    if (!editItem) {
+      return;
+    }
+    const qty = parseFloat(quantityInput);
+    if (isNaN(qty) || qty < 0) {
+      showAlert('inventory.quantity_invalid');
+      return;
+    }
+    try {
+      setIsSaving(true);
+      const res = await apiClient.post(
+        `${BASE_URL}${PORT}${API}${VERSION}${V1}${DASHBOARD}${LEADER_DASH}${INVENTORIES}${UPDATE_INVENTORY}`,
+        {
+          product: editItem.product,
+          quantity: qty,
+        },
+      );
+      if (res?.data?.success) {
+        setInventoryItems(prev =>
+          prev.map(item =>
+            item.product === editItem.product ? {...item, quantity: qty} : item,
+          ),
+        );
+        setDataInventory(prev =>
+          prev.map(item =>
+            item.name === editItem.product ? {...item, population: qty} : item,
+          ),
+        );
+        setShowEditModal(false);
+        setEditItem(null);
+        showAlert('inventory.update_success');
+      } else {
+        showAlert('inventory.update_error');
+      }
+    } catch (error) {
+      showAlert('inventory.update_error');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   // Chuẩn bị dữ liệu cho LineChart
   let lineData = {
     labels: dates.map(d => moment(d).format('DD/MM')),
@@ -380,7 +453,7 @@ const Report = () => {
                 <Icon name="pie-chart" size={24} color={colors.primary} />
               </View>
               <Text style={[styles.sectionTitle, {color: colors.text}]}>
-                {t('inventory')}
+                {t('inventory.title')}
               </Text>
             </View>
             {dataInventory && dataInventory.length > 0 ? (
@@ -407,6 +480,71 @@ const Report = () => {
             )}
           </LinearGradient>
         </Animated.View>
+        {canEditInventory && inventoryItems.length > 0 && (
+          <Animated.View
+            style={[
+              styles.card,
+              {
+                opacity: fadeAnim,
+                transform: [{translateY: slideAnim}, {scale: scaleAnim}],
+              },
+            ]}>
+            <LinearGradient
+              colors={
+                isDarkMode
+                  ? [colors.surface, colors.surfaceSecondary]
+                  : [colors.white, colors.backgroundSecondary]
+              }
+              style={styles.cardGradient}>
+              <View style={styles.sectionHeader}>
+                <View
+                  style={[
+                    styles.iconContainer,
+                    {backgroundColor: colors.primary + '20'},
+                  ]}>
+                  <Icon name="cubes" size={24} color={colors.primary} />
+                </View>
+                <Text style={[styles.sectionTitle, {color: colors.text}]}>
+                  {t('inventory.manage')}
+                </Text>
+              </View>
+
+              {inventoryItems.map((item, idx) => (
+                <View
+                  key={`${item.product}-${idx}`}
+                  style={[styles.invRow, {backgroundColor: colors.background}]}>
+                  <View style={styles.invInfo}>
+                    <Text
+                      style={[styles.invName, {color: colors.text}]}
+                      numberOfLines={1}>
+                      {item.product}
+                    </Text>
+                    <Text
+                      style={[styles.invQty, {color: colors.textSecondary}]}>
+                      {t('inventory.current')}: {item.quantity}
+                    </Text>
+                  </View>
+                  <TouchableOpacity
+                    style={[
+                      styles.invButton,
+                      {backgroundColor: colors.primary},
+                    ]}
+                    onPress={() => handleOpenEditInventory(item)}>
+                    <IconFA
+                      name="pencil-alt"
+                      size={12}
+                      color="#fff"
+                      style={styles.invButtonIcon}
+                    />
+                    <Text style={styles.invButtonText}>
+                      {t('inventory.update')}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              ))}
+            </LinearGradient>
+          </Animated.View>
+        )}
         {/* Daily Report Card */}
         <Animated.View
           style={[
@@ -663,6 +801,88 @@ const Report = () => {
           </LinearGradient>
         </Animated.View>
       </ScrollView>
+
+      {/* Inventory Edit Modal */}
+      <Modal
+        visible={showEditModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowEditModal(false)}>
+        <View style={styles.modalOverlay}>
+          <View
+            style={[styles.modalContent, {backgroundColor: colors.surface}]}>
+            <View style={styles.modalHeader}>
+              <Icon name="cubes" size={20} color={colors.primary} />
+              <Text style={[styles.modalTitle, {color: colors.text}]}>
+                {t('inventory.update_quantity')}
+              </Text>
+              <TouchableOpacity
+                onPress={() => setShowEditModal(false)}
+                hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}>
+                <Icon name="times" size={20} color={colors.textSecondary} />
+              </TouchableOpacity>
+            </View>
+
+            <Text style={[styles.modalField, {color: colors.textSecondary}]}>
+              {t('inventory.product')}
+            </Text>
+            <View
+              style={[
+                styles.modalProductBox,
+                {backgroundColor: colors.background},
+              ]}>
+              <Text style={[styles.modalProductText, {color: colors.text}]}>
+                {editItem?.product || '-'}
+              </Text>
+            </View>
+
+            <Text style={[styles.modalField, {color: colors.textSecondary}]}>
+              {t('inventory.quantity')}
+            </Text>
+            <TextInput
+              style={[
+                styles.modalInput,
+                {backgroundColor: colors.background, color: colors.text},
+              ]}
+              value={quantityInput}
+              onChangeText={setQuantityInput}
+              keyboardType="numeric"
+              placeholder="0"
+              placeholderTextColor={colors.placeholder}
+            />
+
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={[
+                  styles.modalBtn,
+                  styles.modalBtnGhost,
+                  {borderColor: colors.border},
+                ]}
+                onPress={() => setShowEditModal(false)}>
+                <Text
+                  style={[styles.modalBtnText, {color: colors.textSecondary}]}>
+                  {t('cancel')}
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[
+                  styles.modalBtn,
+                  {
+                    backgroundColor: isSaving
+                      ? colors.textSecondary
+                      : colors.primary,
+                  },
+                ]}
+                onPress={handleSaveInventory}
+                disabled={isSaving}>
+                <Text style={styles.modalBtnPrimaryText}>
+                  {isSaving ? t('loading') : t('inventory.save')}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -821,9 +1041,109 @@ const styles = StyleSheet.create({
     marginRight: 8,
     borderRadius: 2,
   },
-  legendText: {
-    fontSize: 12,
-    fontWeight: 'bold',
+  invRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderRadius: 14,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    marginBottom: 10,
+  },
+  invInfo: {
+    flex: 1,
+    marginRight: 12,
+  },
+  invName: {
+    fontSize: 15,
+    fontWeight: '600',
+    marginBottom: 2,
+  },
+  invQty: {
+    fontSize: 13,
+  },
+  invButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 10,
+  },
+  invButtonIcon: {
+    marginRight: 6,
+  },
+  invButtonText: {
+    color: '#fff',
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    padding: 24,
+  },
+  modalContent: {
+    borderRadius: 16,
+    padding: 20,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 16,
+  },
+  modalTitle: {
+    flex: 1,
+    marginLeft: 10,
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  modalField: {
+    fontSize: 13,
+    fontWeight: '600',
+    marginBottom: 6,
+  },
+  modalProductBox: {
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    marginBottom: 16,
+  },
+  modalProductText: {
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  modalInput: {
+    borderRadius: 12,
+    borderWidth: 1.5,
+    borderColor: 'transparent',
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    fontSize: 15,
+    marginBottom: 20,
+  },
+  modalButtons: {
+    flexDirection: 'row',
+  },
+  modalBtn: {
+    flex: 1,
+    alignItems: 'center',
+    paddingVertical: 12,
+    borderRadius: 12,
+  },
+  modalBtnGhost: {
+    borderWidth: 1.5,
+    marginRight: 12,
+  },
+  modalBtnText: {
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  modalBtnPrimaryText: {
+    color: '#fff',
+    fontSize: 15,
+    fontWeight: '700',
   },
 });
 

@@ -41,6 +41,7 @@ import {
 } from '../utils/Colors';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import {useTranslation} from 'react-i18next';
+import {translateMessage} from '../../services/i18next';
 import * as ImagePicker from 'react-native-image-picker';
 // Alternative: import ImagePicker from 'react-native-image-crop-picker';
 // Alternative: import DocumentPicker from 'react-native-document-picker';
@@ -532,7 +533,7 @@ const Upload = () => {
   }, []);
 
   const showAlert = message => {
-    Alert.alert(t('noti'), t(message));
+    Alert.alert(t('noti'), translateMessage(message));
   };
 
   const getInformationPostedOfUser = async () => {

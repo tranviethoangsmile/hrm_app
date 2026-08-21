@@ -181,9 +181,10 @@ const FeatureTab = ({onScrollList}) => {
       },
       {
         iconName: 'clipboard-outline',
-        labelKey: 'inventory',
+        labelKey: 'inventory.title',
         category: 'work',
         action: () => navigation.navigate('Report'),
+        minRole: 'LEADER',
         gradient: ['#667eea', '#764ba2'],
         iconColor: '#667eea',
       },

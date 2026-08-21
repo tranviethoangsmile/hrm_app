@@ -48,23 +48,23 @@ const AttendanceCalendar = ({year, month, checkins, dayoffs, onSelectDay}) => {
       return null;
     }
     const key = moment([year, month, day]).format('YYYY-MM-DD');
-    if (offSet.has(key)) {
-      return 'off';
-    }
     const checkin = byDate[key];
     if (!checkin) {
-      return 'none';
+      return offSet.has(key) ? 'off' : 'none';
     }
     if (checkin.is_paid_leave) {
       return 'leave';
     }
-    if (checkin.is_weekend) {
-      return 'weekend';
+    if (offSet.has(key) || checkin.is_weekend) {
+      return 'restwork';
+    }
+    if (checkin.work_shift === 'NIGHT') {
+      return 'night';
     }
     if (checkin.over_time > 0) {
       return 'ot';
     }
-    return 'work';
+    return 'day';
   };
 
   const statusColor = status => {
@@ -73,11 +73,13 @@ const AttendanceCalendar = ({year, month, checkins, dayoffs, onSelectDay}) => {
         return colors.textTertiary;
       case 'leave':
         return '#00D4AA';
-      case 'weekend':
-        return '#FF6B6B';
+      case 'restwork':
+        return '#FF3B30';
+      case 'night':
+        return '#A18AFF';
       case 'ot':
         return '#FF9500';
-      case 'work':
+      case 'day':
         return '#4FACFE';
       default:
         return 'transparent';
@@ -137,6 +139,8 @@ const AttendanceCalendar = ({year, month, checkins, dayoffs, onSelectDay}) => {
       <View style={styles.legend}>
         {[
           {label: 'Day', color: '#4FACFE'},
+          {label: 'Night', color: '#A18AFF'},
+          {label: 'Work on off', color: '#FF3B30'},
           {label: 'OT', color: '#FF9500'},
           {label: 'Leave', color: '#00D4AA'},
           {label: 'Off', color: colors.textTertiary},
